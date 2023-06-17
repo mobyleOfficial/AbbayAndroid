@@ -1,4 +1,4 @@
-package com.mobyle.abbay.presentation.ui.theme
+package com.mobyle.abbay.presentation.common.theme
 
 import androidx.compose.ui.graphics.Color
 
