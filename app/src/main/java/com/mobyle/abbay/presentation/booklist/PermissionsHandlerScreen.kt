@@ -117,13 +117,6 @@ fun performFileSearch(activity: Activity) {
     }
 }
 
-@ExperimentalPermissionsApi
-@Composable
-@Preview
-fun PermissionsHandlerScreenPreview() {
-    PermissionsHandlerScreen()
-}
-
 private class BookListScreenCompanionClass {
     companion object {
         const val TAG = "HelpMe"
