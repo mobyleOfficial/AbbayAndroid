@@ -1,4 +1,4 @@
-package com.mobyle.abbay
+package com.mobyle.abbay.presentation
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -10,7 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.mobyle.abbay.ui.theme.AbbayTheme
+import com.mobyle.abbay.presentation.ui.theme.AbbayTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

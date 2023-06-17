@@ -1,4 +1,4 @@
-package com.mobyle.abbay.ui.theme
+package com.mobyle.abbay.presentation.ui.theme
 
 import android.app.Activity
 import android.os.Build

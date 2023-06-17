@@ -1,4 +1,4 @@
-package com.mobyle.abbay.ui.theme
+package com.mobyle.abbay.presentation.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
