@@ -5,8 +5,6 @@ import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.util.Log
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -45,28 +43,25 @@ fun BookListScreen() {
         mutableStateOf(false)
     }
     val permissionState =
-        rememberPermissionState(permission = Manifest.permission.READ_EXTERNAL_STORAGE)
+        rememberPermissionState(permission = Manifest.permission.READ_EXTERNAL_STORAGE) { isGranted ->
+            if (isGranted) {
+                Log.d(BookListScreenCompanionClass.TAG, "Select folder")
+            } else {
+                if (!shouldShowRationaleBefore && hasShowRationaleBefore) {
+                    shouldShowRationaleBefore = true
+                }
 
-    val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            Log.d(BookListScreenCompanionClass.TAG, "Select folder")
-        } else {
-            if(!shouldShowRationaleBefore && hasShowRationaleBefore) {
-                shouldShowRationaleBefore = true
+                hasShowRationaleBefore = true
             }
-
-            hasShowRationaleBefore = true
         }
-    }
+
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(key1 = lifecycleOwner, effect = {
         val eventObserver = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_CREATE -> {
-                    launcher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+                    permissionState.launchPermissionRequest()
                 }
 
                 else -> {
@@ -89,12 +84,11 @@ fun BookListScreen() {
         if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
             Log.d(BookListScreenCompanionClass.TAG, "Select folder")
         } else {
-            if(!hasShowRationaleBefore) {
-                launcher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+            if (!hasShowRationaleBefore) {
+                permissionState.launchPermissionRequest()
             }
         }
     }
-
 
     when {
         state.isGranted -> Text("Select folder")
