@@ -10,7 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.mobyle.abbay.presentation.booklist.BookListScreen
+import com.mobyle.abbay.presentation.booklist.PermissionsHandlerScreen
 import com.mobyle.abbay.presentation.common.theme.AbbayTheme
 
 @ExperimentalPermissionsApi
@@ -23,7 +23,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    BookListScreen()
+                    PermissionsHandlerScreen()
                 }
             }
         }
@@ -35,6 +35,6 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun GreetingPreview() {
     AbbayTheme {
-        BookListScreen()
+        PermissionsHandlerScreen()
     }
 }

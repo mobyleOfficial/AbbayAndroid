@@ -34,7 +34,7 @@ import com.google.accompanist.permissions.shouldShowRationale
 
 @ExperimentalPermissionsApi
 @Composable
-fun BookListScreen() {
+fun PermissionsHandlerScreen() {
     var shouldShowRationaleBefore by remember {
         mutableStateOf(false)
     }
@@ -120,8 +120,8 @@ fun performFileSearch(activity: Activity) {
 @ExperimentalPermissionsApi
 @Composable
 @Preview
-fun BookListScreenPreview() {
-    BookListScreen()
+fun PermissionsHandlerScreenPreview() {
+    PermissionsHandlerScreen()
 }
 
 private class BookListScreenCompanionClass {
