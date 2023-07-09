@@ -3,8 +3,8 @@ package com.mobyle.abbay.infra.di
 import android.content.Context
 import androidx.room.Room
 import com.mobyle.abbay.R
-import com.mobyle.abbay.infra.database.AbbayDatabase
 import com.mobyle.abbay.data.datasource.local.daos.BooksDao
+import com.mobyle.abbay.infra.database.AbbayDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

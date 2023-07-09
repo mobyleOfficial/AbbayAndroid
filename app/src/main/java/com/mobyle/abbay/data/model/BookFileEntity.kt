@@ -6,9 +6,9 @@ import kotlinx.serialization.Serializable
 
 @Entity
 @Serializable
-data class BookEntity(
-    @PrimaryKey val path: String,
-    val name: String,
-    val thumbnail: ByteArray?,
-    val duration: Int
+class BookFileEntity(
+    @PrimaryKey var path: String,
+    var name: String,
+    var thumbnail: ByteArray?,
+    var duration: Int
 )

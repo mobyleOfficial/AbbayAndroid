@@ -1,20 +1,20 @@
 package com.mobyle.abbay.presentation.booklist
 
-import android.media.MediaMetadataRetriever
 import com.mobyle.abbay.infra.common.BaseViewModel
 import com.model.Book
-import com.usecase.AddBooksList
+import com.model.BookFile
+import com.model.BookFolder
+import com.usecase.AddBooks
 import com.usecase.GetBooksList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
 class BooksListViewModel @Inject constructor(
     private val getBooksList: GetBooksList,
-    private val addBooksList: AddBooksList
+    private val addBooks: AddBooks
 ) :
     BaseViewModel() {
     private val _uiState = MutableStateFlow<BooksListUiState>(BooksListUiState.Loading)
@@ -25,9 +25,15 @@ class BooksListViewModel @Inject constructor(
         getAudiobookList()
     }
 
-    fun addBooksList(booksList: List<Book>) = launch {
+    fun addBooksList(booksList: List<BookFile>) = launch {
         this.booksList.addAll(booksList)
-        addBooksList.invoke(this.booksList)
+        addBooks.invoke(booksList)
+        _uiState.tryEmit(BooksListUiState.BookListSuccess(this.booksList))
+    }
+
+    fun addBookFolder(bookFolder: BookFolder) = launch {
+        this.booksList.add(bookFolder)
+        addBooks.invoke(booksList)
         _uiState.tryEmit(BooksListUiState.BookListSuccess(this.booksList))
     }
 
