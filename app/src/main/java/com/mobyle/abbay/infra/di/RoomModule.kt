@@ -16,10 +16,6 @@ import javax.inject.Singleton
 @Module
 class RoomModule {
     @Provides
-    fun providesBooksDao(database: AbbayDatabase): BooksDao =
-        database.getBooksDao()
-
-    @Provides
     @Singleton
     fun providesAppDatabase(@ApplicationContext context: Context): AbbayDatabase =
         Room.databaseBuilder(
@@ -27,4 +23,8 @@ class RoomModule {
             AbbayDatabase::class.java,
             context.getString(R.string.app_name)
         ).build()
+
+    @Provides
+    fun providesBooksDao(database: AbbayDatabase): BooksDao =
+        database.getBooksDao()
 }

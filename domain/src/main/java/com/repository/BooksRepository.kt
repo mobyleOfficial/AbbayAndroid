@@ -3,5 +3,7 @@ package com.repository
 import com.model.Book
 
 interface BooksRepository {
-    fun getBooksList(): List<Book>
+    suspend fun getBooksList(): List<Book>
+
+    suspend fun addBooksList(booksList: List<Book>)
 }
