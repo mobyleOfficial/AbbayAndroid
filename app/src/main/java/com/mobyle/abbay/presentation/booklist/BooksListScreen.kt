@@ -34,6 +34,7 @@ import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiStat
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.Loading
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.NoBookSelected
 import com.model.BookFile
+import androidx.compose.runtime.getValue
 import com.model.BookFolder
 
 @ExperimentalMaterial3Api
@@ -99,6 +100,8 @@ fun BooksListScreen() {
         }
     })
 
+    val booksListState by viewModel.uiState.collectAsState()
+
     Scaffold(topBar = {
         TopAppBar(title = {
             Text("Abbay")
@@ -116,10 +119,56 @@ fun BooksListScreen() {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            BooksListBody(
-                viewModel,
-                { openFileSelector.launch(arrayOf("audio/*")) },
-                { openFolderSelector.launch(null) })
+            when (val state = booksListState) {
+                is BookListSuccess -> {
+                    val bookList = state.audiobookList
+
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(bookList.size) { index ->
+                            val book = bookList[index]
+                            Row {
+                                AsyncImage(
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data(book.thumbnail)
+                                        .crossfade(true)
+                                        .build(), contentDescription = ""
+                                )
+                                Text(book.name)
+                            }
+                        }
+                    }
+                }
+
+                is NoBookSelected -> {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Button(onClick = {
+                            openFileSelector.launch(arrayOf("audio/*"))
+                        }) {
+                            Text("Add a file")
+                        }
+
+                        Text("Or")
+
+                        Button(onClick = {
+                            openFolderSelector.launch(null)
+                        }) {
+                            Text(text = "Add a folder")
+                        }
+                    }
+
+                }
+
+                is GenericError -> {}
+                is Loading -> {}
+            }
+//            BooksListBody(
+//                viewModel,
+//                { openFileSelector.launch(arrayOf("audio/*")) },
+//                { openFolderSelector.launch(null) })
         }
     }
 }

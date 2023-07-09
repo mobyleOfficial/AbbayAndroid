@@ -28,13 +28,17 @@ class BooksListViewModel @Inject constructor(
     fun addBooksList(booksList: List<BookFile>) = launch {
         this.booksList.addAll(booksList)
         addBooks.invoke(booksList)
-        _uiState.tryEmit(BooksListUiState.BookListSuccess(this.booksList))
+        val newBookList = mutableListOf<Book>()
+        newBookList.addAll(this.booksList)
+        _uiState.emit(BooksListUiState.BookListSuccess(newBookList))
     }
 
     fun addBookFolder(bookFolder: BookFolder) = launch {
         this.booksList.add(bookFolder)
         addBooks.invoke(booksList)
-        _uiState.tryEmit(BooksListUiState.BookListSuccess(this.booksList))
+        val newBookList = mutableListOf<Book>()
+        newBookList.addAll(this.booksList)
+        _uiState.emit(BooksListUiState.BookListSuccess(newBookList))
     }
 
     private fun getAudiobookList() = launch {
@@ -47,7 +51,7 @@ class BooksListViewModel @Inject constructor(
             BooksListUiState.BookListSuccess(booksList)
         }
 
-        _uiState.tryEmit(state)
+        _uiState.emit(state)
     }
 
     sealed class BooksListUiState {
