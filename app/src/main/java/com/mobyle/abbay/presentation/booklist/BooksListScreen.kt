@@ -1,6 +1,7 @@
 package com.mobyle.abbay.presentation.booklist
 
 import android.media.MediaMetadataRetriever
+import android.provider.CalendarContract
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -8,7 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,8 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -206,12 +204,17 @@ fun BookFileItem(book: BookFile) {
     Column(
         modifier = Modifier
             .padding(top = 8.dp)
-            .fillMaxWidth()
+            .fillMaxWidth(),
+        verticalArrangement = Arrangement.Center,
     ) {
-        Row(modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)) {
+        Row(
+            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Box(
                 modifier = Modifier
                     .clip(shape = RoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp))
+                    .background(Color.Gray)
                     .height(86.dp)
                     .width(86.dp)
             ) {
@@ -225,7 +228,11 @@ fun BookFileItem(book: BookFile) {
                         .build(), contentDescription = ""
                 )
             }
-            Column {
+            Column(
+                modifier = Modifier
+                    .padding(start = 12.dp),
+                verticalArrangement = Arrangement.Center,
+            ) {
                 Text(book.name)
                 Row {
                     Row {
@@ -250,7 +257,8 @@ fun BookFolderItem(book: BookFolder) {
     Column(
         modifier = Modifier
             .padding(top = 8.dp)
-            .fillMaxWidth()
+            .fillMaxWidth(),
+        verticalArrangement = Arrangement.Center,
     ) {
         Row(modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)) {
             Box(
@@ -269,7 +277,9 @@ fun BookFolderItem(book: BookFolder) {
                         .build(), contentDescription = ""
                 )
             }
-            Column {
+            Column(
+                verticalArrangement = Arrangement.Center,
+            ) {
                 Text(book.name)
                 Row {
                     Row {
