@@ -3,14 +3,23 @@ package com.mobyle.abbay.presentation.booklist
 import android.media.MediaMetadataRetriever
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material3.Button
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -19,22 +28,33 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.documentfile.provider.DocumentFile
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.BookListSuccess
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.GenericError
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.Loading
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.NoBookSelected
+import com.mobyle.abbay.presentation.common.mappers.toBook
+import com.mobyle.abbay.presentation.common.mappers.toFolder
+import com.mobyle.abbay.presentation.common.widgets.SVGIcon
 import com.model.BookFile
-import androidx.compose.runtime.getValue
 import com.model.BookFolder
 
 @ExperimentalMaterial3Api
@@ -104,13 +124,24 @@ fun BooksListScreen() {
 
     Scaffold(topBar = {
         TopAppBar(title = {
-            Text("Abbay")
+            Text(
+                "Your Audiobooks", style = TextStyle(
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            )
         }, actions = {
             IconButton(onClick = { openFolderSelector.launch(null) }) {
-                Text("Folder")
+                SVGIcon(
+                    R.drawable.folder_plus,
+                    "Add folder icon"
+                )
             }
             IconButton(onClick = { openFileSelector.launch(arrayOf("audio/*")) }) {
-                Text("Files")
+                SVGIcon(
+                    R.drawable.file_plus,
+                    "Add folder icon"
+                )
             }
         })
     }) { innerPadding ->
@@ -124,16 +155,17 @@ fun BooksListScreen() {
                     val bookList = state.audiobookList
 
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        item {
+                        }
                         items(bookList.size) { index ->
-                            val book = bookList[index]
-                            Row {
-                                AsyncImage(
-                                    model = ImageRequest.Builder(LocalContext.current)
-                                        .data(book.thumbnail)
-                                        .crossfade(true)
-                                        .build(), contentDescription = ""
-                                )
-                                Text(book.name)
+                            when (val book = bookList[index]) {
+                                is BookFolder -> {
+                                    BookFolderItem(book)
+                                }
+
+                                is BookFile -> {
+                                    BookFileItem(book)
+                                }
                             }
                         }
                     }
@@ -165,78 +197,100 @@ fun BooksListScreen() {
                 is GenericError -> {}
                 is Loading -> {}
             }
-//            BooksListBody(
-//                viewModel,
-//                { openFileSelector.launch(arrayOf("audio/*")) },
-//                { openFolderSelector.launch(null) })
         }
     }
 }
 
 @Composable
-private fun BooksListBody(
-    viewModel: BooksListViewModel,
-    openFileSelector: () -> Unit,
-    openFolderSelector: () -> Unit,
-) {
-
-    val booksListState = viewModel.uiState.collectAsState()
-
-    when (val state = booksListState.value) {
-        is BookListSuccess -> {
-            val bookList = state.audiobookList
-
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(bookList.size) { index ->
-                    val book = bookList[index]
+fun BookFileItem(book: BookFile) {
+    Column(
+        modifier = Modifier
+            .padding(top = 8.dp)
+            .fillMaxWidth()
+    ) {
+        Row(modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)) {
+            Box(
+                modifier = Modifier
+                    .clip(shape = RoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp))
+                    .height(86.dp)
+                    .width(86.dp)
+            ) {
+                AsyncImage(
+                    contentScale = ContentScale.FillBounds,
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(book.thumbnail)
+                        .fallback(R.drawable.file_music)
+                        .error(R.drawable.file_music)
+                        .crossfade(true)
+                        .build(), contentDescription = ""
+                )
+            }
+            Column {
+                Text(book.name)
+                Row {
                     Row {
-                        AsyncImage(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(book.thumbnail)
-                                .crossfade(true)
-                                .build(), contentDescription = ""
-                        )
-                        Text(book.name)
+                        Text("Icon")
+                        Text("00:18:43/8:44:09")
                     }
                 }
             }
         }
-
-        is NoBookSelected -> {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Button(onClick = {
-                    openFileSelector.invoke()
-                }) {
-                    Text("Add a file")
-                }
-
-                Text("Or")
-
-                Button(onClick = {
-                    openFolderSelector.invoke()
-                }) {
-                    Text(text = "Add a folder")
-                }
-            }
-
-        }
-
-        is GenericError -> {}
-        is Loading -> {}
+        Divider(
+            color = Color.White,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(0.5.dp)
+                .padding(horizontal = 16.dp)
+        )
     }
 }
 
-private fun MediaMetadataRetriever.toBook(path: String): BookFile {
-    val title = extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
-    val duration = extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION) ?: "0"
-    return BookFile(path, title ?: "", embeddedPicture, Integer.parseInt(duration))
-}
-
-private fun List<BookFile>.toFolder(): BookFolder {
-    val firstBook = first()
-    return BookFolder(this, firstBook.name, firstBook.thumbnail, this.sumOf { it.duration })
+@Composable
+fun BookFolderItem(book: BookFolder) {
+    Column(
+        modifier = Modifier
+            .padding(top = 8.dp)
+            .fillMaxWidth()
+    ) {
+        Row(modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)) {
+            Box(
+                modifier = Modifier
+                    .clip(shape = RoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp))
+                    .height(86.dp)
+                    .width(86.dp)
+            ) {
+                AsyncImage(
+                    contentScale = ContentScale.FillBounds,
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(book.thumbnail)
+                        .fallback(R.drawable.file_music)
+                        .error(R.drawable.file_music)
+                        .crossfade(true)
+                        .build(), contentDescription = ""
+                )
+            }
+            Column {
+                Text(book.name)
+                Row {
+                    Row {
+                        Text("Icon")
+                        Text("01/18")
+                    }
+                }
+                Row {
+                    Row {
+                        Text("Icon")
+                        Text("00:18:43/8:44:09")
+                    }
+                }
+            }
+        }
+        Divider(
+            color = Color.White,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(0.5.dp)
+                .padding(horizontal = 16.dp)
+        )
+    }
 }
