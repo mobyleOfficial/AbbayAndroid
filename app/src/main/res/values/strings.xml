@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Abbay</string>
+    <string name="book_list_top_bar_title">Your Audiobooks</string>
+    <string name="book_list_top_bar_folder_button_description">Add folder icon</string>
+    <string name="book_list_top_bar_file_button_description">Add file icon</string>
+    <string name="no_book_selected_primary_button_title">Add a file</string>
+    <string name="no_book_selected_secondary_button_title">Add a folder</string>
+    <string name="no_book_selected_or">Or</string>
 </resources>

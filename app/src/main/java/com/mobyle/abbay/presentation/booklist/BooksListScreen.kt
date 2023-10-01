@@ -3,28 +3,17 @@ package com.mobyle.abbay.presentation.booklist
 import android.media.MediaMetadataRetriever
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.BottomSheetScaffold
 import androidx.compose.material.Button
-import androidx.compose.material.Divider
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.IconButton
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -36,23 +25,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat.getString
 import androidx.documentfile.provider.DocumentFile
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.BookListSuccess
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.GenericError
@@ -60,7 +42,6 @@ import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiStat
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.NoBookSelected
 import com.mobyle.abbay.presentation.common.mappers.toBook
 import com.mobyle.abbay.presentation.common.mappers.toFolder
-import com.mobyle.abbay.presentation.common.widgets.SVGIcon
 import com.model.BookFile
 import com.model.BookFolder
 
@@ -71,6 +52,7 @@ fun BooksListScreen() {
     val context = LocalContext.current
     val density = LocalDensity.current
     val asyncScope = rememberCoroutineScope()
+    val fileFilterList = arrayOf("audio/*")
 
     // States
     val bottomSheetState = rememberBottomSheetScaffoldState()
@@ -136,25 +118,14 @@ fun BooksListScreen() {
         scaffoldState = bottomSheetState,
         sheetContent = {
             Column {
-                // the first item that is visible
-                Box(
+                MiniPlayer(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .background(color = MaterialTheme.colors.primary)
-                ) {
-                    Text(
-                        text = "Swipe up to Expand the sheet",
-                        color = Color.White,
-                        modifier = Modifier
-                            .align(alignment = Alignment.Center)
-                            .onGloballyPositioned {
-                                componentHeight = with(density) {
-                                    it.size.height.toDp()
-                                }
-                            },
-                    )
-                }
-
+                        .onGloballyPositioned {
+                            componentHeight = with(density) {
+                                it.size.height.toDp()
+                            }
+                        }
+                )
                 Box(
                     modifier = Modifier.fillMaxSize(),
                 ) {
@@ -168,27 +139,14 @@ fun BooksListScreen() {
             modifier = Modifier.fillMaxSize(),
         ) {
             Scaffold(topBar = {
-                TopAppBar(title = {
-                    Text(
-                        "Your Audiobooks", style = TextStyle(
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                }, actions = {
-                    IconButton(onClick = { openFolderSelector.launch(null) }) {
-                        SVGIcon(
-                            R.drawable.folder_plus,
-                            "Add folder icon"
-                        )
+                BookListTopBar(
+                    openFolderSelector = {
+                        openFolderSelector.launch(null)
+                    },
+                    openFileSelector = {
+                        openFileSelector.launch(fileFilterList)
                     }
-                    IconButton(onClick = { openFileSelector.launch(arrayOf("audio/*")) }) {
-                        SVGIcon(
-                            R.drawable.file_plus,
-                            "Add folder icon"
-                        )
-                    }
-                })
+                )
             }) { innerPadding ->
                 Box(
                     modifier = Modifier
@@ -227,17 +185,27 @@ fun BooksListScreen() {
                                 verticalArrangement = Arrangement.Center
                             ) {
                                 Button(onClick = {
-                                    openFileSelector.launch(arrayOf("audio/*"))
+                                    openFileSelector.launch(fileFilterList)
                                 }) {
-                                    Text("Add a file")
+                                    Text(
+                                        getString(
+                                            context,
+                                            R.string.no_book_selected_primary_button_title
+                                        )
+                                    )
                                 }
 
-                                Text("Or")
+                                Text(getString(context, R.string.no_book_selected_or))
 
                                 Button(onClick = {
                                     openFolderSelector.launch(null)
                                 }) {
-                                    Text(text = "Add a folder")
+                                    Text(
+                                        text = getString(
+                                            context,
+                                            R.string.no_book_selected_secondary_button_title
+                                        )
+                                    )
                                 }
                             }
 
@@ -249,112 +217,5 @@ fun BooksListScreen() {
                 }
             }
         }
-    }
-}
-
-@Composable
-fun BookFileItem(book: BookFile, onClick: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .padding(top = 8.dp)
-            .fillMaxWidth()
-            .clickable {
-                onClick.invoke()
-            },
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Row(
-            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .clip(shape = RoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp))
-                    .background(Color.Gray)
-                    .height(86.dp)
-                    .width(86.dp)
-            ) {
-                AsyncImage(
-                    contentScale = ContentScale.FillBounds,
-                    model = ImageRequest.Builder(LocalContext.current).data(book.thumbnail)
-                        .fallback(R.drawable.file_music).error(R.drawable.file_music)
-                        .crossfade(true).build(),
-                    contentDescription = ""
-                )
-            }
-            Column(
-                modifier = Modifier.padding(start = 12.dp),
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(book.name)
-                Row {
-                    Row {
-                        Text("Icon")
-                        Text("00:18:43/8:44:09")
-                    }
-                }
-            }
-        }
-        Divider(
-            color = Color.White,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(0.5.dp)
-                .padding(horizontal = 16.dp)
-        )
-    }
-}
-
-@Composable
-fun BookFolderItem(book: BookFolder, onClick: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .padding(top = 8.dp)
-            .fillMaxWidth()
-            .clickable {
-                onClick.invoke()
-            },
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Row(modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)) {
-            Box(
-                modifier = Modifier
-                    .clip(shape = RoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp))
-                    .height(86.dp)
-                    .width(86.dp)
-            ) {
-                AsyncImage(
-                    contentScale = ContentScale.FillBounds,
-                    model = ImageRequest.Builder(LocalContext.current).data(book.thumbnail)
-                        .fallback(R.drawable.file_music).error(R.drawable.file_music)
-                        .crossfade(true).build(),
-                    contentDescription = ""
-                )
-            }
-            Column(
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(book.name)
-                Row {
-                    Row {
-                        Text("Icon")
-                        Text("01/18")
-                    }
-                }
-                Row {
-                    Row {
-                        Text("Icon")
-                        Text("00:18:43/8:44:09")
-                    }
-                }
-            }
-        }
-        Divider(
-            color = Color.White,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(0.5.dp)
-                .padding(horizontal = 16.dp)
-        )
     }
 }
