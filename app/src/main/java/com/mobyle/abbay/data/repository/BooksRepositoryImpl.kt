@@ -3,6 +3,7 @@ package com.mobyle.abbay.data.repository
 import com.mobyle.abbay.data.datasource.local.books.BooksLocalDataSource
 import com.mobyle.abbay.data.mappers.toDomain
 import com.mobyle.abbay.data.mappers.toEntity
+import com.mobyle.abbay.data.model.BookFileEntity
 import com.model.Book
 import com.model.BookFile
 import com.model.BookFolder
@@ -20,7 +21,13 @@ class BooksRepositoryImpl @Inject constructor(private val localDataSource: Books
             it.toDomain()
         }
 
-        return booksFolderList + bookFilesList
+        //return booksFolderList + bookFilesList
+
+        return listOf(
+            BookFile("path", "name 1", null, 10),
+            BookFile("path", "name 2", null, 10),
+            BookFile("path", "name 3", null, 10)
+        )
     }
 
     override suspend fun addBooks(booksList: List<Book>) {

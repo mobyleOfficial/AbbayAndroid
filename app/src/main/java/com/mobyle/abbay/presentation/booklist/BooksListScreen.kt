@@ -1,10 +1,10 @@
 package com.mobyle.abbay.presentation.booklist
 
 import android.media.MediaMetadataRetriever
-import android.provider.CalendarContract
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,23 +16,32 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material.BottomSheetScaffold
+import androidx.compose.material.Button
+import androidx.compose.material.Divider
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Scaffold
+import androidx.compose.material.Text
+import androidx.compose.material.TopAppBar
+import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -55,31 +64,35 @@ import com.mobyle.abbay.presentation.common.widgets.SVGIcon
 import com.model.BookFile
 import com.model.BookFolder
 
-@ExperimentalMaterial3Api
+@ExperimentalMaterialApi
 @Composable
 fun BooksListScreen() {
     val viewModel: BooksListViewModel = hiltViewModel()
     val context = LocalContext.current
+    val density = LocalDensity.current
+    val asyncScope = rememberCoroutineScope()
 
+    // States
+    val bottomSheetState = rememberBottomSheetScaffoldState()
+    val booksListState by viewModel.uiState.collectAsState()
+    var componentHeight by remember { mutableStateOf(0.dp) }
+    var hasBookSelected by remember { mutableStateOf(false) }
+
+    // Launchers
     val openFileSelector = rememberLauncherForActivityResult(
-        contract =
-        ActivityResultContracts.OpenMultipleDocuments()
+        contract = ActivityResultContracts.OpenMultipleDocuments()
     ) { filesList ->
         if (filesList.isNotEmpty()) {
-            viewModel.addBooksList(filesList.filter { it.path != null }
-                .map { uri ->
-                    val metadataRetriever = MediaMetadataRetriever()
-                    metadataRetriever.setDataSource(context, uri)
-                    metadataRetriever.toBook(uri.path!!)
-                }
-            )
+            viewModel.addBooksList(filesList.filter { it.path != null }.map { uri ->
+                val metadataRetriever = MediaMetadataRetriever()
+                metadataRetriever.setDataSource(context, uri)
+                metadataRetriever.toBook(uri.path!!)
+            })
         }
     }
 
-    // Launchers
     val openFolderSelector = rememberLauncherForActivityResult(
-        contract =
-        ActivityResultContracts.OpenDocumentTree()
+        contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
         uri?.let {
             val pickedDir = DocumentFile.fromTreeUri(context, it)
@@ -98,6 +111,7 @@ fun BooksListScreen() {
             viewModel.addBookFolder(bookFolder)
         }
     }
+
     // lifecycle
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(key1 = lifecycleOwner, effect = {
@@ -118,93 +132,135 @@ fun BooksListScreen() {
         }
     })
 
-    val booksListState by viewModel.uiState.collectAsState()
-
-    Scaffold(topBar = {
-        TopAppBar(title = {
-            Text(
-                "Your Audiobooks", style = TextStyle(
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-        }, actions = {
-            IconButton(onClick = { openFolderSelector.launch(null) }) {
-                SVGIcon(
-                    R.drawable.folder_plus,
-                    "Add folder icon"
-                )
-            }
-            IconButton(onClick = { openFileSelector.launch(arrayOf("audio/*")) }) {
-                SVGIcon(
-                    R.drawable.file_plus,
-                    "Add folder icon"
-                )
-            }
-        })
-    }) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            when (val state = booksListState) {
-                is BookListSuccess -> {
-                    val bookList = state.audiobookList
-
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        item {
-                        }
-                        items(bookList.size) { index ->
-                            when (val book = bookList[index]) {
-                                is BookFolder -> {
-                                    BookFolderItem(book)
+    BottomSheetScaffold(
+        scaffoldState = bottomSheetState,
+        sheetContent = {
+            Column {
+                // the first item that is visible
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(color = MaterialTheme.colors.primary)
+                ) {
+                    Text(
+                        text = "Swipe up to Expand the sheet",
+                        color = Color.White,
+                        modifier = Modifier
+                            .align(alignment = Alignment.Center)
+                            .onGloballyPositioned {
+                                componentHeight = with(density) {
+                                    it.size.height.toDp()
                                 }
+                            },
+                    )
+                }
 
-                                is BookFile -> {
-                                    BookFileItem(book)
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    Text(text = "Expanded")
+                }
+            }
+        },
+        sheetPeekHeight = if (hasBookSelected) componentHeight.value.dp else 0.dp,
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            Scaffold(topBar = {
+                TopAppBar(title = {
+                    Text(
+                        "Your Audiobooks", style = TextStyle(
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }, actions = {
+                    IconButton(onClick = { openFolderSelector.launch(null) }) {
+                        SVGIcon(
+                            R.drawable.folder_plus,
+                            "Add folder icon"
+                        )
+                    }
+                    IconButton(onClick = { openFileSelector.launch(arrayOf("audio/*")) }) {
+                        SVGIcon(
+                            R.drawable.file_plus,
+                            "Add folder icon"
+                        )
+                    }
+                })
+            }) { innerPadding ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    when (val state = booksListState) {
+                        is BookListSuccess -> {
+                            val bookList = state.audiobookList
+
+                            Column {
+                                LazyColumn(modifier = Modifier.weight(1.0f)) {
+                                    items(bookList.size) { index ->
+                                        when (val book = bookList[index]) {
+                                            is BookFolder -> {
+                                                BookFolderItem(book) {
+                                                    hasBookSelected = !hasBookSelected
+                                                }
+                                            }
+
+                                            is BookFile -> {
+                                                BookFileItem(book) {
+                                                    hasBookSelected = !hasBookSelected
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
-                    }
-                }
 
-                is NoBookSelected -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Button(onClick = {
-                            openFileSelector.launch(arrayOf("audio/*"))
-                        }) {
-                            Text("Add a file")
+                        is NoBookSelected -> {
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Button(onClick = {
+                                    openFileSelector.launch(arrayOf("audio/*"))
+                                }) {
+                                    Text("Add a file")
+                                }
+
+                                Text("Or")
+
+                                Button(onClick = {
+                                    openFolderSelector.launch(null)
+                                }) {
+                                    Text(text = "Add a folder")
+                                }
+                            }
+
                         }
 
-                        Text("Or")
-
-                        Button(onClick = {
-                            openFolderSelector.launch(null)
-                        }) {
-                            Text(text = "Add a folder")
-                        }
+                        is GenericError -> {}
+                        is Loading -> {}
                     }
-
                 }
-
-                is GenericError -> {}
-                is Loading -> {}
             }
         }
     }
 }
 
 @Composable
-fun BookFileItem(book: BookFile) {
+fun BookFileItem(book: BookFile, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .padding(top = 8.dp)
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .clickable {
+                onClick.invoke()
+            },
         verticalArrangement = Arrangement.Center,
     ) {
         Row(
@@ -220,17 +276,14 @@ fun BookFileItem(book: BookFile) {
             ) {
                 AsyncImage(
                     contentScale = ContentScale.FillBounds,
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(book.thumbnail)
-                        .fallback(R.drawable.file_music)
-                        .error(R.drawable.file_music)
-                        .crossfade(true)
-                        .build(), contentDescription = ""
+                    model = ImageRequest.Builder(LocalContext.current).data(book.thumbnail)
+                        .fallback(R.drawable.file_music).error(R.drawable.file_music)
+                        .crossfade(true).build(),
+                    contentDescription = ""
                 )
             }
             Column(
-                modifier = Modifier
-                    .padding(start = 12.dp),
+                modifier = Modifier.padding(start = 12.dp),
                 verticalArrangement = Arrangement.Center,
             ) {
                 Text(book.name)
@@ -253,11 +306,14 @@ fun BookFileItem(book: BookFile) {
 }
 
 @Composable
-fun BookFolderItem(book: BookFolder) {
+fun BookFolderItem(book: BookFolder, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .padding(top = 8.dp)
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .clickable {
+                onClick.invoke()
+            },
         verticalArrangement = Arrangement.Center,
     ) {
         Row(modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)) {
@@ -269,12 +325,10 @@ fun BookFolderItem(book: BookFolder) {
             ) {
                 AsyncImage(
                     contentScale = ContentScale.FillBounds,
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(book.thumbnail)
-                        .fallback(R.drawable.file_music)
-                        .error(R.drawable.file_music)
-                        .crossfade(true)
-                        .build(), contentDescription = ""
+                    model = ImageRequest.Builder(LocalContext.current).data(book.thumbnail)
+                        .fallback(R.drawable.file_music).error(R.drawable.file_music)
+                        .crossfade(true).build(),
+                    contentDescription = ""
                 )
             }
             Column(

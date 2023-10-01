@@ -48,7 +48,12 @@ class BooksListViewModel @Inject constructor(
             BooksListUiState.NoBookSelected
         } else {
             this.booksList.addAll(booksList)
-            BooksListUiState.BookListSuccess(booksList)
+            this.booksList.addAll(booksList)
+            this.booksList.addAll(booksList)
+            this.booksList.addAll(booksList)
+            this.booksList.addAll(booksList)
+            this.booksList.addAll(booksList)
+            BooksListUiState.BookListSuccess(this.booksList)
         }
 
         _uiState.emit(state)
