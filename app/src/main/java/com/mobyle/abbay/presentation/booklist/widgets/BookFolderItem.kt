@@ -1,4 +1,4 @@
-package com.mobyle.abbay.presentation.booklist
+package com.mobyle.abbay.presentation.booklist.widgets
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.mobyle.abbay.R
+import com.mobyle.abbay.presentation.common.widgets.BookThumbnail
 import com.model.BookFolder
 
 @Composable
@@ -36,20 +37,7 @@ fun BookFolderItem(book: BookFolder, onClick: () -> Unit) {
         verticalArrangement = Arrangement.Center,
     ) {
         Row(modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)) {
-            Box(
-                modifier = Modifier
-                    .clip(shape = RoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp))
-                    .height(86.dp)
-                    .width(86.dp)
-            ) {
-                AsyncImage(
-                    contentScale = ContentScale.FillBounds,
-                    model = ImageRequest.Builder(LocalContext.current).data(book.thumbnail)
-                        .fallback(R.drawable.file_music).error(R.drawable.file_music)
-                        .crossfade(true).build(),
-                    contentDescription = ""
-                )
-            }
+            BookThumbnail(book.thumbnail)
             Column(
                 verticalArrangement = Arrangement.Center,
             ) {

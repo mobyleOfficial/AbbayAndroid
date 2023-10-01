@@ -21,13 +21,7 @@ class BooksRepositoryImpl @Inject constructor(private val localDataSource: Books
             it.toDomain()
         }
 
-        //return booksFolderList + bookFilesList
-
-        return listOf(
-            BookFile("path", "name 1", null, 10),
-            BookFile("path", "name 2", null, 10),
-            BookFile("path", "name 3", null, 10)
-        )
+        return booksFolderList + bookFilesList
     }
 
     override suspend fun addBooks(booksList: List<Book>) {

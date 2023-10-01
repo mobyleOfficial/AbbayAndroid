@@ -40,6 +40,10 @@ import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiStat
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.GenericError
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.Loading
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.NoBookSelected
+import com.mobyle.abbay.presentation.booklist.widgets.BookFileItem
+import com.mobyle.abbay.presentation.booklist.widgets.BookFolderItem
+import com.mobyle.abbay.presentation.booklist.widgets.BookListTopBar
+import com.mobyle.abbay.presentation.booklist.widgets.MiniPlayer
 import com.mobyle.abbay.presentation.common.mappers.toBook
 import com.mobyle.abbay.presentation.common.mappers.toFolder
 import com.model.BookFile
@@ -59,6 +63,7 @@ fun BooksListScreen() {
     val booksListState by viewModel.uiState.collectAsState()
     var componentHeight by remember { mutableStateOf(0.dp) }
     var hasBookSelected by remember { mutableStateOf(false) }
+    var selectedBookIndex by remember { mutableStateOf(-1) }
 
     // Launchers
     val openFileSelector = rememberLauncherForActivityResult(
@@ -117,21 +122,25 @@ fun BooksListScreen() {
     BottomSheetScaffold(
         scaffoldState = bottomSheetState,
         sheetContent = {
-            Column {
-                MiniPlayer(
-                    modifier = Modifier
-                        .onGloballyPositioned {
-                            componentHeight = with(density) {
-                                it.size.height.toDp()
+            if (selectedBookIndex != -1) {
+                Column {
+                    MiniPlayer(
+                        book = viewModel.booksList[selectedBookIndex],
+                        modifier = Modifier
+                            .onGloballyPositioned {
+                                componentHeight = with(density) {
+                                    it.size.height.toDp()
+                                }
                             }
-                        }
-                )
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    Text(text = "Expanded")
+                    )
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        Text(text = "Expanded")
+                    }
                 }
             }
+
         },
         sheetPeekHeight = if (hasBookSelected) componentHeight.value.dp else 0.dp,
     ) {
@@ -163,13 +172,15 @@ fun BooksListScreen() {
                                         when (val book = bookList[index]) {
                                             is BookFolder -> {
                                                 BookFolderItem(book) {
-                                                    hasBookSelected = !hasBookSelected
+                                                    hasBookSelected = true
+                                                    selectedBookIndex = index
                                                 }
                                             }
 
                                             is BookFile -> {
                                                 BookFileItem(book) {
-                                                    hasBookSelected = !hasBookSelected
+                                                    hasBookSelected = true
+                                                    selectedBookIndex = index
                                                 }
                                             }
                                         }

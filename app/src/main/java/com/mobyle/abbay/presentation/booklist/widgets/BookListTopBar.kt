@@ -1,4 +1,4 @@
-package com.mobyle.abbay.presentation.booklist
+package com.mobyle.abbay.presentation.booklist.widgets
 
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
