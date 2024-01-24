@@ -18,8 +18,8 @@ import com.mobyle.abbay.R
 fun BookThumbnail(byteArray: ByteArray?, modifier: Modifier = Modifier) {
     val defaultModifier = Modifier
         .clip(shape = RoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp))
-        .height(86.dp)
-        .width(86.dp)
+        .height(64.dp)
+        .width(64.dp)
 
     Box(
         modifier = modifier.then(defaultModifier)

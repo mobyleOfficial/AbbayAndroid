@@ -3,6 +3,7 @@ package com.mobyle.abbay.presentation.booklist
 import android.media.MediaMetadataRetriever
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,10 +16,12 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.rememberBottomSheetScaffoldState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -40,8 +43,7 @@ import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiStat
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.GenericError
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.Loading
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.NoBookSelected
-import com.mobyle.abbay.presentation.booklist.widgets.BookFileItem
-import com.mobyle.abbay.presentation.booklist.widgets.BookFolderItem
+import com.mobyle.abbay.presentation.booklist.widgets.BookItem
 import com.mobyle.abbay.presentation.booklist.widgets.BookListTopBar
 import com.mobyle.abbay.presentation.booklist.widgets.MiniPlayer
 import com.mobyle.abbay.presentation.common.mappers.toBook
@@ -63,7 +65,7 @@ fun BooksListScreen() {
     val booksListState by viewModel.uiState.collectAsState()
     var componentHeight by remember { mutableStateOf(0.dp) }
     var hasBookSelected by remember { mutableStateOf(false) }
-    var selectedBookIndex by remember { mutableStateOf(-1) }
+    var selectedBookIndex by remember { mutableIntStateOf(-1) }
 
     // Launchers
     val openFileSelector = rememberLauncherForActivityResult(
@@ -145,7 +147,9 @@ fun BooksListScreen() {
         sheetPeekHeight = if (hasBookSelected) componentHeight.value.dp else 0.dp,
     ) {
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.primary),
         ) {
             Scaffold(topBar = {
                 BookListTopBar(
@@ -167,18 +171,22 @@ fun BooksListScreen() {
                             val bookList = state.audiobookList
 
                             Column {
-                                LazyColumn(modifier = Modifier.weight(1.0f)) {
+                                LazyColumn(
+                                    modifier = Modifier
+                                        .weight(1.0f)
+                                        .background(MaterialTheme.colorScheme.primary)
+                                ) {
                                     items(bookList.size) { index ->
                                         when (val book = bookList[index]) {
                                             is BookFolder -> {
-                                                BookFolderItem(book) {
+                                                BookItem(book) {
                                                     hasBookSelected = true
                                                     selectedBookIndex = index
                                                 }
                                             }
 
                                             is BookFile -> {
-                                                BookFileItem(book) {
+                                                BookItem(book) {
                                                     hasBookSelected = true
                                                     selectedBookIndex = index
                                                 }
