@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.BottomSheetScaffold
+import androidx.compose.material.BottomSheetValue
 import androidx.compose.material.Button
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Scaffold
@@ -125,9 +126,12 @@ fun BooksListScreen() {
         scaffoldState = bottomSheetState,
         sheetContent = {
             if (selectedBookIndex != -1) {
-                Column {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                ) {
                     MiniPlayer(
                         book = viewModel.booksList[selectedBookIndex],
+                        scaffoldState = bottomSheetState,
                         modifier = Modifier
                             .onGloballyPositioned {
                                 componentHeight = with(density) {
@@ -135,11 +139,6 @@ fun BooksListScreen() {
                                 }
                             }
                     )
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        Text(text = "Expanded")
-                    }
                 }
             }
 
