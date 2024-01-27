@@ -13,24 +13,63 @@
           'start'
         ],
       },
-    },
-    end: {
-      thumbnail: {
+      miniPlayer: {
         width: 'spread',
-        height: 'wrap',
-        top: [
-          'parent',
-          'top'
-        ],
+        height: 'spread',
         start: [
-          'parent',
-          'start'
+          'thumbnail',
+          'end'
         ],
         end: [
           'parent',
           'end'
+        ],
+        top: [
+          'thumbnail',
+          'top'
+        ],
+        bottom: [
+          'thumbnail',
+          'bottom'
         ]
+      }
+    },
+    end: {
+      thumbnail: {
+        width: 200,
+        height: 200,
+        centerHorizontally: 'true',
+        top: [
+          'parent',
+          'top',
+        ],
+        start: [
+          'parent',
+          'start',
+          100
+        ],
+        end: [
+          'parent',
+          'end',
+          100
+        ],
       },
-    }
+      miniPlayer: {
+        height: 'spread',
+        visibility: 'gone',
+        start: [
+          'parent',
+          'start'
+        ],
+        top: [
+          'thumbnail',
+          'top'
+        ],
+        bottom: [
+          'thumbnail',
+          'bottom'
+        ],
+      }
+    },
   }
 }

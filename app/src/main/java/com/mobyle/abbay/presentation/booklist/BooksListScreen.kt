@@ -29,6 +29,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -51,8 +52,9 @@ import com.mobyle.abbay.presentation.common.mappers.toBook
 import com.mobyle.abbay.presentation.common.mappers.toFolder
 import com.model.BookFile
 import com.model.BookFolder
+import kotlinx.coroutines.launch
 
-@ExperimentalMaterialApi
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun BooksListScreen() {
     val viewModel: BooksListViewModel = hiltViewModel()
@@ -126,20 +128,27 @@ fun BooksListScreen() {
         scaffoldState = bottomSheetState,
         sheetContent = {
             if (selectedBookIndex != -1) {
-                MiniPlayer(
-                    book = viewModel.booksList[selectedBookIndex],
-                    scaffoldState = bottomSheetState,
+                Column(
                     modifier = Modifier
-                        .onGloballyPositioned {
-                            componentHeight = with(density) {
-                                it.size.height.toDp()
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surface),
+                ) {
+                    MiniPlayer(
+                        book = viewModel.booksList[selectedBookIndex],
+                        scaffoldState = bottomSheetState,
+                        modifier = Modifier
+                            .onGloballyPositioned {
+                                componentHeight = with(density) {
+                                    it.size.height.toDp()
+                                }
                             }
-                        }
-                )
+                    )
+                }
             }
 
         },
-        sheetPeekHeight = if (hasBookSelected) componentHeight.value.dp else 0.dp,
+        //sheetPeekHeight = 0.dp,
+        sheetPeekHeight = if (hasBookSelected) 64.dp else 0.dp,
     ) {
         Box(
             modifier = Modifier
@@ -177,6 +186,10 @@ fun BooksListScreen() {
                                                 BookItem(book) {
                                                     hasBookSelected = true
                                                     selectedBookIndex = index
+
+                                                    asyncScope.launch {
+                                                        bottomSheetState.bottomSheetState.expand()
+                                                    }
                                                 }
                                             }
 
@@ -184,6 +197,10 @@ fun BooksListScreen() {
                                                 BookItem(book) {
                                                     hasBookSelected = true
                                                     selectedBookIndex = index
+
+                                                    asyncScope.launch {
+                                                        bottomSheetState.bottomSheetState.expand()
+                                                    }
                                                 }
                                             }
                                         }
