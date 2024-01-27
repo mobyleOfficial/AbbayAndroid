@@ -126,20 +126,16 @@ fun BooksListScreen() {
         scaffoldState = bottomSheetState,
         sheetContent = {
             if (selectedBookIndex != -1) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    MiniPlayer(
-                        book = viewModel.booksList[selectedBookIndex],
-                        scaffoldState = bottomSheetState,
-                        modifier = Modifier
-                            .onGloballyPositioned {
-                                componentHeight = with(density) {
-                                    it.size.height.toDp()
-                                }
+                MiniPlayer(
+                    book = viewModel.booksList[selectedBookIndex],
+                    scaffoldState = bottomSheetState,
+                    modifier = Modifier
+                        .onGloballyPositioned {
+                            componentHeight = with(density) {
+                                it.size.height.toDp()
                             }
-                    )
-                }
+                        }
+                )
             }
 
         },

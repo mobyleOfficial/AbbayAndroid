@@ -1,0 +1,36 @@
+{
+  ConstraintSets: {
+    start: {
+      thumbnail: {
+        height: 64,
+        width: 64,
+        top: [
+          'parent',
+          'top'
+        ],
+        start: [
+          'parent',
+          'start'
+        ],
+      },
+    },
+    end: {
+      thumbnail: {
+        width: 'spread',
+        height: 'wrap',
+        top: [
+          'parent',
+          'top'
+        ],
+        start: [
+          'parent',
+          'start'
+        ],
+        end: [
+          'parent',
+          'end'
+        ]
+      },
+    }
+  }
+}
