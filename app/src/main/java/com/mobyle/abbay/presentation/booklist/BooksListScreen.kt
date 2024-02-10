@@ -1,6 +1,11 @@
 package com.mobyle.abbay.presentation.booklist
 
+import android.content.Context
+import android.database.Cursor
 import android.media.MediaMetadataRetriever
+import android.net.Uri
+import android.provider.MediaStore
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -11,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.BottomSheetScaffold
-import androidx.compose.material.BottomSheetValue
 import androidx.compose.material.Button
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Scaffold
@@ -29,17 +33,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.getString
+import androidx.core.database.getStringOrNull
 import androidx.documentfile.provider.DocumentFile
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.BookListSuccess
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.GenericError
@@ -53,6 +60,8 @@ import com.mobyle.abbay.presentation.common.mappers.toFolder
 import com.model.BookFile
 import com.model.BookFolder
 import kotlinx.coroutines.launch
+import java.io.File
+
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -69,6 +78,9 @@ fun BooksListScreen() {
     var componentHeight by remember { mutableStateOf(0.dp) }
     var hasBookSelected by remember { mutableStateOf(false) }
     var selectedBookIndex by remember { mutableIntStateOf(-1) }
+    val player = remember {
+        ExoPlayer.Builder(context).build()
+    }
 
     // Launchers
     val openFileSelector = rememberLauncherForActivityResult(
@@ -76,9 +88,17 @@ fun BooksListScreen() {
     ) { filesList ->
         if (filesList.isNotEmpty()) {
             viewModel.addBooksList(filesList.filter { it.path != null }.map { uri ->
+                var id: String? = null
                 val metadataRetriever = MediaMetadataRetriever()
                 metadataRetriever.setDataSource(context, uri)
-                metadataRetriever.toBook(uri.path!!)
+                context.musicCursor {
+                    val title = getTitle(it)
+                    if ((uri.path?.split("/")?.lastOrNull()) == title.orEmpty()) {
+                        id = getId(it)
+                    }
+                }
+
+                metadataRetriever.toBook(id.orEmpty())
             })
         }
     }
@@ -134,6 +154,7 @@ fun BooksListScreen() {
                         .background(MaterialTheme.colorScheme.surface),
                 ) {
                     MiniPlayer(
+                        player = player,
                         book = viewModel.booksList[selectedBookIndex],
                         scaffoldState = bottomSheetState,
                         modifier = Modifier
@@ -147,8 +168,7 @@ fun BooksListScreen() {
             }
 
         },
-        //sheetPeekHeight = 0.dp,
-        sheetPeekHeight = if (hasBookSelected) 64.dp else 0.dp,
+        sheetPeekHeight = if (hasBookSelected) 72.dp else 0.dp,
     ) {
         Box(
             modifier = Modifier
@@ -187,7 +207,10 @@ fun BooksListScreen() {
                                                     hasBookSelected = true
                                                     selectedBookIndex = index
 
+                                                    // player.playBook(book)
+
                                                     asyncScope.launch {
+                                                        bottomSheetState.bottomSheetState.expand()
                                                         bottomSheetState.bottomSheetState.expand()
                                                     }
                                                 }
@@ -198,7 +221,10 @@ fun BooksListScreen() {
                                                     hasBookSelected = true
                                                     selectedBookIndex = index
 
+                                                    player.playBook(book.path)
+
                                                     asyncScope.launch {
+                                                        bottomSheetState.bottomSheetState.expand()
                                                         bottomSheetState.bottomSheetState.expand()
                                                     }
                                                 }
@@ -250,3 +276,36 @@ fun BooksListScreen() {
         }
     }
 }
+
+@androidx.annotation.OptIn(UnstableApi::class)
+private fun ExoPlayer.playBook(id: String) {
+    clearMediaItems()
+    val uri = Uri.parse(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + File.separatorChar + id)
+    val mediaItem = MediaItem.Builder()
+        .setMediaId(id)
+        .setUri(uri)
+        .build()
+    addMediaItem(mediaItem)
+    prepare()
+    playWhenReady = true
+}
+
+inline fun Context.musicCursor(block: (Cursor) -> Unit) {
+    contentResolver.query(
+        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null,
+        MediaStore.Audio.Media.DEFAULT_SORT_ORDER
+    )
+        ?.use { cursor ->
+            while (cursor.moveToNext()) {
+                block.invoke(cursor)
+            }
+        }
+}
+private fun getTitle(cursor: Cursor): String? {
+    return cursor.getStringOrNull(cursor.getColumnIndex(MediaStore.Audio.AudioColumns.DISPLAY_NAME))
+}
+
+private fun getId(cursor: Cursor): String? {
+    return cursor.getStringOrNull(cursor.getColumnIndex(MediaStore.Audio.AudioColumns._ID))
+}
+

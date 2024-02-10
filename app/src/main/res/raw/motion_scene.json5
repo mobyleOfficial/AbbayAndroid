@@ -32,26 +32,44 @@
           'thumbnail',
           'bottom'
         ]
+      },
+      content: {
+        width: 0,
+        height: 0,
+        visibility: 'gone',
+        start: [
+          'thumbnail',
+          'start'
+        ],
+        end: [
+          'thumbnail',
+          'end'
+        ],
+        top: [
+          'thumbnail',
+          'top'
+        ],
       }
     },
     end: {
       thumbnail: {
-        width: 200,
-        height: 200,
+        width: 300,
+        height: 300,
         centerHorizontally: 'true',
         top: [
           'parent',
           'top',
+          32
         ],
         start: [
           'parent',
           'start',
-          100
+          32
         ],
         end: [
           'parent',
           'end',
-          100
+          32
         ],
       },
       miniPlayer: {
@@ -63,12 +81,34 @@
         ],
         top: [
           'thumbnail',
-          'top'
+          'top',
+          48
         ],
         bottom: [
           'thumbnail',
           'bottom'
         ],
+      },
+      content: {
+        width: 'spread',
+        height: 'spread',
+        visibility: 'visible',
+        start: [
+          'parent',
+          'start'
+        ],
+        end: [
+          'parent',
+          'end'
+        ],
+        top: [
+          'thumbnail',
+          'bottom'
+        ],
+        bottom: [
+          'parent',
+          'bottom'
+        ]
       }
     },
   }
