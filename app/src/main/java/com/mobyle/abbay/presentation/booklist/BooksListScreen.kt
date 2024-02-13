@@ -5,7 +5,6 @@ import android.database.Cursor
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -61,7 +60,6 @@ import com.model.BookFile
 import com.model.BookFolder
 import kotlinx.coroutines.launch
 import java.io.File
-
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable

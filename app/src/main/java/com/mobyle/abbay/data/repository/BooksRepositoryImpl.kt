@@ -3,7 +3,6 @@ package com.mobyle.abbay.data.repository
 import com.mobyle.abbay.data.datasource.local.books.BooksLocalDataSource
 import com.mobyle.abbay.data.mappers.toDomain
 import com.mobyle.abbay.data.mappers.toEntity
-import com.mobyle.abbay.data.model.BookFileEntity
 import com.model.Book
 import com.model.BookFile
 import com.model.BookFolder
