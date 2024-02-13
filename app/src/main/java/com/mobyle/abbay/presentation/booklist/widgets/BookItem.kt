@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.widgets.BookThumbnail
 import com.mobyle.abbay.presentation.common.widgets.SVGIcon
+import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
 import com.model.BookFolder
 
@@ -68,7 +69,7 @@ fun BookItem(book: Book, onClick: () -> Unit) {
                             modifier = Modifier.padding(start = 8.dp, end = 4.dp)
                         )
                         Text(
-                            "00:18:43/8:44:09",
+                            "00:00:00/${book.duration.toHHMMSS()}",
                             style = MaterialTheme.typography.titleSmall
                         )
                     }

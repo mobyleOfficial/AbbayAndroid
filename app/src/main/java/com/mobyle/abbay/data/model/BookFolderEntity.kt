@@ -11,5 +11,5 @@ data class BookFolderEntity(
     var bookFileList: String,
     var name: String,
     var thumbnail: ByteArray?,
-    var duration: Int
+    var duration: Long
 )

@@ -17,10 +17,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalContext
@@ -33,6 +37,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.utils.currentFraction
+import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
 import com.model.BookFolder
 import kotlin.math.max
@@ -55,6 +60,9 @@ fun MiniPlayer(
             .readBytes()
             .decodeToString()
     }
+    var playerIcon = remember {
+        mutableStateOf(Icons.Default.Pause)
+    }
 
     MotionLayout(
         motionScene = MotionScene(content = motionSceneContent),
@@ -76,14 +84,14 @@ fun MiniPlayer(
             ) {
                 Text(book.name)
                 Row {
-                    Text("00:18:43/8:44:09")
+                    Text("00:18:43/${book.duration.toHHMMSS()}")
                     if (book is BookFolder) {
                         Text("1/${book.bookFileList.size}")
                     }
                 }
             }
 
-            Text("Controles")
+            PlayerController(player = player, playerIcon = playerIcon)
         }
 
         Column(
@@ -100,9 +108,7 @@ fun MiniPlayer(
                 IconButton(onClick = {}) {
                     Icon(Icons.Default.FastRewind, contentDescription = "")
                 }
-                IconButton(onClick = {}) {
-                    Icon(Icons.Default.Pause, contentDescription = "")
-                }
+                PlayerController(player = player, playerIcon = playerIcon)
                 IconButton(onClick = {}) {
                     Icon(Icons.Default.FastForward, contentDescription = "")
                 }
@@ -131,5 +137,20 @@ fun MiniPlayer(
                 contentDescription = ""
             )
         }
+    }
+}
+
+@Composable
+private fun PlayerController(player: ExoPlayer, playerIcon: MutableState<ImageVector>) {
+    IconButton(onClick = {
+        playerIcon.value = if (player.isPlaying) {
+            player.pause()
+            Icons.Default.PlayArrow
+        } else {
+            player.playWhenReady = true
+            Icons.Default.Pause
+        }
+    }) {
+        Icon(playerIcon.value, contentDescription = "")
     }
 }

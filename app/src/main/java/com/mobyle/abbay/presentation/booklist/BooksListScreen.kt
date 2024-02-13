@@ -279,8 +279,10 @@ fun BooksListScreen() {
 
 @androidx.annotation.OptIn(UnstableApi::class)
 private fun ExoPlayer.playBook(id: String) {
+    pause()
     clearMediaItems()
-    val uri = Uri.parse(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + File.separatorChar + id)
+    val uri =
+        Uri.parse(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + File.separatorChar + id)
     val mediaItem = MediaItem.Builder()
         .setMediaId(id)
         .setUri(uri)
@@ -301,6 +303,7 @@ inline fun Context.musicCursor(block: (Cursor) -> Unit) {
             }
         }
 }
+
 private fun getTitle(cursor: Cursor): String? {
     return cursor.getStringOrNull(cursor.getColumnIndex(MediaStore.Audio.AudioColumns.DISPLAY_NAME))
 }

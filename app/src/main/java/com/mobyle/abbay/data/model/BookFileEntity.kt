@@ -10,5 +10,5 @@ class BookFileEntity(
     @PrimaryKey var path: String,
     var name: String,
     var thumbnail: ByteArray?,
-    var duration: Int
+    var duration: Long
 )

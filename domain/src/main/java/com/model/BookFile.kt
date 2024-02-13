@@ -4,5 +4,5 @@ class BookFile(
     val path: String,
     name: String,
     thumbnail: ByteArray?,
-    duration: Int
+    duration: Long
 ) : Book(name, thumbnail, duration)
