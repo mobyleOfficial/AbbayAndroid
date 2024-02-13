@@ -19,7 +19,8 @@ class BooksListViewModel @Inject constructor(
     BaseViewModel() {
     private val _uiState = MutableStateFlow<BooksListUiState>(BooksListUiState.Loading)
     val uiState: StateFlow<BooksListUiState> get() = _uiState
-    private val booksList = mutableListOf<Book>()
+    var booksList = mutableListOf<Book>()
+        private set
 
     init {
         getAudiobookList()
@@ -43,11 +44,11 @@ class BooksListViewModel @Inject constructor(
 
     private fun getAudiobookList() = launch {
         val booksList = getBooksList.invoke()
+        this.booksList.addAll(booksList)
 
         val state = if (booksList.isEmpty()) {
             BooksListUiState.NoBookSelected
         } else {
-            this.booksList.addAll(booksList)
             BooksListUiState.BookListSuccess(booksList)
         }
 

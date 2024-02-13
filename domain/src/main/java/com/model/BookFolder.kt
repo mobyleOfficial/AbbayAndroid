@@ -4,5 +4,5 @@ class BookFolder(
     val bookFileList: List<BookFile>,
     name: String,
     thumbnail: ByteArray?,
-    duration: Int
+    duration: Long
 ) : Book(name, thumbnail, duration)

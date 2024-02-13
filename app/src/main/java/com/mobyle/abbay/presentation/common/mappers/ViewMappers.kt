@@ -6,8 +6,8 @@ import com.model.BookFolder
 
 fun MediaMetadataRetriever.toBook(path: String): BookFile {
     val title = extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
-    val duration = extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION) ?: "0"
-    return BookFile(path, title ?: "", embeddedPicture, Integer.parseInt(duration))
+    val duration = extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION) ?: "0L"
+    return BookFile(path, title ?: "", embeddedPicture, duration.toLong())
 }
 
 fun List<BookFile>.toFolder(): BookFolder {

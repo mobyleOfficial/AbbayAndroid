@@ -1,0 +1,115 @@
+{
+  ConstraintSets: {
+    start: {
+      thumbnail: {
+        height: 64,
+        width: 64,
+        top: [
+          'parent',
+          'top'
+        ],
+        start: [
+          'parent',
+          'start'
+        ],
+      },
+      miniPlayer: {
+        width: 'spread',
+        height: 'spread',
+        start: [
+          'thumbnail',
+          'end'
+        ],
+        end: [
+          'parent',
+          'end'
+        ],
+        top: [
+          'thumbnail',
+          'top'
+        ],
+        bottom: [
+          'thumbnail',
+          'bottom'
+        ]
+      },
+      content: {
+        width: 0,
+        height: 0,
+        visibility: 'gone',
+        start: [
+          'thumbnail',
+          'start'
+        ],
+        end: [
+          'thumbnail',
+          'end'
+        ],
+        top: [
+          'thumbnail',
+          'top'
+        ],
+      }
+    },
+    end: {
+      thumbnail: {
+        width: 300,
+        height: 300,
+        centerHorizontally: 'true',
+        top: [
+          'parent',
+          'top',
+          32
+        ],
+        start: [
+          'parent',
+          'start',
+          32
+        ],
+        end: [
+          'parent',
+          'end',
+          32
+        ],
+      },
+      miniPlayer: {
+        height: 'spread',
+        visibility: 'gone',
+        start: [
+          'parent',
+          'start'
+        ],
+        top: [
+          'thumbnail',
+          'top',
+          48
+        ],
+        bottom: [
+          'thumbnail',
+          'bottom'
+        ],
+      },
+      content: {
+        width: 'spread',
+        height: 'spread',
+        visibility: 'visible',
+        start: [
+          'parent',
+          'start'
+        ],
+        end: [
+          'parent',
+          'end'
+        ],
+        top: [
+          'thumbnail',
+          'bottom'
+        ],
+        bottom: [
+          'parent',
+          'bottom'
+        ]
+      }
+    },
+  }
+}
