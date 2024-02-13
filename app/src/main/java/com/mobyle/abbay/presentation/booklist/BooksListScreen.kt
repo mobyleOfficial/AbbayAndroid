@@ -22,7 +22,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -35,14 +35,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.getString
 import androidx.core.database.getStringOrNull
 import androidx.documentfile.provider.DocumentFile
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
@@ -56,8 +53,10 @@ import com.mobyle.abbay.presentation.booklist.widgets.BookListTopBar
 import com.mobyle.abbay.presentation.booklist.widgets.MiniPlayer
 import com.mobyle.abbay.presentation.common.mappers.toBook
 import com.mobyle.abbay.presentation.common.mappers.toFolder
+import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.BookFile
 import com.model.BookFolder
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -122,25 +121,15 @@ fun BooksListScreen() {
         }
     }
 
-    // lifecycle
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(key1 = lifecycleOwner, effect = {
-        val eventObserver = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_CREATE -> {
-                }
+    // SideEffects
+    var currentProgress by remember { mutableStateOf("") }
 
-                else -> {
-                    // Do nothing in other states
-                }
-            }
+    LaunchedEffect(Unit) {
+        while (true) {
+            currentProgress = player.currentPosition.toHHMMSS()
+            delay(1000) // Update every second
         }
-        lifecycleOwner.lifecycle.addObserver(eventObserver)
-
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(eventObserver)
-        }
-    })
+    }
 
     BottomSheetScaffold(
         scaffoldState = bottomSheetState,
@@ -155,6 +144,7 @@ fun BooksListScreen() {
                         player = player,
                         book = viewModel.booksList[selectedBookIndex],
                         scaffoldState = bottomSheetState,
+                        progress = currentProgress,
                         modifier = Modifier
                             .onGloballyPositioned {
                                 componentHeight = with(density) {
@@ -201,7 +191,7 @@ fun BooksListScreen() {
                                     items(bookList.size) { index ->
                                         when (val book = bookList[index]) {
                                             is BookFolder -> {
-                                                BookItem(book) {
+                                                BookItem(book = book, progress = currentProgress) {
                                                     hasBookSelected = true
                                                     selectedBookIndex = index
 
@@ -215,11 +205,11 @@ fun BooksListScreen() {
                                             }
 
                                             is BookFile -> {
-                                                BookItem(book) {
+                                                BookItem(book = book, progress = currentProgress) {
                                                     hasBookSelected = true
                                                     selectedBookIndex = index
 
-                                                    player.playBook(book.path)
+                                                    player.playBook(book.id)
 
                                                     asyncScope.launch {
                                                         bottomSheetState.bottomSheetState.expand()

@@ -11,5 +11,6 @@ data class BookFolderEntity(
     var bookFileList: String,
     var name: String,
     var thumbnail: ByteArray?,
+    val progress: Long,
     var duration: Long
 )

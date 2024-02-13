@@ -1,8 +1,9 @@
 package com.model
 
 class BookFile(
-    val path: String,
+    val id: String,
     name: String,
     thumbnail: ByteArray?,
+    progress: Long,
     duration: Long
-) : Book(name, thumbnail, duration)
+) : Book(name, thumbnail, progress, duration)

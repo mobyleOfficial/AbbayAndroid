@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -21,7 +22,7 @@ import com.model.Book
 import com.model.BookFolder
 
 @Composable
-fun BookItem(book: Book, onClick: () -> Unit) {
+fun BookItem(book: Book, progress: String, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .padding(top = 8.dp)
@@ -69,7 +70,7 @@ fun BookItem(book: Book, onClick: () -> Unit) {
                             modifier = Modifier.padding(start = 8.dp, end = 4.dp)
                         )
                         Text(
-                            "00:00:00/${book.duration.toHHMMSS()}",
+                            "${progress}/${book.duration.toHHMMSS()}",
                             style = MaterialTheme.typography.titleSmall
                         )
                     }

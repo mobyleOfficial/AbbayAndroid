@@ -11,14 +11,15 @@ fun BookFolderEntity.toDomain(): BookFolder = BookFolder(
     Json.decodeFromString<List<String>>(this.bookFileList)
         .map {
             it.toEntity().toDomain()
-        }, name, thumbnail, duration
+        }, name, thumbnail, progress, duration
 )
 
 fun BookFileEntity.toDomain() = BookFile(
-    path,
-    name,
-    thumbnail,
-    duration
+    id = id,
+    name = name,
+    thumbnail = thumbnail,
+    progress = progress,
+    duration = duration
 )
 
 private fun String.toEntity() = Json.decodeFromString<BookFileEntity>(this)

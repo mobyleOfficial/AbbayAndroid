@@ -48,6 +48,7 @@ import kotlin.math.min
 fun MiniPlayer(
     player: ExoPlayer,
     book: Book,
+    progress: String,
     scaffoldState: BottomSheetScaffoldState,
     modifier: Modifier
 ) {
@@ -60,7 +61,7 @@ fun MiniPlayer(
             .readBytes()
             .decodeToString()
     }
-    var playerIcon = remember {
+    val playerIcon = remember {
         mutableStateOf(Icons.Default.Pause)
     }
 
@@ -84,7 +85,7 @@ fun MiniPlayer(
             ) {
                 Text(book.name)
                 Row {
-                    Text("00:18:43/${book.duration.toHHMMSS()}")
+                    Text("$progress/${book.duration.toHHMMSS()}")
                     if (book is BookFolder) {
                         Text("1/${book.bookFileList.size}")
                     }
