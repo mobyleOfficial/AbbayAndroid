@@ -25,7 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -54,6 +55,7 @@ import com.mobyle.abbay.presentation.booklist.widgets.MiniPlayer
 import com.mobyle.abbay.presentation.common.mappers.toBook
 import com.mobyle.abbay.presentation.common.mappers.toFolder
 import com.mobyle.abbay.presentation.utils.toHHMMSS
+import com.model.Book
 import com.model.BookFile
 import com.model.BookFolder
 import kotlinx.coroutines.delay
@@ -74,7 +76,7 @@ fun BooksListScreen() {
     val booksListState by viewModel.uiState.collectAsState()
     var componentHeight by remember { mutableStateOf(0.dp) }
     var hasBookSelected by remember { mutableStateOf(false) }
-    var selectedBookIndex by remember { mutableIntStateOf(-1) }
+    var selectedBook by remember { mutableStateOf<Book?>(null) }
     val player = remember {
         ExoPlayer.Builder(context).build()
     }
@@ -122,19 +124,19 @@ fun BooksListScreen() {
     }
 
     // SideEffects
-    var currentProgress by remember { mutableStateOf("") }
+    val currentProgress = remember { mutableLongStateOf(0L) }
 
     LaunchedEffect(Unit) {
         while (true) {
-            currentProgress = player.currentPosition.toHHMMSS()
-            delay(1000) // Update every second
+            currentProgress.longValue = player.currentPosition
+            delay(1000)
         }
     }
 
     BottomSheetScaffold(
         scaffoldState = bottomSheetState,
         sheetContent = {
-            if (selectedBookIndex != -1) {
+            selectedBook?.let {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -142,7 +144,7 @@ fun BooksListScreen() {
                 ) {
                     MiniPlayer(
                         player = player,
-                        book = viewModel.booksList[selectedBookIndex],
+                        book = it,
                         scaffoldState = bottomSheetState,
                         progress = currentProgress,
                         modifier = Modifier
@@ -154,7 +156,6 @@ fun BooksListScreen() {
                     )
                 }
             }
-
         },
         sheetPeekHeight = if (hasBookSelected) 72.dp else 0.dp,
     ) {
@@ -191,9 +192,13 @@ fun BooksListScreen() {
                                     items(bookList.size) { index ->
                                         when (val book = bookList[index]) {
                                             is BookFolder -> {
-                                                BookItem(book = book, progress = currentProgress) {
+                                                BookItem(
+                                                    book = book,
+                                                    isSelected = false,
+                                                    progress = currentProgress.longValue.toHHMMSS()
+                                                ) {
                                                     hasBookSelected = true
-                                                    selectedBookIndex = index
+                                                    selectedBook = book
 
                                                     // player.playBook(book)
 
@@ -205,9 +210,13 @@ fun BooksListScreen() {
                                             }
 
                                             is BookFile -> {
-                                                BookItem(book = book, progress = currentProgress) {
+                                                BookItem(
+                                                    book = book,
+                                                    isSelected = book.id == (selectedBook as? BookFile)?.id,
+                                                    progress = currentProgress.longValue.toHHMMSS()
+                                                ) {
                                                     hasBookSelected = true
-                                                    selectedBookIndex = index
+                                                    selectedBook = book
 
                                                     player.playBook(book.id)
 

@@ -20,6 +20,9 @@ val BottomSheetScaffoldState.currentFraction: Float
     }
 
 fun Long.toHHMMSS(): String {
+    if (this == 0L) {
+        return "00:00:00"
+    }
     val hours = this / (1000 * 60 * 60)
     val minutes = (this % (1000 * 60 * 60)) / (1000 * 60)
     val seconds = ((this % (1000 * 60 * 60)) % (1000 * 60)) / 1000
