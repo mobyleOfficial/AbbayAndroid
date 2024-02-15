@@ -71,6 +71,7 @@ fun MiniPlayer(
     book: Book,
     progress: MutableLongState,
     scaffoldState: BottomSheetScaffoldState,
+    playerIcon: MutableState<ImageVector>,
     modifier: Modifier
 ) {
     val swipeProgress = scaffoldState.currentFraction
@@ -82,9 +83,7 @@ fun MiniPlayer(
             .readBytes()
             .decodeToString()
     }
-    val playerIcon = remember {
-        mutableStateOf(Icons.Default.Pause)
-    }
+
 
     var slideValue by remember { mutableFloatStateOf(0f) }
 
@@ -92,6 +91,7 @@ fun MiniPlayer(
         slideValue = percentage
         progress.longValue = (player.duration * percentage).toLong()
     }
+
 
     MotionLayout(
         motionScene = MotionScene(content = motionSceneContent),

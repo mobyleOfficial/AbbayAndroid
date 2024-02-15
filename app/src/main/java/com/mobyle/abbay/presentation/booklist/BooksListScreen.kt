@@ -19,6 +19,9 @@ import androidx.compose.material.Button
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -79,6 +82,9 @@ fun BooksListScreen() {
     var selectedBook by remember { mutableStateOf<Book?>(null) }
     val player = remember {
         ExoPlayer.Builder(context).build()
+    }
+    val playerIcon = remember {
+        mutableStateOf(Icons.Default.Pause)
     }
 
     // Launchers
@@ -147,6 +153,7 @@ fun BooksListScreen() {
                         book = it,
                         scaffoldState = bottomSheetState,
                         progress = currentProgress,
+                        playerIcon = playerIcon,
                         modifier = Modifier
                             .onGloballyPositioned {
                                 componentHeight = with(density) {
@@ -216,6 +223,7 @@ fun BooksListScreen() {
                                                     progress = currentProgress.longValue.toHHMMSS()
                                                 ) {
                                                     if (selectedBook?.id != book.id) {
+                                                        playerIcon.value = Icons.Default.Pause
                                                         currentProgress.longValue = book.progress
                                                         selectedBook?.let {
                                                             viewModel.updateBookProgress(
