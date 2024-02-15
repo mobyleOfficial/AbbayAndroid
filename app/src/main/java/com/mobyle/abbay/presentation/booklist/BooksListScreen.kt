@@ -215,10 +215,20 @@ fun BooksListScreen() {
                                                     isSelected = book.id == (selectedBook as? BookFile)?.id,
                                                     progress = currentProgress.longValue.toHHMMSS()
                                                 ) {
-                                                    hasBookSelected = true
-                                                    selectedBook = book
+                                                    if (selectedBook?.id != book.id) {
+                                                        currentProgress.longValue = book.progress
+                                                        selectedBook?.let {
+                                                            viewModel.updateBookProgress(
+                                                                it.id,
+                                                                player.currentPosition
+                                                            )
+                                                        }
 
-                                                    player.playBook(book.id)
+                                                        hasBookSelected = true
+
+                                                        selectedBook = book
+                                                        player.playBook(book.id, book.progress)
+                                                    }
 
                                                     asyncScope.launch {
                                                         bottomSheetState.bottomSheetState.expand()
@@ -275,7 +285,7 @@ fun BooksListScreen() {
 }
 
 @androidx.annotation.OptIn(UnstableApi::class)
-private fun ExoPlayer.playBook(id: String) {
+private fun ExoPlayer.playBook(id: String, progress: Long) {
     pause()
     clearMediaItems()
     val uri =
@@ -285,6 +295,7 @@ private fun ExoPlayer.playBook(id: String) {
         .setUri(uri)
         .build()
     addMediaItem(mediaItem)
+    seekTo(progress)
     prepare()
     playWhenReady = true
 }

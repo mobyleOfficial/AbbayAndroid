@@ -8,6 +8,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
 fun BookFolderEntity.toDomain(): BookFolder = BookFolder(
+    "",
     Json.decodeFromString<List<String>>(this.bookFileList)
         .map {
             it.toEntity().toDomain()

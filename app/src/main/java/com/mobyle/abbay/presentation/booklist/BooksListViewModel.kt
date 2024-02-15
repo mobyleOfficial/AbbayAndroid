@@ -9,6 +9,7 @@ import com.usecase.GetBooksList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 @HiltViewModel
@@ -40,6 +41,22 @@ class BooksListViewModel @Inject constructor(
         val newBookList = mutableListOf<Book>()
         newBookList.addAll(this.booksList)
         _uiState.emit(BooksListUiState.BookListSuccess(newBookList))
+    }
+
+    fun updateBookProgress(id: String, progress: Long) {
+        booksList.firstOrNull { it.id == id }?.let {
+
+            when (it) {
+                is BookFile -> {
+                    booksList[booksList.indexOf(it)] = it.copy(progress = progress)
+                }
+
+                is BookFolder -> {}
+                else -> {}
+            }
+        }
+
+        _uiState.update { (BooksListUiState.BookListSuccess(booksList)) }
     }
 
     private fun getAudiobookList() = launch {

@@ -92,7 +92,7 @@ fun MiniPlayer(
         slideValue = percentage
         progress.longValue = (player.duration * percentage).toLong()
     }
-    
+
     MotionLayout(
         motionScene = MotionScene(content = motionSceneContent),
         progress = motionProgress,

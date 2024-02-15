@@ -19,5 +19,5 @@ fun MediaMetadataRetriever.toBook(id: String): BookFile {
 
 fun List<BookFile>.toFolder(): BookFolder {
     val firstBook = first()
-    return BookFolder(this, firstBook.name, firstBook.thumbnail, 0L, this.sumOf { it.duration })
+    return BookFolder("", this, firstBook.name, firstBook.thumbnail, 0L, this.sumOf { it.duration })
 }
