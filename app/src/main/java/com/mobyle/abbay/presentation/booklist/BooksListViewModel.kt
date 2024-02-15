@@ -1,10 +1,11 @@
 package com.mobyle.abbay.presentation.booklist
 
+import android.util.Log
 import com.mobyle.abbay.infra.common.BaseViewModel
 import com.model.Book
 import com.model.BookFile
 import com.model.BookFolder
-import com.usecase.AddBooks
+import com.usecase.UpsertBookList
 import com.usecase.GetBooksList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +16,7 @@ import javax.inject.Inject
 @HiltViewModel
 class BooksListViewModel @Inject constructor(
     private val getBooksList: GetBooksList,
-    private val addBooks: AddBooks
+    private val upsertBookList: UpsertBookList
 ) :
     BaseViewModel() {
     private val _uiState = MutableStateFlow<BooksListUiState>(BooksListUiState.Loading)
@@ -27,9 +28,9 @@ class BooksListViewModel @Inject constructor(
         getAudiobookList()
     }
 
-    fun addBooksList(booksList: List<BookFile>) = launch {
+    fun updateBookList(booksList: List<BookFile>) = launch {
         this.booksList.addAll(booksList)
-        addBooks.invoke(booksList)
+        upsertBookList.invoke(booksList)
         val newBookList = mutableListOf<Book>()
         newBookList.addAll(this.booksList)
         _uiState.emit(BooksListUiState.BookListSuccess(newBookList))
@@ -37,7 +38,7 @@ class BooksListViewModel @Inject constructor(
 
     fun addBookFolder(bookFolder: BookFolder) = launch {
         this.booksList.add(bookFolder)
-        addBooks.invoke(booksList)
+        upsertBookList.invoke(booksList)
         val newBookList = mutableListOf<Book>()
         newBookList.addAll(this.booksList)
         _uiState.emit(BooksListUiState.BookListSuccess(newBookList))
@@ -57,6 +58,11 @@ class BooksListViewModel @Inject constructor(
         }
 
         _uiState.update { (BooksListUiState.BookListSuccess(booksList)) }
+    }
+
+    fun updateBookList(id: String, progress: Long) = launch {
+        updateBookProgress(id, progress)
+        upsertBookList.invoke(booksList)
     }
 
     private fun getAudiobookList() = launch {

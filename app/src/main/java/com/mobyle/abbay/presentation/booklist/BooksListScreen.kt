@@ -21,14 +21,12 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +42,8 @@ import androidx.core.content.ContextCompat.getString
 import androidx.core.database.getStringOrNull
 import androidx.documentfile.provider.DocumentFile
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
@@ -92,7 +92,7 @@ fun BooksListScreen() {
         contract = ActivityResultContracts.OpenMultipleDocuments()
     ) { filesList ->
         if (filesList.isNotEmpty()) {
-            viewModel.addBooksList(filesList.filter { it.path != null }.map { uri ->
+            viewModel.updateBookList(filesList.filter { it.path != null }.map { uri ->
                 var id: String? = null
                 val metadataRetriever = MediaMetadataRetriever()
                 metadataRetriever.setDataSource(context, uri)
@@ -136,6 +136,12 @@ fun BooksListScreen() {
         while (true) {
             currentProgress.longValue = player.currentPosition
             delay(1000)
+        }
+    }
+
+    LifecycleEventEffect(event = Lifecycle.Event.ON_PAUSE) {
+        selectedBook?.let {
+            viewModel.updateBookList(it.id, player.currentPosition)
         }
     }
 
