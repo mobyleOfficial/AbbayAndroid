@@ -47,6 +47,8 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.MediaController
+import com.google.common.util.concurrent.MoreExecutors
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.BookListSuccess
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.GenericError
@@ -67,7 +69,7 @@ import java.io.File
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun BooksListScreen() {
+fun BooksListScreen(player: MediaController) {
     val viewModel: BooksListViewModel = hiltViewModel()
     val context = LocalContext.current
     val density = LocalDensity.current
@@ -80,9 +82,9 @@ fun BooksListScreen() {
     var componentHeight by remember { mutableStateOf(0.dp) }
     var hasBookSelected by remember { mutableStateOf(false) }
     var selectedBook by remember { mutableStateOf<Book?>(null) }
-    val player = remember {
-        ExoPlayer.Builder(context).build()
-    }
+//    val player = remember {
+//        ExoPlayer.Builder(context).build()
+//    }
     val playerIcon = remember {
         mutableStateOf(Icons.Default.Pause)
     }
@@ -234,14 +236,17 @@ fun BooksListScreen() {
                                                         selectedBook?.let {
                                                             viewModel.updateBookProgress(
                                                                 it.id,
-                                                                player.currentPosition
+                                                                currentProgress.longValue
                                                             )
                                                         }
 
                                                         hasBookSelected = true
 
                                                         selectedBook = book
-                                                        player.playBook(book.id, book.progress)
+                                                        player.playBook(
+                                                            book.id,
+                                                            currentProgress.longValue
+                                                        )
                                                     }
 
                                                     asyncScope.launch {
@@ -299,7 +304,7 @@ fun BooksListScreen() {
 }
 
 @androidx.annotation.OptIn(UnstableApi::class)
-private fun ExoPlayer.playBook(id: String, progress: Long) {
+private fun MediaController.playBook(id: String, progress: Long) {
     pause()
     clearMediaItems()
     val uri =

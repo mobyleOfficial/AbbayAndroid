@@ -51,6 +51,7 @@ import androidx.constraintlayout.compose.ExperimentalMotionApi
 import androidx.constraintlayout.compose.MotionLayout
 import androidx.constraintlayout.compose.MotionScene
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.MediaController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.mobyle.abbay.R
@@ -67,7 +68,7 @@ import kotlin.math.min
 )
 @Composable
 fun MiniPlayer(
-    player: ExoPlayer,
+    player: MediaController,
     book: Book,
     progress: MutableLongState,
     scaffoldState: BottomSheetScaffoldState,
@@ -231,7 +232,7 @@ fun MiniPlayer(
 }
 
 @Composable
-private fun PlayerController(player: ExoPlayer, playerIcon: MutableState<ImageVector>) {
+private fun PlayerController(player: MediaController, playerIcon: MutableState<ImageVector>) {
     IconButton(onClick = {
         playerIcon.value = if (player.isPlaying) {
             player.pause()
