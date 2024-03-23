@@ -24,6 +24,8 @@ class BooksListViewModel @Inject constructor(
     var booksList = mutableListOf<Book>()
         private set
 
+    val isPlaying = MutableStateFlow(false)
+
     init {
         getAudiobookList()
     }
@@ -57,7 +59,7 @@ class BooksListViewModel @Inject constructor(
             }
         }
 
-        _uiState.update { (BooksListUiState.BookListSuccess(booksList)) }
+        _uiState.value = BooksListUiState.BookListSuccess(booksList.toList())
     }
 
     fun updateBookList(id: String, progress: Long) = launch {

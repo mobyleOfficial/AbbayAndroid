@@ -1,5 +1,7 @@
 package com.mobyle.abbay.presentation.booklist.widgets
 
+import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,6 +62,8 @@ import com.mobyle.abbay.presentation.utils.currentFraction
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
 import com.model.BookFolder
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 
@@ -70,6 +75,7 @@ import kotlin.math.min
 fun MiniPlayer(
     player: MediaController,
     book: Book,
+    onPlayingChange: (Boolean) -> Unit,
     progress: MutableLongState,
     scaffoldState: BottomSheetScaffoldState,
     playerIcon: MutableState<ImageVector>,
@@ -85,14 +91,12 @@ fun MiniPlayer(
             .decodeToString()
     }
 
-
     var slideValue by remember { mutableFloatStateOf(0f) }
 
     fun onSliderValueChange(percentage: Float) {
         slideValue = percentage
-        progress.longValue = (player.duration * percentage).toLong()
+        progress.longValue = (book.duration * percentage).toLong()
     }
-
 
     MotionLayout(
         motionScene = MotionScene(content = motionSceneContent),
@@ -132,7 +136,12 @@ fun MiniPlayer(
                 }
             }
 
-            PlayerController(player = player, playerIcon = playerIcon)
+            PlayerController(
+                player = player,
+                onPlayingChange = onPlayingChange,
+                position = progress.longValue,
+                playerIcon = playerIcon
+            )
         }
 
         Column(
@@ -161,12 +170,12 @@ fun MiniPlayer(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Slider(
-                    value = progress.longValue.toFloat() / player.duration,
+                    value = progress.longValue.toFloat() / book.duration,
                     onValueChange = { percentage ->
                         onSliderValueChange(percentage)
                     },
                     onValueChangeFinished = {
-                        val newPosition = (player.duration * slideValue).toLong()
+                        val newPosition = (book.duration * slideValue).toLong()
                         player.seekTo(newPosition)
                         progress.longValue = newPosition
                     },
@@ -200,7 +209,12 @@ fun MiniPlayer(
                 IconButton(onClick = {}) {
                     Icon(Icons.Default.FastRewind, contentDescription = "", tint = Color.White)
                 }
-                PlayerController(player = player, playerIcon = playerIcon)
+                PlayerController(
+                    player = player,
+                    onPlayingChange = onPlayingChange,
+                    position = progress.longValue,
+                    playerIcon = playerIcon
+                )
                 IconButton(onClick = {}) {
                     Icon(Icons.Default.FastForward, contentDescription = "", tint = Color.White)
                 }
@@ -232,12 +246,20 @@ fun MiniPlayer(
 }
 
 @Composable
-private fun PlayerController(player: MediaController, playerIcon: MutableState<ImageVector>) {
+private fun PlayerController(
+    player: MediaController,
+    position: Long,
+    playerIcon: MutableState<ImageVector>,
+    onPlayingChange: (Boolean) -> Unit,
+) {
     IconButton(onClick = {
         playerIcon.value = if (player.isPlaying) {
+            onPlayingChange(false)
             player.pause()
             Icons.Default.PlayArrow
         } else {
+            player.seekTo(position)
+            onPlayingChange(true)
             player.playWhenReady = true
             Icons.Default.Pause
         }

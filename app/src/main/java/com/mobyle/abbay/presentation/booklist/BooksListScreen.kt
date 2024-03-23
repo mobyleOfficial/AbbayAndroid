@@ -1,10 +1,13 @@
 package com.mobyle.abbay.presentation.booklist
 
+import android.app.Activity
 import android.content.Context
 import android.database.Cursor
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
+import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -31,12 +34,14 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.getString
 import androidx.core.database.getStringOrNull
@@ -46,9 +51,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaController
-import com.google.common.util.concurrent.MoreExecutors
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.BookListSuccess
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.GenericError
@@ -59,13 +62,18 @@ import com.mobyle.abbay.presentation.booklist.widgets.BookListTopBar
 import com.mobyle.abbay.presentation.booklist.widgets.MiniPlayer
 import com.mobyle.abbay.presentation.common.mappers.toBook
 import com.mobyle.abbay.presentation.common.mappers.toFolder
+import com.mobyle.abbay.presentation.utils.LaunchedEffectAndCollect
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
 import com.model.BookFile
 import com.model.BookFolder
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.io.File
+
+
+private const val LAST_SELECTED_BOOK_ID = "LAST_SELECTED_BOOK_ID"
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -82,12 +90,12 @@ fun BooksListScreen(player: MediaController) {
     var componentHeight by remember { mutableStateOf(0.dp) }
     var hasBookSelected by remember { mutableStateOf(false) }
     var selectedBook by remember { mutableStateOf<Book?>(null) }
-//    val player = remember {
-//        ExoPlayer.Builder(context).build()
-//    }
+    val activity = LocalContext.current as Activity
     val playerIcon = remember {
         mutableStateOf(Icons.Default.Pause)
     }
+    val isPlaying = viewModel.isPlaying.collectAsState()
+    val currentProgress = remember { mutableLongStateOf(0L) }
 
     // Launchers
     val openFileSelector = rememberLauncherForActivityResult(
@@ -132,10 +140,23 @@ fun BooksListScreen(player: MediaController) {
     }
 
     // SideEffects
-    val currentProgress = remember { mutableLongStateOf(0L) }
+    BackHandler {
+        asyncScope.launch {
+            if (bottomSheetState.bottomSheetState.isCollapsed) {
+                activity.finishAffinity()
+            } else {
+                bottomSheetState.bottomSheetState.collapse()
+            }
+
+        }
+    }
 
     LaunchedEffect(Unit) {
-        while (true) {
+        viewModel.isPlaying.value = player.isPlaying
+    }
+
+    LaunchedEffectAndCollect(viewModel.isPlaying) {
+        while (it == true) {
             currentProgress.longValue = player.currentPosition
             delay(1000)
         }
@@ -162,6 +183,18 @@ fun BooksListScreen(player: MediaController) {
                         scaffoldState = bottomSheetState,
                         progress = currentProgress,
                         playerIcon = playerIcon,
+                        onPlayingChange = { isPlaying ->
+                            viewModel.isPlaying.value = isPlaying
+
+                            if (!isPlaying) {
+                                selectedBook?.let {
+                                    viewModel.updateBookProgress(
+                                        it.id,
+                                        currentProgress.longValue
+                                    )
+                                }
+                            }
+                        },
                         modifier = Modifier
                             .onGloballyPositioned {
                                 componentHeight = with(density) {
@@ -198,6 +231,27 @@ fun BooksListScreen(player: MediaController) {
                         is BookListSuccess -> {
                             val bookList = state.audiobookList
 
+                            if (selectedBook == null) {
+                                activity.getPreferences(Context.MODE_PRIVATE)?.let {
+                                    val id =
+                                        it.getString(LAST_SELECTED_BOOK_ID, "").orEmpty()
+
+                                    bookList.firstOrNull { it.id == id }?.let { book ->
+                                        currentProgress.longValue = book.progress
+                                        selectedBook = book
+                                        hasBookSelected = true
+
+                                        if (!player.isPlaying) {
+                                            player.prepareBook(
+                                                id,
+                                                book.progress,
+                                                viewModel.isPlaying
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
                             Column {
                                 LazyColumn(
                                     modifier = Modifier
@@ -207,32 +261,24 @@ fun BooksListScreen(player: MediaController) {
                                     items(bookList.size) { index ->
                                         when (val book = bookList[index]) {
                                             is BookFolder -> {
-                                                BookItem(
-                                                    book = book,
-                                                    isSelected = false,
-                                                    progress = currentProgress.longValue.toHHMMSS()
-                                                ) {
-                                                    hasBookSelected = true
-                                                    selectedBook = book
-
-                                                    // player.playBook(book)
-
-                                                    asyncScope.launch {
-                                                        bottomSheetState.bottomSheetState.expand()
-                                                        bottomSheetState.bottomSheetState.expand()
-                                                    }
-                                                }
+                                                //TBD
                                             }
 
                                             is BookFile -> {
                                                 BookItem(
                                                     book = book,
                                                     isSelected = book.id == (selectedBook as? BookFile)?.id,
-                                                    progress = currentProgress.longValue.toHHMMSS()
+                                                    progress = if (book.id == (selectedBook as? BookFile)?.id) {
+                                                        if (isPlaying.value) {
+                                                            currentProgress.longValue.toHHMMSS()
+                                                        } else {
+                                                            book.progress.toHHMMSS()
+                                                        }
+                                                    } else {
+                                                        book.progress.toHHMMSS()
+                                                    }
                                                 ) {
                                                     if (selectedBook?.id != book.id) {
-                                                        playerIcon.value = Icons.Default.Pause
-                                                        currentProgress.longValue = book.progress
                                                         selectedBook?.let {
                                                             viewModel.updateBookProgress(
                                                                 it.id,
@@ -240,12 +286,27 @@ fun BooksListScreen(player: MediaController) {
                                                             )
                                                         }
 
+                                                        playerIcon.value = Icons.Default.Pause
+                                                        currentProgress.longValue = book.progress
+
+                                                        activity.getPreferences(Context.MODE_PRIVATE)
+                                                            ?.let { sharedPref ->
+                                                                with(sharedPref.edit()) {
+                                                                    putString(
+                                                                        LAST_SELECTED_BOOK_ID,
+                                                                        book.id
+                                                                    )
+                                                                    apply()
+                                                                }
+                                                            }
+
                                                         hasBookSelected = true
 
                                                         selectedBook = book
                                                         player.playBook(
                                                             book.id,
-                                                            currentProgress.longValue
+                                                            book.progress,
+                                                            viewModel.isPlaying
                                                         )
                                                     }
 
@@ -304,7 +365,23 @@ fun BooksListScreen(player: MediaController) {
 }
 
 @androidx.annotation.OptIn(UnstableApi::class)
-private fun MediaController.playBook(id: String, progress: Long) {
+private fun MediaController.playBook(
+    id: String,
+    progress: Long,
+    isPlaying: MutableStateFlow<Boolean>
+) {
+    prepareBook(id, progress, isPlaying)
+    isPlaying.value = true
+    playWhenReady = true
+}
+
+@androidx.annotation.OptIn(UnstableApi::class)
+private fun MediaController.prepareBook(
+    id: String,
+    progress: Long,
+    isPlaying: MutableStateFlow<Boolean>,
+) {
+    isPlaying.value = false
     pause()
     clearMediaItems()
     val uri =
@@ -316,7 +393,6 @@ private fun MediaController.playBook(id: String, progress: Long) {
     addMediaItem(mediaItem)
     seekTo(progress)
     prepare()
-    playWhenReady = true
 }
 
 inline fun Context.musicCursor(block: (Cursor) -> Unit) {
