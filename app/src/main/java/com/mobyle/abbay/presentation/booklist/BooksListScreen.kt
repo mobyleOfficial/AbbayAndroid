@@ -24,6 +24,7 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -87,15 +88,22 @@ fun BooksListScreen(player: MediaController) {
     // States
     val bottomSheetState = rememberBottomSheetScaffoldState()
     val booksListState by viewModel.uiState.collectAsState()
+    val selectedBook by viewModel.selectedBook.collectAsState()
+    val currentProgress by viewModel.currentProgress.collectAsState()
+    val isPlaying by viewModel.isPlaying.collectAsState()
+    val hasBookSelected by viewModel.hasBookSelected.collectAsState(false)
     var componentHeight by remember { mutableStateOf(0.dp) }
-    var hasBookSelected by remember { mutableStateOf(false) }
-    var selectedBook by remember { mutableStateOf<Book?>(null) }
     val activity = LocalContext.current as Activity
+
     val playerIcon = remember {
-        mutableStateOf(Icons.Default.Pause)
+        val icon = if (player.isPlaying) {
+            Icons.Default.Pause
+        } else {
+            Icons.Default.PlayArrow
+        }
+
+        mutableStateOf(icon)
     }
-    val isPlaying = viewModel.isPlaying.collectAsState()
-    val currentProgress = remember { mutableLongStateOf(0L) }
 
     // Launchers
     val openFileSelector = rememberLauncherForActivityResult(
@@ -157,7 +165,7 @@ fun BooksListScreen(player: MediaController) {
 
     LaunchedEffectAndCollect(viewModel.isPlaying) {
         while (it == true) {
-            currentProgress.longValue = player.currentPosition
+            viewModel.setCurrentProgress(player.currentPosition)
             delay(1000)
         }
     }
@@ -190,11 +198,12 @@ fun BooksListScreen(player: MediaController) {
                                 selectedBook?.let {
                                     viewModel.updateBookProgress(
                                         it.id,
-                                        currentProgress.longValue
+                                        currentProgress
                                     )
                                 }
                             }
                         },
+                        updateProgress = viewModel::setCurrentProgress,
                         modifier = Modifier
                             .onGloballyPositioned {
                                 componentHeight = with(density) {
@@ -217,6 +226,7 @@ fun BooksListScreen(player: MediaController) {
                     openFolderSelector = {
                         openFolderSelector.launch(null)
                     },
+                    openSettings = {},
                     openFileSelector = {
                         openFileSelector.launch(fileFilterList)
                     }
@@ -236,10 +246,11 @@ fun BooksListScreen(player: MediaController) {
                                     val id =
                                         it.getString(LAST_SELECTED_BOOK_ID, "").orEmpty()
 
-                                    bookList.firstOrNull { it.id == id }?.let { book ->
-                                        currentProgress.longValue = book.progress
-                                        selectedBook = book
-                                        hasBookSelected = true
+                                    bookList.firstOrNull { book ->
+                                        book.id == id
+                                    }?.let { book ->
+                                        viewModel.setCurrentProgress(book.progress)
+                                        viewModel.selectBook(book)
 
                                         if (!player.isPlaying) {
                                             player.prepareBook(
@@ -269,8 +280,8 @@ fun BooksListScreen(player: MediaController) {
                                                     book = book,
                                                     isSelected = book.id == (selectedBook as? BookFile)?.id,
                                                     progress = if (book.id == (selectedBook as? BookFile)?.id) {
-                                                        if (isPlaying.value) {
-                                                            currentProgress.longValue.toHHMMSS()
+                                                        if (isPlaying) {
+                                                            currentProgress.toHHMMSS()
                                                         } else {
                                                             book.progress.toHHMMSS()
                                                         }
@@ -282,13 +293,11 @@ fun BooksListScreen(player: MediaController) {
                                                         selectedBook?.let {
                                                             viewModel.updateBookProgress(
                                                                 it.id,
-                                                                currentProgress.longValue
+                                                                currentProgress
                                                             )
                                                         }
 
-                                                        playerIcon.value = Icons.Default.Pause
-                                                        currentProgress.longValue = book.progress
-
+                                                        viewModel.setCurrentProgress(book.progress)
                                                         activity.getPreferences(Context.MODE_PRIVATE)
                                                             ?.let { sharedPref ->
                                                                 with(sharedPref.edit()) {
@@ -300,9 +309,7 @@ fun BooksListScreen(player: MediaController) {
                                                                 }
                                                             }
 
-                                                        hasBookSelected = true
-
-                                                        selectedBook = book
+                                                        viewModel.selectBook(book)
                                                         player.playBook(
                                                             book.id,
                                                             book.progress,

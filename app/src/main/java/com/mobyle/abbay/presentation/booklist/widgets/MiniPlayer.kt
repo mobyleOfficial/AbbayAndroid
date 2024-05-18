@@ -76,9 +76,10 @@ fun MiniPlayer(
     player: MediaController,
     book: Book,
     onPlayingChange: (Boolean) -> Unit,
-    progress: MutableLongState,
+    progress: Long,
     scaffoldState: BottomSheetScaffoldState,
     playerIcon: MutableState<ImageVector>,
+    updateProgress: (Long) -> Unit,
     modifier: Modifier
 ) {
     val swipeProgress = scaffoldState.currentFraction
@@ -95,7 +96,7 @@ fun MiniPlayer(
 
     fun onSliderValueChange(percentage: Float) {
         slideValue = percentage
-        progress.longValue = (book.duration * percentage).toLong()
+        updateProgress((book.duration * percentage).toLong())
     }
 
     MotionLayout(
@@ -124,7 +125,7 @@ fun MiniPlayer(
                 )
                 Row {
                     Text(
-                        "${progress.longValue.toHHMMSS()}/${book.duration.toHHMMSS()}",
+                        "${progress.toHHMMSS()}/${book.duration.toHHMMSS()}",
                         style = MaterialTheme.typography.titleSmall,
                     )
                     if (book is BookFolder) {
@@ -139,7 +140,7 @@ fun MiniPlayer(
             PlayerController(
                 player = player,
                 onPlayingChange = onPlayingChange,
-                position = progress.longValue,
+                position = progress,
                 playerIcon = playerIcon
             )
         }
@@ -170,14 +171,14 @@ fun MiniPlayer(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Slider(
-                    value = progress.longValue.toFloat() / book.duration,
+                    value = progress.toFloat() / book.duration,
                     onValueChange = { percentage ->
                         onSliderValueChange(percentage)
                     },
                     onValueChangeFinished = {
                         val newPosition = (book.duration * slideValue).toLong()
                         player.seekTo(newPosition)
-                        progress.longValue = newPosition
+                        updateProgress(newPosition)
                     },
                     colors = SliderDefaults.colors(
                         thumbColor = MaterialTheme.colorScheme.tertiary,
@@ -191,7 +192,7 @@ fun MiniPlayer(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        progress.longValue.toHHMMSS(),
+                        progress.toHHMMSS(),
                         style = MaterialTheme.typography.titleSmall
                     )
                     Text(
@@ -212,7 +213,7 @@ fun MiniPlayer(
                 PlayerController(
                     player = player,
                     onPlayingChange = onPlayingChange,
-                    position = progress.longValue,
+                    position = progress,
                     playerIcon = playerIcon
                 )
                 IconButton(onClick = {}) {

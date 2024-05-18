@@ -10,6 +10,7 @@ import com.usecase.GetBooksList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
@@ -25,6 +26,14 @@ class BooksListViewModel @Inject constructor(
         private set
 
     val isPlaying = MutableStateFlow(false)
+
+    private val _selectedBook = MutableStateFlow<Book?>(null)
+    val selectedBook: StateFlow<Book?> get() = _selectedBook
+
+    private val _currentProgress = MutableStateFlow(0L)
+    val currentProgress: StateFlow<Long> get() = _currentProgress
+
+    var hasBookSelected = _selectedBook.map { it != null }
 
     init {
         getAudiobookList()
@@ -67,6 +76,14 @@ class BooksListViewModel @Inject constructor(
         upsertBookList.invoke(booksList)
     }
 
+    fun selectBook(book: Book?) {
+        _selectedBook.tryEmit(book)
+    }
+
+    fun setCurrentProgress(progress: Long) {
+        _currentProgress.tryEmit(progress)
+    }
+
     private fun getAudiobookList() = launch {
         val booksList = getBooksList.invoke()
         this.booksList.addAll(booksList)
@@ -84,8 +101,8 @@ class BooksListViewModel @Inject constructor(
         data class BookListSuccess(val audiobookList: List<Book>) :
             BooksListUiState()
 
-        object NoBookSelected : BooksListUiState()
-        object GenericError : BooksListUiState()
-        object Loading : BooksListUiState()
+        data object NoBookSelected : BooksListUiState()
+        data object GenericError : BooksListUiState()
+        data object Loading : BooksListUiState()
     }
 }
