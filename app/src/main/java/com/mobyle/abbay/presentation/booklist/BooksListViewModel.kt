@@ -1,20 +1,22 @@
 package com.mobyle.abbay.presentation.booklist
 
+import android.util.Log
 import com.mobyle.abbay.infra.common.BaseViewModel
 import com.model.Book
 import com.model.BookFile
 import com.model.BookFolder
-import com.usecase.AddBooks
+import com.usecase.UpsertBookList
 import com.usecase.GetBooksList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 @HiltViewModel
 class BooksListViewModel @Inject constructor(
     private val getBooksList: GetBooksList,
-    private val addBooks: AddBooks
+    private val upsertBookList: UpsertBookList
 ) :
     BaseViewModel() {
     private val _uiState = MutableStateFlow<BooksListUiState>(BooksListUiState.Loading)
@@ -22,13 +24,15 @@ class BooksListViewModel @Inject constructor(
     var booksList = mutableListOf<Book>()
         private set
 
+    val isPlaying = MutableStateFlow(false)
+
     init {
         getAudiobookList()
     }
 
-    fun addBooksList(booksList: List<BookFile>) = launch {
+    fun updateBookList(booksList: List<BookFile>) = launch {
         this.booksList.addAll(booksList)
-        addBooks.invoke(booksList)
+        upsertBookList.invoke(booksList)
         val newBookList = mutableListOf<Book>()
         newBookList.addAll(this.booksList)
         _uiState.emit(BooksListUiState.BookListSuccess(newBookList))
@@ -36,10 +40,31 @@ class BooksListViewModel @Inject constructor(
 
     fun addBookFolder(bookFolder: BookFolder) = launch {
         this.booksList.add(bookFolder)
-        addBooks.invoke(booksList)
+        upsertBookList.invoke(booksList)
         val newBookList = mutableListOf<Book>()
         newBookList.addAll(this.booksList)
         _uiState.emit(BooksListUiState.BookListSuccess(newBookList))
+    }
+
+    fun updateBookProgress(id: String, progress: Long) {
+        booksList.firstOrNull { it.id == id }?.let {
+
+            when (it) {
+                is BookFile -> {
+                    booksList[booksList.indexOf(it)] = it.copy(progress = progress)
+                }
+
+                is BookFolder -> {}
+                else -> {}
+            }
+        }
+
+        _uiState.value = BooksListUiState.BookListSuccess(booksList.toList())
+    }
+
+    fun updateBookList(id: String, progress: Long) = launch {
+        updateBookProgress(id, progress)
+        upsertBookList.invoke(booksList)
     }
 
     private fun getAudiobookList() = launch {

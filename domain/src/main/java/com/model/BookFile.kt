@@ -1,8 +1,9 @@
 package com.model
 
-class BookFile(
-    val path: String,
-    name: String,
-    thumbnail: ByteArray?,
-    duration: Long
-) : Book(name, thumbnail, duration)
+data class BookFile(
+    override val id: String,
+    override val name: String,
+    override val thumbnail: ByteArray?,
+    override val progress: Long,
+    override val duration: Long
+) : Book

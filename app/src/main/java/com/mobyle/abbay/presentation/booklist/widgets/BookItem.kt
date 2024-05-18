@@ -21,7 +21,7 @@ import com.model.Book
 import com.model.BookFolder
 
 @Composable
-fun BookItem(book: Book, onClick: () -> Unit) {
+fun BookItem(book: Book, isSelected: Boolean, progress: String, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .padding(top = 8.dp)
@@ -43,7 +43,7 @@ fun BookItem(book: Book, onClick: () -> Unit) {
                     modifier = Modifier.padding(8.dp)
                 )
                 Row {
-                    if(book is BookFolder) {
+                    if (book is BookFolder) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
@@ -68,8 +68,12 @@ fun BookItem(book: Book, onClick: () -> Unit) {
                             description = "Clock Icon",
                             modifier = Modifier.padding(start = 8.dp, end = 4.dp)
                         )
+                        val currentProgress = if (isSelected) {
+                            progress
+                        } else book.progress.toHHMMSS()
+
                         Text(
-                            "00:00:00/${book.duration.toHHMMSS()}",
+                            "$currentProgress/${book.duration.toHHMMSS()}",
                             style = MaterialTheme.typography.titleSmall
                         )
                     }
