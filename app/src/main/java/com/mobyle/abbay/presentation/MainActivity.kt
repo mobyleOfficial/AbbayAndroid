@@ -6,13 +6,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.common.util.concurrent.MoreExecutors
+import com.mobyle.abbay.infra.navigation.AbbayNavHost
 import com.mobyle.abbay.presentation.booklist.BooksListScreen
 import com.mobyle.abbay.presentation.common.service.PlayerService
 import com.mobyle.abbay.presentation.common.theme.MyApplicationTheme
@@ -32,24 +36,22 @@ class MainActivity : ComponentActivity() {
 
         controller.addListener({
             setContent {
+                val navController = rememberNavController()
+
                 MyApplicationTheme {
                     // A surface container using the 'background' color from the theme
-                    androidx.compose.material3.Surface(
+                    Surface(
                         modifier = Modifier.fillMaxSize(),
-                        color = androidx.compose.material3.MaterialTheme.colorScheme.background
+                        color = MaterialTheme.colorScheme.background
                     ) {
-                        BooksListScreen(controller.get())
+                        AbbayNavHost(
+                            player = controller.get(),
+                            navController = navController
+                        )
+                       // BooksListScreen(controller.get())
                     }
                 }
             }
         }, MoreExecutors.directExecutor())
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    MyApplicationTheme {
-
     }
 }

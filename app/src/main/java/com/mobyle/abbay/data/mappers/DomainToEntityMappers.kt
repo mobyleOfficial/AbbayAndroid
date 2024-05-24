@@ -3,11 +3,11 @@ package com.mobyle.abbay.data.mappers
 import com.mobyle.abbay.data.model.BookFileEntity
 import com.mobyle.abbay.data.model.BookFolderEntity
 import com.model.BookFile
-import com.model.BookFolder
+import com.model.MultipleBooks
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-fun BookFolder.toEntity(): BookFolderEntity = BookFolderEntity(
+fun MultipleBooks.toEntity(): BookFolderEntity = BookFolderEntity(
     bookFileList.first().id,
     Json.encodeToString(bookFileList.map {
         it.toEntity().toJson()

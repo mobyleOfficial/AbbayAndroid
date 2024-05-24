@@ -3,7 +3,7 @@ package com.mobyle.abbay.presentation.booklist
 import com.mobyle.abbay.infra.common.BaseViewModel
 import com.model.Book
 import com.model.BookFile
-import com.model.BookFolder
+import com.model.MultipleBooks
 import com.usecase.GetBooksList
 import com.usecase.UpsertBookList
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -45,8 +45,8 @@ class BooksListViewModel @Inject constructor(
         _uiState.emit(BooksListUiState.BookListSuccess(newBookList))
     }
 
-    fun addBookFolder(bookFolder: BookFolder) = launch {
-        this.booksList.add(bookFolder)
+    fun addBookFolder(filesList: List<Book>) = launch {
+        this.booksList.addAll(filesList)
         upsertBookList.invoke(booksList)
         val newBookList = mutableListOf<Book>()
         newBookList.addAll(this.booksList)
@@ -61,7 +61,7 @@ class BooksListViewModel @Inject constructor(
                     booksList[booksList.indexOf(it)] = it.copy(progress = progress)
                 }
 
-                is BookFolder -> {}
+                is MultipleBooks -> {}
                 else -> {}
             }
         }

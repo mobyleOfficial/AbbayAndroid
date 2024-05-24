@@ -18,7 +18,7 @@ import com.mobyle.abbay.presentation.common.widgets.BookThumbnail
 import com.mobyle.abbay.presentation.common.widgets.SVGIcon
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
-import com.model.BookFolder
+import com.model.MultipleBooks
 
 @Composable
 fun BookItem(book: Book, isSelected: Boolean, progress: String, onClick: () -> Unit) {
@@ -43,7 +43,7 @@ fun BookItem(book: Book, isSelected: Boolean, progress: String, onClick: () -> U
                     modifier = Modifier.padding(8.dp)
                 )
                 Row {
-                    if (book is BookFolder) {
+                    if (book is MultipleBooks) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier

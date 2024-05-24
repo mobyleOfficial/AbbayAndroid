@@ -53,7 +53,7 @@ import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.utils.currentFraction
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
-import com.model.BookFolder
+import com.model.MultipleBooks
 import kotlin.math.max
 import kotlin.math.min
 
@@ -118,7 +118,7 @@ fun MiniPlayer(
                         "${progress.toHHMMSS()}/${book.duration.toHHMMSS()}",
                         style = MaterialTheme.typography.titleSmall,
                     )
-                    if (book is BookFolder) {
+                    if (book is MultipleBooks) {
                         Text(
                             "1/${book.bookFileList.size}",
                             style = MaterialTheme.typography.titleSmall,

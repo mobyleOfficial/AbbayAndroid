@@ -1,9 +1,10 @@
 package com.model
 
-data class BookFolder(
+class MultipleBooks(
     override val id: String,
+    val bookFileList: List<BookFile>,
     override val name: String,
     override val thumbnail: ByteArray?,
-    override val progress: Long = 0L,
-    override val duration: Long = 0L
+    override val progress: Long,
+    override val duration: Long
 ) : Book

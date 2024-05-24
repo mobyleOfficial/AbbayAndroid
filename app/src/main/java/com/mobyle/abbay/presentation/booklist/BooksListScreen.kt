@@ -58,11 +58,13 @@ import com.mobyle.abbay.presentation.booklist.widgets.BookItem
 import com.mobyle.abbay.presentation.booklist.widgets.BookListTopBar
 import com.mobyle.abbay.presentation.booklist.widgets.MiniPlayer
 import com.mobyle.abbay.presentation.common.mappers.toBook
-import com.mobyle.abbay.presentation.common.mappers.toFolder
+import com.mobyle.abbay.presentation.common.mappers.toMultipleBooks
 import com.mobyle.abbay.presentation.utils.LaunchedEffectAndCollect
 import com.mobyle.abbay.presentation.utils.toHHMMSS
+import com.model.Book
 import com.model.BookFile
 import com.model.BookFolder
+import com.model.MultipleBooks
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -127,18 +129,68 @@ fun BooksListScreen(player: MediaController) {
         uri?.let {
             val pickedDir = DocumentFile.fromTreeUri(context, it)
             val list = pickedDir?.listFiles() ?: emptyArray()
-            val bookFolder = list.toList().filter { document ->
-                document.type?.contains("audio") ?: false
-            }.filter { document ->
-                document.uri.path != null
-            }.map { document ->
-                val fileUri = document.uri
-                val metadataRetriever = MediaMetadataRetriever()
-                metadataRetriever.setDataSource(context, fileUri)
-                metadataRetriever.toBook(fileUri.path!!)
-            }.toFolder()
+            val audioList = mutableListOf<Book>()
+            val folderList = mutableListOf<Book>()
+            val audioFolderList = mutableListOf<Book>()
 
-            viewModel.addBookFolder(bookFolder)
+            list.toList().filter { document ->
+                document.type?.contains("audio") ?: false || document.type == null
+            }.forEach { document ->
+                if (document.type?.contains("audio") == true) {
+                    val fileUri = document.uri
+                    val metadataRetriever = MediaMetadataRetriever()
+                    metadataRetriever.setDataSource(context, fileUri)
+                    audioList.add(metadataRetriever.toBook(fileUri.path!!))
+                } else {
+                    DocumentFile.fromTreeUri(context, document.uri)?.let { documentsTree ->
+                        val audiobooksFromFiles = mutableListOf<BookFile>()
+                        val childDocuments = documentsTree.listFiles()
+                        for (childDocument in childDocuments) {
+                            if (childDocument.type?.contains("audio") == true) {
+                                val fileUri = childDocument.uri
+                                val metadataRetriever = MediaMetadataRetriever()
+                                metadataRetriever.setDataSource(context, fileUri)
+                                audiobooksFromFiles.add(metadataRetriever.toBook(fileUri.path!!))
+                            } else if (childDocument.type == null) {
+                                childDocument.name?.let { name ->
+                                    val folder = BookFolder(
+                                        name = name,
+                                        id = "",
+                                        thumbnail = null
+                                    )
+                                    folderList.add(folder)
+                                }
+                            }
+                        }
+
+                        audiobooksFromFiles.toMultipleBooks()?.let {
+                            audioFolderList.add(it)
+                        }
+                    }
+                }
+            }
+
+            audioList
+            audioFolderList
+
+            /*
+            * Como tratar pastas dentro de pastas:
+            * O comportamento esperado para tratamento de pasta dentro de pastas é adicionar a
+            * possibilidade de navegar para uma nova pasta caso exista OU mostras arquivos de
+            * audio.
+            * As pastas aninhadas devem se comportar da mesma maneira que se comportam na tela inicial
+            * onde devemos tratar 3 casos
+            * 1. Apenas audio: mostra o arquivo de audio, se clicar toca;
+            * 2. Pasta com arquivos de audio: mostra a pasta de audio, se clicar toca;
+            * 3. Pasta com arquivos de audio e pastas: separar os audios das pastas, portanto mostrar
+            * uma pasta assim ocmo é mostrado no 2 e as pastas separadamente
+            * */
+            folderList
+
+            // take a look to fix crash: https://medium.com/bobble-engineering/android-database-sqlite-sqliteblobtoobigexception-in-room-database-7bb70ce17717
+            audioList.addAll(audioFolderList)
+            audioList.addAll(folderList)
+            viewModel.addBookFolder(audioList.toList())
         }
     }
 
@@ -266,7 +318,7 @@ fun BooksListScreen(player: MediaController) {
                                 ) {
                                     items(bookList.size) { index ->
                                         when (val book = bookList[index]) {
-                                            is BookFolder -> {
+                                            is MultipleBooks -> {
                                                 //TBD
                                             }
 
