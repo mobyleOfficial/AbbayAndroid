@@ -1,5 +1,9 @@
 package com.mobyle.abbay.presentation.utils
 
+import android.content.Context
+import android.database.Cursor
+import android.net.Uri
+import android.provider.MediaStore
 import androidx.compose.material.BottomSheetScaffoldState
 import androidx.compose.material.BottomSheetValue
 import androidx.compose.material.ExperimentalMaterialApi
@@ -7,10 +11,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.core.database.getStringOrNull
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
+import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.session.MediaController
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import java.io.File
 
 @OptIn(ExperimentalMaterialApi::class)
 val BottomSheetScaffoldState.currentFraction: Float
@@ -64,3 +74,55 @@ fun <T> LaunchedEffectAndCollect(
         effectFlow.collect(function)
     }
 }
+
+fun Cursor.getTitle(): String? {
+    return getStringOrNull(getColumnIndex(MediaStore.Audio.AudioColumns.DISPLAY_NAME))
+}
+
+fun Cursor.getId(): String? {
+    return getStringOrNull(getColumnIndex(MediaStore.Audio.AudioColumns._ID))
+}
+
+@androidx.annotation.OptIn(UnstableApi::class)
+fun MediaController.playBook(
+    id: String,
+    progress: Long,
+    isPlaying: MutableStateFlow<Boolean>
+) {
+    prepareBook(id, progress, isPlaying)
+    isPlaying.value = true
+    playWhenReady = true
+}
+
+@androidx.annotation.OptIn(UnstableApi::class)
+fun MediaController.prepareBook(
+    id: String,
+    progress: Long,
+    isPlaying: MutableStateFlow<Boolean>,
+) {
+    isPlaying.value = false
+    pause()
+    clearMediaItems()
+    val uri =
+        Uri.parse(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + File.separatorChar + id)
+    val mediaItem = MediaItem.Builder()
+        .setMediaId(id)
+        .setUri(uri)
+        .build()
+    addMediaItem(mediaItem)
+    seekTo(progress)
+    prepare()
+}
+
+fun Context.musicCursor(block: (Cursor) -> Unit) {
+    contentResolver.query(
+        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null,
+        MediaStore.Audio.Media.DEFAULT_SORT_ORDER
+    )
+        ?.use { cursor ->
+            while (cursor.moveToNext()) {
+                block.invoke(cursor)
+            }
+        }
+}
+

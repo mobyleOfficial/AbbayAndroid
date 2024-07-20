@@ -3,7 +3,7 @@ package com.model
 interface Book {
     val id: String
     val name: String
-    val thumbnail: ByteArray?
+    val thumbnail: String?
     val progress: Long
     val duration: Long
 }

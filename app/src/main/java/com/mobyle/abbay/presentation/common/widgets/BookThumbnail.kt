@@ -15,7 +15,7 @@ import coil.request.ImageRequest
 import com.mobyle.abbay.R
 
 @Composable
-fun BookThumbnail(byteArray: ByteArray?, modifier: Modifier = Modifier) {
+fun BookThumbnail(byteArray: String?, modifier: Modifier = Modifier) {
     val defaultModifier = Modifier
         .clip(shape = RoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp))
         .height(64.dp)

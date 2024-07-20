@@ -2,10 +2,7 @@ package com.mobyle.abbay.presentation.booklist
 
 import android.app.Activity
 import android.content.Context
-import android.database.Cursor
 import android.media.MediaMetadataRetriever
-import android.net.Uri
-import android.provider.MediaStore
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -36,18 +33,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.getString
-import androidx.core.database.getStringOrNull
 import androidx.documentfile.provider.DocumentFile
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import androidx.media3.common.MediaItem
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.BookListSuccess
@@ -60,15 +55,18 @@ import com.mobyle.abbay.presentation.booklist.widgets.MiniPlayer
 import com.mobyle.abbay.presentation.common.mappers.toBook
 import com.mobyle.abbay.presentation.common.mappers.toMultipleBooks
 import com.mobyle.abbay.presentation.utils.LaunchedEffectAndCollect
+import com.mobyle.abbay.presentation.utils.getId
+import com.mobyle.abbay.presentation.utils.getTitle
+import com.mobyle.abbay.presentation.utils.musicCursor
+import com.mobyle.abbay.presentation.utils.playBook
+import com.mobyle.abbay.presentation.utils.prepareBook
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
 import com.model.BookFile
 import com.model.BookFolder
 import com.model.MultipleBooks
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import java.io.File
 
 
 private const val LAST_SELECTED_BOOK_ID = "LAST_SELECTED_BOOK_ID"
@@ -112,13 +110,13 @@ fun BooksListScreen(player: MediaController) {
                 val metadataRetriever = MediaMetadataRetriever()
                 metadataRetriever.setDataSource(context, uri)
                 context.musicCursor {
-                    val title = getTitle(it)
+                    val title = it.getTitle()
                     if ((uri.path?.split("/")?.lastOrNull()) == title.orEmpty()) {
-                        id = getId(it)
+                        id = it.getId()
                     }
                 }
 
-                metadataRetriever.toBook(id.orEmpty())
+                metadataRetriever.toBook(context, id.orEmpty())
             })
         }
     }
@@ -140,7 +138,7 @@ fun BooksListScreen(player: MediaController) {
                     val fileUri = document.uri
                     val metadataRetriever = MediaMetadataRetriever()
                     metadataRetriever.setDataSource(context, fileUri)
-                    audioList.add(metadataRetriever.toBook(fileUri.path!!))
+                    audioList.add(metadataRetriever.toBook(context, fileUri.path!!))
                 } else {
                     DocumentFile.fromTreeUri(context, document.uri)?.let { documentsTree ->
                         val audiobooksFromFiles = mutableListOf<BookFile>()
@@ -150,7 +148,12 @@ fun BooksListScreen(player: MediaController) {
                                 val fileUri = childDocument.uri
                                 val metadataRetriever = MediaMetadataRetriever()
                                 metadataRetriever.setDataSource(context, fileUri)
-                                audiobooksFromFiles.add(metadataRetriever.toBook(fileUri.path!!))
+                                audiobooksFromFiles.add(
+                                    metadataRetriever.toBook(
+                                        context,
+                                        fileUri.path!!
+                                    )
+                                )
                             } else if (childDocument.type == null) {
                                 childDocument.name?.let { name ->
                                     val folder = BookFolder(
@@ -170,9 +173,6 @@ fun BooksListScreen(player: MediaController) {
                 }
             }
 
-            audioList
-            audioFolderList
-
             /*
             * Como tratar pastas dentro de pastas:
             * O comportamento esperado para tratamento de pasta dentro de pastas é adicionar a
@@ -185,12 +185,10 @@ fun BooksListScreen(player: MediaController) {
             * 3. Pasta com arquivos de audio e pastas: separar os audios das pastas, portanto mostrar
             * uma pasta assim ocmo é mostrado no 2 e as pastas separadamente
             * */
-            folderList
 
-            // take a look to fix crash: https://medium.com/bobble-engineering/android-database-sqlite-sqliteblobtoobigexception-in-room-database-7bb70ce17717
             audioList.addAll(audioFolderList)
             audioList.addAll(folderList)
-            viewModel.addBookFolder(audioList.toList())
+            viewModel.addAllBookTypes(audioList.toList())
         }
     }
 
@@ -318,11 +316,11 @@ fun BooksListScreen(player: MediaController) {
                                 ) {
                                     items(bookList.size) { index ->
                                         when (val book = bookList[index]) {
-                                            is MultipleBooks -> {
-                                                //TBD
+                                            is BookFolder -> {
+                                                Text(book.name, color = Color.Yellow)
                                             }
 
-                                            is BookFile -> {
+                                            is BookFile, is MultipleBooks -> {
                                                 BookItem(
                                                     book = book,
                                                     isSelected = book.id == (selectedBook as? BookFile)?.id,
@@ -417,55 +415,3 @@ fun BooksListScreen(player: MediaController) {
         }
     }
 }
-
-@androidx.annotation.OptIn(UnstableApi::class)
-private fun MediaController.playBook(
-    id: String,
-    progress: Long,
-    isPlaying: MutableStateFlow<Boolean>
-) {
-    prepareBook(id, progress, isPlaying)
-    isPlaying.value = true
-    playWhenReady = true
-}
-
-@androidx.annotation.OptIn(UnstableApi::class)
-private fun MediaController.prepareBook(
-    id: String,
-    progress: Long,
-    isPlaying: MutableStateFlow<Boolean>,
-) {
-    isPlaying.value = false
-    pause()
-    clearMediaItems()
-    val uri =
-        Uri.parse(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + File.separatorChar + id)
-    val mediaItem = MediaItem.Builder()
-        .setMediaId(id)
-        .setUri(uri)
-        .build()
-    addMediaItem(mediaItem)
-    seekTo(progress)
-    prepare()
-}
-
-inline fun Context.musicCursor(block: (Cursor) -> Unit) {
-    contentResolver.query(
-        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null,
-        MediaStore.Audio.Media.DEFAULT_SORT_ORDER
-    )
-        ?.use { cursor ->
-            while (cursor.moveToNext()) {
-                block.invoke(cursor)
-            }
-        }
-}
-
-private fun getTitle(cursor: Cursor): String? {
-    return cursor.getStringOrNull(cursor.getColumnIndex(MediaStore.Audio.AudioColumns.DISPLAY_NAME))
-}
-
-private fun getId(cursor: Cursor): String? {
-    return cursor.getStringOrNull(cursor.getColumnIndex(MediaStore.Audio.AudioColumns._ID))
-}
-

@@ -1,13 +1,13 @@
 package com.mobyle.abbay.data.mappers
 
 import com.mobyle.abbay.data.model.BookFileEntity
-import com.mobyle.abbay.data.model.BookFolderEntity
+import com.mobyle.abbay.data.model.MultipleBooksEntity
 import com.model.BookFile
 import com.model.MultipleBooks
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
-fun BookFolderEntity.toDomain(): MultipleBooks = MultipleBooks(
+fun MultipleBooksEntity.toDomain(): MultipleBooks = MultipleBooks(
     "",
     Json.decodeFromString<List<String>>(this.bookFileList)
         .map {

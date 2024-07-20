@@ -45,7 +45,7 @@ class BooksListViewModel @Inject constructor(
         _uiState.emit(BooksListUiState.BookListSuccess(newBookList))
     }
 
-    fun addBookFolder(filesList: List<Book>) = launch {
+    fun addAllBookTypes(filesList: List<Book>) = launch {
         this.booksList.addAll(filesList)
         upsertBookList.invoke(booksList)
         val newBookList = mutableListOf<Book>()

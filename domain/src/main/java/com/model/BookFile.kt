@@ -3,7 +3,7 @@ package com.model
 data class BookFile(
     override val id: String,
     override val name: String,
-    override val thumbnail: ByteArray?,
+    override val thumbnail: String?,
     override val progress: Long,
     override val duration: Long
 ) : Book
