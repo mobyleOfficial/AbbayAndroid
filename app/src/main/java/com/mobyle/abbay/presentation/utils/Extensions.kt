@@ -17,6 +17,10 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DefaultDataSourceFactory
+import androidx.media3.exoplayer.source.ConcatenatingMediaSource
+import androidx.media3.exoplayer.source.MediaSource
+import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.session.MediaController
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -95,6 +99,17 @@ fun MediaController.playBook(
 }
 
 @androidx.annotation.OptIn(UnstableApi::class)
+fun MediaController.playMultipleBooks(
+    idList: List<String>,
+    progress: Long,
+    isPlaying: MutableStateFlow<Boolean>
+) {
+    prepareMultipleBooks(idList, progress, isPlaying)
+    isPlaying.value = true
+    playWhenReady = true
+}
+
+@androidx.annotation.OptIn(UnstableApi::class)
 fun MediaController.prepareBook(
     id: String,
     progress: Long,
@@ -110,6 +125,29 @@ fun MediaController.prepareBook(
         .setUri(uri)
         .build()
     addMediaItem(mediaItem)
+    seekTo(progress)
+    prepare()
+}
+
+fun MediaController.prepareMultipleBooks(
+    idList: List<String>,
+    progress: Long,
+    isPlaying: MutableStateFlow<Boolean>,
+) {
+    isPlaying.value = false
+    pause()
+    clearMediaItems()
+
+    val items = idList.map { id ->
+        val uri =
+            Uri.parse(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + File.separatorChar + id)
+        val mediaItem = MediaItem.Builder()
+            .setMediaId(id)
+            .setUri(uri)
+            .build()
+        mediaItem
+    }
+    addMediaItems(items)
     seekTo(progress)
     prepare()
 }

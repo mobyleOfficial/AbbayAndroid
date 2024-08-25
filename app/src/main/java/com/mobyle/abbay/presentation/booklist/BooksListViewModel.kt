@@ -78,8 +78,29 @@ class BooksListViewModel @Inject constructor(
         _selectedBook.tryEmit(book)
     }
 
-    fun setCurrentProgress(progress: Long) {
+    fun setCurrentProgress(id: String, progress: Long) {
         _currentProgress.tryEmit(progress)
+        val index = booksList.indexOfFirst { it.id == id }
+
+        if (index != -1) {
+            val book = booksList[index]
+
+            booksList[index] = when (book) {
+                is MultipleBooks -> {
+                    book.copy(progress = progress)
+                }
+
+                is BookFile -> {
+                    book.copy(progress = progress)
+                }
+
+                else -> {
+                    book
+                }
+            }
+
+            _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
+        }
     }
 
     private fun getAudiobookList() = launch {

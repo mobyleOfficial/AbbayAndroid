@@ -8,11 +8,15 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
 fun MultipleBooksEntity.toDomain(): MultipleBooks = MultipleBooks(
-    "",
-    Json.decodeFromString<List<String>>(this.bookFileList)
+    id = id,
+    bookFileList = Json.decodeFromString<List<String>>(this.bookFileList)
         .map {
             it.toEntity().toDomain()
-        }, name, thumbnail, progress, duration
+        },
+    name = name,
+    thumbnail = thumbnail,
+    progress = progress,
+    duration = duration
 )
 
 fun BookFileEntity.toDomain() = BookFile(

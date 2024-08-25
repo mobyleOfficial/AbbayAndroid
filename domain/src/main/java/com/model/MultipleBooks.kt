@@ -1,6 +1,6 @@
 package com.model
 
-class MultipleBooks(
+data class MultipleBooks(
     override val id: String,
     val bookFileList: List<BookFile>,
     override val name: String,

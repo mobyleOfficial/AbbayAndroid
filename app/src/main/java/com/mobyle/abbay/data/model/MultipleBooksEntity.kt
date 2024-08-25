@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 @Entity
 @Serializable
 data class MultipleBooksEntity(
-    @PrimaryKey var path: String,
+    @PrimaryKey var id: String,
     var bookFileList: String,
     var name: String,
     var thumbnail: String?,

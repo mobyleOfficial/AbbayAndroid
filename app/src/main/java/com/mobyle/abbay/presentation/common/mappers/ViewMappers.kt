@@ -3,12 +3,17 @@ package com.mobyle.abbay.presentation.common.mappers
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
+import androidx.core.net.toUri
 import com.model.BookFile
 import com.model.MultipleBooks
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 
 fun MediaMetadataRetriever.toBook(context: Context, id: String): BookFile {
     val title = extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
@@ -20,7 +25,13 @@ fun MediaMetadataRetriever.toBook(context: Context, id: String): BookFile {
     return BookFile(
         id = id,
         name = title ?: "",
-        thumbnail = imageBitmap?.let { getImageUriFromBitmap(context, imageBitmap).toString() },
+        thumbnail = imageBitmap?.let {
+            getImageUriFromBitmap(
+                context,
+                imageBitmap,
+                id.replace(" ", "")
+            ).toString()
+        },
         progress = 0L,
         duration = duration.toLong()
     )
@@ -30,7 +41,7 @@ fun List<BookFile>.toMultipleBooks(): MultipleBooks? {
     val firstBook = firstOrNull()
     return firstBook?.let {
         MultipleBooks(
-            "",
+            it.id,
             this,
             firstBook.name,
             firstBook.thumbnail,
@@ -39,7 +50,27 @@ fun List<BookFile>.toMultipleBooks(): MultipleBooks? {
     }
 }
 
-fun getImageUriFromBitmap(context: Context, bitmap: Bitmap): Uri {
-    val path = MediaStore.Images.Media.insertImage(context.contentResolver, bitmap, "File", null)
-    return Uri.parse(path?.toString().orEmpty())
+// todo: add images into multiple files book
+fun getImageUriFromBitmap(context: Context, bitmap: Bitmap, name: String): Uri {
+    val filesDir = context.filesDir
+    val imageFile = File(filesDir, name)
+
+    var fos: FileOutputStream? = null
+    try {
+        fos = FileOutputStream(imageFile)
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
+        return imageFile.toUri()
+    } catch (e: IOException) {
+        e.printStackTrace()
+        return Uri.parse("")
+    } finally {
+        try {
+            fos?.close()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+
+//    val path = MediaStore.Images.Media.insertImage(context.contentResolver, bitmap, "File", null)
+//    return Uri.parse(path?.toString().orEmpty())
+    }
 }
