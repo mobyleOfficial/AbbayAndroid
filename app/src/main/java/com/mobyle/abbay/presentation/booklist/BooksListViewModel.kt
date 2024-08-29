@@ -1,5 +1,8 @@
 package com.mobyle.abbay.presentation.booklist
 
+import android.net.Uri
+import android.util.Log
+import androidx.lifecycle.viewModelScope
 import com.mobyle.abbay.infra.common.BaseViewModel
 import com.model.Book
 import com.model.BookFile
@@ -7,9 +10,12 @@ import com.model.MultipleBooks
 import com.usecase.GetBooksList
 import com.usecase.UpsertBookList
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -33,16 +39,36 @@ class BooksListViewModel @Inject constructor(
 
     var hasBookSelected = _selectedBook.map { it != null }
 
+    val booksIdList = MutableStateFlow<List<Book?>>(emptyList())
+
     init {
         getAudiobookList()
     }
 
-    fun updateBookList(booksList: List<BookFile>) = launch {
+    fun updateBookList(booksList: List<Book>) = launch {
         this.booksList.addAll(booksList)
         upsertBookList.invoke(booksList)
         val newBookList = mutableListOf<Book>()
         newBookList.addAll(this.booksList)
         _uiState.emit(BooksListUiState.BookListSuccess(newBookList))
+    }
+
+    fun addThumbnails(booksWithThumbList: List<Book>) = launch{
+        val newList = this.booksList.map { book ->
+            booksWithThumbList.firstOrNull { it.id == book.id}?.let {
+                when(it) {
+                    is MultipleBooks ->  it.copy(thumbnail = it.thumbnail)
+                    is BookFile -> it.copy(thumbnail = it.thumbnail)
+                    else -> book
+                }
+            } ?: book
+        }.toList()
+
+        upsertBookList.invoke(newList)
+        this.booksList.clear()
+        this.booksList.addAll(newList)
+
+        _uiState.emit(BooksListUiState.BookListSuccess(this.booksList.toList()))
     }
 
     fun addAllBookTypes(filesList: List<Book>) = launch {
@@ -51,6 +77,7 @@ class BooksListViewModel @Inject constructor(
         val newBookList = mutableListOf<Book>()
         newBookList.addAll(this.booksList)
         _uiState.emit(BooksListUiState.BookListSuccess(newBookList))
+        booksIdList.emit(this.booksList)
     }
 
     fun updateBookProgress(id: String, progress: Long) {
@@ -114,6 +141,10 @@ class BooksListViewModel @Inject constructor(
         }
 
         _uiState.emit(state)
+    }
+
+    fun showLoading() {
+        _uiState.value = BooksListUiState.Loading
     }
 
     sealed class BooksListUiState {

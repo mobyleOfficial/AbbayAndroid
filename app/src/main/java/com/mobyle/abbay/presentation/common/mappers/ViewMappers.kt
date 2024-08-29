@@ -37,6 +37,20 @@ fun MediaMetadataRetriever.toBook(context: Context, id: String): BookFile {
     )
 }
 
+fun MediaMetadataRetriever.getThumbnail(context: Context, id: String): String? {
+    val imageBitmap = embeddedPicture?.let {
+        BitmapFactory.decodeByteArray(it, 0, it.size)
+    }
+
+    return imageBitmap?.let {
+        getImageUriFromBitmap(
+            context,
+            imageBitmap,
+            id.replace(" ", "")
+        ).toString()
+    }
+}
+
 fun List<BookFile>.toMultipleBooks(): MultipleBooks? {
     val firstBook = firstOrNull()
     return firstBook?.let {

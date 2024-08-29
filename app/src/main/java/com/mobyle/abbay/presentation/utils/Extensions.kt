@@ -1,8 +1,12 @@
 package com.mobyle.abbay.presentation.utils
 
+import android.content.ContentUris
 import android.content.Context
 import android.database.Cursor
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Build
 import android.provider.MediaStore
 import androidx.compose.material.BottomSheetScaffoldState
 import androidx.compose.material.BottomSheetValue
@@ -11,16 +15,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.core.database.getLongOrNull
 import androidx.core.database.getStringOrNull
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.DefaultDataSourceFactory
-import androidx.media3.exoplayer.source.ConcatenatingMediaSource
-import androidx.media3.exoplayer.source.MediaSource
-import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.session.MediaController
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -86,6 +87,11 @@ fun Cursor.getTitle(): String? {
 fun Cursor.getId(): String? {
     return getStringOrNull(getColumnIndex(MediaStore.Audio.AudioColumns._ID))
 }
+
+fun Cursor.getDuration(): Long? {
+    return getLongOrNull(getColumnIndex(MediaStore.Audio.Media.DURATION))
+}
+
 
 @androidx.annotation.OptIn(UnstableApi::class)
 fun MediaController.playBook(
