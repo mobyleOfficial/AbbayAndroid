@@ -21,7 +21,12 @@ import com.model.Book
 import com.model.MultipleBooks
 
 @Composable
-fun BookItem(book: Book, isSelected: Boolean, progress: String, onClick: () -> Unit) {
+fun BookItem(
+    book: Book,
+    isSelected: Boolean,
+    progress: String,
+    currentMediaIndex: Int,
+    onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .padding(top = 8.dp)
@@ -53,8 +58,9 @@ fun BookItem(book: Book, isSelected: Boolean, progress: String, onClick: () -> U
                                 description = "Book Icon",
                                 modifier = Modifier.padding(start = 8.dp, end = 4.dp)
                             )
+
                             Text(
-                                "01/18",
+                                "$currentMediaIndex/${book.bookFileList.size - 1}",
                                 style = MaterialTheme.typography.titleSmall,
                             )
                         }

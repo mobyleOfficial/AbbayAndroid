@@ -1,19 +1,13 @@
 package com.mobyle.abbay.presentation.booklist
 
-import android.R.attr
 import android.app.Activity
 import android.content.ContentResolver
-import android.content.ContentUris
 import android.content.Context
-import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.net.Uri
-import android.os.Build
 import android.os.Environment.getExternalStorageDirectory
 import android.provider.DocumentsContract
 import android.provider.MediaStore
-import android.util.Log
-import android.util.Size
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,7 +17,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.BottomSheetScaffold
 import androidx.compose.material.Button
@@ -46,7 +39,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -64,7 +56,6 @@ import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiStat
 import com.mobyle.abbay.presentation.booklist.widgets.BookItem
 import com.mobyle.abbay.presentation.booklist.widgets.BookListTopBar
 import com.mobyle.abbay.presentation.booklist.widgets.MiniPlayer
-import com.mobyle.abbay.presentation.common.mappers.getImageUriFromBitmap
 import com.mobyle.abbay.presentation.common.mappers.getThumbnail
 import com.mobyle.abbay.presentation.common.mappers.toBook
 import com.mobyle.abbay.presentation.common.mappers.toMultipleBooks
@@ -78,14 +69,11 @@ import com.mobyle.abbay.presentation.utils.playMultipleBooks
 import com.mobyle.abbay.presentation.utils.prepareBook
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.BookFile
-import com.model.BookFolder
 import com.model.MultipleBooks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.IOException
 
 
 private const val LAST_SELECTED_BOOK_ID = "LAST_SELECTED_BOOK_ID"
@@ -405,13 +393,10 @@ fun BooksListScreen(player: MediaController) {
                                 ) {
                                     items(bookList.size) { index ->
                                         when (val book = bookList[index]) {
-                                            is BookFolder -> {
-                                                Text(book.name, color = Color.Yellow)
-                                            }
-
                                             is MultipleBooks -> {
                                                 BookItem(
                                                     book = book,
+                                                    currentMediaIndex = player.currentMediaItemIndex + 1,
                                                     isSelected = book.id == (selectedBook as? BookFile)?.id,
                                                     progress = if (book.id == (selectedBook as? BookFile)?.id) {
                                                         if (isPlaying) {
@@ -464,6 +449,7 @@ fun BooksListScreen(player: MediaController) {
                                             is BookFile -> {
                                                 BookItem(
                                                     book = book,
+                                                    currentMediaIndex = player.currentMediaItemIndex + 1,
                                                     isSelected = book.id == (selectedBook as? BookFile)?.id,
                                                     progress = if (book.id == (selectedBook as? BookFile)?.id) {
                                                         if (isPlaying) {

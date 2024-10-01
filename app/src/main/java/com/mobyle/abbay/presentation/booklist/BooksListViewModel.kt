@@ -1,8 +1,5 @@
 package com.mobyle.abbay.presentation.booklist
 
-import android.net.Uri
-import android.util.Log
-import androidx.lifecycle.viewModelScope
 import com.mobyle.abbay.infra.common.BaseViewModel
 import com.model.Book
 import com.model.BookFile
@@ -10,12 +7,9 @@ import com.model.MultipleBooks
 import com.usecase.GetBooksList
 import com.usecase.UpsertBookList
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
