@@ -323,6 +323,14 @@ fun BooksListScreen(player: MediaController) {
                                 )
                             }
                         },
+                        updateCurrentBookPosition = {
+                            selectedBook?.let { book ->
+                                viewModel.updateBookPosition(
+                                    id = book.id,
+                                    position = player.currentMediaItemIndex
+                                )
+                            }
+                        },
                         modifier = Modifier
                             .onGloballyPositioned {
                                 componentHeight = with(density) {
@@ -396,7 +404,7 @@ fun BooksListScreen(player: MediaController) {
                                             is MultipleBooks -> {
                                                 BookItem(
                                                     book = book,
-                                                    currentMediaIndex = player.currentMediaItemIndex + 1,
+                                                    currentMediaIndex = book.currentBookPosition + 1,
                                                     isSelected = book.id == (selectedBook as? BookFile)?.id,
                                                     progress = if (book.id == (selectedBook as? BookFile)?.id) {
                                                         if (isPlaying) {

@@ -72,6 +72,7 @@ fun MiniPlayer(
     progress: Long,
     scaffoldState: BottomSheetScaffoldState,
     playerIcon: MutableState<ImageVector>,
+    updateCurrentBookPosition: (Int) -> Unit,
     updateProgress: (Long) -> Unit,
     modifier: Modifier
 ) {
@@ -95,6 +96,7 @@ fun MiniPlayer(
             scaffoldState = scaffoldState,
             playerIcon = playerIcon,
             updateProgress = updateProgress,
+            updateCurrentBookPosition = updateCurrentBookPosition,
             modifier = modifier
         )
     }
@@ -281,6 +283,7 @@ private fun MultipleFilePlayer(
     progress: Long,
     scaffoldState: BottomSheetScaffoldState,
     playerIcon: MutableState<ImageVector>,
+    updateCurrentBookPosition: (Int) -> Unit,
     updateProgress: (Long) -> Unit,
     modifier: Modifier
 ) {
@@ -380,6 +383,7 @@ private fun MultipleFilePlayer(
             ) {
                 IconButton(onClick = {
                     player.seekToPreviousMediaItem()
+                    updateCurrentBookPosition(player.currentMediaItemIndex)
                 }) {
                     Icon(Icons.Default.FastRewind, contentDescription = "", tint = Color.White)
                 }
@@ -391,6 +395,7 @@ private fun MultipleFilePlayer(
                 )
                 IconButton(onClick = {
                     player.seekToNextMediaItem()
+                    updateCurrentBookPosition(player.currentMediaItemIndex)
                 }) {
                     Icon(Icons.Default.FastForward, contentDescription = "", tint = Color.White)
                 }

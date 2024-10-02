@@ -52,12 +52,14 @@ fun List<BookFile>.toMultipleBooks(): MultipleBooks? {
     val firstBook = firstOrNull()
     return firstBook?.let {
         MultipleBooks(
-            it.id,
-            this,
-            firstBook.name,
-            firstBook.thumbnail,
-            0L,
-            this.sumOf { it.duration })
+            id = it.id,
+            bookFileList = this,
+            name = firstBook.name,
+            thumbnail = firstBook.thumbnail,
+            progress = 0L,
+            duration = this.sumOf { it.duration },
+            currentBookPosition = 0
+        )
     }
 }
 

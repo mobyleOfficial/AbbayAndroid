@@ -124,6 +124,22 @@ class BooksListViewModel @Inject constructor(
         }
     }
 
+    fun updateBookPosition(id: String, position: Int) {
+        val index = booksList.indexOfFirst { it.id == id }
+
+        if (index != -1) {
+            val book = booksList[index]
+
+            if(book is MultipleBooks) {
+                booksList[index] = book.copy(currentBookPosition = position)
+
+                _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
+            }
+
+
+        }
+    }
+
     private fun getAudiobookList() = launch {
         val booksList = getBooksList.invoke()
         this.booksList.addAll(booksList)
