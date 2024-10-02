@@ -25,6 +25,7 @@ fun BookItem(
     book: Book,
     isSelected: Boolean,
     progress: String,
+    intermediaryProgress: Long,
     currentMediaIndex: Int,
     onClick: () -> Unit) {
     Column(
@@ -76,7 +77,7 @@ fun BookItem(
                         )
                         val currentProgress = if (isSelected) {
                             progress
-                        } else book.progress.toHHMMSS()
+                        } else intermediaryProgress.plus(book.progress).toHHMMSS()
 
                         Text(
                             "$currentProgress/${book.duration.toHHMMSS()}",

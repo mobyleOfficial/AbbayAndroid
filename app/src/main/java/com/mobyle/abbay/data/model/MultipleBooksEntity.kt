@@ -12,5 +12,6 @@ data class MultipleBooksEntity(
     var name: String,
     var thumbnail: String?,
     val progress: Long,
-    var duration: Long
+    var duration: Long,
+    val currentBookPosition: Int = 0
 )

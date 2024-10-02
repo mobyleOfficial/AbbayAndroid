@@ -16,7 +16,8 @@ fun MultipleBooksEntity.toDomain(): MultipleBooks = MultipleBooks(
     name = name,
     thumbnail = thumbnail,
     progress = progress,
-    duration = duration
+    duration = duration,
+    currentBookPosition = currentBookPosition
 )
 
 fun BookFileEntity.toDomain() = BookFile(

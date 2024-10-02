@@ -402,18 +402,21 @@ fun BooksListScreen(player: MediaController) {
                                     items(bookList.size) { index ->
                                         when (val book = bookList[index]) {
                                             is MultipleBooks -> {
+                                                val intermediaryProgress = book.bookFileList.map { it.duration }.subList(0, book.currentBookPosition).sum()
+
                                                 BookItem(
                                                     book = book,
                                                     currentMediaIndex = book.currentBookPosition + 1,
                                                     isSelected = book.id == (selectedBook as? BookFile)?.id,
+                                                    intermediaryProgress = intermediaryProgress,
                                                     progress = if (book.id == (selectedBook as? BookFile)?.id) {
                                                         if (isPlaying) {
-                                                            currentProgress.toHHMMSS()
+                                                            intermediaryProgress.plus(currentProgress).toHHMMSS()
                                                         } else {
-                                                            book.progress.toHHMMSS()
+                                                            intermediaryProgress.plus(book.progress).toHHMMSS()
                                                         }
                                                     } else {
-                                                        book.progress.toHHMMSS()
+                                                        intermediaryProgress.plus(book.progress).toHHMMSS()
                                                     }
                                                 ) {
                                                     if (selectedBook?.id != book.id) {
@@ -459,6 +462,7 @@ fun BooksListScreen(player: MediaController) {
                                                     book = book,
                                                     currentMediaIndex = player.currentMediaItemIndex + 1,
                                                     isSelected = book.id == (selectedBook as? BookFile)?.id,
+                                                    intermediaryProgress = 0L,
                                                     progress = if (book.id == (selectedBook as? BookFile)?.id) {
                                                         if (isPlaying) {
                                                             currentProgress.toHHMMSS()

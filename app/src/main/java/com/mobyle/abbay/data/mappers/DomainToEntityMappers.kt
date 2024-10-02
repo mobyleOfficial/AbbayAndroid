@@ -8,11 +8,17 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 fun MultipleBooks.toEntity(): MultipleBooksEntity = MultipleBooksEntity(
-    bookFileList.first().id,
-    Json.encodeToString(bookFileList.map {
-        it.toEntity().toJson()
-    }
-    ), name, thumbnail, progress, duration
+    id = bookFileList.first().id,
+    bookFileList = Json.encodeToString(
+        bookFileList.map {
+            it.toEntity().toJson()
+        }
+    ),
+    name = name,
+    thumbnail = thumbnail,
+    progress = progress,
+    duration = duration,
+    currentBookPosition = currentBookPosition
 )
 
 fun BookFile.toEntity() = BookFileEntity(
