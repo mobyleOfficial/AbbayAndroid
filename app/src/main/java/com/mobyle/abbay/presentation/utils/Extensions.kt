@@ -19,6 +19,8 @@ import androidx.lifecycle.flowWithLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
+import com.model.Book
+import com.model.MultipleBooks
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.io.File
@@ -166,3 +168,4 @@ fun Context.musicCursor(block: (Cursor) -> Unit) {
         }
 }
 
+fun List<Book>.intermediateProgress(index: Int) = this.map { it.duration }.subList(0,index).sum()

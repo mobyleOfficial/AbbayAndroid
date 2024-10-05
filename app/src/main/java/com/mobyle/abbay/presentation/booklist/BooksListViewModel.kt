@@ -47,11 +47,11 @@ class BooksListViewModel @Inject constructor(
         _uiState.emit(BooksListUiState.BookListSuccess(newBookList))
     }
 
-    fun addThumbnails(booksWithThumbList: List<Book>) = launch{
+    fun addThumbnails(booksWithThumbList: List<Book>) = launch {
         val newList = this.booksList.map { book ->
-            booksWithThumbList.firstOrNull { it.id == book.id}?.let {
-                when(it) {
-                    is MultipleBooks ->  it.copy(thumbnail = it.thumbnail)
+            booksWithThumbList.firstOrNull { it.id == book.id }?.let {
+                when (it) {
+                    is MultipleBooks -> it.copy(thumbnail = it.thumbnail)
                     is BookFile -> it.copy(thumbnail = it.thumbnail)
                     else -> book
                 }
@@ -106,7 +106,7 @@ class BooksListViewModel @Inject constructor(
         if (index != -1) {
             val book = booksList[index]
 
-            booksList[index] = when (book) {
+            val mappedBook = when (book) {
                 is MultipleBooks -> {
                     book.copy(progress = progress)
                 }
@@ -119,8 +119,10 @@ class BooksListViewModel @Inject constructor(
                     book
                 }
             }
-
+            booksList[index] = mappedBook
             _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
+            selectBook(mappedBook)
+
         }
     }
 
@@ -130,13 +132,12 @@ class BooksListViewModel @Inject constructor(
         if (index != -1) {
             val book = booksList[index]
 
-            if(book is MultipleBooks) {
+            if (book is MultipleBooks) {
                 booksList[index] = book.copy(currentBookPosition = position)
 
                 _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
+                selectBook(book.copy(currentBookPosition = position))
             }
-
-
         }
     }
 

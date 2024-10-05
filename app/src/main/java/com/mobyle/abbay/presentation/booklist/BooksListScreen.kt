@@ -63,6 +63,7 @@ import com.mobyle.abbay.presentation.utils.LaunchedEffectAndCollect
 import com.mobyle.abbay.presentation.utils.getDuration
 import com.mobyle.abbay.presentation.utils.getId
 import com.mobyle.abbay.presentation.utils.getTitle
+import com.mobyle.abbay.presentation.utils.intermediateProgress
 import com.mobyle.abbay.presentation.utils.musicCursor
 import com.mobyle.abbay.presentation.utils.playBook
 import com.mobyle.abbay.presentation.utils.playMultipleBooks
@@ -301,7 +302,7 @@ fun BooksListScreen(player: MediaController) {
                         player = player,
                         book = it,
                         scaffoldState = bottomSheetState,
-                        progress = currentProgress,
+                        progress = it.progress,
                         playerIcon = playerIcon,
                         onPlayingChange = { isPlaying ->
                             viewModel.isPlaying.value = isPlaying
@@ -327,7 +328,7 @@ fun BooksListScreen(player: MediaController) {
                             selectedBook?.let { book ->
                                 viewModel.updateBookPosition(
                                     id = book.id,
-                                    position = player.currentMediaItemIndex
+                                    position = it
                                 )
                             }
                         },
@@ -402,7 +403,8 @@ fun BooksListScreen(player: MediaController) {
                                     items(bookList.size) { index ->
                                         when (val book = bookList[index]) {
                                             is MultipleBooks -> {
-                                                val intermediaryProgress = book.bookFileList.map { it.duration }.subList(0, book.currentBookPosition).sum()
+                                                val intermediaryProgress = book.bookFileList
+                                                    .intermediateProgress(book.currentBookPosition)
 
                                                 BookItem(
                                                     book = book,
@@ -411,12 +413,16 @@ fun BooksListScreen(player: MediaController) {
                                                     intermediaryProgress = intermediaryProgress,
                                                     progress = if (book.id == (selectedBook as? BookFile)?.id) {
                                                         if (isPlaying) {
-                                                            intermediaryProgress.plus(currentProgress).toHHMMSS()
+                                                            intermediaryProgress.plus(
+                                                                currentProgress
+                                                            ).toHHMMSS()
                                                         } else {
-                                                            intermediaryProgress.plus(book.progress).toHHMMSS()
+                                                            intermediaryProgress.plus(book.progress)
+                                                                .toHHMMSS()
                                                         }
                                                     } else {
-                                                        intermediaryProgress.plus(book.progress).toHHMMSS()
+                                                        intermediaryProgress.plus(book.progress)
+                                                            .toHHMMSS()
                                                     }
                                                 ) {
                                                     if (selectedBook?.id != book.id) {

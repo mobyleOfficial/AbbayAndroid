@@ -53,6 +53,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.utils.currentFraction
+import com.mobyle.abbay.presentation.utils.intermediateProgress
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
 import com.model.BookFile
@@ -287,7 +288,7 @@ private fun MultipleFilePlayer(
     updateProgress: (Long) -> Unit,
     modifier: Modifier
 ) {
-    val duration = player.duration
+    val duration = book.bookFileList[book.currentBookPosition].duration
     val swipeProgress = scaffoldState.currentFraction
     val motionProgress = max(min(swipeProgress, 1f), 0f)
     val context = LocalContext.current
@@ -382,8 +383,11 @@ private fun MultipleFilePlayer(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 IconButton(onClick = {
-                    player.seekToPreviousMediaItem()
-                    updateCurrentBookPosition(player.currentMediaItemIndex)
+                    if(book.currentBookPosition > 0) {
+                        player.seekToPreviousMediaItem()
+                        updateProgress(0L)
+                        updateCurrentBookPosition(book.currentBookPosition - 1)
+                    }
                 }) {
                     Icon(Icons.Default.FastRewind, contentDescription = "", tint = Color.White)
                 }
@@ -394,8 +398,12 @@ private fun MultipleFilePlayer(
                     playerIcon = playerIcon
                 )
                 IconButton(onClick = {
-                    player.seekToNextMediaItem()
-                    updateCurrentBookPosition(player.currentMediaItemIndex)
+                    if(book.currentBookPosition < book.bookFileList.size - 1) {
+                        player.seekToNextMediaItem()
+                        updateProgress(0L)
+                        updateCurrentBookPosition(book.currentBookPosition + 1)
+                    }
+
                 }) {
                     Icon(Icons.Default.FastForward, contentDescription = "", tint = Color.White)
                 }
@@ -444,6 +452,13 @@ private fun MiniPlayerContent(
                 .layoutId("miniPlayer")
         ),
     ) {
+        val intermediaryProgress = if (book is MultipleBooks) {
+            book.bookFileList
+                .intermediateProgress(book.currentBookPosition)
+        } else {
+            0L
+        }
+
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -456,7 +471,7 @@ private fun MiniPlayerContent(
             )
             Row {
                 Text(
-                    "${progress.toHHMMSS()}/${book.duration.toHHMMSS()}",
+                    "${intermediaryProgress.plus(progress).toHHMMSS()}/${book.duration.toHHMMSS()}",
                     style = MaterialTheme.typography.titleSmall,
                 )
             }
