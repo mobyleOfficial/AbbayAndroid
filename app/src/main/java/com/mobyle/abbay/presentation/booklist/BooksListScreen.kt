@@ -385,6 +385,7 @@ fun BooksListScreen(player: MediaController) {
                                             id = book.id,
                                             progress = book.progress
                                         )
+                                        
                                         viewModel.selectBook(book)
 
                                         if (!player.isPlaying) {
