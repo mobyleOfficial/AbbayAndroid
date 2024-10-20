@@ -82,7 +82,9 @@ class BooksListViewModel @Inject constructor(
                     booksList[booksList.indexOf(it)] = it.copy(progress = progress)
                 }
 
-                is MultipleBooks -> {}
+                is MultipleBooks -> {
+                    booksList[booksList.indexOf(it)] = it.copy(progress = progress)
+                }
                 else -> {}
             }
         }
@@ -104,9 +106,8 @@ class BooksListViewModel @Inject constructor(
         val index = booksList.indexOfFirst { it.id == id }
 
         if (index != -1) {
-            val book = booksList[index]
 
-            val mappedBook = when (book) {
+            val mappedBook = when (val book = booksList[index]) {
                 is MultipleBooks -> {
                     book.copy(progress = progress)
                 }

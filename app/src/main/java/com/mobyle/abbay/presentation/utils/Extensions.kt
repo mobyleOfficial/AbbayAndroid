@@ -104,11 +104,17 @@ fun MediaController.playBook(
 
 @androidx.annotation.OptIn(UnstableApi::class)
 fun MediaController.playMultipleBooks(
+    currentPosition: Int,
     idList: List<String>,
     progress: Long,
     isPlaying: MutableStateFlow<Boolean>
 ) {
-    prepareMultipleBooks(idList, progress, isPlaying)
+    prepareMultipleBooks(
+        currentPosition = currentPosition,
+        idList = idList,
+        progress = progress,
+        isPlaying = isPlaying
+    )
     isPlaying.value = true
     playWhenReady = true
 }
@@ -134,6 +140,7 @@ fun MediaController.prepareBook(
 }
 
 fun MediaController.prepareMultipleBooks(
+    currentPosition: Int,
     idList: List<String>,
     progress: Long,
     isPlaying: MutableStateFlow<Boolean>,
@@ -152,7 +159,7 @@ fun MediaController.prepareMultipleBooks(
         mediaItem
     }
     addMediaItems(items)
-    seekTo(progress)
+    seekTo(currentPosition, progress)
     prepare()
 }
 

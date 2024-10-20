@@ -68,6 +68,7 @@ import com.mobyle.abbay.presentation.utils.musicCursor
 import com.mobyle.abbay.presentation.utils.playBook
 import com.mobyle.abbay.presentation.utils.playMultipleBooks
 import com.mobyle.abbay.presentation.utils.prepareBook
+import com.mobyle.abbay.presentation.utils.prepareMultipleBooks
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.BookFile
 import com.model.MultipleBooks
@@ -273,10 +274,12 @@ fun BooksListScreen(player: MediaController) {
     LaunchedEffectAndCollect(viewModel.isPlaying) {
         while (it == true) {
             selectedBook?.let {
-                viewModel.setCurrentProgress(
-                    id = it.id,
-                    progress = player.currentPosition
-                )
+                if (player.isPlaying) {
+                    viewModel.setCurrentProgress(
+                        id = it.id,
+                        progress = player.currentPosition
+                    )
+                }
             }
 
             delay(1000)
@@ -306,6 +309,7 @@ fun BooksListScreen(player: MediaController) {
                         playerIcon = playerIcon,
                         onPlayingChange = { isPlaying ->
                             viewModel.isPlaying.value = isPlaying
+
 
                             if (!isPlaying) {
                                 selectedBook?.let {
@@ -384,11 +388,20 @@ fun BooksListScreen(player: MediaController) {
                                         viewModel.selectBook(book)
 
                                         if (!player.isPlaying) {
-                                            player.prepareBook(
-                                                id,
-                                                book.progress,
-                                                viewModel.isPlaying
-                                            )
+                                            if (book is MultipleBooks) {
+                                                player.prepareMultipleBooks(
+                                                    currentPosition = book.currentBookPosition,
+                                                    idList = book.bookFileList.map { it.id },
+                                                    progress = book.progress,
+                                                    isPlaying = viewModel.isPlaying
+                                                )
+                                            } else {
+                                                player.prepareBook(
+                                                    id,
+                                                    book.progress,
+                                                    viewModel.isPlaying
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -450,9 +463,10 @@ fun BooksListScreen(player: MediaController) {
 
                                                         viewModel.selectBook(book)
                                                         player.playMultipleBooks(
-                                                            book.bookFileList.map { it.id },
-                                                            book.progress,
-                                                            viewModel.isPlaying
+                                                            currentPosition = book.currentBookPosition,
+                                                            idList = book.bookFileList.map { it.id },
+                                                            progress = book.progress,
+                                                            isPlaying = viewModel.isPlaying
                                                         )
                                                     }
 
