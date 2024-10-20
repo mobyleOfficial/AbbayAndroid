@@ -82,8 +82,11 @@ private const val LAST_SELECTED_BOOK_ID = "LAST_SELECTED_BOOK_ID"
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun BooksListScreen(player: MediaController) {
-    val viewModel: BooksListViewModel = hiltViewModel()
+fun BooksListScreen(
+    viewModel: BooksListViewModel = hiltViewModel(),
+    player: MediaController,
+    navigateToSettings: () -> Unit
+) {
     val context = LocalContext.current
     val density = LocalDensity.current
     val asyncScope = rememberCoroutineScope()
@@ -358,7 +361,7 @@ fun BooksListScreen(player: MediaController) {
                     openFolderSelector = {
                         openFolderSelector.launch(null)
                     },
-                    openSettings = {},
+                    openSettings = navigateToSettings,
                     openFileSelector = {
                         openFileSelector.launch(fileFilterList)
                     }
@@ -385,7 +388,7 @@ fun BooksListScreen(player: MediaController) {
                                             id = book.id,
                                             progress = book.progress
                                         )
-                                        
+
                                         viewModel.selectBook(book)
 
                                         if (!player.isPlaying) {
