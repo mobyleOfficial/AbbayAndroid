@@ -6,10 +6,12 @@ import kotlinx.serialization.Serializable
 
 @Entity
 @Serializable
-class BookFolderEntity(
+data class MultipleBooksEntity(
     @PrimaryKey var id: String,
+    var bookFileList: String,
     var name: String,
     var thumbnail: String?,
     val progress: Long,
-    var duration: Long
+    var duration: Long,
+    val currentBookPosition: Int = 0
 )

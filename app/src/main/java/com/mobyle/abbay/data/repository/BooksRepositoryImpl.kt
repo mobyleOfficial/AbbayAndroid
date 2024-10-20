@@ -5,7 +5,7 @@ import com.mobyle.abbay.data.mappers.toDomain
 import com.mobyle.abbay.data.mappers.toEntity
 import com.model.Book
 import com.model.BookFile
-import com.model.BookFolder
+import com.model.MultipleBooks
 import com.repository.BooksRepository
 import javax.inject.Inject
 
@@ -16,7 +16,7 @@ class BooksRepositoryImpl @Inject constructor(private val localDataSource: Books
             it.toDomain()
         }
 
-        val booksFolderList = localDataSource.getBookFolderList().map {
+        val booksFolderList = localDataSource.getMultipleBooksList().map {
             it.toDomain()
         }
 
@@ -24,10 +24,12 @@ class BooksRepositoryImpl @Inject constructor(private val localDataSource: Books
     }
 
     override suspend fun upsertBookList(booksList: List<Book>) {
-        val folderList = booksList.filterIsInstance<BookFolder>().map { it.toEntity() }
+        val multipleBooksList = booksList.filterIsInstance<MultipleBooks>().map { it.toEntity() }
         val bookFilesList = booksList.filterIsInstance<BookFile>().map { it.toEntity() }
+        //val bookFolderList = booksList.filterIsInstance<BookFolder>().map { it.toEntity() }
 
         localDataSource.addBookFileList(bookFilesList)
-        localDataSource.addBookFolderList(folderList)
+        localDataSource.addMultipleBooksList(multipleBooksList)
+      //  localDataSource.addBooksFolderList(bookFolderList)
     }
 }

@@ -18,10 +18,16 @@ import com.mobyle.abbay.presentation.common.widgets.BookThumbnail
 import com.mobyle.abbay.presentation.common.widgets.SVGIcon
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
-import com.model.BookFolder
+import com.model.MultipleBooks
 
 @Composable
-fun BookItem(book: Book, isSelected: Boolean, progress: String, onClick: () -> Unit) {
+fun BookItem(
+    book: Book,
+    isSelected: Boolean,
+    progress: String,
+    intermediaryProgress: Long,
+    currentMediaIndex: Int,
+    onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .padding(top = 8.dp)
@@ -43,7 +49,7 @@ fun BookItem(book: Book, isSelected: Boolean, progress: String, onClick: () -> U
                     modifier = Modifier.padding(8.dp)
                 )
                 Row {
-                    if (book is BookFolder) {
+                    if (book is MultipleBooks) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
@@ -53,8 +59,9 @@ fun BookItem(book: Book, isSelected: Boolean, progress: String, onClick: () -> U
                                 description = "Book Icon",
                                 modifier = Modifier.padding(start = 8.dp, end = 4.dp)
                             )
+
                             Text(
-                                "01/18",
+                                "$currentMediaIndex/${book.bookFileList.size - 1}",
                                 style = MaterialTheme.typography.titleSmall,
                             )
                         }
@@ -70,7 +77,7 @@ fun BookItem(book: Book, isSelected: Boolean, progress: String, onClick: () -> U
                         )
                         val currentProgress = if (isSelected) {
                             progress
-                        } else book.progress.toHHMMSS()
+                        } else intermediaryProgress.plus(book.progress).toHHMMSS()
 
                         Text(
                             "$currentProgress/${book.duration.toHHMMSS()}",
