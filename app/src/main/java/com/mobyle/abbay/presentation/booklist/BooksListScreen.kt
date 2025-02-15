@@ -125,6 +125,17 @@ fun BooksListScreen(
 
     }
 
+    LifecycleEventEffect(event = Lifecycle.Event.ON_CREATE) {
+        viewModel.shouldOpenPlayerInStartup()
+    }
+
+    LaunchedEffect(viewModel.shouldOpenPlayerInStartup) {
+        if(viewModel.shouldOpenPlayerInStartup) {
+            bottomSheetState.bottomSheetState.expand()
+            bottomSheetState.bottomSheetState.expand()
+        }
+    }
+
     val playerIcon = remember {
         val icon = if (player.isPlaying) {
             Icons.Default.Pause
@@ -286,6 +297,7 @@ fun BooksListScreen(
             delay(1000)
         }
     }
+
 
     LifecycleEventEffect(event = Lifecycle.Event.ON_PAUSE) {
         selectedBook?.let {
