@@ -43,6 +43,6 @@ class DataModule {
 
     @Provides
     fun provideSharedPrefs(context: Context): SharedPreferences {
-        return context.getSharedPreferences("Prefs", Context.MODE_PRIVATE)
+        return context.getSharedPreferences(KeyValueStore.KEY, Context.MODE_PRIVATE)
     }
 }

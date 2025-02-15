@@ -14,4 +14,8 @@ class KeyValueStore @Inject constructor(private val sharedPrefs: SharedPreferenc
             putBoolean(key.name, value)
         }
     }
+
+    companion object {
+        const val KEY = "Prefs"
+    }
 }
