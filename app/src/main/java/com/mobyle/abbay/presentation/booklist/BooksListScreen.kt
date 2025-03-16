@@ -32,26 +32,41 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.getString
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.media3.session.MediaController
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.BookListSuccess
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.GenericError
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.Loading
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.NoBookSelected
+import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.NoPermissionsGranted
 import com.mobyle.abbay.presentation.booklist.widgets.BookItem
 import com.mobyle.abbay.presentation.booklist.widgets.BookListTopBar
 import com.mobyle.abbay.presentation.booklist.widgets.MiniPlayer
@@ -75,15 +90,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
+import java.util.Date
 
 
 private const val LAST_SELECTED_BOOK_ID = "LAST_SELECTED_BOOK_ID"
+private const val AUTO_DENIAL_THRESHOLD = 300
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun BooksListScreen(
     viewModel: BooksListViewModel = hiltViewModel(),
     player: MediaController,
-    navigateToSettings: () -> Unit
+    navigateToSettings: () -> Unit,
+    openAppSettings: () -> Unit,
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current
@@ -99,6 +118,17 @@ fun BooksListScreen(
     val hasBookSelected by viewModel.hasBookSelected.collectAsState(false)
     var componentHeight by remember { mutableStateOf(0.dp) }
     val activity = LocalContext.current as Activity
+    val permissionRequestAttemptTime = remember { mutableLongStateOf(0) }
+    val permissionState = rememberMultiplePermissionsState(
+        permissions = viewModel.getPermissionsList(),
+        onPermissionsResult = { permissions ->
+            if (permissions.entries.all { it.value }) {
+                viewModel.getAudiobookList()
+            } else if (Date().time - permissionRequestAttemptTime.longValue < AUTO_DENIAL_THRESHOLD) {
+                openAppSettings()
+            }
+        }
+    )
 
     LaunchedEffectAndCollect(viewModel.booksIdList) {
         asyncScope.launch(Dispatchers.IO) {
@@ -130,7 +160,7 @@ fun BooksListScreen(
     }
 
     LaunchedEffect(viewModel.shouldOpenPlayerInStartup) {
-        if(viewModel.shouldOpenPlayerInStartup) {
+        if (viewModel.shouldOpenPlayerInStartup) {
             bottomSheetState.bottomSheetState.expand()
             bottomSheetState.bottomSheetState.expand()
         }
@@ -593,6 +623,55 @@ fun BooksListScreen(
                                 CircularProgressIndicator(
                                     modifier = Modifier.align(Alignment.Center)
                                 )
+                            }
+                        }
+
+                        is NoPermissionsGranted -> {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                Text(
+                                    stringResource(id = R.string.no_permission_error_title),
+                                    style = TextStyle(
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontFamily = FontFamily.Default,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center,
+                                        fontSize = 24.sp,
+                                    ),
+                                )
+
+                                AsyncImage(
+                                    contentScale = ContentScale.None,
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data(R.drawable.img_no_permissions)
+                                        .crossfade(true)
+                                        .build(),
+                                    contentDescription = "",
+                                    modifier = Modifier.graphicsLayer(
+                                        scaleX = 0.6f,
+                                        scaleY = 0.5f
+                                    )
+                                )
+                                Button(onClick = {
+                                    asyncScope.launch {
+                                        permissionRequestAttemptTime.longValue = Date().time
+                                        permissionState.launchMultiplePermissionRequest()
+                                    }
+                                }, modifier = Modifier.padding(bottom = 16.dp)) {
+                                    Text(
+                                        stringResource(id = R.string.no_permission_error_button_text),
+                                        style = TextStyle(
+                                            color = Color.White,
+                                            fontFamily = FontFamily.Default,
+                                            fontWeight = FontWeight.Medium,
+                                            textAlign = TextAlign.Center,
+                                            fontSize = 18.sp,
+                                        ),
+                                    )
+                                }
                             }
                         }
                     }

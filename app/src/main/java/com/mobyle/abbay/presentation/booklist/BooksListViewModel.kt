@@ -1,12 +1,14 @@
 package com.mobyle.abbay.presentation.booklist
 
+import android.Manifest
+import android.os.Build
 import com.mobyle.abbay.infra.common.BaseViewModel
+import com.mobyle.abbay.presentation.utils.permissions.CheckPermissionsProvider
 import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
 import com.usecase.GetBooksList
 import com.usecase.IsOpenPlayerInStartup
-import com.usecase.IsPlayWhenAppIsClosedEnabled
 import com.usecase.UpsertBookList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,9 +20,8 @@ import javax.inject.Inject
 class BooksListViewModel @Inject constructor(
     private val getBooksList: GetBooksList,
     private val upsertBookList: UpsertBookList,
+    private val checkPermissionsProvider: CheckPermissionsProvider,
     val isOpenPlayerInStartupUC: IsOpenPlayerInStartup,
-    isPlayWhenAppIsClosedEnabledUC: IsPlayWhenAppIsClosedEnabled,
-
 ) :
     BaseViewModel() {
     private val _uiState = MutableStateFlow<BooksListUiState>(BooksListUiState.Loading)
@@ -43,7 +44,17 @@ class BooksListViewModel @Inject constructor(
     var shouldOpenPlayerInStartup = false
 
     init {
-        getAudiobookList()
+        if (checkPermissionsProvider.areAllPermissionsGranted(getPermissionsList())) {
+            getAudiobookList()
+        } else {
+            _uiState.value = BooksListUiState.NoPermissionsGranted
+        }
+    }
+
+    fun getPermissionsList() = if (Build.VERSION.SDK_INT >= 33) {
+        PERMISSIONS_LIST
+    } else {
+        API_32_OR_LESS_PERMISSIONS_LIST
     }
 
     fun updateBookList(booksList: List<Book>) = launch {
@@ -150,7 +161,7 @@ class BooksListViewModel @Inject constructor(
         }
     }
 
-    private fun getAudiobookList() = launch {
+    fun getAudiobookList() = launch {
         val booksList = getBooksList.invoke()
         this.booksList.addAll(booksList)
 
@@ -178,5 +189,13 @@ class BooksListViewModel @Inject constructor(
         data object NoBookSelected : BooksListUiState()
         data object GenericError : BooksListUiState()
         data object Loading : BooksListUiState()
+
+        data object NoPermissionsGranted : BooksListUiState()
+    }
+
+    companion object {
+        val API_32_OR_LESS_PERMISSIONS_LIST = listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+        val PERMISSIONS_LIST = listOf(Manifest.permission.READ_MEDIA_AUDIO)
+
     }
 }

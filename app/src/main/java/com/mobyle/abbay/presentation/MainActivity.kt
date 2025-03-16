@@ -1,7 +1,6 @@
 package com.mobyle.abbay.presentation
 
 import android.content.ComponentName
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -25,7 +24,6 @@ import javax.inject.Inject
 
 /*
 * todo list:
-*  1. Handle Permissions properly;
 *  2. Show/change root folder;
 *  3. Handle bar in notification;
 *  4. Show all files in multibooks;
@@ -35,6 +33,7 @@ import javax.inject.Inject
 *  8. Add tabs;
 *  9. Handle deleted books;
 * 10. Change volume;
+* 11. Handle dark mode;
 * */
 @ExperimentalMaterialApi
 @ExperimentalPermissionsApi
