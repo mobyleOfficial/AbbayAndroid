@@ -5,6 +5,8 @@ import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
 import com.usecase.GetBooksList
+import com.usecase.IsOpenPlayerInStartup
+import com.usecase.IsPlayWhenAppIsClosedEnabled
 import com.usecase.UpsertBookList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +17,10 @@ import javax.inject.Inject
 @HiltViewModel
 class BooksListViewModel @Inject constructor(
     private val getBooksList: GetBooksList,
-    private val upsertBookList: UpsertBookList
+    private val upsertBookList: UpsertBookList,
+    val isOpenPlayerInStartupUC: IsOpenPlayerInStartup,
+    isPlayWhenAppIsClosedEnabledUC: IsPlayWhenAppIsClosedEnabled,
+
 ) :
     BaseViewModel() {
     private val _uiState = MutableStateFlow<BooksListUiState>(BooksListUiState.Loading)
@@ -34,6 +39,8 @@ class BooksListViewModel @Inject constructor(
     var hasBookSelected = _selectedBook.map { it != null }
 
     val booksIdList = MutableStateFlow<List<Book?>>(emptyList())
+
+    var shouldOpenPlayerInStartup = false
 
     init {
         getAudiobookList()
@@ -85,6 +92,7 @@ class BooksListViewModel @Inject constructor(
                 is MultipleBooks -> {
                     booksList[booksList.indexOf(it)] = it.copy(progress = progress)
                 }
+
                 else -> {}
             }
         }
@@ -157,6 +165,10 @@ class BooksListViewModel @Inject constructor(
 
     fun showLoading() {
         _uiState.value = BooksListUiState.Loading
+    }
+
+    fun shouldOpenPlayerInStartup() {
+        shouldOpenPlayerInStartup = isOpenPlayerInStartupUC()
     }
 
     sealed class BooksListUiState {

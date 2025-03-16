@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.BottomSheetScaffold
 import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -80,10 +79,12 @@ import java.io.File
 
 private const val LAST_SELECTED_BOOK_ID = "LAST_SELECTED_BOOK_ID"
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun BooksListScreen(player: MediaController) {
-    val viewModel: BooksListViewModel = hiltViewModel()
+fun BooksListScreen(
+    viewModel: BooksListViewModel = hiltViewModel(),
+    player: MediaController,
+    navigateToSettings: () -> Unit
+) {
     val context = LocalContext.current
     val density = LocalDensity.current
     val asyncScope = rememberCoroutineScope()
@@ -122,6 +123,17 @@ fun BooksListScreen(player: MediaController) {
             }
         }
 
+    }
+
+    LifecycleEventEffect(event = Lifecycle.Event.ON_CREATE) {
+        viewModel.shouldOpenPlayerInStartup()
+    }
+
+    LaunchedEffect(viewModel.shouldOpenPlayerInStartup) {
+        if(viewModel.shouldOpenPlayerInStartup) {
+            bottomSheetState.bottomSheetState.expand()
+            bottomSheetState.bottomSheetState.expand()
+        }
     }
 
     val playerIcon = remember {
@@ -286,6 +298,7 @@ fun BooksListScreen(player: MediaController) {
         }
     }
 
+
     LifecycleEventEffect(event = Lifecycle.Event.ON_PAUSE) {
         selectedBook?.let {
             viewModel.updateBookList(it.id, player.currentPosition)
@@ -358,7 +371,7 @@ fun BooksListScreen(player: MediaController) {
                     openFolderSelector = {
                         openFolderSelector.launch(null)
                     },
-                    openSettings = {},
+                    openSettings = navigateToSettings,
                     openFileSelector = {
                         openFileSelector.launch(fileFilterList)
                     }
@@ -385,7 +398,7 @@ fun BooksListScreen(player: MediaController) {
                                             id = book.id,
                                             progress = book.progress
                                         )
-                                        
+
                                         viewModel.selectBook(book)
 
                                         if (!player.isPlaying) {

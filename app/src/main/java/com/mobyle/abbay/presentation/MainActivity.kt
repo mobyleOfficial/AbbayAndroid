@@ -1,6 +1,7 @@
 package com.mobyle.abbay.presentation
 
 import android.content.ComponentName
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,19 +14,39 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.mobyle.abbay.infra.navigation.AbbayNavHost
 import com.mobyle.abbay.presentation.common.service.PlayerService
 import com.mobyle.abbay.presentation.common.theme.MyApplicationTheme
+import com.usecase.IsPlayWhenAppIsClosedEnabled
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+/*
+* todo list:
+*  1. Handle Permissions properly;
+*  2. Show/change root folder;
+*  3. Handle bar in notification;
+*  4. Show all files in multibooks;
+*  5. Change name/image of book;
+*  6. Clear all data;
+*  7. Add themes;
+*  8. Add tabs;
+*  9. Handle deleted books;
+* 10. Change volume;
+* */
 @ExperimentalMaterialApi
 @ExperimentalPermissionsApi
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject
+    lateinit var isPlayWhenAppIsClosedEnabled: IsPlayWhenAppIsClosedEnabled
+    private lateinit var controller: ListenableFuture<MediaController>
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val controller =
+        controller  =
             MediaController.Builder(
                 this,
                 SessionToken(this, ComponentName(this, PlayerService::class.java))
@@ -45,10 +66,20 @@ class MainActivity : ComponentActivity() {
                             player = controller.get(),
                             navController = navController
                         )
-                       // BooksListScreen(controller.get())
                     }
                 }
             }
         }, MoreExecutors.directExecutor())
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        if (!isPlayWhenAppIsClosedEnabled()) {
+            if(::controller.isInitialized) {
+                controller.get().stop()
+                controller.get().release()
+            }
+        }
     }
 }
