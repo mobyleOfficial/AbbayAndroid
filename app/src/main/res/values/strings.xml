@@ -6,4 +6,7 @@
     <string name="no_book_selected_primary_button_title">Add a file</string>
     <string name="no_book_selected_secondary_button_title">Add a folder</string>
     <string name="no_book_selected_or">Or</string>
+    <string name="no_permission_error_title">We need some permissions to access your books!</string>
+    <string name="no_permission_error_button_text">Grant Permissions</string>
+
 </resources>
