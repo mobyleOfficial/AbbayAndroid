@@ -23,6 +23,19 @@ import com.usecase.IsPlayWhenAppIsClosedEnabled
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+/*
+* todo list:
+*  1. Handle Permissions properly;
+*  2. Show/change root folder;
+*  3. Handle bar in notification;
+*  4. Show all files in multibooks;
+*  5. Change name/image of book;
+*  6. Clear all data;
+*  7. Add themes;
+*  8. Add tabs;
+*  9. Handle deleted books;
+* 10. Change volume;
+* */
 @ExperimentalMaterialApi
 @ExperimentalPermissionsApi
 @AndroidEntryPoint
