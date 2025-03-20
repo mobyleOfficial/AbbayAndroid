@@ -32,7 +32,6 @@ import javax.inject.Inject
 *  7. Add themes;
 *  8. Add tabs;
 *  9. Handle deleted books;
-* 10. Change volume;
 * 11. Handle dark mode;
 * */
 @ExperimentalMaterialApi

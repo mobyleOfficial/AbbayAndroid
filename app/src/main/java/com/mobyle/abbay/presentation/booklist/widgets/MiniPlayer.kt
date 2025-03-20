@@ -1,7 +1,10 @@
 package com.mobyle.abbay.presentation.booklist.widgets
 
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,11 +18,18 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
+import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeDown
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.VolumeDown
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -322,7 +332,8 @@ private fun MultipleFilePlayer(
             modifier = Modifier
                 .fillMaxWidth()
                 .layoutId("content")
-                .padding(horizontal = 28.dp),
+                .padding(horizontal = 28.dp)
+                .padding(bottom = 30.dp, top = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -381,7 +392,7 @@ private fun MultipleFilePlayer(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 IconButton(onClick = {
-                    if(book.currentBookPosition > 0) {
+                    if (book.currentBookPosition > 0) {
                         player.seekToPreviousMediaItem()
                         updateProgress(0L)
                         updateCurrentBookPosition(book.currentBookPosition - 1)
@@ -396,7 +407,7 @@ private fun MultipleFilePlayer(
                     playerIcon = playerIcon
                 )
                 IconButton(onClick = {
-                    if(book.currentBookPosition < book.bookFileList.size - 1) {
+                    if (book.currentBookPosition < book.bookFileList.size - 1) {
                         player.seekToNextMediaItem()
                         updateProgress(0L)
                         updateCurrentBookPosition(book.currentBookPosition + 1)
@@ -413,21 +424,118 @@ private fun MultipleFilePlayer(
                 .padding(8.dp)
                 .layoutId("thumbnail")
         ) {
-            AsyncImage(
-                contentScale = ContentScale.FillBounds,
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(book.thumbnail)
-                    .fallback(R.drawable.file_music)
-                    .error(R.drawable.file_music)
-                    .crossfade(true)
-                    .build(),
-                modifier = modifier.then(
-                    Modifier
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                // horizontalAlignment = Alignment.End
+            ) {
+                AsyncImage(
+                    contentScale = ContentScale.FillBounds,
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(book.thumbnail)
+                        .fallback(R.drawable.file_music)
+                        .error(R.drawable.file_music)
+                        .crossfade(true)
+                        .build(),
+                    modifier = modifier.then(
+                        Modifier
+                            .fillMaxSize()
+                            .clip(shape = RoundedCornerShape(percent = 10))
+                    ),
+                    contentDescription = ""
+                )
+
+                Box(
+                    modifier = Modifier
                         .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.2f))
+                        .clickable {
+                            playerIcon.value = if (player.isPlaying) {
+                                onPlayingChange(false)
+                                player.pause()
+                                Icons.Default.Pause
+                            } else {
+                                player.seekTo(progress)
+                                onPlayingChange(true)
+                                player.playWhenReady = true
+                                Icons.Default.PlayArrow
+                            }
+                        }
                         .clip(shape = RoundedCornerShape(percent = 10))
-                ),
-                contentDescription = ""
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                    ) {
+                        Log.d("HelpMe", player.isPlaying.toString())
+                        playerIcon.value = if (player.isPlaying) {
+                            Icons.Default.Pause
+                        } else {
+                            Icons.Default.PlayArrow
+                        }
+
+                        Icon(playerIcon.value, contentDescription = "", tint = Color.White)
+                    }
+                }
+            }
+
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .layoutId("topContent"),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            TopAppBar(
+                backgroundColor = MaterialTheme.colorScheme.surface,
+                title = {
+
+                },
+                navigationIcon = {
+                    IconButton(onClick = {
+
+                    }) {
+                        Icon(
+                            Icons.Default.ChevronLeft,
+                            contentDescription = "",
+                            tint = Color.White
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {
+                        // change speed
+                    }) {
+                        Icon(
+                            Icons.Default.Speed,
+                            contentDescription = "",
+                            tint = Color.White
+                        )
+                    }
+
+                    IconButton(onClick = {
+                        // Change volume
+                    }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.VolumeDown,
+                            contentDescription = "",
+                            tint = Color.White
+                        )
+                    }
+
+                    IconButton(onClick = {
+                        // Lock controllers
+                    }) {
+                        Icon(
+                            Icons.Default.Lock,
+                            contentDescription = "",
+                            tint = Color.White
+                        )
+                    }
+                }
             )
+
+            Text("Files", modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
         }
     }
 }
