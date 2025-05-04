@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.BottomSheetScaffoldState
 import androidx.compose.material.ExperimentalMaterialApi
@@ -29,6 +31,8 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -62,20 +66,16 @@ import androidx.media3.session.MediaController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.mobyle.abbay.R
+import com.mobyle.abbay.presentation.booklist.widgets.models.BookSpeed
 import com.mobyle.abbay.presentation.utils.currentFraction
 import com.mobyle.abbay.presentation.utils.intermediateProgress
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
+import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import kotlinx.coroutines.launch
-import com.mobyle.abbay.presentation.booklist.widgets.models.SpeedModel
 
 @OptIn(
     ExperimentalMaterialApi::class, ExperimentalMotionApi::class,
@@ -588,14 +588,14 @@ private fun BooksTopBar(
     onSpeedChange: (Float) -> Unit,
 ) {
     val speedOptions = listOf(
-        SpeedModel.Half,
-        SpeedModel.Normal,
-        SpeedModel.OnePointTwoFive,
-        SpeedModel.OnePointFive,
-        SpeedModel.Double
+        BookSpeed.Half,
+        BookSpeed.Normal,
+        BookSpeed.OnePointTwoFive,
+        BookSpeed.OnePointFive,
+        BookSpeed.Double
     )
     val speedMenuExpanded = remember { mutableStateOf(false) }
-    val currentSpeed = remember { mutableStateOf<SpeedModel>(SpeedModel.Normal) }
+    val currentSpeed = remember { mutableStateOf<BookSpeed>(BookSpeed.Normal) }
 
     TopAppBar(
         backgroundColor = MaterialTheme.colorScheme.surface,

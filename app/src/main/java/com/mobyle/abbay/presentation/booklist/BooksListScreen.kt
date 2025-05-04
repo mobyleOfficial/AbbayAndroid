@@ -1,13 +1,8 @@
 package com.mobyle.abbay.presentation.booklist
 
 import android.app.Activity
-import android.content.ContentResolver
 import android.content.Context
 import android.media.MediaMetadataRetriever
-import android.net.Uri
-import android.os.Environment.getExternalStorageDirectory
-import android.provider.DocumentsContract
-import android.provider.MediaStore
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -70,11 +65,8 @@ import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiStat
 import com.mobyle.abbay.presentation.booklist.widgets.BookItem
 import com.mobyle.abbay.presentation.booklist.widgets.BookListTopBar
 import com.mobyle.abbay.presentation.booklist.widgets.MiniPlayer
-import com.mobyle.abbay.presentation.common.mappers.getThumbnail
 import com.mobyle.abbay.presentation.common.mappers.toBook
-import com.mobyle.abbay.presentation.common.mappers.toMultipleBooks
 import com.mobyle.abbay.presentation.utils.LaunchedEffectAndCollect
-import com.mobyle.abbay.presentation.utils.getDuration
 import com.mobyle.abbay.presentation.utils.getId
 import com.mobyle.abbay.presentation.utils.getTitle
 import com.mobyle.abbay.presentation.utils.intermediateProgress
@@ -89,7 +81,6 @@ import com.model.MultipleBooks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.File
 import java.util.Date
 
 
