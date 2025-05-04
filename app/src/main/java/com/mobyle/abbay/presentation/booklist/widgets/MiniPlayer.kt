@@ -214,6 +214,7 @@ private fun SingleFilePlayer(
             modifier = Modifier
                 .fillMaxWidth()
                 .layoutId("content")
+                .padding(horizontal = 28.dp)
                 .padding(bottom = 30.dp, top = 16.dp),
         )
 
@@ -315,9 +316,7 @@ private fun MultipleFilePlayer(
     LaunchedEffect(showChapters.value) {
         onDisableGesture(showChapters.value)
     }
-
-
-
+    
     LaunchedEffect(swipeProgress) {
         if (swipeProgress < 1f) {
             showChapters.value = false
@@ -539,7 +538,10 @@ private fun BooksTopBar(
         },
         actions = {
             IconButton(onClick = { speedMenuExpanded.value = true }) {
-                Row {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
                     Text(
                         text = currentSpeed.value.text,
                         color = Color.White
