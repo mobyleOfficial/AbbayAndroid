@@ -27,6 +27,12 @@ import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Forward10
+import androidx.compose.material.icons.filled.Forward30
+import androidx.compose.material.icons.filled.Replay10
+import androidx.compose.material.icons.filled.Replay30
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -69,8 +75,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 @OptIn(
-    ExperimentalMaterialApi::class, ExperimentalMotionApi::class,
-    ExperimentalFoundationApi::class
+    ExperimentalMaterialApi::class, ExperimentalMotionApi::class, ExperimentalFoundationApi::class
 )
 @Composable
 fun MiniPlayer(
@@ -175,18 +180,14 @@ private fun SingleFilePlayer(
     val motionProgress = max(min(swipeProgress, 1f), 0f)
     val context = LocalContext.current
     val motionSceneContent = remember {
-        context.resources
-            .openRawResource(R.raw.motion_scene)
-            .readBytes()
-            .decodeToString()
+        context.resources.openRawResource(R.raw.motion_scene).readBytes().decodeToString()
     }
     val scope = rememberCoroutineScope()
 
     MotionLayout(
         motionScene = MotionScene(content = motionSceneContent),
         progress = motionProgress,
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
         MiniPlayerContent(
             player = player,
@@ -232,40 +233,28 @@ private fun SingleFilePlayer(
                 .fillMaxWidth()
                 .layoutId(LayoutId.TOP_CONTENT.id),
         ) {
-            BooksTopBar(
-                book = book,
-                isScreenLocked = isScreenLocked,
-                onCollapseMiniPlayer = {
-                    scope.launch {
-                        scaffoldState.bottomSheetState.collapse()
-                    }
-                },
-                onSpeedChange = {
-                    player.playbackParameters = player.playbackParameters.withSpeed(it)
-                    updateBookSpeed(it)
-                },
-                onLockToggle = { onLockScreen(it) }
-            )
+            BooksTopBar(book = book, isScreenLocked = isScreenLocked, onCollapseMiniPlayer = {
+                scope.launch {
+                    scaffoldState.bottomSheetState.collapse()
+                }
+            }, onSpeedChange = {
+                player.playbackParameters = player.playbackParameters.withSpeed(it)
+                updateBookSpeed(it)
+            }, onLockToggle = { onLockScreen(it) })
         }
 
         Box(
-            modifier = Modifier
-                .layoutId(LayoutId.LOCK_OVERLAY.id)
+            modifier = Modifier.layoutId(LayoutId.LOCK_OVERLAY.id)
         ) {
             if (isScreenLocked) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.4f))
-                        .combinedClickable(
-                            onClick = {
-                                showScreenLockedAlert()
-                            },
-                            onLongClick = {
-                                unlockScreen()
-                            }
-                        )
-                )
+                Box(modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.4f))
+                    .combinedClickable(onClick = {
+                        showScreenLockedAlert()
+                    }, onLongClick = {
+                        unlockScreen()
+                    }))
             }
         }
     }
@@ -296,15 +285,13 @@ private fun MultipleFilePlayer(
     val motionProgress = max(min(swipeProgress, 1f), 0f)
     val context = LocalContext.current
     val motionSceneContent = remember {
-        context.resources
-            .openRawResource(R.raw.motion_scene)
-            .readBytes()
-            .decodeToString()
+        context.resources.openRawResource(R.raw.motion_scene).readBytes().decodeToString()
     }
     val scope = rememberCoroutineScope()
     val showChapters = remember { mutableStateOf(false) }
     val files = book.bookFileList
     val currentIndex = book.currentBookPosition
+    val duration = book.bookFileList[book.currentBookPosition].duration
 
     LaunchedEffect(showChapters.value) {
         onDisableGesture(showChapters.value)
@@ -319,8 +306,7 @@ private fun MultipleFilePlayer(
     MotionLayout(
         motionScene = MotionScene(content = motionSceneContent),
         progress = motionProgress,
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
         MiniPlayerContent(
             player = player,
@@ -334,6 +320,7 @@ private fun MultipleFilePlayer(
         PlayerControls(
             player = player,
             book = book,
+            receivedDuration = duration,
             onPlayingChange = onPlayingChange,
             progress = progress,
             playerIcon = playerIcon,
@@ -374,15 +361,12 @@ private fun MultipleFilePlayer(
                 }
 
                 AnimatedVisibility(
-                    visible = swipeProgress == 1f,
-                    modifier = Modifier.padding(top = 8.dp)
+                    visible = swipeProgress == 1f, modifier = Modifier.padding(top = 8.dp)
                 ) {
                     BookFileItem(
-                        file = files.getOrNull(currentIndex),
-                        currentIndex = currentIndex,
-                        onClick = {
+                        file = files.getOrNull(currentIndex), onClick = {
                             showChapters.value = !showChapters.value
-                        }
+                        }, isExpanded = showChapters.value
                     )
                 }
 
@@ -406,40 +390,28 @@ private fun MultipleFilePlayer(
                 .fillMaxWidth()
                 .layoutId(LayoutId.TOP_CONTENT.id),
         ) {
-            BooksTopBar(
-                book = book,
-                isScreenLocked = isScreenLocked,
-                onCollapseMiniPlayer = {
-                    scope.launch {
-                        scaffoldState.bottomSheetState.collapse()
-                    }
-                },
-                onSpeedChange = {
-                    player.playbackParameters = player.playbackParameters.withSpeed(it)
-                    updateBookSpeed(it)
-                },
-                onLockToggle = { onLockScreen(it) }
-            )
+            BooksTopBar(book = book, isScreenLocked = isScreenLocked, onCollapseMiniPlayer = {
+                scope.launch {
+                    scaffoldState.bottomSheetState.collapse()
+                }
+            }, onSpeedChange = {
+                player.playbackParameters = player.playbackParameters.withSpeed(it)
+                updateBookSpeed(it)
+            }, onLockToggle = { onLockScreen(it) })
         }
 
         Box(
-            modifier = Modifier
-                .layoutId(LayoutId.LOCK_OVERLAY.id)
+            modifier = Modifier.layoutId(LayoutId.LOCK_OVERLAY.id)
         ) {
             if (isScreenLocked) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.4f))
-                        .combinedClickable(
-                            onClick = {
-                                showScreenLockedAlert()
-                            },
-                            onLongClick = {
-                                unlockScreen()
-                            }
-                        )
-                )
+                Box(modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.4f))
+                    .combinedClickable(onClick = {
+                        showScreenLockedAlert()
+                    }, onLongClick = {
+                        unlockScreen()
+                    }))
             }
         }
     }
@@ -447,16 +419,14 @@ private fun MultipleFilePlayer(
 
 @Composable
 private fun BookFileItem(
-    file: BookFile?,
-    currentIndex: Int,
-    onClick: () -> Unit,
+    file: BookFile?, onClick: () -> Unit, isExpanded: Boolean
 ) {
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
     ) {
         Text(
             text = file?.fileName ?: "Unknown File",
@@ -464,10 +434,11 @@ private fun BookFileItem(
             color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.8f),
             maxLines = 1
         )
-        Text(
-            text = file?.duration?.toHHMMSS() ?: "",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.6f)
+        Spacer(modifier = Modifier.width(8.dp))
+        Icon(
+            imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+            contentDescription = if (isExpanded) "Hide chapters" else "Show chapters",
+            tint = Color.White
         )
     }
 }
@@ -485,34 +456,28 @@ private fun BookFilesList(
     }
 
     LazyColumn(
-        state = listState,
-        modifier = Modifier
+        state = listState, modifier = Modifier
             .fillMaxWidth()
             .heightIn(max = 220.dp)
     ) {
         itemsIndexed(files) { index, file ->
             val isSelected = index == currentIndex
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onClick(index) }
-                    .background(
-                        if (isSelected)
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                        else
-                            Color.Transparent
-                    )
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onClick(index) }
+                .background(
+                    if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                    else Color.Transparent
+                )
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
                         .size(28.dp)
                         .background(
                             if (isSelected) MaterialTheme.colorScheme.tertiary else Color.Transparent,
                             shape = RoundedCornerShape(14.dp)
-                        ),
-                    contentAlignment = Alignment.Center
+                        ), contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "${index + 1}",
@@ -587,71 +552,56 @@ private fun BooksTopBar(
         onSpeedChange(currentSpeed.value.speed)
     }
 
-    TopAppBar(
-        backgroundColor = MaterialTheme.colorScheme.surface,
-        title = {
+    TopAppBar(backgroundColor = MaterialTheme.colorScheme.surface, title = {
 
-        },
-        navigationIcon = {
-            IconButton(onClick = onCollapseMiniPlayer) {
-                Icon(
-                    Icons.Default.ChevronLeft,
-                    contentDescription = "",
-                    tint = Color.White
-                )
-            }
-        },
-        actions = {
-            IconButton(onClick = { speedMenuExpanded.value = true }) {
-                Row(
-                    verticalAlignment = Alignment.Bottom,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = currentSpeed.value.text,
-                        color = Color.White
-                    )
-                    Icon(
-                        Icons.Default.Speed,
-                        contentDescription = "Change speed",
-                        tint = Color.White
-                    )
-                }
-            }
-
-            DropdownMenu(
-                expanded = speedMenuExpanded.value,
-                onDismissRequest = { speedMenuExpanded.value = false }
+    }, navigationIcon = {
+        IconButton(onClick = onCollapseMiniPlayer) {
+            Icon(
+                Icons.Default.ChevronLeft, contentDescription = "", tint = Color.White
+            )
+        }
+    }, actions = {
+        IconButton(onClick = { speedMenuExpanded.value = true }) {
+            Row(
+                verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.Center
             ) {
-                speedOptions.forEach { speedModel ->
-                    DropdownMenuItem(onClick = {
-                        currentSpeed.value = speedModel
-                        speedMenuExpanded.value = false
-                        onSpeedChange(speedModel.speed)
-                    }, text = {
-                        Text(
-                            text = speedModel.text,
-                            color = if (currentSpeed.value == speedModel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
-                    })
-                }
-            }
-
-            IconButton(onClick = {
-                onLockToggle(!isScreenLocked)
-            }) {
+                Text(
+                    text = currentSpeed.value.text, color = Color.White
+                )
                 Icon(
-                    if (isScreenLocked) {
-                        Icons.Default.LockOpen
-                    } else {
-                        Icons.Default.Lock
-                    },
-                    contentDescription = "",
-                    tint = Color.White
+                    Icons.Default.Speed, contentDescription = "Change speed", tint = Color.White
                 )
             }
         }
-    )
+
+        DropdownMenu(expanded = speedMenuExpanded.value,
+            onDismissRequest = { speedMenuExpanded.value = false }) {
+            speedOptions.forEach { speedModel ->
+                DropdownMenuItem(onClick = {
+                    currentSpeed.value = speedModel
+                    speedMenuExpanded.value = false
+                    onSpeedChange(speedModel.speed)
+                }, text = {
+                    Text(
+                        text = speedModel.text,
+                        color = if (currentSpeed.value == speedModel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                    )
+                })
+            }
+        }
+
+        IconButton(onClick = {
+            onLockToggle(!isScreenLocked)
+        }) {
+            Icon(
+                if (isScreenLocked) {
+                    Icons.Default.LockOpen
+                } else {
+                    Icons.Default.Lock
+                }, contentDescription = "", tint = Color.White
+            )
+        }
+    })
 }
 
 @ExperimentalFoundationApi
@@ -673,21 +623,19 @@ private fun MiniPlayerContent(
         ),
     ) {
         val intermediaryProgress = if (book is MultipleBooks) {
-            book.bookFileList
-                .intermediateProgress(book.currentBookPosition)
+            book.bookFileList.intermediateProgress(book.currentBookPosition)
         } else {
             0L
         }
 
         Column(
-            modifier = Modifier
-                .weight(1f)
+            modifier = Modifier.weight(1f)
         ) {
             Text(
-                book.name, style = MaterialTheme.typography.titleMedium,
+                book.name,
+                style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
-                modifier = Modifier
-                    .basicMarquee()
+                modifier = Modifier.basicMarquee()
             )
             Row {
                 Text(
@@ -717,12 +665,8 @@ private fun BookImage(
 ) {
     AsyncImage(
         contentScale = ContentScale.FillBounds,
-        model = ImageRequest.Builder(LocalContext.current)
-            .data(book.thumbnail)
-            .fallback(R.drawable.file_music)
-            .error(R.drawable.file_music)
-            .crossfade(true)
-            .build(),
+        model = ImageRequest.Builder(LocalContext.current).data(book.thumbnail)
+            .fallback(R.drawable.file_music).error(R.drawable.file_music).crossfade(true).build(),
         modifier = modifier.then(
             Modifier
                 .fillMaxSize()
@@ -731,27 +675,24 @@ private fun BookImage(
         contentDescription = ""
     )
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.2f))
-            .clickable {
-                playerIcon.value = if (player.isPlaying) {
-                    onPlayingChange(false)
-                    player.pause()
-                    Icons.Default.Pause
-                } else {
-                    player.seekTo(progress)
-                    onPlayingChange(true)
-                    player.playWhenReady = true
-                    Icons.Default.PlayArrow
-                }
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .background(Color.Black.copy(alpha = 0.2f))
+        .clickable {
+            playerIcon.value = if (player.isPlaying) {
+                onPlayingChange(false)
+                player.pause()
+                Icons.Default.Pause
+            } else {
+                player.seekTo(progress)
+                onPlayingChange(true)
+                player.playWhenReady = true
+                Icons.Default.PlayArrow
             }
-            .clip(shape = RoundedCornerShape(percent = 10))
-    ) {
+        }
+        .clip(shape = RoundedCornerShape(percent = 10))) {
         Box(
-            modifier = Modifier
-                .align(Alignment.Center)
+            modifier = Modifier.align(Alignment.Center)
         ) {
             playerIcon.value = if (player.isPlaying) {
                 Icons.Default.Pause
@@ -768,22 +709,22 @@ private fun BookImage(
 private fun PlayerControls(
     player: MediaController,
     book: Book,
-    onPlayingChange: (Boolean) -> Unit,
+    receivedDuration: Long? = null,
     progress: Long,
     playerIcon: MutableState<ImageVector>,
+    onPlayingChange: (Boolean) -> Unit,
     updateProgress: (Long) -> Unit,
     modifier: Modifier
 ) {
     var slideValue by remember { mutableFloatStateOf(0f) }
-
+    val duration = receivedDuration ?: book.duration
     fun onSliderValueChange(percentage: Float) {
         slideValue = percentage
-        updateProgress((book.duration * percentage).toLong())
+        updateProgress((duration * percentage).toLong())
     }
 
     Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             book.name,
@@ -803,45 +744,46 @@ private fun PlayerControls(
         Column(
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Slider(
-                value = progress.toFloat() / book.duration,
-                onValueChange = { percentage ->
-                    onSliderValueChange(percentage)
-                },
-                onValueChangeFinished = {
-                    val newPosition = (book.duration * slideValue).toLong()
-                    player.seekTo(newPosition)
-                    updateProgress(newPosition)
-                },
-                colors = SliderDefaults.colors(
-                    thumbColor = MaterialTheme.colorScheme.tertiary,
-                    activeTrackColor = MaterialTheme.colorScheme.tertiary
-                ),
-                modifier = Modifier.fillMaxWidth()
+            Slider(value = progress.toFloat() / duration, onValueChange = { percentage ->
+                onSliderValueChange(percentage)
+            }, onValueChangeFinished = {
+                val newPosition = (duration * slideValue).toLong()
+                player.seekTo(newPosition)
+                updateProgress(newPosition)
+            }, colors = SliderDefaults.colors(
+                thumbColor = MaterialTheme.colorScheme.tertiary,
+                activeTrackColor = MaterialTheme.colorScheme.tertiary
+            ), modifier = Modifier.fillMaxWidth()
             )
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    progress.toHHMMSS(),
-                    style = MaterialTheme.typography.titleSmall
+                    progress.toHHMMSS(), style = MaterialTheme.typography.titleSmall
                 )
                 Text(
-                    book.duration.toHHMMSS(),
-                    style = MaterialTheme.typography.titleSmall
+                    duration.toHHMMSS(), style = MaterialTheme.typography.titleSmall
                 )
             }
         }
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            IconButton(onClick = {}) {
-                Icon(Icons.Default.FastRewind, contentDescription = "", tint = Color.White)
+            IconButton(onClick = {
+                val newPosition = (progress - 30_000L).coerceAtLeast(0L)
+                player.seekTo(newPosition)
+                updateProgress(newPosition)
+            }) {
+                Icon(Icons.Default.Replay30, contentDescription = "", tint = Color.White)
+            }
+            IconButton(onClick = {
+                val forwardTo = (progress - 10_000L).coerceAtMost(duration)
+                player.seekTo(forwardTo)
+                updateProgress(forwardTo)
+            }) {
+                Icon(Icons.Default.Replay10, contentDescription = "", tint = Color.White)
             }
             PlayerController(
                 player = player,
@@ -849,8 +791,19 @@ private fun PlayerControls(
                 position = progress,
                 playerIcon = playerIcon
             )
-            IconButton(onClick = {}) {
-                Icon(Icons.Default.FastForward, contentDescription = "", tint = Color.White)
+            IconButton(onClick = {
+                val forwardTo = (progress + 10_000L).coerceAtMost(duration)
+                player.seekTo(forwardTo)
+                updateProgress(forwardTo)
+            }) {
+                Icon(Icons.Default.Forward10, contentDescription = "", tint = Color.White)
+            }
+            IconButton(onClick = {
+                val forwardTo = (progress + 30_000L).coerceAtMost(duration)
+                player.seekTo(forwardTo)
+                updateProgress(forwardTo)
+            }) {
+                Icon(Icons.Default.Forward30, contentDescription = "", tint = Color.White)
             }
         }
     }
@@ -860,55 +813,47 @@ private fun PlayerControls(
 private fun ScreenLockedAlert(
     onDismissRequest: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismissRequest,
-        title = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Lock,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(end = 8.dp)
-                )
-                Text(
-                    "Screen Locked",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        },
-        text = {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    "Long press anywhere on the screen to unlock.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-                Text(
-                    "This prevents accidental touches while listening.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    textAlign = TextAlign.Center
-                )
-            }
-        },
-        confirmButton = {
-            // No confirm button, unlock is by long press
-        },
-        dismissButton = {
+    AlertDialog(onDismissRequest = onDismissRequest, title = {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Lock,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(end = 8.dp)
+            )
             Text(
-                "Dismiss",
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .clickable { onDismissRequest() }
-                    .padding(8.dp)
+                "Screen Locked",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary
             )
         }
-    )
+    }, text = {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                "Long press anywhere on the screen to unlock.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+            Text(
+                "This prevents accidental touches while listening.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                textAlign = TextAlign.Center
+            )
+        }
+    }, confirmButton = {
+        // No confirm button, unlock is by long press
+    }, dismissButton = {
+        Text("Dismiss",
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .clickable { onDismissRequest() }
+                .padding(8.dp))
+    })
 }
