@@ -119,6 +119,9 @@ fun BooksListScreen(
     var componentHeight by remember { mutableStateOf(0.dp) }
     val activity = LocalContext.current as Activity
     val permissionRequestAttemptTime = remember { mutableLongStateOf(0) }
+    val isGestureDisabled = remember {
+        mutableStateOf(true)
+    }
     val permissionState = rememberMultiplePermissionsState(
         permissions = viewModel.getPermissionsList(),
         onPermissionsResult = { permissions ->
@@ -379,6 +382,9 @@ fun BooksListScreen(
                                 )
                             }
                         },
+                        isGestureDisabled = {
+                            isGestureDisabled.value = !it
+                        },
                         modifier = Modifier
                             .onGloballyPositioned {
                                 componentHeight = with(density) {
@@ -389,6 +395,7 @@ fun BooksListScreen(
                 }
             }
         },
+        sheetGesturesEnabled = isGestureDisabled.value,
         sheetPeekHeight = if (hasBookSelected) 72.dp else 0.dp,
     ) {
         Box(

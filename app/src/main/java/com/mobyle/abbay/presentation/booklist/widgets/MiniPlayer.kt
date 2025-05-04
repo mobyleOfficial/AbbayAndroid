@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.BottomSheetScaffoldState
@@ -34,10 +35,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,6 +72,10 @@ import com.model.BookFile
 import com.model.MultipleBooks
 import kotlin.math.max
 import kotlin.math.min
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.BottomSheetState
+import kotlinx.coroutines.launch
 
 @OptIn(
     ExperimentalMaterialApi::class, ExperimentalMotionApi::class,
@@ -83,6 +91,7 @@ fun MiniPlayer(
     playerIcon: MutableState<ImageVector>,
     updateCurrentBookPosition: (Int) -> Unit,
     updateProgress: (Long) -> Unit,
+    isGestureDisabled: (Boolean) -> Unit,
     modifier: Modifier
 ) {
     if (book is BookFile) {
@@ -106,6 +115,7 @@ fun MiniPlayer(
             playerIcon = playerIcon,
             updateProgress = updateProgress,
             updateCurrentBookPosition = updateCurrentBookPosition,
+            isGestureDisabled = isGestureDisabled,
             modifier = modifier
         )
     }
@@ -294,6 +304,7 @@ private fun MultipleFilePlayer(
     playerIcon: MutableState<ImageVector>,
     updateCurrentBookPosition: (Int) -> Unit,
     updateProgress: (Long) -> Unit,
+    isGestureDisabled: (Boolean) -> Unit,
     modifier: Modifier
 ) {
     val duration = book.bookFileList[book.currentBookPosition].duration
@@ -311,6 +322,15 @@ private fun MultipleFilePlayer(
     fun onSliderValueChange(percentage: Float) {
         slideValue = percentage
         updateProgress((duration * percentage).toLong())
+    }
+
+    val showChapters = remember { mutableStateOf(false) }
+    val chapters = book.bookFileList
+    val currentIndex = book.currentBookPosition
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(showChapters.value) {
+        isGestureDisabled(showChapters.value)
     }
 
     MotionLayout(
@@ -424,60 +444,113 @@ private fun MultipleFilePlayer(
                 .padding(8.dp)
                 .layoutId("thumbnail")
         ) {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                // horizontalAlignment = Alignment.End
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopCenter)
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f))
+                    .clip(RoundedCornerShape(8.dp))
             ) {
-                AsyncImage(
-                    contentScale = ContentScale.FillBounds,
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(book.thumbnail)
-                        .fallback(R.drawable.file_music)
-                        .error(R.drawable.file_music)
-                        .crossfade(true)
-                        .build(),
-                    modifier = modifier.then(
-                        Modifier
-                            .fillMaxSize()
-                            .clip(shape = RoundedCornerShape(percent = 10))
-                    ),
-                    contentDescription = ""
-                )
-
-                Box(
+                Text(
+                    text = chapters.getOrNull(currentIndex)?.name ?: "Unknown Chapter",
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.2f))
-                        .clickable {
-                            playerIcon.value = if (player.isPlaying) {
-                                onPlayingChange(false)
-                                player.pause()
-                                Icons.Default.Pause
-                            } else {
-                                player.seekTo(progress)
-                                onPlayingChange(true)
-                                player.playWhenReady = true
-                                Icons.Default.PlayArrow
+                        .fillMaxWidth()
+                        .clickable { showChapters.value = !showChapters.value }
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                )
+                if (showChapters.value) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 180.dp)
+                    ) {
+                        itemsIndexed(chapters) { index, chapter ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        showChapters.value = false
+                                        updateCurrentBookPosition(index)
+                                        player.seekTo(index, 0L)
+                                        updateProgress(0L)
+                                    }
+                                    .background(
+                                        if (index == currentIndex)
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                        else
+                                            Color.Transparent
+                                    )
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = chapter.name,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    text = chapter.duration.toHHMMSS(),
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
                             }
                         }
-                        .clip(shape = RoundedCornerShape(percent = 10))
+                    }
+                }
+
+                Box(
+                    modifier = Modifier.weight(1f),
                 ) {
+                    AsyncImage(
+                        contentScale = ContentScale.FillBounds,
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(book.thumbnail)
+                            .fallback(R.drawable.file_music)
+                            .error(R.drawable.file_music)
+                            .crossfade(true)
+                            .build(),
+                        modifier = modifier.then(
+                            Modifier
+                                .fillMaxSize()
+                                .clip(shape = RoundedCornerShape(percent = 10))
+                        ),
+                        contentDescription = ""
+                    )
+
                     Box(
                         modifier = Modifier
-                            .align(Alignment.Center)
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.2f))
+                            .clickable {
+                                playerIcon.value = if (player.isPlaying) {
+                                    onPlayingChange(false)
+                                    player.pause()
+                                    Icons.Default.Pause
+                                } else {
+                                    player.seekTo(progress)
+                                    onPlayingChange(true)
+                                    player.playWhenReady = true
+                                    Icons.Default.PlayArrow
+                                }
+                            }
+                            .clip(shape = RoundedCornerShape(percent = 10))
                     ) {
-                        Log.d("HelpMe", player.isPlaying.toString())
-                        playerIcon.value = if (player.isPlaying) {
-                            Icons.Default.Pause
-                        } else {
-                            Icons.Default.PlayArrow
-                        }
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                        ) {
+                            playerIcon.value = if (player.isPlaying) {
+                                Icons.Default.Pause
+                            } else {
+                                Icons.Default.PlayArrow
+                            }
 
-                        Icon(playerIcon.value, contentDescription = "", tint = Color.White)
+                            Icon(playerIcon.value, contentDescription = "", tint = Color.White)
+                        }
                     }
                 }
             }
-
         }
 
         Column(
@@ -486,58 +559,61 @@ private fun MultipleFilePlayer(
                 .layoutId("topContent"),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            TopAppBar(
-                backgroundColor = MaterialTheme.colorScheme.surface,
-                title = {
-
-                },
-                navigationIcon = {
-                    IconButton(onClick = {
-
-                    }) {
-                        Icon(
-                            Icons.Default.ChevronLeft,
-                            contentDescription = "",
-                            tint = Color.White
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {
-                        // change speed
-                    }) {
-                        Icon(
-                            Icons.Default.Speed,
-                            contentDescription = "",
-                            tint = Color.White
-                        )
-                    }
-
-                    IconButton(onClick = {
-                        // Change volume
-                    }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.VolumeDown,
-                            contentDescription = "",
-                            tint = Color.White
-                        )
-                    }
-
-                    IconButton(onClick = {
-                        // Lock controllers
-                    }) {
-                        Icon(
-                            Icons.Default.Lock,
-                            contentDescription = "",
-                            tint = Color.White
-                        )
-                    }
-                }
-            )
-
-            Text("Files", modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+            BooksTopBar()
         }
     }
+}
+
+@Composable
+private fun BooksTopBar() {
+    TopAppBar(
+        backgroundColor = MaterialTheme.colorScheme.surface,
+        title = {
+
+        },
+        navigationIcon = {
+            IconButton(onClick = {
+
+            }) {
+                Icon(
+                    Icons.Default.ChevronLeft,
+                    contentDescription = "",
+                    tint = Color.White
+                )
+            }
+        },
+        actions = {
+            IconButton(onClick = {
+                // change speed
+            }) {
+                Icon(
+                    Icons.Default.Speed,
+                    contentDescription = "",
+                    tint = Color.White
+                )
+            }
+
+            IconButton(onClick = {
+                // Change volume
+            }) {
+                Icon(
+                    Icons.AutoMirrored.Filled.VolumeDown,
+                    contentDescription = "",
+                    tint = Color.White
+                )
+            }
+
+            IconButton(onClick = {
+                // Lock controllers
+            }) {
+                Icon(
+                    Icons.Default.Lock,
+                    contentDescription = "",
+                    tint = Color.White
+                )
+            }
+        }
+    )
 }
 
 @ExperimentalFoundationApi
