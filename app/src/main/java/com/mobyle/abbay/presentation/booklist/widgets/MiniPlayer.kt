@@ -78,6 +78,7 @@ import com.model.MultipleBooks
 import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
+import com.mobyle.abbay.presentation.booklist.widgets.models.LayoutId
 
 @OptIn(
     ExperimentalMaterialApi::class, ExperimentalMotionApi::class,
@@ -213,7 +214,7 @@ private fun SingleFilePlayer(
             updateProgress = updateProgress,
             modifier = Modifier
                 .fillMaxWidth()
-                .layoutId("content")
+                .layoutId(LayoutId.CONTENT.id)
                 .padding(horizontal = 28.dp)
                 .padding(bottom = 30.dp, top = 16.dp),
         )
@@ -221,7 +222,7 @@ private fun SingleFilePlayer(
         Box(
             Modifier
                 .padding(8.dp)
-                .layoutId("thumbnail")
+                .layoutId(LayoutId.THUMBNAIL.id)
                 .clip(shape = RoundedCornerShape(percent = 10)),
         ) {
             BookImage(
@@ -237,7 +238,7 @@ private fun SingleFilePlayer(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .layoutId("topContent"),
+                .layoutId(LayoutId.TOP_CONTENT.id),
         ) {
             BooksTopBar(
                 book = book,
@@ -257,7 +258,7 @@ private fun SingleFilePlayer(
 
         Box(
             modifier = Modifier
-                .layoutId("lockOverlay")
+                .layoutId(LayoutId.LOCK_OVERLAY.id)
         ) {
             if (isScreenLocked) {
                 Box(
@@ -316,7 +317,7 @@ private fun MultipleFilePlayer(
     LaunchedEffect(showChapters.value) {
         onDisableGesture(showChapters.value)
     }
-    
+
     LaunchedEffect(swipeProgress) {
         if (swipeProgress < 1f) {
             showChapters.value = false
@@ -347,7 +348,7 @@ private fun MultipleFilePlayer(
             updateProgress = updateProgress,
             modifier = Modifier
                 .fillMaxWidth()
-                .layoutId("content")
+                .layoutId(LayoutId.CONTENT.id)
                 .padding(horizontal = 28.dp)
                 .padding(bottom = 30.dp, top = 16.dp),
         )
@@ -355,7 +356,7 @@ private fun MultipleFilePlayer(
         Box(
             Modifier
                 .padding(8.dp)
-                .layoutId("thumbnail")
+                .layoutId(LayoutId.THUMBNAIL.id)
         ) {
             Column(
                 modifier = Modifier
@@ -435,7 +436,7 @@ private fun MultipleFilePlayer(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .layoutId("topContent"),
+                .layoutId(LayoutId.TOP_CONTENT.id),
         ) {
             BooksTopBar(
                 book = book,
@@ -455,7 +456,7 @@ private fun MultipleFilePlayer(
 
         Box(
             modifier = Modifier
-                .layoutId("lockOverlay")
+                .layoutId(LayoutId.LOCK_OVERLAY.id)
         ) {
             if (isScreenLocked) {
                 Box(
@@ -609,7 +610,7 @@ private fun MiniPlayerContent(
             Modifier
                 .padding(8.dp)
                 .fillMaxWidth()
-                .layoutId("miniPlayer")
+                .layoutId(LayoutId.MINI_PLAYER.id)
         ),
     ) {
         val intermediaryProgress = if (book is MultipleBooks) {
