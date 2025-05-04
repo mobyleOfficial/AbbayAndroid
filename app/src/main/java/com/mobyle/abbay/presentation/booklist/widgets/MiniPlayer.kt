@@ -67,6 +67,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.booklist.widgets.models.BookSpeed
+import com.mobyle.abbay.presentation.common.mappers.toBookSpeed
 import com.mobyle.abbay.presentation.utils.currentFraction
 import com.mobyle.abbay.presentation.utils.intermediateProgress
 import com.mobyle.abbay.presentation.utils.toHHMMSS
@@ -91,6 +92,7 @@ fun MiniPlayer(
     playerIcon: MutableState<ImageVector>,
     updateCurrentBookPosition: (Int) -> Unit,
     updateProgress: (Long) -> Unit,
+    updateBookSpeed: (Float) -> Unit,
     isGestureDisabled: (Boolean) -> Unit,
     modifier: Modifier
 ) {
@@ -103,6 +105,7 @@ fun MiniPlayer(
             scaffoldState = scaffoldState,
             playerIcon = playerIcon,
             updateProgress = updateProgress,
+            updateBookSpeed = updateBookSpeed,
             modifier = modifier
         )
     } else if (book is MultipleBooks) {
@@ -116,6 +119,7 @@ fun MiniPlayer(
             updateProgress = updateProgress,
             updateCurrentBookPosition = updateCurrentBookPosition,
             isGestureDisabled = isGestureDisabled,
+            updateBookSpeed = updateBookSpeed,
             modifier = modifier
         )
     }
@@ -156,6 +160,7 @@ private fun SingleFilePlayer(
     scaffoldState: BottomSheetScaffoldState,
     playerIcon: MutableState<ImageVector>,
     updateProgress: (Long) -> Unit,
+    updateBookSpeed: (Float) -> Unit,
     modifier: Modifier
 ) {
     val swipeProgress = scaffoldState.currentFraction
@@ -305,6 +310,7 @@ private fun MultipleFilePlayer(
     updateCurrentBookPosition: (Int) -> Unit,
     updateProgress: (Long) -> Unit,
     isGestureDisabled: (Boolean) -> Unit,
+    updateBookSpeed: (Float) -> Unit,
     modifier: Modifier
 ) {
     val duration = book.bookFileList[book.currentBookPosition].duration
@@ -333,7 +339,6 @@ private fun MultipleFilePlayer(
     }
 
     LaunchedEffect(swipeProgress) {
-        Log.d("HelpMe", swipeProgress.toString())
         if (swipeProgress < 1f) {
             showChapters.value = false
         }
@@ -569,6 +574,7 @@ private fun MultipleFilePlayer(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             BooksTopBar(
+                book = book,
                 onCollapseMiniPlayer = {
                     scope.launch {
                         scaffoldState.bottomSheetState.collapse()
@@ -576,6 +582,7 @@ private fun MultipleFilePlayer(
                 },
                 onSpeedChange = {
                     player.playbackParameters = player.playbackParameters.withSpeed(it)
+                    updateBookSpeed(it)
                 }
             )
         }
@@ -584,6 +591,7 @@ private fun MultipleFilePlayer(
 
 @Composable
 private fun BooksTopBar(
+    book: Book,
     onCollapseMiniPlayer: () -> Unit,
     onSpeedChange: (Float) -> Unit,
 ) {
@@ -595,7 +603,12 @@ private fun BooksTopBar(
         BookSpeed.Double
     )
     val speedMenuExpanded = remember { mutableStateOf(false) }
-    val currentSpeed = remember { mutableStateOf<BookSpeed>(BookSpeed.Normal) }
+    val currentSpeed = remember { mutableStateOf(book.speed.toBookSpeed()) }
+
+    LaunchedEffect(book.id) {
+        currentSpeed.value = book.speed.toBookSpeed()
+        onSpeedChange(currentSpeed.value.speed)
+    }
 
     TopAppBar(
         backgroundColor = MaterialTheme.colorScheme.surface,
@@ -613,11 +626,17 @@ private fun BooksTopBar(
         },
         actions = {
             IconButton(onClick = { speedMenuExpanded.value = true }) {
-                Icon(
-                    Icons.Default.Speed,
-                    contentDescription = "Change speed",
-                    tint = Color.White
-                )
+               Row {
+                   Text(
+                       text = currentSpeed.value.text,
+                       color = Color.White
+                   )
+                   Icon(
+                       Icons.Default.Speed,
+                       contentDescription = "Change speed",
+                       tint = Color.White
+                   )
+               }
             }
             DropdownMenu(
                 expanded = speedMenuExpanded.value,

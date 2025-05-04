@@ -280,6 +280,14 @@ fun BooksListScreen(
                         isGestureDisabled = {
                             isGestureDisabled.value = !it
                         },
+                        updateBookSpeed = {
+                            selectedBook?.let { book ->
+                                viewModel.updateBookSpeed(
+                                    id = book.id,
+                                    speed = it
+                                )
+                            }
+                        },
                         modifier = Modifier
                             .onGloballyPositioned {
                                 componentHeight = with(density) {

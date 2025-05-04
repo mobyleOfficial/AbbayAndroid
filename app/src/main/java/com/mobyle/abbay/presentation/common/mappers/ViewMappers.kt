@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import androidx.core.net.toUri
+import com.mobyle.abbay.presentation.booklist.widgets.models.BookSpeed
 import com.model.BookFile
 import com.model.MultipleBooks
 import java.io.File
@@ -84,5 +85,15 @@ fun getImageUriFromBitmap(context: Context, bitmap: Bitmap, name: String): Uri {
         } catch (e: IOException) {
             e.printStackTrace()
         }
+    }
+}
+
+fun Float.toBookSpeed(): BookSpeed {
+    return when(this) {
+        0.5f -> BookSpeed.Half
+        1.25f -> BookSpeed.OnePointTwoFive
+        1.5f -> BookSpeed.OnePointFive
+        2f -> BookSpeed.Double
+        else -> BookSpeed.Normal
     }
 }
