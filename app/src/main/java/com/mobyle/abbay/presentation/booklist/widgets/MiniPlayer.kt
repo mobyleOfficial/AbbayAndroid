@@ -1,5 +1,6 @@
 package com.mobyle.abbay.presentation.booklist.widgets
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -7,7 +8,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.BottomSheetScaffoldState
 import androidx.compose.material.ExperimentalMaterialApi
@@ -354,7 +357,7 @@ private fun MultipleFilePlayer(
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f))
                     .clip(RoundedCornerShape(8.dp))
             ) {
-                if (swipeProgress == 1f) {
+                AnimatedVisibility(visible = swipeProgress == 1f) {
                     BookFileItem(
                         file = files.getOrNull(currentIndex),
                         currentIndex = currentIndex,
@@ -363,7 +366,7 @@ private fun MultipleFilePlayer(
                         }
                     )
                 }
-
+                
                 if (showChapters.value && swipeProgress == 1f) {
                     BookFilesList(
                         files = files,
@@ -373,7 +376,7 @@ private fun MultipleFilePlayer(
                             updateCurrentBookPosition(index)
                             player.seekTo(index, 0L)
                             updateProgress(0L)
-                        }
+                        },
                     )
                 }
 
@@ -491,7 +494,14 @@ private fun BookFilesList(
     currentIndex: Int,
     onClick: (Int) -> Unit,
 ) {
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(Unit) {
+        listState.animateScrollToItem(currentIndex)
+    }
+
     LazyColumn(
+        state = listState,
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(max = 220.dp)
@@ -515,14 +525,14 @@ private fun BookFilesList(
                     modifier = Modifier
                         .size(28.dp)
                         .background(
-                            if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                            if (isSelected) MaterialTheme.colorScheme.tertiary else Color.Transparent,
                             shape = RoundedCornerShape(14.dp)
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "${index + 1}",
-                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
+                        color = Color.White,
                         style = MaterialTheme.typography.labelMedium
                     )
                 }
@@ -540,14 +550,6 @@ private fun BookFilesList(
                         text = file.duration.toHHMMSS(),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.7f)
-                    )
-                }
-                if (isSelected) {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = "Current chapter",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(start = 8.dp)
                     )
                 }
             }
