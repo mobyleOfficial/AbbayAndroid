@@ -53,7 +53,7 @@ Abbay is an Android audiobook player app built with Jetpack Compose and ExoPlaye
 
 - **Playback Speed:** Tap the speed icon in the top bar to change.
 - **Screen Lock:** Tap the lock icon to lock/unlock the player.
-- **Chapters:** Tap the chapter name to view/select chapters.
+- **Files:** Tap the file name to view/select book file.
 
 ## Contributing
 
