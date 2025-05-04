@@ -317,7 +317,7 @@ private fun MultipleFilePlayer(
             .readBytes()
             .decodeToString()
     }
-
+    val scope = rememberCoroutineScope()
     var slideValue by remember { mutableFloatStateOf(0f) }
     fun onSliderValueChange(percentage: Float) {
         slideValue = percentage
@@ -327,10 +327,16 @@ private fun MultipleFilePlayer(
     val showChapters = remember { mutableStateOf(false) }
     val chapters = book.bookFileList
     val currentIndex = book.currentBookPosition
-    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(showChapters.value) {
         isGestureDisabled(showChapters.value)
+    }
+
+    LaunchedEffect(swipeProgress) {
+        Log.d("HelpMe", swipeProgress.toString())
+        if (swipeProgress < 1f) {
+            showChapters.value = false
+        }
     }
 
     MotionLayout(
@@ -451,16 +457,19 @@ private fun MultipleFilePlayer(
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f))
                     .clip(RoundedCornerShape(8.dp))
             ) {
-                Text(
-                    text = chapters.getOrNull(currentIndex)?.name ?: "Unknown Chapter",
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showChapters.value = !showChapters.value }
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                )
-                if (showChapters.value) {
+                if(swipeProgress == 1f) {
+                    Text(
+                        text = chapters.getOrNull(currentIndex)?.name ?: "Unknown Chapter",
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showChapters.value = !showChapters.value }
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                    )
+                }
+
+                if (showChapters.value && swipeProgress == 1f) {
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -559,22 +568,28 @@ private fun MultipleFilePlayer(
                 .layoutId("topContent"),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            BooksTopBar()
+            BooksTopBar(
+                collapseMiniPlayer = {
+                    scope.launch {
+                        scaffoldState.bottomSheetState.collapse()
+                    }
+                }
+            )
         }
     }
 }
 
 @Composable
-private fun BooksTopBar() {
+private fun BooksTopBar(
+    collapseMiniPlayer: () -> Unit,
+) {
     TopAppBar(
         backgroundColor = MaterialTheme.colorScheme.surface,
         title = {
 
         },
         navigationIcon = {
-            IconButton(onClick = {
-
-            }) {
+            IconButton(onClick = collapseMiniPlayer) {
                 Icon(
                     Icons.Default.ChevronLeft,
                     contentDescription = "",
