@@ -6,5 +6,6 @@ interface Book {
     val thumbnail: String?
     val progress: Long
     val duration: Long
+    val speed: Float
 }
 

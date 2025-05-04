@@ -78,6 +78,14 @@ fun <T> LaunchedEffectAndCollect(
 }
 
 fun Cursor.getTitle(): String? {
+    return getStringOrNull(getColumnIndex(MediaStore.Audio.AudioColumns.TITLE))
+}
+
+fun Cursor.getAlbumTitle(): String? {
+    return getStringOrNull(getColumnIndex(MediaStore.Audio.AudioColumns.ALBUM))
+}
+
+fun Cursor.getFileName(): String? {
     return getStringOrNull(getColumnIndex(MediaStore.Audio.AudioColumns.DISPLAY_NAME))
 }
 

@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import androidx.core.net.toUri
+import com.mobyle.abbay.presentation.booklist.widgets.models.BookSpeed
 import com.model.BookFile
 import com.model.MultipleBooks
 import java.io.File
@@ -13,7 +14,8 @@ import java.io.FileOutputStream
 import java.io.IOException
 
 fun MediaMetadataRetriever.toBook(context: Context, id: String): BookFile {
-    val title = extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
+    val fileName = extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
+    val title = extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM)
     val duration = extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION) ?: "0L"
     val imageBitmap = embeddedPicture?.let {
         BitmapFactory.decodeByteArray(it, 0, it.size)
@@ -21,7 +23,8 @@ fun MediaMetadataRetriever.toBook(context: Context, id: String): BookFile {
 
     return BookFile(
         id = id,
-        name = title ?: "",
+        name = title ?: fileName.orEmpty(),
+        fileName = fileName.orEmpty(),
         thumbnail = imageBitmap?.let {
             getImageUriFromBitmap(
                 context,
@@ -30,7 +33,8 @@ fun MediaMetadataRetriever.toBook(context: Context, id: String): BookFile {
             ).toString()
         },
         progress = 0L,
-        duration = duration.toLong()
+        duration = duration.toLong(),
+        speed = 1f
     )
 }
 
@@ -58,7 +62,8 @@ fun List<BookFile>.toMultipleBooks(): MultipleBooks? {
             thumbnail = firstBook.thumbnail,
             progress = 0L,
             duration = this.sumOf { it.duration },
-            currentBookPosition = 0
+            currentBookPosition = 0,
+            speed = 1f
         )
     }
 }
@@ -67,23 +72,30 @@ fun List<BookFile>.toMultipleBooks(): MultipleBooks? {
 fun getImageUriFromBitmap(context: Context, bitmap: Bitmap, name: String): Uri {
     val filesDir = context.filesDir
     val imageFile = File(filesDir, name)
-
     var fos: FileOutputStream? = null
-    try {
+
+    return try {
         fos = FileOutputStream(imageFile)
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
-        return imageFile.toUri()
+        imageFile.toUri()
     } catch (e: IOException) {
         e.printStackTrace()
-        return Uri.parse("")
+        Uri.parse("")
     } finally {
         try {
             fos?.close()
         } catch (e: IOException) {
             e.printStackTrace()
         }
+    }
+}
 
-//    val path = MediaStore.Images.Media.insertImage(context.contentResolver, bitmap, "File", null)
-//    return Uri.parse(path?.toString().orEmpty())
+fun Float.toBookSpeed(): BookSpeed {
+    return when(this) {
+        0.5f -> BookSpeed.Half
+        1.25f -> BookSpeed.OnePointTwoFive
+        1.5f -> BookSpeed.OnePointFive
+        2f -> BookSpeed.Double
+        else -> BookSpeed.Normal
     }
 }

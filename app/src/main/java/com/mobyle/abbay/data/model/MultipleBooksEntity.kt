@@ -7,11 +7,12 @@ import kotlinx.serialization.Serializable
 @Entity
 @Serializable
 data class MultipleBooksEntity(
-    @PrimaryKey var id: String,
-    var bookFileList: String,
-    var name: String,
-    var thumbnail: String?,
+    @PrimaryKey val id: String,
+    val bookFileList: String,
+    val name: String,
+    val thumbnail: String?,
     val progress: Long,
-    var duration: Long,
-    val currentBookPosition: Int = 0
+    val duration: Long,
+    val currentBookPosition: Int = 0,
+    val speed: Float
 )

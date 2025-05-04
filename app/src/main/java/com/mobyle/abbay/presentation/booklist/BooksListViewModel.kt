@@ -125,7 +125,6 @@ class BooksListViewModel @Inject constructor(
         val index = booksList.indexOfFirst { it.id == id }
 
         if (index != -1) {
-
             val mappedBook = when (val book = booksList[index]) {
                 is MultipleBooks -> {
                     book.copy(progress = progress)
@@ -139,10 +138,10 @@ class BooksListViewModel @Inject constructor(
                     book
                 }
             }
+
             booksList[index] = mappedBook
             _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
             selectBook(mappedBook)
-
         }
     }
 
@@ -158,6 +157,31 @@ class BooksListViewModel @Inject constructor(
                 _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
                 selectBook(book.copy(currentBookPosition = position))
             }
+        }
+    }
+    fun updateBookSpeed(id: String, speed: Float) {
+        booksList.firstOrNull { it.id == id }?.let {
+            val newBook = when (it) {
+                is BookFile -> {
+                    it.copy(speed = speed)
+                }
+
+                is MultipleBooks -> {
+                    it.copy(speed = speed)
+                }
+
+                else -> {null}
+            }
+
+            newBook?.let { book ->
+                booksList[booksList.indexOf(it)] = book
+                selectBook(book)
+            }
+        }
+
+        launch {
+            upsertBookList.invoke(booksList)
+            _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
         }
     }
 
