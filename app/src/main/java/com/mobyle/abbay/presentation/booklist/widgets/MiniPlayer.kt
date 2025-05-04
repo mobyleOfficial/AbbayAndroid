@@ -1,6 +1,5 @@
 package com.mobyle.abbay.presentation.booklist.widgets
 
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -122,29 +121,6 @@ fun MiniPlayer(
             updateBookSpeed = updateBookSpeed,
             modifier = modifier
         )
-    }
-}
-
-@Composable
-private fun PlayerController(
-    player: MediaController,
-    position: Long,
-    playerIcon: MutableState<ImageVector>,
-    onPlayingChange: (Boolean) -> Unit,
-) {
-    IconButton(onClick = {
-        playerIcon.value = if (player.isPlaying) {
-            onPlayingChange(false)
-            player.pause()
-            Icons.Default.PlayArrow
-        } else {
-            player.seekTo(position)
-            onPlayingChange(true)
-            player.playWhenReady = true
-            Icons.Default.Pause
-        }
-    }) {
-        Icon(playerIcon.value, contentDescription = "", tint = Color.White)
     }
 }
 
@@ -407,6 +383,29 @@ private fun MultipleFilePlayer(
                 }
             )
         }
+    }
+}
+
+@Composable
+private fun PlayerController(
+    player: MediaController,
+    position: Long,
+    playerIcon: MutableState<ImageVector>,
+    onPlayingChange: (Boolean) -> Unit,
+) {
+    IconButton(onClick = {
+        playerIcon.value = if (player.isPlaying) {
+            onPlayingChange(false)
+            player.pause()
+            Icons.Default.PlayArrow
+        } else {
+            player.seekTo(position)
+            onPlayingChange(true)
+            player.playWhenReady = true
+            Icons.Default.Pause
+        }
+    }) {
+        Icon(playerIcon.value, contentDescription = "", tint = Color.White)
     }
 }
 
