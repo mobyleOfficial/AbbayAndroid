@@ -30,7 +30,8 @@ fun MediaMetadataRetriever.toBook(context: Context, id: String): BookFile {
             ).toString()
         },
         progress = 0L,
-        duration = duration.toLong()
+        duration = duration.toLong(),
+        speed = 1f
     )
 }
 
@@ -58,7 +59,8 @@ fun List<BookFile>.toMultipleBooks(): MultipleBooks? {
             thumbnail = firstBook.thumbnail,
             progress = 0L,
             duration = this.sumOf { it.duration },
-            currentBookPosition = 0
+            currentBookPosition = 0,
+            speed = 1f
         )
     }
 }
@@ -67,23 +69,20 @@ fun List<BookFile>.toMultipleBooks(): MultipleBooks? {
 fun getImageUriFromBitmap(context: Context, bitmap: Bitmap, name: String): Uri {
     val filesDir = context.filesDir
     val imageFile = File(filesDir, name)
-
     var fos: FileOutputStream? = null
-    try {
+
+    return try {
         fos = FileOutputStream(imageFile)
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
-        return imageFile.toUri()
+        imageFile.toUri()
     } catch (e: IOException) {
         e.printStackTrace()
-        return Uri.parse("")
+        Uri.parse("")
     } finally {
         try {
             fos?.close()
         } catch (e: IOException) {
             e.printStackTrace()
         }
-
-//    val path = MediaStore.Images.Media.insertImage(context.contentResolver, bitmap, "File", null)
-//    return Uri.parse(path?.toString().orEmpty())
     }
 }

@@ -136,19 +136,9 @@ fun BooksListScreen(
     LaunchedEffectAndCollect(viewModel.booksIdList) {
         asyncScope.launch(Dispatchers.IO) {
             it?.let {
-                val booksWithThumbnails = it.map {
-                    val metadataRetriever = MediaMetadataRetriever()
-                    metadataRetriever.setDataSource(
-                        context,
-                        Uri.parse("content://media/external/audio/media/${it?.id}")
-                    )
-                    val thumb = metadataRetriever.getThumbnail(context, it?.id.orEmpty())
-                    when (it) {
-                        is MultipleBooks -> it.copy(thumbnail = thumb)
-                        is BookFile -> it.copy(thumbnail = thumb)
-                        else -> it
-                    }
-                }.filterNotNull()
+                val booksWithThumbnails = it.mapNotNull { book ->
+                    book.getThumb(context)
+                }
 
                 if (booksWithThumbnails.isNotEmpty()) {
                     viewModel.addThumbnails(booksWithThumbnails)
@@ -200,93 +190,6 @@ fun BooksListScreen(
         }
     }
 
-    fun resolveContentUri(uri: Uri): String {
-
-        val docUri = DocumentsContract.buildDocumentUriUsingTree(
-            uri,
-            DocumentsContract.getTreeDocumentId(uri)
-        )
-        val docCursor = context.contentResolver.query(docUri, null, null, null, null)
-
-        var str: String = ""
-
-        // get a string of the form : primary:Audiobooks or 1407-1105:Audiobooks
-        while (docCursor!!.moveToNext()) {
-            str = docCursor.getString(0)
-            if (str.matches(Regex(".*:.*"))) break //Maybe useless
-        }
-
-        docCursor.close()
-
-        val split = str.split(":")
-
-        val base: File =
-            if (split[0] == "primary") getExternalStorageDirectory()
-            else File("/storage/${split[0]}")
-
-        if (!base.isDirectory) throw Exception("'$uri' cannot be resolved in a valid path")
-
-        return File(base, split[1]).canonicalPath
-    }
-
-    fun getBooksFromUri(uri: Uri?) {
-        uri?.let {
-            val folderPath = resolveContentUri(uri)
-            val contentResolver: ContentResolver = context.contentResolver
-            val songUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
-            val songCursor = contentResolver.query(songUri, null, null, null, null)
-            if (songCursor != null && songCursor.moveToFirst()) {
-                val filesHashMap = mutableMapOf<String, List<BookFile>>()
-
-                do {
-                    songCursor.getColumnIndex(MediaStore.Audio.Media.DATA).let {
-                        if (it != -1) {
-                            val filePath = songCursor.getString(it)
-
-                            if (filePath.contains(folderPath)) {
-                                val id = songCursor.getId().orEmpty()
-                                val title = songCursor.getTitle().orEmpty()
-                                val progress = 0L
-                                val duration = songCursor.getDuration() ?: 0L
-                                val fileFolderPath =
-                                    songCursor.getString(it).substringBeforeLast("/")
-                                val thumbnail = null
-
-                                val book = BookFile(
-                                    id = id,
-                                    name = title,
-                                    thumbnail = thumbnail,
-                                    progress = progress,
-                                    duration = duration
-                                )
-
-                                filesHashMap[fileFolderPath]?.let {
-                                    val newList = it.toMutableList()
-                                    newList.add(book)
-                                    filesHashMap[fileFolderPath] = newList.toList()
-                                } ?: run {
-                                    filesHashMap[fileFolderPath] = listOf(book)
-                                }
-                            }
-                        }
-                    }
-                } while (songCursor.moveToNext())
-                songCursor.close()
-
-
-                val filesList = filesHashMap.mapValues {
-                    if (it.value.size == 1) {
-                        it.value.first()
-                    } else {
-                        it.value.toMultipleBooks()
-                    }
-                }.values.toList().filterNotNull()
-
-                viewModel.addAllBookTypes(filesList.toList())
-            }
-        }
-    }
-
     val openFolderSelector = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
@@ -294,11 +197,12 @@ fun BooksListScreen(
             viewModel.showLoading()
             asyncScope.launch(Dispatchers.IO) {
                 delay(500)
-                getBooksFromUri(uri)
+                uri.getBooks(context)?.let {
+                    viewModel.addAllBookTypes(it)
+                }
             }
         }
     }
-
 
     // SideEffects
     BackHandler {

@@ -23,14 +23,12 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeDown
 import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material.icons.filled.VolumeDown
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -74,8 +72,10 @@ import kotlin.math.max
 import kotlin.math.min
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.BottomSheetState
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import kotlinx.coroutines.launch
+import com.mobyle.abbay.presentation.booklist.widgets.models.SpeedModel
 
 @OptIn(
     ExperimentalMaterialApi::class, ExperimentalMotionApi::class,
@@ -457,7 +457,7 @@ private fun MultipleFilePlayer(
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f))
                     .clip(RoundedCornerShape(8.dp))
             ) {
-                if(swipeProgress == 1f) {
+                if (swipeProgress == 1f) {
                     Text(
                         text = chapters.getOrNull(currentIndex)?.name ?: "Unknown Chapter",
                         color = MaterialTheme.colorScheme.primary,
@@ -569,10 +569,13 @@ private fun MultipleFilePlayer(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             BooksTopBar(
-                collapseMiniPlayer = {
+                onCollapseMiniPlayer = {
                     scope.launch {
                         scaffoldState.bottomSheetState.collapse()
                     }
+                },
+                onSpeedChange = {
+                    player.playbackParameters = player.playbackParameters.withSpeed(it)
                 }
             )
         }
@@ -581,15 +584,26 @@ private fun MultipleFilePlayer(
 
 @Composable
 private fun BooksTopBar(
-    collapseMiniPlayer: () -> Unit,
+    onCollapseMiniPlayer: () -> Unit,
+    onSpeedChange: (Float) -> Unit,
 ) {
+    val speedOptions = listOf(
+        SpeedModel.Half,
+        SpeedModel.Normal,
+        SpeedModel.OnePointTwoFive,
+        SpeedModel.OnePointFive,
+        SpeedModel.Double
+    )
+    val speedMenuExpanded = remember { mutableStateOf(false) }
+    val currentSpeed = remember { mutableStateOf<SpeedModel>(SpeedModel.Normal) }
+
     TopAppBar(
         backgroundColor = MaterialTheme.colorScheme.surface,
         title = {
 
         },
         navigationIcon = {
-            IconButton(onClick = collapseMiniPlayer) {
+            IconButton(onClick = onCollapseMiniPlayer) {
                 Icon(
                     Icons.Default.ChevronLeft,
                     contentDescription = "",
@@ -598,14 +612,29 @@ private fun BooksTopBar(
             }
         },
         actions = {
-            IconButton(onClick = {
-                // change speed
-            }) {
+            IconButton(onClick = { speedMenuExpanded.value = true }) {
                 Icon(
                     Icons.Default.Speed,
-                    contentDescription = "",
+                    contentDescription = "Change speed",
                     tint = Color.White
                 )
+            }
+            DropdownMenu(
+                expanded = speedMenuExpanded.value,
+                onDismissRequest = { speedMenuExpanded.value = false }
+            ) {
+                speedOptions.forEach { speedModel ->
+                    DropdownMenuItem(onClick = {
+                        currentSpeed.value = speedModel
+                        speedMenuExpanded.value = false
+                        onSpeedChange(speedModel.speed)
+                    }, text = {
+                        Text(
+                            text = speedModel.text,
+                            color = if (currentSpeed.value == speedModel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    })
+                }
             }
 
             IconButton(onClick = {
