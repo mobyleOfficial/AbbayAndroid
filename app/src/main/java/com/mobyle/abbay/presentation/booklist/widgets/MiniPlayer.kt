@@ -5,14 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +21,7 @@ import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Speed
@@ -37,15 +31,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -68,6 +54,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.booklist.widgets.models.BookSpeed
+import com.mobyle.abbay.presentation.booklist.widgets.models.LayoutId
 import com.mobyle.abbay.presentation.common.mappers.toBookSpeed
 import com.mobyle.abbay.presentation.utils.currentFraction
 import com.mobyle.abbay.presentation.utils.intermediateProgress
@@ -78,7 +65,6 @@ import com.model.MultipleBooks
 import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
-import com.mobyle.abbay.presentation.booklist.widgets.models.LayoutId
 
 @OptIn(
     ExperimentalMaterialApi::class, ExperimentalMotionApi::class,
@@ -111,7 +97,7 @@ fun MiniPlayer(
             scaffoldState = scaffoldState,
             playerIcon = playerIcon,
             onLockScreen = {
-                if(it) {
+                if (it) {
                     onDisableGesture(true)
                 }
                 isScreenLocked.value = it
@@ -138,7 +124,7 @@ fun MiniPlayer(
             playerIcon = playerIcon,
             updateProgress = updateProgress,
             onLockScreen = {
-                if(it) {
+                if (it) {
                     onDisableGesture(true)
                 }
                 isScreenLocked.value = it
@@ -544,7 +530,7 @@ private fun BooksTopBar(
         actions = {
             IconButton(onClick = { speedMenuExpanded.value = true }) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.Bottom,
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Text(
@@ -558,6 +544,7 @@ private fun BooksTopBar(
                     )
                 }
             }
+
             DropdownMenu(
                 expanded = speedMenuExpanded.value,
                 onDismissRequest = { speedMenuExpanded.value = false }
@@ -577,22 +564,16 @@ private fun BooksTopBar(
             }
 
             IconButton(onClick = {
-                // Change volume
-            }) {
-                Icon(
-                    Icons.AutoMirrored.Filled.VolumeDown,
-                    contentDescription = "",
-                    tint = Color.White
-                )
-            }
-
-            IconButton(onClick = {
                 onLockToggle(!isScreenLocked)
             }) {
                 Icon(
-                    Icons.Default.Lock,
+                    if (isScreenLocked) {
+                        Icons.Default.LockOpen
+                    } else {
+                        Icons.Default.Lock
+                    },
                     contentDescription = "",
-                    tint = if (isScreenLocked) MaterialTheme.colorScheme.primary else Color.White
+                    tint = Color.White
                 )
             }
         }
@@ -807,9 +788,53 @@ private fun ScreenLockedAlert(
 ) {
     AlertDialog(
         onDismissRequest = onDismissRequest,
-        title = { Text("Screen Locked") },
-        text = { Text("Long press to unlock screen") },
-        confirmButton = {},
-        dismissButton = {}
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text(
+                    "Screen Locked",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        },
+        text = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Long press anywhere on the screen to unlock.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+                Text(
+                    "This prevents accidental touches while listening.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center
+                )
+            }
+        },
+        confirmButton = {
+            // No confirm button, unlock is by long press
+        },
+        dismissButton = {
+            Text(
+                "Dismiss",
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .clickable { onDismissRequest() }
+                    .padding(8.dp)
+            )
+        }
     )
 }
