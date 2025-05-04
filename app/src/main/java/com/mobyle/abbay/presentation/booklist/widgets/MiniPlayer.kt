@@ -16,7 +16,6 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.VolumeDown
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
@@ -301,7 +300,7 @@ private fun MultipleFilePlayer(
     }
     val scope = rememberCoroutineScope()
     val showChapters = remember { mutableStateOf(false) }
-    val chapters = book.bookFileList
+    val files = book.bookFileList
     val currentIndex = book.currentBookPosition
 
     LaunchedEffect(showChapters.value) {
@@ -356,54 +355,26 @@ private fun MultipleFilePlayer(
                     .clip(RoundedCornerShape(8.dp))
             ) {
                 if (swipeProgress == 1f) {
-                    Text(
-                        text = chapters.getOrNull(currentIndex)?.name ?: "Unknown Chapter",
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { showChapters.value = !showChapters.value }
-                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                    BookFileItem(
+                        file = files.getOrNull(currentIndex),
+                        currentIndex = currentIndex,
+                        onClick = {
+                            showChapters.value = !showChapters.value
+                        }
                     )
                 }
 
                 if (showChapters.value && swipeProgress == 1f) {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 180.dp)
-                    ) {
-                        itemsIndexed(chapters) { index, chapter ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        showChapters.value = false
-                                        updateCurrentBookPosition(index)
-                                        player.seekTo(index, 0L)
-                                        updateProgress(0L)
-                                    }
-                                    .background(
-                                        if (index == currentIndex)
-                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                                        else
-                                            Color.Transparent
-                                    )
-                                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = chapter.name,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Text(
-                                    text = chapter.duration.toHHMMSS(),
-                                    style = MaterialTheme.typography.bodySmall,
-                                )
-                            }
+                    BookFilesList(
+                        files = files,
+                        currentIndex = currentIndex,
+                        onClick = { index ->
+                            showChapters.value = false
+                            updateCurrentBookPosition(index)
+                            player.seekTo(index, 0L)
+                            updateProgress(0L)
                         }
-                    }
+                    )
                 }
 
                 Box(
@@ -462,6 +433,123 @@ private fun MultipleFilePlayer(
                             }
                         )
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BookFileItem(
+    file: BookFile?,
+    currentIndex: Int,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .background(
+                    MaterialTheme.colorScheme.tertiary,
+                    shape = RoundedCornerShape(14.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "${currentIndex + 1}",
+                color = MaterialTheme.colorScheme.onPrimary,
+                style = MaterialTheme.typography.labelMedium
+            )
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = file?.name ?: "Unknown File",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.tertiary,
+                maxLines = 1
+            )
+            Text(
+                text = file?.duration?.toHHMMSS() ?: "",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.7f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun BookFilesList(
+    files: List<BookFile>,
+    currentIndex: Int,
+    onClick: (Int) -> Unit,
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = 220.dp)
+    ) {
+        itemsIndexed(files) { index, file ->
+            val isSelected = index == currentIndex
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onClick(index) }
+                    .background(
+                        if (isSelected)
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                        else
+                            Color.Transparent
+                    )
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .background(
+                            if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                            shape = RoundedCornerShape(14.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "${index + 1}",
+                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = file.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        maxLines = 1
+                    )
+                    Text(
+                        text = file.duration.toHHMMSS(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.7f)
+                    )
+                }
+                if (isSelected) {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = "Current chapter",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
             }
         }
     }
