@@ -355,9 +355,28 @@ private fun MultipleFilePlayer(
                     .fillMaxWidth()
                     .align(Alignment.TopCenter)
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f))
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(8.dp)),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                AnimatedVisibility(visible = swipeProgress == 1f) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(shape = RoundedCornerShape(percent = 10)),
+                ) {
+                    BookImage(
+                        modifier = modifier,
+                        player = player,
+                        playerIcon = playerIcon,
+                        book = book,
+                        progress = progress,
+                        onPlayingChange = onPlayingChange,
+                    )
+                }
+
+                AnimatedVisibility(
+                    visible = swipeProgress == 1f,
+                    modifier = Modifier.padding(top = 8.dp)
+                ) {
                     BookFileItem(
                         file = files.getOrNull(currentIndex),
                         currentIndex = currentIndex,
@@ -377,21 +396,6 @@ private fun MultipleFilePlayer(
                             player.seekTo(index, 0L)
                             updateProgress(0L)
                         },
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(shape = RoundedCornerShape(percent = 10)),
-                ) {
-                    BookImage(
-                        modifier = modifier,
-                        player = player,
-                        playerIcon = playerIcon,
-                        book = book,
-                        progress = progress,
-                        onPlayingChange = onPlayingChange,
                     )
                 }
             }
@@ -447,44 +451,24 @@ private fun BookFileItem(
     currentIndex: Int,
     onClick: () -> Unit,
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .clickable { onClick() },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Box(
-            modifier = Modifier
-                .size(28.dp)
-                .background(
-                    MaterialTheme.colorScheme.tertiary,
-                    shape = RoundedCornerShape(14.dp)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "${currentIndex + 1}",
-                color = MaterialTheme.colorScheme.onPrimary,
-                style = MaterialTheme.typography.labelMedium
-            )
-        }
-        Spacer(modifier = Modifier.width(12.dp))
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(
-                text = file?.fileName ?: "Unknown File",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.8f),
-                maxLines = 1
-            )
-            Text(
-                text = file?.duration?.toHHMMSS() ?: "",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.6f)
-            )
-        }
+        Text(
+            text = file?.fileName ?: "Unknown File",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.8f),
+            maxLines = 1
+        )
+        Text(
+            text = file?.duration?.toHHMMSS() ?: "",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.6f)
+        )
     }
 }
 
