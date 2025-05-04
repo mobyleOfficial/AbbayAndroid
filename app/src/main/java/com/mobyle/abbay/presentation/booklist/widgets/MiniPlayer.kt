@@ -101,10 +101,6 @@ fun MiniPlayer(
     val isScreenLocked = remember { mutableStateOf(false) }
     val showUnlockDialog = remember { mutableStateOf(false) }
 
-    LaunchedEffect(isScreenLocked) {
-        onDisableGesture(isScreenLocked.value)
-    }
-
     if (book is BookFile) {
         SingleFilePlayer(
             player = player,
@@ -115,12 +111,16 @@ fun MiniPlayer(
             scaffoldState = scaffoldState,
             playerIcon = playerIcon,
             onLockScreen = {
+                if(it) {
+                    onDisableGesture(true)
+                }
                 isScreenLocked.value = it
             },
             showScreenLockedAlert = {
                 showUnlockDialog.value = true
             },
             unlockScreen = {
+                onDisableGesture(false)
                 isScreenLocked.value = false
             },
             updateProgress = updateProgress,
@@ -138,12 +138,16 @@ fun MiniPlayer(
             playerIcon = playerIcon,
             updateProgress = updateProgress,
             onLockScreen = {
+                if(it) {
+                    onDisableGesture(true)
+                }
                 isScreenLocked.value = it
             },
             showScreenLockedAlert = {
                 showUnlockDialog.value = true
             },
             unlockScreen = {
+                onDisableGesture(false)
                 isScreenLocked.value = false
             },
             updateCurrentBookPosition = updateCurrentBookPosition,
