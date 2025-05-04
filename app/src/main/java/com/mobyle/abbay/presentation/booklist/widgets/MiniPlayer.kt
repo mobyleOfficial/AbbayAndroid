@@ -366,8 +366,8 @@ private fun MultipleFilePlayer(
                         }
                     )
                 }
-                
-                if (showChapters.value && swipeProgress == 1f) {
+
+                AnimatedVisibility(visible = showChapters.value && swipeProgress == 1f) {
                     BookFilesList(
                         files = files,
                         currentIndex = currentIndex,
@@ -474,15 +474,15 @@ private fun BookFileItem(
             modifier = Modifier.weight(1f)
         ) {
             Text(
-                text = file?.name ?: "Unknown File",
+                text = file?.fileName ?: "Unknown File",
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.tertiary,
+                color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.8f),
                 maxLines = 1
             )
             Text(
                 text = file?.duration?.toHHMMSS() ?: "",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.7f)
+                color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.6f)
             )
         }
     }
@@ -541,7 +541,7 @@ private fun BookFilesList(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = file.name,
+                        text = file.fileName,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.tertiary,
                         maxLines = 1

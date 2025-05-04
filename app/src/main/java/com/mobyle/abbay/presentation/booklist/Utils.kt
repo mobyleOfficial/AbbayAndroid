@@ -9,7 +9,9 @@ import android.provider.DocumentsContract
 import android.provider.MediaStore
 import com.mobyle.abbay.presentation.common.mappers.getThumbnail
 import com.mobyle.abbay.presentation.common.mappers.toMultipleBooks
+import com.mobyle.abbay.presentation.utils.getAlbumTitle
 import com.mobyle.abbay.presentation.utils.getDuration
+import com.mobyle.abbay.presentation.utils.getFileName
 import com.mobyle.abbay.presentation.utils.getId
 import com.mobyle.abbay.presentation.utils.getTitle
 import com.model.Book
@@ -50,28 +52,30 @@ fun Uri.resolveContentUri(context: Context): String? {
 fun Uri.getBooks(context: Context): List<Book>? {
     return this.resolveContentUri(context)?.let { folderPath ->
         val contentResolver: ContentResolver = context.contentResolver
-        val songUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
-        val songCursor = contentResolver.query(songUri, null, null, null, null)
-        if (songCursor != null && songCursor.moveToFirst()) {
+        val bookUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+        val bookCursor = contentResolver.query(bookUri, null, null, null, null)
+        if (bookCursor != null && bookCursor.moveToFirst()) {
             val filesHashMap = mutableMapOf<String, List<BookFile>>()
 
             do {
-                songCursor.getColumnIndex(MediaStore.Audio.Media.DATA).let {
+                bookCursor.getColumnIndex(MediaStore.Audio.Media.DATA).let {
                     if (it != -1) {
-                        val filePath = songCursor.getString(it)
+                        val filePath = bookCursor.getString(it)
 
                         if (filePath.contains(folderPath)) {
-                            val id = songCursor.getId().orEmpty()
-                            val title = songCursor.getTitle().orEmpty()
+                            val id = bookCursor.getId().orEmpty()
+                            val title = bookCursor.getAlbumTitle()
+                            val fileName = bookCursor.getFileName().orEmpty()
                             val progress = 0L
-                            val duration = songCursor.getDuration() ?: 0L
+                            val duration = bookCursor.getDuration() ?: 0L
                             val fileFolderPath =
-                                songCursor.getString(it).substringBeforeLast("/")
+                                bookCursor.getString(it).substringBeforeLast("/")
                             val thumbnail = null
 
                             val book = BookFile(
                                 id = id,
-                                name = title,
+                                name = title ?: fileName,
+                                fileName = fileName,
                                 thumbnail = thumbnail,
                                 progress = progress,
                                 duration = duration,
@@ -88,8 +92,8 @@ fun Uri.getBooks(context: Context): List<Book>? {
                         }
                     }
                 }
-            } while (songCursor.moveToNext())
-            songCursor.close()
+            } while (bookCursor.moveToNext())
+            bookCursor.close()
 
             val filesList = filesHashMap.mapValues {
                 if (it.value.size == 1) {

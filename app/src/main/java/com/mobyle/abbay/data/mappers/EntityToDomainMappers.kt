@@ -23,6 +23,7 @@ fun MultipleBooksEntity.toDomain(): MultipleBooks = MultipleBooks(
 fun BookFileEntity.toDomain() = BookFile(
     id = id,
     name = name,
+    fileName = fileName,
     thumbnail = thumbnail,
     progress = progress,
     duration = duration,

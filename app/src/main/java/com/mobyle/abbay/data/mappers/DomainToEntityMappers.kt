@@ -25,6 +25,7 @@ fun MultipleBooks.toEntity(): MultipleBooksEntity = MultipleBooksEntity(
 fun BookFile.toEntity() = BookFileEntity(
     id = id,
     name = name,
+    fileName = fileName,
     thumbnail = thumbnail,
     progress = progress,
     duration = duration,

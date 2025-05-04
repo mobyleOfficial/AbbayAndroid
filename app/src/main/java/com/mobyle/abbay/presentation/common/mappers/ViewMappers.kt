@@ -14,7 +14,8 @@ import java.io.FileOutputStream
 import java.io.IOException
 
 fun MediaMetadataRetriever.toBook(context: Context, id: String): BookFile {
-    val title = extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
+    val fileName = extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
+    val title = extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM)
     val duration = extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION) ?: "0L"
     val imageBitmap = embeddedPicture?.let {
         BitmapFactory.decodeByteArray(it, 0, it.size)
@@ -22,7 +23,8 @@ fun MediaMetadataRetriever.toBook(context: Context, id: String): BookFile {
 
     return BookFile(
         id = id,
-        name = title ?: "",
+        name = title ?: fileName.orEmpty(),
+        fileName = fileName.orEmpty(),
         thumbnail = imageBitmap?.let {
             getImageUriFromBitmap(
                 context,

@@ -9,6 +9,7 @@ import kotlinx.serialization.Serializable
 class BookFileEntity(
     @PrimaryKey val id: String,
     val name: String,
+    val fileName: String,
     val thumbnail: String?,
     val progress: Long,
     val duration: Long,

@@ -7,4 +7,5 @@ data class BookFile(
     override val progress: Long,
     override val duration: Long,
     override val speed: Float,
+    val fileName: String
 ) : Book
