@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +31,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -92,17 +94,34 @@ fun MiniPlayer(
     updateCurrentBookPosition: (Int) -> Unit,
     updateProgress: (Long) -> Unit,
     updateBookSpeed: (Float) -> Unit,
-    isGestureDisabled: (Boolean) -> Unit,
+    onDisableGesture: (Boolean) -> Unit,
     modifier: Modifier
 ) {
+    val isScreenLocked = remember { mutableStateOf(false) }
+    val showUnlockDialog = remember { mutableStateOf(false) }
+
+    LaunchedEffect(isScreenLocked) {
+        onDisableGesture(isScreenLocked.value)
+    }
+
     if (book is BookFile) {
         SingleFilePlayer(
             player = player,
             book = book,
+            isScreenLocked = isScreenLocked.value,
             onPlayingChange = onPlayingChange,
             progress = progress,
             scaffoldState = scaffoldState,
             playerIcon = playerIcon,
+            onLockScreen = {
+                isScreenLocked.value = it
+            },
+            showScreenLockedAlert = {
+                showUnlockDialog.value = true
+            },
+            unlockScreen = {
+                isScreenLocked.value = false
+            },
             updateProgress = updateProgress,
             updateBookSpeed = updateBookSpeed,
             modifier = modifier
@@ -111,16 +130,32 @@ fun MiniPlayer(
         MultipleFilePlayer(
             player = player,
             book = book,
+            isScreenLocked = isScreenLocked.value,
             onPlayingChange = onPlayingChange,
             progress = progress,
             scaffoldState = scaffoldState,
             playerIcon = playerIcon,
             updateProgress = updateProgress,
+            onLockScreen = {
+                isScreenLocked.value = it
+            },
+            showScreenLockedAlert = {
+                showUnlockDialog.value = true
+            },
+            unlockScreen = {
+                isScreenLocked.value = false
+            },
             updateCurrentBookPosition = updateCurrentBookPosition,
-            isGestureDisabled = isGestureDisabled,
+            onDisableGesture = onDisableGesture,
             updateBookSpeed = updateBookSpeed,
             modifier = modifier
         )
+    }
+
+    if (showUnlockDialog.value) {
+        ScreenLockedAlert {
+            showUnlockDialog.value = false
+        }
     }
 }
 
@@ -131,10 +166,14 @@ fun MiniPlayer(
 private fun SingleFilePlayer(
     player: MediaController,
     book: Book,
-    onPlayingChange: (Boolean) -> Unit,
+    isScreenLocked: Boolean,
     progress: Long,
     scaffoldState: BottomSheetScaffoldState,
     playerIcon: MutableState<ImageVector>,
+    unlockScreen: () -> Unit,
+    showScreenLockedAlert: () -> Unit,
+    onLockScreen: (Boolean) -> Unit,
+    onPlayingChange: (Boolean) -> Unit,
     updateProgress: (Long) -> Unit,
     updateBookSpeed: (Float) -> Unit,
     modifier: Modifier
@@ -201,6 +240,7 @@ private fun SingleFilePlayer(
         ) {
             BooksTopBar(
                 book = book,
+                isScreenLocked = isScreenLocked,
                 onCollapseMiniPlayer = {
                     scope.launch {
                         scaffoldState.bottomSheetState.collapse()
@@ -209,8 +249,30 @@ private fun SingleFilePlayer(
                 onSpeedChange = {
                     player.playbackParameters = player.playbackParameters.withSpeed(it)
                     updateBookSpeed(it)
-                }
+                },
+                onLockToggle = { onLockScreen(it) }
             )
+        }
+
+        Box(
+            modifier = Modifier
+                .layoutId("lockOverlay")
+        ) {
+            if (isScreenLocked) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.4f))
+                        .combinedClickable(
+                            onClick = {
+                                showScreenLockedAlert()
+                            },
+                            onLongClick = {
+                                unlockScreen()
+                            }
+                        )
+                )
+            }
         }
     }
 }
@@ -222,13 +284,17 @@ private fun SingleFilePlayer(
 private fun MultipleFilePlayer(
     player: MediaController,
     book: MultipleBooks,
-    onPlayingChange: (Boolean) -> Unit,
+    isScreenLocked: Boolean,
     progress: Long,
     scaffoldState: BottomSheetScaffoldState,
     playerIcon: MutableState<ImageVector>,
+    unlockScreen: () -> Unit,
+    showScreenLockedAlert: () -> Unit,
+    onLockScreen: (Boolean) -> Unit,
+    onPlayingChange: (Boolean) -> Unit,
     updateCurrentBookPosition: (Int) -> Unit,
     updateProgress: (Long) -> Unit,
-    isGestureDisabled: (Boolean) -> Unit,
+    onDisableGesture: (Boolean) -> Unit,
     updateBookSpeed: (Float) -> Unit,
     modifier: Modifier
 ) {
@@ -247,8 +313,10 @@ private fun MultipleFilePlayer(
     val currentIndex = book.currentBookPosition
 
     LaunchedEffect(showChapters.value) {
-        isGestureDisabled(showChapters.value)
+        onDisableGesture(showChapters.value)
     }
+
+
 
     LaunchedEffect(swipeProgress) {
         if (swipeProgress < 1f) {
@@ -372,6 +440,7 @@ private fun MultipleFilePlayer(
         ) {
             BooksTopBar(
                 book = book,
+                isScreenLocked = isScreenLocked,
                 onCollapseMiniPlayer = {
                     scope.launch {
                         scaffoldState.bottomSheetState.collapse()
@@ -380,8 +449,30 @@ private fun MultipleFilePlayer(
                 onSpeedChange = {
                     player.playbackParameters = player.playbackParameters.withSpeed(it)
                     updateBookSpeed(it)
-                }
+                },
+                onLockToggle = { onLockScreen(it) }
             )
+        }
+
+        Box(
+            modifier = Modifier
+                .layoutId("lockOverlay")
+        ) {
+            if (isScreenLocked) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.4f))
+                        .combinedClickable(
+                            onClick = {
+                                showScreenLockedAlert()
+                            },
+                            onLongClick = {
+                                unlockScreen()
+                            }
+                        )
+                )
+            }
         }
     }
 }
@@ -412,8 +503,10 @@ private fun PlayerController(
 @Composable
 private fun BooksTopBar(
     book: Book,
+    isScreenLocked: Boolean,
     onCollapseMiniPlayer: () -> Unit,
     onSpeedChange: (Float) -> Unit,
+    onLockToggle: (Boolean) -> Unit,
 ) {
     val speedOptions = listOf(
         BookSpeed.Half,
@@ -487,12 +580,12 @@ private fun BooksTopBar(
             }
 
             IconButton(onClick = {
-                // Lock controllers
+                onLockToggle(!isScreenLocked)
             }) {
                 Icon(
                     Icons.Default.Lock,
                     contentDescription = "",
-                    tint = Color.White
+                    tint = if (isScreenLocked) MaterialTheme.colorScheme.primary else Color.White
                 )
             }
         }
@@ -699,4 +792,17 @@ private fun PlayerControls(
             }
         }
     }
+}
+
+@Composable
+private fun ScreenLockedAlert(
+    onDismissRequest: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = { Text("Screen Locked") },
+        text = { Text("Long press to unlock screen") },
+        confirmButton = {},
+        dismissButton = {}
+    )
 }

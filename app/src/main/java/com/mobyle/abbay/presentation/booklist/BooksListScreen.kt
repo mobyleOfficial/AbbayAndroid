@@ -277,7 +277,7 @@ fun BooksListScreen(
                                 )
                             }
                         },
-                        isGestureDisabled = {
+                        onDisableGesture = {
                             isGestureDisabled.value = !it
                         },
                         updateBookSpeed = {

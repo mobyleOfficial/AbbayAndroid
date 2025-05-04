@@ -55,6 +55,9 @@
         height: 0,
         visibility: 'gone',
         top: ['parent', 'top'],
+      },
+      lockOverlay: {
+        visibility: 'gone',
       }
     },
     end: {
@@ -104,7 +107,6 @@
           'parent',
           'end'
         ],
-
         bottom: [
           'parent',
           'bottom'
@@ -114,6 +116,15 @@
         width: "spread",
         visibility: 'visible',
         top: ['parent', 'top'],
+      },
+      lockOverlay: {
+        height: 'spread',
+        width: "spread",
+        visibility: 'visible',
+        top: ['parent', 'top'],
+        bottom: ['parent', 'bottom'],
+        start: ['parent', 'start'],
+        end: ['parent', 'end']
       }
     },
   }
