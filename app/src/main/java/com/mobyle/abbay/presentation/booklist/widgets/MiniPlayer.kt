@@ -172,13 +172,7 @@ private fun SingleFilePlayer(
             .readBytes()
             .decodeToString()
     }
-
-    var slideValue by remember { mutableFloatStateOf(0f) }
-
-    fun onSliderValueChange(percentage: Float) {
-        slideValue = percentage
-        updateProgress((book.duration * percentage).toLong())
-    }
+    val scope = rememberCoroutineScope()
 
     MotionLayout(
         motionScene = MotionScene(content = motionSceneContent),
@@ -195,102 +189,51 @@ private fun SingleFilePlayer(
             modifier = modifier
         )
 
-        Column(
+        PlayerControls(
+            player = player,
+            book = book,
+            onPlayingChange = onPlayingChange,
+            progress = progress,
+            playerIcon = playerIcon,
+            updateProgress = updateProgress,
             modifier = Modifier
                 .fillMaxWidth()
                 .layoutId("content")
-                .padding(horizontal = 28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                book.name,
-                style = TextStyle(
-                    color = MaterialTheme.colorScheme.tertiary,
-                    fontFamily = FontFamily.Default,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 22.sp,
-                    lineHeight = 400.sp,
-                ),
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                modifier = Modifier
-                    .basicMarquee()
-                    .fillMaxWidth()
-            )
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Slider(
-                    value = progress.toFloat() / book.duration,
-                    onValueChange = { percentage ->
-                        onSliderValueChange(percentage)
-                    },
-                    onValueChangeFinished = {
-                        val newPosition = (book.duration * slideValue).toLong()
-                        player.seekTo(newPosition)
-                        updateProgress(newPosition)
-                    },
-                    colors = SliderDefaults.colors(
-                        thumbColor = MaterialTheme.colorScheme.tertiary,
-                        activeTrackColor = MaterialTheme.colorScheme.tertiary
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        progress.toHHMMSS(),
-                        style = MaterialTheme.typography.titleSmall
-                    )
-                    Text(
-                        book.duration.toHHMMSS(),
-                        style = MaterialTheme.typography.titleSmall
-                    )
-                }
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                IconButton(onClick = {}) {
-                    Icon(Icons.Default.FastRewind, contentDescription = "", tint = Color.White)
-                }
-                PlayerController(
-                    player = player,
-                    onPlayingChange = onPlayingChange,
-                    position = progress,
-                    playerIcon = playerIcon
-                )
-                IconButton(onClick = {}) {
-                    Icon(Icons.Default.FastForward, contentDescription = "", tint = Color.White)
-                }
-            }
-        }
+                .padding(bottom = 30.dp, top = 16.dp),
+        )
 
         Box(
             Modifier
                 .padding(8.dp)
                 .layoutId("thumbnail")
+                .clip(shape = RoundedCornerShape(percent = 10)),
         ) {
-            AsyncImage(
-                contentScale = ContentScale.FillBounds,
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(book.thumbnail)
-                    .fallback(R.drawable.file_music)
-                    .error(R.drawable.file_music)
-                    .crossfade(true)
-                    .build(),
-                modifier = modifier.then(
-                    Modifier
-                        .fillMaxSize()
-                        .clip(shape = RoundedCornerShape(percent = 10))
-                ),
-                contentDescription = ""
+            BookImage(
+                modifier = modifier,
+                player = player,
+                playerIcon = playerIcon,
+                book = book,
+                progress = progress,
+                onPlayingChange = onPlayingChange,
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .layoutId("topContent"),
+        ) {
+            BooksTopBar(
+                book = book,
+                onCollapseMiniPlayer = {
+                    scope.launch {
+                        scaffoldState.bottomSheetState.collapse()
+                    }
+                },
+                onSpeedChange = {
+                    player.playbackParameters = player.playbackParameters.withSpeed(it)
+                    updateBookSpeed(it)
+                }
             )
         }
     }
@@ -313,7 +256,6 @@ private fun MultipleFilePlayer(
     updateBookSpeed: (Float) -> Unit,
     modifier: Modifier
 ) {
-    val duration = book.bookFileList[book.currentBookPosition].duration
     val swipeProgress = scaffoldState.currentFraction
     val motionProgress = max(min(swipeProgress, 1f), 0f)
     val context = LocalContext.current
@@ -324,12 +266,6 @@ private fun MultipleFilePlayer(
             .decodeToString()
     }
     val scope = rememberCoroutineScope()
-    var slideValue by remember { mutableFloatStateOf(0f) }
-    fun onSliderValueChange(percentage: Float) {
-        slideValue = percentage
-        updateProgress((duration * percentage).toLong())
-    }
-
     val showChapters = remember { mutableStateOf(false) }
     val chapters = book.bookFileList
     val currentIndex = book.currentBookPosition
@@ -359,96 +295,19 @@ private fun MultipleFilePlayer(
             modifier = modifier
         )
 
-        Column(
+        PlayerControls(
+            player = player,
+            book = book,
+            onPlayingChange = onPlayingChange,
+            progress = progress,
+            playerIcon = playerIcon,
+            updateProgress = updateProgress,
             modifier = Modifier
                 .fillMaxWidth()
                 .layoutId("content")
                 .padding(horizontal = 28.dp)
                 .padding(bottom = 30.dp, top = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                book.name,
-                style = TextStyle(
-                    color = MaterialTheme.colorScheme.tertiary,
-                    fontFamily = FontFamily.Default,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 22.sp,
-                    lineHeight = 400.sp,
-                ),
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                modifier = Modifier
-                    .basicMarquee()
-                    .fillMaxWidth()
-            )
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Slider(
-                    value = progress.toFloat() / duration,
-                    onValueChange = { percentage ->
-                        onSliderValueChange(percentage)
-                    },
-                    onValueChangeFinished = {
-                        val newPosition = (duration * slideValue).toLong()
-                        player.seekTo(newPosition)
-                        updateProgress(newPosition)
-                    },
-                    colors = SliderDefaults.colors(
-                        thumbColor = MaterialTheme.colorScheme.tertiary,
-                        activeTrackColor = MaterialTheme.colorScheme.tertiary
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        progress.toHHMMSS(),
-                        style = MaterialTheme.typography.titleSmall
-                    )
-                    Text(
-                        duration.toHHMMSS(),
-                        style = MaterialTheme.typography.titleSmall
-                    )
-                }
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                IconButton(onClick = {
-                    if (book.currentBookPosition > 0) {
-                        player.seekToPreviousMediaItem()
-                        updateProgress(0L)
-                        updateCurrentBookPosition(book.currentBookPosition - 1)
-                    }
-                }) {
-                    Icon(Icons.Default.FastRewind, contentDescription = "", tint = Color.White)
-                }
-                PlayerController(
-                    player = player,
-                    onPlayingChange = onPlayingChange,
-                    position = progress,
-                    playerIcon = playerIcon
-                )
-                IconButton(onClick = {
-                    if (book.currentBookPosition < book.bookFileList.size - 1) {
-                        player.seekToNextMediaItem()
-                        updateProgress(0L)
-                        updateCurrentBookPosition(book.currentBookPosition + 1)
-                    }
-
-                }) {
-                    Icon(Icons.Default.FastForward, contentDescription = "", tint = Color.White)
-                }
-            }
-        }
+        )
 
         Box(
             Modifier
@@ -514,64 +373,26 @@ private fun MultipleFilePlayer(
                 }
 
                 Box(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(shape = RoundedCornerShape(percent = 10)),
                 ) {
-                    AsyncImage(
-                        contentScale = ContentScale.FillBounds,
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(book.thumbnail)
-                            .fallback(R.drawable.file_music)
-                            .error(R.drawable.file_music)
-                            .crossfade(true)
-                            .build(),
-                        modifier = modifier.then(
-                            Modifier
-                                .fillMaxSize()
-                                .clip(shape = RoundedCornerShape(percent = 10))
-                        ),
-                        contentDescription = ""
+                    BookImage(
+                        modifier = modifier,
+                        player = player,
+                        playerIcon = playerIcon,
+                        book = book,
+                        progress = progress,
+                        onPlayingChange = onPlayingChange,
                     )
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.2f))
-                            .clickable {
-                                playerIcon.value = if (player.isPlaying) {
-                                    onPlayingChange(false)
-                                    player.pause()
-                                    Icons.Default.Pause
-                                } else {
-                                    player.seekTo(progress)
-                                    onPlayingChange(true)
-                                    player.playWhenReady = true
-                                    Icons.Default.PlayArrow
-                                }
-                            }
-                            .clip(shape = RoundedCornerShape(percent = 10))
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                        ) {
-                            playerIcon.value = if (player.isPlaying) {
-                                Icons.Default.Pause
-                            } else {
-                                Icons.Default.PlayArrow
-                            }
-
-                            Icon(playerIcon.value, contentDescription = "", tint = Color.White)
-                        }
-                    }
                 }
             }
         }
 
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .layoutId("topContent"),
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             BooksTopBar(
                 book = book,
@@ -626,17 +447,17 @@ private fun BooksTopBar(
         },
         actions = {
             IconButton(onClick = { speedMenuExpanded.value = true }) {
-               Row {
-                   Text(
-                       text = currentSpeed.value.text,
-                       color = Color.White
-                   )
-                   Icon(
-                       Icons.Default.Speed,
-                       contentDescription = "Change speed",
-                       tint = Color.White
-                   )
-               }
+                Row {
+                    Text(
+                        text = currentSpeed.value.text,
+                        color = Color.White
+                    )
+                    Icon(
+                        Icons.Default.Speed,
+                        contentDescription = "Change speed",
+                        tint = Color.White
+                    )
+                }
             }
             DropdownMenu(
                 expanded = speedMenuExpanded.value,
@@ -728,5 +549,155 @@ private fun MiniPlayerContent(
             position = progress,
             playerIcon = playerIcon
         )
+    }
+}
+
+@Composable
+private fun BookImage(
+    modifier: Modifier,
+    progress: Long,
+    player: MediaController,
+    book: Book,
+    playerIcon: MutableState<ImageVector>,
+    onPlayingChange: (Boolean) -> Unit
+) {
+    AsyncImage(
+        contentScale = ContentScale.FillBounds,
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(book.thumbnail)
+            .fallback(R.drawable.file_music)
+            .error(R.drawable.file_music)
+            .crossfade(true)
+            .build(),
+        modifier = modifier.then(
+            Modifier
+                .fillMaxSize()
+                .clip(shape = RoundedCornerShape(percent = 10))
+        ),
+        contentDescription = ""
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.2f))
+            .clickable {
+                playerIcon.value = if (player.isPlaying) {
+                    onPlayingChange(false)
+                    player.pause()
+                    Icons.Default.Pause
+                } else {
+                    player.seekTo(progress)
+                    onPlayingChange(true)
+                    player.playWhenReady = true
+                    Icons.Default.PlayArrow
+                }
+            }
+            .clip(shape = RoundedCornerShape(percent = 10))
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+        ) {
+            playerIcon.value = if (player.isPlaying) {
+                Icons.Default.Pause
+            } else {
+                Icons.Default.PlayArrow
+            }
+
+            Icon(playerIcon.value, contentDescription = "", tint = Color.White)
+        }
+    }
+}
+
+@Composable
+private fun PlayerControls(
+    player: MediaController,
+    book: Book,
+    onPlayingChange: (Boolean) -> Unit,
+    progress: Long,
+    playerIcon: MutableState<ImageVector>,
+    updateProgress: (Long) -> Unit,
+    modifier: Modifier
+) {
+    var slideValue by remember { mutableFloatStateOf(0f) }
+
+    fun onSliderValueChange(percentage: Float) {
+        slideValue = percentage
+        updateProgress((book.duration * percentage).toLong())
+    }
+
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            book.name,
+            style = TextStyle(
+                color = MaterialTheme.colorScheme.tertiary,
+                fontFamily = FontFamily.Default,
+                fontWeight = FontWeight.Medium,
+                fontSize = 22.sp,
+                lineHeight = 400.sp,
+            ),
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            modifier = Modifier
+                .basicMarquee()
+                .fillMaxWidth()
+        )
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Slider(
+                value = progress.toFloat() / book.duration,
+                onValueChange = { percentage ->
+                    onSliderValueChange(percentage)
+                },
+                onValueChangeFinished = {
+                    val newPosition = (book.duration * slideValue).toLong()
+                    player.seekTo(newPosition)
+                    updateProgress(newPosition)
+                },
+                colors = SliderDefaults.colors(
+                    thumbColor = MaterialTheme.colorScheme.tertiary,
+                    activeTrackColor = MaterialTheme.colorScheme.tertiary
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    progress.toHHMMSS(),
+                    style = MaterialTheme.typography.titleSmall
+                )
+                Text(
+                    book.duration.toHHMMSS(),
+                    style = MaterialTheme.typography.titleSmall
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            IconButton(onClick = {}) {
+                Icon(Icons.Default.FastRewind, contentDescription = "", tint = Color.White)
+            }
+            PlayerController(
+                player = player,
+                onPlayingChange = onPlayingChange,
+                position = progress,
+                playerIcon = playerIcon
+            )
+            IconButton(onClick = {}) {
+                Icon(Icons.Default.FastForward, contentDescription = "", tint = Color.White)
+            }
+        }
     }
 }
