@@ -6,4 +6,6 @@ interface BooksRepository {
     suspend fun getBookList(): List<Book>
 
     suspend fun upsertBookList(booksList: List<Book>)
+
+    suspend fun deleteBook(book: Book)
 }

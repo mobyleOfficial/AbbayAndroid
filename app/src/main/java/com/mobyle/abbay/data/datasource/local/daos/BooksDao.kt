@@ -5,7 +5,6 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.mobyle.abbay.data.model.BookFileEntity
-import com.mobyle.abbay.data.model.BookFolderEntity
 import com.mobyle.abbay.data.model.MultipleBooksEntity
 
 @Dao
@@ -22,10 +21,9 @@ interface BooksDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMultipleBooksList(booksList: List<MultipleBooksEntity>)
 
-    @Query("SELECT * FROM BookFolderEntity")
-    suspend fun getBooksFolderList(): List<BookFolderEntity>
+    @Query("DELETE FROM BookFileEntity WHERE id = :id")
+    suspend fun deleteBookFile(id: String)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertBooksFolderList(booksList: List<BookFolderEntity>)
-
+    @Query("DELETE FROM MultipleBooksEntity WHERE id = :id")
+    suspend fun deleteMultipleBook(id: String)
 }

@@ -30,4 +30,15 @@ class BooksRepositoryImpl @Inject constructor(private val localDataSource: Books
         localDataSource.addBookFileList(bookFilesList)
         localDataSource.addMultipleBooksList(multipleBooksList)
     }
+
+    override suspend fun deleteBook(book: Book) {
+        when(book) {
+           is MultipleBooks -> {
+               localDataSource.deleteMultipleFilesBook(book.id)
+           }
+           is BookFile -> {
+               localDataSource.deleteBook(book.id)
+           }
+        }
+    }
 }

@@ -11,14 +11,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.BottomSheetScaffold
 import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.rememberBottomSheetScaffoldState
@@ -82,7 +85,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Date
-
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.material3.Icon
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import com.model.Book
 
 private const val LAST_SELECTED_BOOK_ID = "LAST_SELECTED_BOOK_ID"
 private const val AUTO_DENIAL_THRESHOLD = 300
@@ -361,132 +370,216 @@ fun BooksListScreen(
                                 }
                             }
 
+                            val bookToDelete = remember { mutableStateOf<Book?>(null) }
+                            val showDeleteDialog = remember {
+                                mutableStateOf(false)
+                            }
+
                             Column {
                                 LazyColumn(
                                     modifier = Modifier
                                         .weight(1.0f)
                                         .background(MaterialTheme.colorScheme.primary)
                                 ) {
-                                    items(bookList.size) { index ->
-                                        when (val book = bookList[index]) {
-                                            is MultipleBooks -> {
-                                                val intermediaryProgress = book.bookFileList
-                                                    .intermediateProgress(book.currentBookPosition)
-
-                                                BookItem(
-                                                    book = book,
-                                                    currentMediaIndex = book.currentBookPosition + 1,
-                                                    isSelected = book.id == (selectedBook as? BookFile)?.id,
-                                                    intermediaryProgress = intermediaryProgress,
-                                                    progress = if (book.id == (selectedBook as? BookFile)?.id) {
-                                                        if (isPlaying) {
-                                                            intermediaryProgress.plus(
-                                                                currentProgress
-                                                            ).toHHMMSS()
-                                                        } else {
-                                                            intermediaryProgress.plus(book.progress)
-                                                                .toHHMMSS()
-                                                        }
-                                                    } else {
-                                                        intermediaryProgress.plus(book.progress)
-                                                            .toHHMMSS()
+                                    items(
+                                        items = bookList,
+                                        key = { book -> book.id },
+                                        itemContent = { book ->
+                                            val dismissState = rememberSwipeToDismissBoxState(
+                                                confirmValueChange = { dismissValue ->
+                                                    if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
+                                                        bookToDelete.value = book
+                                                        showDeleteDialog.value = true
                                                     }
-                                                ) {
-                                                    if (selectedBook?.id != book.id) {
-                                                        selectedBook?.let {
-                                                            viewModel.updateBookProgress(
-                                                                it.id,
-                                                                currentProgress
-                                                            )
-                                                        }
 
-                                                        viewModel.setCurrentProgress(
-                                                            id = book.id,
-                                                            progress = book.progress
+                                                    false
+                                                }
+                                            )
+
+                                            SwipeToDismissBox(
+                                                state = dismissState,
+                                                enableDismissFromStartToEnd = false,
+                                                backgroundContent = {
+                                                    val color = MaterialTheme.colorScheme.error
+                                                    val alignment = Alignment.CenterEnd
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .fillMaxSize()
+                                                            .background(color)
+                                                            .padding(horizontal = 20.dp),
+                                                        contentAlignment = alignment
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Delete,
+                                                            contentDescription = "Delete",
+                                                            tint = Color.White
                                                         )
-                                                        activity.getPreferences(Context.MODE_PRIVATE)
-                                                            ?.let { sharedPref ->
-                                                                with(sharedPref.edit()) {
-                                                                    putString(
-                                                                        LAST_SELECTED_BOOK_ID,
-                                                                        book.id
-                                                                    )
-                                                                    apply()
+                                                    }
+                                                },
+                                                content = {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .background(MaterialTheme.colorScheme.primary)
+                                                    ) {
+                                                        when (book) {
+                                                            is MultipleBooks -> {
+                                                                val intermediaryProgress = book.bookFileList
+                                                                    .intermediateProgress(book.currentBookPosition)
+
+                                                                BookItem(
+                                                                    book = book,
+                                                                    currentMediaIndex = book.currentBookPosition + 1,
+                                                                    isSelected = book.id == (selectedBook as? BookFile)?.id,
+                                                                    intermediaryProgress = intermediaryProgress,
+                                                                    progress = if (book.id == (selectedBook as? BookFile)?.id) {
+                                                                        if (isPlaying) {
+                                                                            intermediaryProgress.plus(currentProgress).toHHMMSS()
+                                                                        } else {
+                                                                            intermediaryProgress.plus(book.progress).toHHMMSS()
+                                                                        }
+                                                                    } else {
+                                                                        intermediaryProgress.plus(book.progress).toHHMMSS()
+                                                                    }
+                                                                ) {
+                                                                    if (selectedBook?.id != book.id) {
+                                                                        selectedBook?.let {
+                                                                            viewModel.updateBookProgress(
+                                                                                it.id,
+                                                                                currentProgress
+                                                                            )
+                                                                        }
+
+                                                                        viewModel.setCurrentProgress(
+                                                                            id = book.id,
+                                                                            progress = book.progress
+                                                                        )
+                                                                        activity.getPreferences(Context.MODE_PRIVATE)
+                                                                            ?.let { sharedPref ->
+                                                                                with(sharedPref.edit()) {
+                                                                                    putString(
+                                                                                        LAST_SELECTED_BOOK_ID,
+                                                                                        book.id
+                                                                                    )
+                                                                                    apply()
+                                                                                }
+                                                                            }
+
+                                                                        viewModel.selectBook(book)
+                                                                        player.playMultipleBooks(
+                                                                            currentPosition = book.currentBookPosition,
+                                                                            idList = book.bookFileList.map { it.id },
+                                                                            progress = book.progress,
+                                                                            isPlaying = viewModel.isPlaying
+                                                                        )
+                                                                    }
+
+                                                                    asyncScope.launch {
+                                                                        bottomSheetState.bottomSheetState.expand()
+                                                                        bottomSheetState.bottomSheetState.expand()
+                                                                    }
                                                                 }
                                                             }
 
-                                                        viewModel.selectBook(book)
-                                                        player.playMultipleBooks(
-                                                            currentPosition = book.currentBookPosition,
-                                                            idList = book.bookFileList.map { it.id },
-                                                            progress = book.progress,
-                                                            isPlaying = viewModel.isPlaying
-                                                        )
-                                                    }
+                                                            is BookFile -> {
+                                                                BookItem(
+                                                                    book = book,
+                                                                    currentMediaIndex = player.currentMediaItemIndex + 1,
+                                                                    isSelected = book.id == (selectedBook as? BookFile)?.id,
+                                                                    intermediaryProgress = 0L,
+                                                                    progress = if (book.id == (selectedBook as? BookFile)?.id) {
+                                                                        if (isPlaying) {
+                                                                            currentProgress.toHHMMSS()
+                                                                        } else {
+                                                                            book.progress.toHHMMSS()
+                                                                        }
+                                                                    } else {
+                                                                        book.progress.toHHMMSS()
+                                                                    }
+                                                                ) {
+                                                                    if (selectedBook?.id != book.id) {
+                                                                        selectedBook?.let {
+                                                                            viewModel.updateBookProgress(
+                                                                                it.id,
+                                                                                currentProgress
+                                                                            )
+                                                                        }
 
-                                                    asyncScope.launch {
-                                                        bottomSheetState.bottomSheetState.expand()
-                                                        bottomSheetState.bottomSheetState.expand()
-                                                    }
-                                                }
-                                            }
+                                                                        viewModel.setCurrentProgress(
+                                                                            id = book.id,
+                                                                            progress = book.progress
+                                                                        )
+                                                                        activity.getPreferences(Context.MODE_PRIVATE)
+                                                                            ?.let { sharedPref ->
+                                                                                with(sharedPref.edit()) {
+                                                                                    putString(
+                                                                                        LAST_SELECTED_BOOK_ID,
+                                                                                        book.id
+                                                                                    )
+                                                                                    apply()
+                                                                                }
+                                                                            }
 
-                                            is BookFile -> {
-                                                BookItem(
-                                                    book = book,
-                                                    currentMediaIndex = player.currentMediaItemIndex + 1,
-                                                    isSelected = book.id == (selectedBook as? BookFile)?.id,
-                                                    intermediaryProgress = 0L,
-                                                    progress = if (book.id == (selectedBook as? BookFile)?.id) {
-                                                        if (isPlaying) {
-                                                            currentProgress.toHHMMSS()
-                                                        } else {
-                                                            book.progress.toHHMMSS()
-                                                        }
-                                                    } else {
-                                                        book.progress.toHHMMSS()
-                                                    }
-                                                ) {
-                                                    if (selectedBook?.id != book.id) {
-                                                        selectedBook?.let {
-                                                            viewModel.updateBookProgress(
-                                                                it.id,
-                                                                currentProgress
-                                                            )
-                                                        }
+                                                                        viewModel.selectBook(book)
+                                                                        player.playBook(
+                                                                            book.id,
+                                                                            book.progress,
+                                                                            viewModel.isPlaying
+                                                                        )
+                                                                    }
 
-                                                        viewModel.setCurrentProgress(
-                                                            id = book.id,
-                                                            progress = book.progress
-                                                        )
-                                                        activity.getPreferences(Context.MODE_PRIVATE)
-                                                            ?.let { sharedPref ->
-                                                                with(sharedPref.edit()) {
-                                                                    putString(
-                                                                        LAST_SELECTED_BOOK_ID,
-                                                                        book.id
-                                                                    )
-                                                                    apply()
+                                                                    asyncScope.launch {
+                                                                        bottomSheetState.bottomSheetState.expand()
+                                                                        bottomSheetState.bottomSheetState.expand()
+                                                                    }
                                                                 }
                                                             }
-
-                                                        viewModel.selectBook(book)
-                                                        player.playBook(
-                                                            book.id,
-                                                            book.progress,
-                                                            viewModel.isPlaying
-                                                        )
+                                                        }
                                                     }
+                                                },
+                                                enableDismissFromEndToStart = true,
+                                            )
+                                        }
+                                    )
+                                }
+                            }
 
-                                                    asyncScope.launch {
-                                                        bottomSheetState.bottomSheetState.expand()
-                                                        bottomSheetState.bottomSheetState.expand()
-                                                    }
+                            if (showDeleteDialog.value) {
+                                AlertDialog(
+                                    onDismissRequest = {
+                                        showDeleteDialog.value = false
+                                        bookToDelete.value = null
+                                    },
+                                    title = {
+                                        Text("Delete Book")
+                                    },
+                                    text = {
+                                        Text("Are you sure you want to delete this book?")
+                                    },
+                                    confirmButton = {
+                                        TextButton(
+                                            onClick = {
+                                                bookToDelete.value?.let { book ->
+                                                    viewModel.removeBook(book)
                                                 }
+                                                showDeleteDialog.value = false
+                                                bookToDelete.value = null
                                             }
+                                        ) {
+                                            Text("Delete", color = MaterialTheme.colorScheme.error)
+                                        }
+                                    },
+                                    dismissButton = {
+                                        TextButton(
+                                            onClick = {
+                                                showDeleteDialog.value = false
+                                                bookToDelete.value = null
+                                            }
+                                        ) {
+                                            Text("Cancel")
                                         }
                                     }
-                                }
+                                )
                             }
                         }
 

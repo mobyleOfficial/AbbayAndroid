@@ -1,7 +1,6 @@
 package com.mobyle.abbay.data.datasource.local.books
 
 import com.mobyle.abbay.data.model.BookFileEntity
-import com.mobyle.abbay.data.model.BookFolderEntity
 import com.mobyle.abbay.data.model.MultipleBooksEntity
 
 interface BooksLocalDataSource {
@@ -13,8 +12,7 @@ interface BooksLocalDataSource {
 
     suspend fun addMultipleBooksList(booksList: List<MultipleBooksEntity>)
 
-    suspend fun getBooksFolderList(): List<BookFolderEntity>
+    suspend fun deleteBook(id: String)
 
-    suspend fun addBooksFolderList(folderList: List<BookFolderEntity>)
-
+    suspend fun deleteMultipleFilesBook(id: String)
 }
