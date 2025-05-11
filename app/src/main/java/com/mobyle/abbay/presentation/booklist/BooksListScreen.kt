@@ -173,20 +173,21 @@ fun BooksListScreen(
     val openFileSelector = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenMultipleDocuments()
     ) { filesList ->
-        if (filesList.isNotEmpty()) {
-            viewModel.updateBookList(filesList.filter { it.path != null }.map { uri ->
-                var id: String? = null
-                val metadataRetriever = MediaMetadataRetriever()
-                metadataRetriever.setDataSource(context, uri)
-                context.musicCursor {
-                    val title = it.getTitle()
-                    if ((uri.path?.split("/")?.lastOrNull()) == title.orEmpty()) {
+        asyncScope.launch(Dispatchers.IO) {
+            if (filesList.isNotEmpty()) {
+                val newBooksList = filesList.filter { it.path != null }.map { uri ->
+                    var id: String? = null
+                    val metadataRetriever = MediaMetadataRetriever()
+                    metadataRetriever.setDataSource(context, uri)
+                    context.musicCursor {
                         id = it.getId()
                     }
+
+                    metadataRetriever.toBook(context, id.orEmpty())
                 }
 
-                metadataRetriever.toBook(context, id.orEmpty())
-            })
+                viewModel.updateBookList(newBooksList)
+            }
         }
     }
 
