@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
@@ -50,11 +51,23 @@ fun BookItem(
             Column(
                 verticalArrangement = Arrangement.Center,
             ) {
-                Text(
-                    book.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(8.dp)
-                )
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        book.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                    if (book.hasError) {
+                        Spacer(modifier = Modifier.weight(1f))
+                        Icon(
+                            imageVector = Icons.Default.Error,
+                            contentDescription = "Error playing file",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(24.dp).padding(end = 8.dp)
+                        )
+                    }
+                }
+
                 Row {
                     if (book is MultipleBooks) {
                         Row(
