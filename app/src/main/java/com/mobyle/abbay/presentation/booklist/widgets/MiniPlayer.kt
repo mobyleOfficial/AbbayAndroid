@@ -247,14 +247,16 @@ private fun SingleFilePlayer(
             modifier = Modifier.layoutId(LayoutId.LOCK_OVERLAY.id)
         ) {
             if (isScreenLocked) {
-                Box(modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.4f))
-                    .combinedClickable(onClick = {
-                        showScreenLockedAlert()
-                    }, onLongClick = {
-                        unlockScreen()
-                    }))
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.4f))
+                        .combinedClickable(onClick = {
+                            showScreenLockedAlert()
+                        }, onLongClick = {
+                            unlockScreen()
+                        })
+                )
             }
         }
     }
@@ -407,11 +409,15 @@ private fun MultipleFilePlayer(
                 Box(modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.4f))
-                    .combinedClickable(onClick = {
-                        showScreenLockedAlert()
-                    }, onLongClick = {
-                        unlockScreen()
-                    }))
+                    .combinedClickable(
+                        onClick = {
+                            showScreenLockedAlert()
+                        },
+                        onLongClick = {
+                            unlockScreen()
+                        }
+                    )
+                )
             }
         }
     }
@@ -634,6 +640,7 @@ private fun MiniPlayerContent(
             Text(
                 book.name,
                 style = MaterialTheme.typography.titleMedium,
+                color = if(book.hasError) {Color.Red} else {Color.Blue},
                 maxLines = 1,
                 modifier = Modifier.basicMarquee()
             )

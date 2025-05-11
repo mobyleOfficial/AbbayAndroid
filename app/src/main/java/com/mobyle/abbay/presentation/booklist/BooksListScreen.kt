@@ -3,6 +3,7 @@ package com.mobyle.abbay.presentation.booklist
 import android.app.Activity
 import android.content.Context
 import android.media.MediaMetadataRetriever
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -91,6 +92,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import com.model.Book
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import com.mobyle.abbay.presentation.utils.fileExists
 
 private const val LAST_SELECTED_BOOK_ID = "LAST_SELECTED_BOOK_ID"
 private const val AUTO_DENIAL_THRESHOLD = 300
@@ -155,6 +159,24 @@ fun BooksListScreen(
         if (viewModel.shouldOpenPlayerInStartup) {
             bottomSheetState.bottomSheetState.expand()
             bottomSheetState.bottomSheetState.expand()
+        }
+    }
+
+    LifecycleEventEffect(event = Lifecycle.Event.ON_RESUME) {
+        asyncScope.launch(Dispatchers.IO) {
+            val updatedList = viewModel.booksList.map {
+                when(it) {
+                    is MultipleBooks -> {
+                        it.copy(hasError = !context.fileExists(it.id))
+                    }
+                    is BookFile -> {
+                        it.copy(hasError = !context.fileExists(it.id))
+                    }
+                    else -> it
+                }
+            }
+
+            viewModel.updateBookList(updatedList)
         }
     }
 
@@ -235,6 +257,16 @@ fun BooksListScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        Log.d("HelpMe", "adding listener")
+        player.addListener(object : Player.Listener {
+            override fun onPlayerError(error: PlaybackException) {
+                selectedBook?.let { book ->
+                    viewModel.markBookAsError(book)
+                }
+            }
+        })
+    }
 
     LifecycleEventEffect(event = Lifecycle.Event.ON_PAUSE) {
         selectedBook?.let {
@@ -360,9 +392,9 @@ fun BooksListScreen(
                                                 )
                                             } else {
                                                 player.prepareBook(
-                                                    id,
-                                                    book.progress,
-                                                    viewModel.isPlaying
+                                                    id = id,
+                                                    progress = book.progress,
+                                                    isPlaying = viewModel.isPlaying
                                                 )
                                             }
                                         }
@@ -522,9 +554,9 @@ fun BooksListScreen(
 
                                                                         viewModel.selectBook(book)
                                                                         player.playBook(
-                                                                            book.id,
-                                                                            book.progress,
-                                                                            viewModel.isPlaying
+                                                                            id = book.id,
+                                                                            progress = book.progress,
+                                                                            isPlaying = viewModel.isPlaying
                                                                         )
                                                                     }
 

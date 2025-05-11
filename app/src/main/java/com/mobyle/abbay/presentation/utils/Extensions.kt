@@ -4,6 +4,7 @@ import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 import android.provider.MediaStore
+import android.util.Log
 import androidx.compose.material.BottomSheetScaffoldState
 import androidx.compose.material.BottomSheetValue
 import androidx.compose.material.ExperimentalMaterialApi
@@ -13,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.core.database.getLongOrNull
 import androidx.core.database.getStringOrNull
+import androidx.core.net.toFile
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
@@ -104,7 +106,11 @@ fun MediaController.playBook(
     progress: Long,
     isPlaying: MutableStateFlow<Boolean>
 ) {
-    prepareBook(id, progress, isPlaying)
+    prepareBook(
+        id = id,
+        progress = progress,
+        isPlaying = isPlaying
+    )
     isPlaying.value = true
     playWhenReady = true
 }
@@ -144,6 +150,17 @@ fun MediaController.prepareBook(
     addMediaItem(mediaItem)
     seekTo(progress)
     prepare()
+}
+fun Context.fileExists(id: String): Boolean {
+    return try {
+        val uri =
+            Uri.parse(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + File.separatorChar + id)
+        this.contentResolver.query(uri, null, null, null, null)?.use {
+            it.count > 0
+        } ?: false
+    } catch (e: Exception) {
+        false
+    }
 }
 
 fun MediaController.prepareMultipleBooks(

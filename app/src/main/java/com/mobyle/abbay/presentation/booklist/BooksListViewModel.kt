@@ -62,6 +62,7 @@ class BooksListViewModel @Inject constructor(
     }
 
     fun updateBookList(booksList: List<Book>) = launch {
+        this.booksList.clear()
         this.booksList.addAll(booksList)
         upsertBookList.invoke(booksList)
         val newBookList = mutableListOf<Book>()
@@ -221,6 +222,19 @@ class BooksListViewModel @Inject constructor(
             if (selectedBook.value?.id == book.id) {
                 _selectedBook.value = null
             }
+        }
+    }
+
+    fun markBookAsError(book: Book) = launch {
+        val index = booksList.indexOfFirst { it.id == book.id }
+        if (index != -1) {
+            val updatedBook = when (book) {
+                is BookFile -> book.copy(hasError = true)
+                is MultipleBooks -> book.copy(hasError = true)
+                else -> book
+            }
+            booksList[index] = updatedBook
+            _uiState.emit(BooksListUiState.BookListSuccess(booksList.toList()))
         }
     }
 
