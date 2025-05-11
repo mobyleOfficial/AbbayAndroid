@@ -412,8 +412,7 @@ private fun MultipleFilePlayer(
                     .combinedClickable(
                         onClick = {
                             showScreenLockedAlert()
-                        },
-                        onLongClick = {
+                        }, onLongClick = {
                             unlockScreen()
                         }
                     )
@@ -425,7 +424,9 @@ private fun MultipleFilePlayer(
 
 @Composable
 private fun BookFileItem(
-    file: BookFile?, onClick: () -> Unit, isExpanded: Boolean
+    file: BookFile?,
+    onClick: () -> Unit,
+    isExpanded: Boolean
 ) {
     Row(
         modifier = Modifier
@@ -640,7 +641,6 @@ private fun MiniPlayerContent(
             Text(
                 book.name,
                 style = MaterialTheme.typography.titleMedium,
-                color = if(book.hasError) {Color.Red} else {Color.Blue},
                 maxLines = 1,
                 modifier = Modifier.basicMarquee()
             )

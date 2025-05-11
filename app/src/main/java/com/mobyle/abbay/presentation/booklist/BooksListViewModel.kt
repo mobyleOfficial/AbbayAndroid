@@ -70,6 +70,10 @@ class BooksListViewModel @Inject constructor(
         _uiState.emit(BooksListUiState.BookListSuccess(newBookList))
     }
 
+    fun updateSelectedBook(book: Book) {
+        selectBook(book)
+    }
+
     fun addThumbnails(booksWithThumbList: List<Book>) = launch {
         val newList = this.booksList.map { book ->
             booksWithThumbList.firstOrNull { it.id == book.id }?.let {

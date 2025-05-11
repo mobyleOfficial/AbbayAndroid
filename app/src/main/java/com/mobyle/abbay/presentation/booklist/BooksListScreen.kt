@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -23,6 +24,7 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.rememberBottomSheetScaffoldState
@@ -94,6 +96,7 @@ import androidx.compose.material3.TextButton
 import com.model.Book
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import com.mobyle.abbay.presentation.utils.currentFraction
 import com.mobyle.abbay.presentation.utils.fileExists
 
 private const val LAST_SELECTED_BOOK_ID = "LAST_SELECTED_BOOK_ID"
@@ -135,6 +138,7 @@ fun BooksListScreen(
             }
         }
     )
+    val showErrorDialog = remember { mutableStateOf(false) }
 
     LaunchedEffectAndCollect(viewModel.booksIdList) {
         asyncScope.launch(Dispatchers.IO) {
@@ -156,24 +160,32 @@ fun BooksListScreen(
     }
 
     LaunchedEffect(viewModel.shouldOpenPlayerInStartup) {
-        if (viewModel.shouldOpenPlayerInStartup) {
+        if (viewModel.shouldOpenPlayerInStartup && selectedBook?.hasError == false) {
             bottomSheetState.bottomSheetState.expand()
             bottomSheetState.bottomSheetState.expand()
         }
     }
 
-    LifecycleEventEffect(event = Lifecycle.Event.ON_RESUME) {
-        asyncScope.launch(Dispatchers.IO) {
+    LaunchedEffect(Unit, viewModel.booksList, bottomSheetState.bottomSheetState.isCollapsed) {
+        if (viewModel.booksList.isNotEmpty()) {
             val updatedList = viewModel.booksList.map {
-                when(it) {
+                val newBook = when (it) {
                     is MultipleBooks -> {
                         it.copy(hasError = !context.fileExists(it.id))
                     }
+
                     is BookFile -> {
                         it.copy(hasError = !context.fileExists(it.id))
                     }
+
                     else -> it
                 }
+
+                if (newBook.hasError && selectedBook?.id == newBook.id) {
+                    viewModel.updateSelectedBook(newBook)
+                }
+
+                newBook
             }
 
             viewModel.updateBookList(updatedList)
@@ -258,7 +270,6 @@ fun BooksListScreen(
     }
 
     LaunchedEffect(Unit) {
-        Log.d("HelpMe", "adding listener")
         player.addListener(object : Player.Listener {
             override fun onPlayerError(error: PlaybackException) {
                 selectedBook?.let { book ->
@@ -272,6 +283,15 @@ fun BooksListScreen(
         selectedBook?.let {
             viewModel.updateBookList(it.id, player.currentPosition)
         }
+    }
+
+    LaunchedEffect(selectedBook) {
+        if (selectedBook?.hasError == true) {
+            showErrorDialog.value = true
+            bottomSheetState.bottomSheetState.collapse()
+        }
+
+        isGestureDisabled.value = selectedBook?.hasError == false
     }
 
     BottomSheetScaffold(
@@ -373,7 +393,7 @@ fun BooksListScreen(
                                         it.getString(LAST_SELECTED_BOOK_ID, "").orEmpty()
 
                                     bookList.firstOrNull { book ->
-                                        book.id == id
+                                        book.id == id && !book.hasError
                                     }?.let { book ->
                                         viewModel.setCurrentProgress(
                                             id = book.id,
@@ -456,8 +476,9 @@ fun BooksListScreen(
                                                     ) {
                                                         when (book) {
                                                             is MultipleBooks -> {
-                                                                val intermediaryProgress = book.bookFileList
-                                                                    .intermediateProgress(book.currentBookPosition)
+                                                                val intermediaryProgress =
+                                                                    book.bookFileList
+                                                                        .intermediateProgress(book.currentBookPosition)
 
                                                                 BookItem(
                                                                     book = book,
@@ -466,15 +487,23 @@ fun BooksListScreen(
                                                                     intermediaryProgress = intermediaryProgress,
                                                                     progress = if (book.id == (selectedBook as? BookFile)?.id) {
                                                                         if (isPlaying) {
-                                                                            intermediaryProgress.plus(currentProgress).toHHMMSS()
+                                                                            intermediaryProgress.plus(
+                                                                                currentProgress
+                                                                            ).toHHMMSS()
                                                                         } else {
-                                                                            intermediaryProgress.plus(book.progress).toHHMMSS()
+                                                                            intermediaryProgress.plus(
+                                                                                book.progress
+                                                                            ).toHHMMSS()
                                                                         }
                                                                     } else {
-                                                                        intermediaryProgress.plus(book.progress).toHHMMSS()
+                                                                        intermediaryProgress.plus(
+                                                                            book.progress
+                                                                        ).toHHMMSS()
                                                                     }
                                                                 ) {
-                                                                    if (selectedBook?.id != book.id) {
+                                                                    if (selectedBook?.id != book.id &&
+                                                                        !book.hasError
+                                                                    ) {
                                                                         selectedBook?.let {
                                                                             viewModel.updateBookProgress(
                                                                                 it.id,
@@ -486,7 +515,9 @@ fun BooksListScreen(
                                                                             id = book.id,
                                                                             progress = book.progress
                                                                         )
-                                                                        activity.getPreferences(Context.MODE_PRIVATE)
+                                                                        activity.getPreferences(
+                                                                            Context.MODE_PRIVATE
+                                                                        )
                                                                             ?.let { sharedPref ->
                                                                                 with(sharedPref.edit()) {
                                                                                     putString(
@@ -506,10 +537,16 @@ fun BooksListScreen(
                                                                         )
                                                                     }
 
-                                                                    asyncScope.launch {
-                                                                        bottomSheetState.bottomSheetState.expand()
-                                                                        bottomSheetState.bottomSheetState.expand()
+                                                                    if (book.hasError) {
+                                                                        showErrorDialog.value = true
+                                                                        viewModel.selectBook(null)
+                                                                    } else {
+                                                                        asyncScope.launch {
+                                                                            bottomSheetState.bottomSheetState.expand()
+                                                                            bottomSheetState.bottomSheetState.expand()
+                                                                        }
                                                                     }
+
                                                                 }
                                                             }
 
@@ -529,7 +566,9 @@ fun BooksListScreen(
                                                                         book.progress.toHHMMSS()
                                                                     }
                                                                 ) {
-                                                                    if (selectedBook?.id != book.id) {
+                                                                    if (selectedBook?.id != book.id &&
+                                                                        !book.hasError
+                                                                    ) {
                                                                         selectedBook?.let {
                                                                             viewModel.updateBookProgress(
                                                                                 it.id,
@@ -541,7 +580,9 @@ fun BooksListScreen(
                                                                             id = book.id,
                                                                             progress = book.progress
                                                                         )
-                                                                        activity.getPreferences(Context.MODE_PRIVATE)
+                                                                        activity.getPreferences(
+                                                                            Context.MODE_PRIVATE
+                                                                        )
                                                                             ?.let { sharedPref ->
                                                                                 with(sharedPref.edit()) {
                                                                                     putString(
@@ -552,7 +593,10 @@ fun BooksListScreen(
                                                                                 }
                                                                             }
 
-                                                                        viewModel.selectBook(book)
+                                                                        viewModel.selectBook(
+                                                                            book
+                                                                        )
+
                                                                         player.playBook(
                                                                             id = book.id,
                                                                             progress = book.progress,
@@ -560,9 +604,16 @@ fun BooksListScreen(
                                                                         )
                                                                     }
 
-                                                                    asyncScope.launch {
-                                                                        bottomSheetState.bottomSheetState.expand()
-                                                                        bottomSheetState.bottomSheetState.expand()
+                                                                    if (book.hasError) {
+                                                                        showErrorDialog.value = true
+                                                                        viewModel.selectBook(
+                                                                            null
+                                                                        )
+                                                                    } else {
+                                                                        asyncScope.launch {
+                                                                            bottomSheetState.bottomSheetState.expand()
+                                                                            bottomSheetState.bottomSheetState.expand()
+                                                                        }
                                                                     }
                                                                 }
                                                             }
@@ -713,5 +764,60 @@ fun BooksListScreen(
                 }
             }
         }
+    }
+
+    if (showErrorDialog.value) {
+        AlertDialog(
+            onDismissRequest = {
+                showErrorDialog.value = false
+                viewModel.selectBook(null)
+            },
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Error,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text(
+                        "File Not Found",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            text = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "The audio file for this book could not be found.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                    Text(
+                        "The file might have been moved or deleted.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showErrorDialog.value = false
+                        viewModel.selectBook(null)
+                    }
+                ) {
+                    Text("OK", color = MaterialTheme.colorScheme.primary)
+                }
+            }
+        )
     }
 }
