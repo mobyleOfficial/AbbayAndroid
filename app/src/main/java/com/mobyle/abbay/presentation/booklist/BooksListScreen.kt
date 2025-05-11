@@ -71,9 +71,8 @@ import com.mobyle.abbay.presentation.booklist.widgets.MiniPlayer
 import com.mobyle.abbay.presentation.common.mappers.toBook
 import com.mobyle.abbay.presentation.utils.LaunchedEffectAndCollect
 import com.mobyle.abbay.presentation.utils.getId
-import com.mobyle.abbay.presentation.utils.getTitle
 import com.mobyle.abbay.presentation.utils.intermediateProgress
-import com.mobyle.abbay.presentation.utils.musicCursor
+import com.mobyle.abbay.presentation.utils.audioCursor
 import com.mobyle.abbay.presentation.utils.playBook
 import com.mobyle.abbay.presentation.utils.playMultipleBooks
 import com.mobyle.abbay.presentation.utils.prepareBook
@@ -179,7 +178,7 @@ fun BooksListScreen(
                     var id: String? = null
                     val metadataRetriever = MediaMetadataRetriever()
                     metadataRetriever.setDataSource(context, uri)
-                    context.musicCursor {
+                    context.audioCursor {
                         id = it.getId()
                     }
 

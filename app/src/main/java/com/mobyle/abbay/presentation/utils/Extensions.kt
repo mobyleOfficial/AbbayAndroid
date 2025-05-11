@@ -170,7 +170,7 @@ fun MediaController.prepareMultipleBooks(
     prepare()
 }
 
-fun Context.musicCursor(block: (Cursor) -> Unit) {
+fun Context.audioCursor(block: (Cursor) -> Unit) {
     contentResolver.query(
         MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null,
         MediaStore.Audio.Media.DEFAULT_SORT_ORDER
