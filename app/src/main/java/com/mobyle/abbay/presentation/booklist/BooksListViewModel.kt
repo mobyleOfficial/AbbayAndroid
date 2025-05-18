@@ -62,6 +62,9 @@ class BooksListViewModel @Inject constructor(
     private val _hasSelectedFolder = MutableStateFlow(getBooksFolderPath() != null)
     val hasSelectedFolder: StateFlow<Boolean> get() = _hasSelectedFolder
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> get() = _isRefreshing
+
     init {
         if (checkPermissionsProvider.areAllPermissionsGranted(getPermissionsList())) {
             getAudiobookList()
@@ -243,8 +246,11 @@ class BooksListViewModel @Inject constructor(
 
     fun removeBook(book: Book) {
         viewModelScope.launch {
-            val currentList = (_uiState.value as? BooksListUiState.BookListSuccess)?.audiobookList ?: return@launch
-            val updatedList = currentList.filter { it.id != book.id }
+            booksList.removeIf {
+                it.id == book.id
+            }
+
+            val updatedList = booksList
             _uiState.value = BooksListUiState.BookListSuccess(updatedList)
 
             deleteBook.invoke(book)
@@ -273,10 +279,15 @@ class BooksListViewModel @Inject constructor(
         val newBooks = newBooksList.filter { book ->
             !currentIds.contains(book.id)
         }
-
+        
         if (newBooks.isNotEmpty()) {
             addAllBookTypes(newBooks)
         }
+        _isRefreshing.value = false
+    }
+
+    fun setRefreshingLoading() {
+        _isRefreshing.value = true
     }
 
     fun hasPermissions() = checkPermissionsProvider.areAllPermissionsGranted(getPermissionsList())

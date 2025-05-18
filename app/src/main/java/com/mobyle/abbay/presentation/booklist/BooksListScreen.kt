@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -113,7 +114,6 @@ fun BooksListScreen(
     val context = LocalContext.current
     val density = LocalDensity.current
     val asyncScope = rememberCoroutineScope()
-    val updateBooksScope = rememberCoroutineScope()
     val fileFilterList = arrayOf("audio/*")
 
     // States
@@ -141,6 +141,7 @@ fun BooksListScreen(
     )
     val showErrorDialog = remember { mutableStateOf(false) }
     val hasSelectedFolder by viewModel.hasSelectedFolder.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     LaunchedEffectAndCollect(viewModel.booksIdList) {
         asyncScope.launch(Dispatchers.IO) {
@@ -159,31 +160,6 @@ fun BooksListScreen(
 
     LifecycleEventEffect(event = Lifecycle.Event.ON_CREATE) {
         viewModel.shouldOpenPlayerInStartup()
-    }
-
-    LifecycleEventEffect(event = Lifecycle.Event.ON_RESUME) {
-        with(viewModel) {
-            if (hasPermissions()) {
-                getBooksFolderPath()?.let {
-                    updateBooksScope.cancel()
-                    updateBooksScope.launch(Dispatchers.IO) {
-                        try {
-                            // give authorization to check persistent URI
-                            val takeFlags =
-                                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                            val uri = Uri.parse(it)
-                            context.contentResolver.takePersistableUriPermission(uri, takeFlags)
-                            delay(500)
-                            uri.getBooks(context)?.let {
-                                checkForNewBooks(it)
-                            }
-                        } catch (e: SecurityException) {
-                            e.printStackTrace()
-                        }
-                    }
-                }
-            }
-        }
     }
 
     LaunchedEffect(viewModel.shouldOpenPlayerInStartup) {
@@ -406,28 +382,32 @@ fun BooksListScreen(
                             openFileSelector.launch(fileFilterList)
                         },
                         onRefresh = {
-                            viewModel.getBooksFolderPath()?.let { path ->
-                                val uri = Uri.parse(path)
-                                asyncScope.launch(Dispatchers.IO) {
-                                    try {
-                                        val takeFlags =
-                                            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                                        context.contentResolver.takePersistableUriPermission(
-                                            uri,
-                                            takeFlags
-                                        )
-                                        delay(500)
-                                        uri.getBooks(context)?.let { books ->
-                                            viewModel.checkForNewBooks(books)
+                            if (!isRefreshing) {
+                                viewModel.getBooksFolderPath()?.let { path ->
+                                    val uri = Uri.parse(path)
+                                    asyncScope.launch(Dispatchers.IO) {
+                                        try {
+                                            val takeFlags =
+                                                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                                            context.contentResolver.takePersistableUriPermission(
+                                                uri,
+                                                takeFlags
+                                            )
+                                            viewModel.setRefreshingLoading()
+                                            delay(500)
+                                            uri.getBooks(context)?.let { books ->
+                                                viewModel.checkForNewBooks(books)
+                                            }
+                                        } catch (e: SecurityException) {
+                                            e.printStackTrace()
                                         }
-                                    } catch (e: SecurityException) {
-                                        e.printStackTrace()
                                     }
                                 }
                             }
                         },
                         hasSelectedFolder = hasSelectedFolder,
                         isContentEnabled = booksListState is BookListSuccess || booksListState is NoBookSelected,
+                        isRefreshing = isRefreshing
                     )
                 }) { innerPadding ->
                 Box(

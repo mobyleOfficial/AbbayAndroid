@@ -1,6 +1,7 @@
 package com.mobyle.abbay.presentation.booklist.widgets
 
 import androidx.compose.foundation.background
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
@@ -21,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.getString
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.widgets.AbbaysDropdownItem
@@ -34,7 +36,8 @@ fun BookListTopBar(
     openSettings: () -> Unit,
     onRefresh: () -> Unit,
     hasSelectedFolder: Boolean = false,
-    isContentEnabled: Boolean = true
+    isContentEnabled: Boolean = true,
+    isRefreshing: Boolean = false
 ) {
     val context = LocalContext.current
     var showAddMenu by remember { mutableStateOf(false) }
@@ -51,13 +54,21 @@ fun BookListTopBar(
             if (isContentEnabled) {
                 IconButton(
                     onClick = onRefresh,
-                    enabled = hasSelectedFolder
+                    enabled = hasSelectedFolder && !isRefreshing
                 ) {
-                    Icon(
-                        Icons.Filled.Refresh,
-                        contentDescription = "Refresh",
-                        tint = Color.White.copy(alpha = if (hasSelectedFolder) 1f else 0.5f)
-                    )
+                    if (isRefreshing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.background(Color.Transparent),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(
+                            Icons.Filled.Refresh,
+                            contentDescription = "Refresh",
+                            tint = Color.White.copy(alpha = if (hasSelectedFolder) 1f else 0.5f)
+                        )
+                    }
                 }
 
                 if (!hasSelectedFolder) {
@@ -82,7 +93,7 @@ fun BookListTopBar(
                             onClick = {
                                 showAddMenu = false
                                 openFolderSelector()
-                            },
+                            }
                         )
 
                         AbbaysDropdownItem(
