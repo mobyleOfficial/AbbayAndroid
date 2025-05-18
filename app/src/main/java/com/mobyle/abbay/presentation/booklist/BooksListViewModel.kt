@@ -2,26 +2,34 @@ package com.mobyle.abbay.presentation.booklist
 
 import android.Manifest
 import android.os.Build
+import androidx.lifecycle.viewModelScope
 import com.mobyle.abbay.infra.common.BaseViewModel
 import com.mobyle.abbay.presentation.utils.permissions.CheckPermissionsProvider
 import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
+import com.usecase.DeleteBook
+import com.usecase.ForceUpdateList
 import com.usecase.GetBooksList
 import com.usecase.IsOpenPlayerInStartup
 import com.usecase.UpsertBookList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class BooksListViewModel @Inject constructor(
     private val getBooksList: GetBooksList,
     private val upsertBookList: UpsertBookList,
-    private val checkPermissionsProvider: CheckPermissionsProvider,
+    private val deleteBook: DeleteBook,
     val isOpenPlayerInStartupUC: IsOpenPlayerInStartup,
+    forceUpdateList: ForceUpdateList,
+    checkPermissionsProvider: CheckPermissionsProvider,
 ) :
     BaseViewModel() {
     private val _uiState = MutableStateFlow<BooksListUiState>(BooksListUiState.Loading)
@@ -49,6 +57,15 @@ class BooksListViewModel @Inject constructor(
         } else {
             _uiState.value = BooksListUiState.NoPermissionsGranted
         }
+
+        forceUpdateList()
+            .onEach {
+                booksList.clear()
+                booksIdList.value = emptyList()
+                _selectedBook.value = null
+                getAudiobookList()
+            }
+            .launchIn(viewModelScope)
     }
 
     fun getPermissionsList() = if (Build.VERSION.SDK_INT >= 33) {
@@ -58,11 +75,16 @@ class BooksListViewModel @Inject constructor(
     }
 
     fun updateBookList(booksList: List<Book>) = launch {
+        this.booksList.clear()
         this.booksList.addAll(booksList)
         upsertBookList.invoke(booksList)
         val newBookList = mutableListOf<Book>()
         newBookList.addAll(this.booksList)
         _uiState.emit(BooksListUiState.BookListSuccess(newBookList))
+    }
+
+    fun updateSelectedBook(book: Book) {
+        selectBook(book)
     }
 
     fun addThumbnails(booksWithThumbList: List<Book>) = launch {
@@ -204,6 +226,33 @@ class BooksListViewModel @Inject constructor(
 
     fun shouldOpenPlayerInStartup() {
         shouldOpenPlayerInStartup = isOpenPlayerInStartupUC()
+    }
+
+    fun removeBook(book: Book) {
+        viewModelScope.launch {
+            val currentList = (_uiState.value as? BooksListUiState.BookListSuccess)?.audiobookList ?: return@launch
+            val updatedList = currentList.filter { it.id != book.id }
+            _uiState.value = BooksListUiState.BookListSuccess(updatedList)
+
+            deleteBook.invoke(book)
+
+            if (selectedBook.value?.id == book.id) {
+                _selectedBook.value = null
+            }
+        }
+    }
+
+    fun markBookAsError(book: Book) = launch {
+        val index = booksList.indexOfFirst { it.id == book.id }
+        if (index != -1) {
+            val updatedBook = when (book) {
+                is BookFile -> book.copy(hasError = true)
+                is MultipleBooks -> book.copy(hasError = true)
+                else -> book
+            }
+            booksList[index] = updatedBook
+            _uiState.emit(BooksListUiState.BookListSuccess(booksList.toList()))
+        }
     }
 
     sealed class BooksListUiState {

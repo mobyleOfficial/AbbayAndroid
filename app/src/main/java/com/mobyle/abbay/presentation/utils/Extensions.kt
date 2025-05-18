@@ -104,7 +104,11 @@ fun MediaController.playBook(
     progress: Long,
     isPlaying: MutableStateFlow<Boolean>
 ) {
-    prepareBook(id, progress, isPlaying)
+    prepareBook(
+        id = id,
+        progress = progress,
+        isPlaying = isPlaying
+    )
     isPlaying.value = true
     playWhenReady = true
 }
@@ -145,6 +149,17 @@ fun MediaController.prepareBook(
     seekTo(progress)
     prepare()
 }
+fun Context.fileExists(id: String): Boolean {
+    return try {
+        val uri =
+            Uri.parse(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + File.separatorChar + id)
+        this.contentResolver.query(uri, null, null, null, null)?.use {
+            it.count > 0
+        } ?: false
+    } catch (e: Exception) {
+        false
+    }
+}
 
 fun MediaController.prepareMultipleBooks(
     currentPosition: Int,
@@ -170,7 +185,7 @@ fun MediaController.prepareMultipleBooks(
     prepare()
 }
 
-fun Context.musicCursor(block: (Cursor) -> Unit) {
+fun Context.audioCursor(block: (Cursor) -> Unit) {
     contentResolver.query(
         MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null,
         MediaStore.Audio.Media.DEFAULT_SORT_ORDER

@@ -13,7 +13,6 @@ import com.mobyle.abbay.presentation.utils.getAlbumTitle
 import com.mobyle.abbay.presentation.utils.getDuration
 import com.mobyle.abbay.presentation.utils.getFileName
 import com.mobyle.abbay.presentation.utils.getId
-import com.mobyle.abbay.presentation.utils.getTitle
 import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
@@ -113,15 +112,19 @@ fun Uri.getBooks(context: Context): List<Book>? {
 }
 
 fun Book?.getThumb(context: Context): Book? {
-    val metadataRetriever = MediaMetadataRetriever()
-    metadataRetriever.setDataSource(
-        context,
-        Uri.parse("content://media/external/audio/media/${this?.id}")
-    )
-    val thumb = metadataRetriever.getThumbnail(context, this?.id.orEmpty())
-    return when (this) {
-        is MultipleBooks -> this.copy(thumbnail = thumb)
-        is BookFile -> this.copy(thumbnail = thumb)
-        else -> this
+    return try {
+        val metadataRetriever = MediaMetadataRetriever()
+        metadataRetriever.setDataSource(
+            context,
+            Uri.parse("content://media/external/audio/media/${this?.id}")
+        )
+        val thumb = metadataRetriever.getThumbnail(context, this?.id.orEmpty())
+        return when (this) {
+            is MultipleBooks -> this.copy(thumbnail = thumb)
+            is BookFile -> this.copy(thumbnail = thumb)
+            else -> this
+        }
+    } catch (_: Exception) {
+        this
     }
 }

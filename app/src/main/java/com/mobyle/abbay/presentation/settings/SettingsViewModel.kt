@@ -1,6 +1,7 @@
 package com.mobyle.abbay.presentation.settings
 
 import com.mobyle.abbay.infra.common.BaseViewModel
+import com.usecase.ClearBooks
 import com.usecase.DisableOpenPlayerInStartup
 import com.usecase.DisablePlayWhenAppIsClosed
 import com.usecase.EnableOpenPlayerInStartup
@@ -19,14 +20,17 @@ class SettingsViewModel @Inject constructor(
     private val disableOpenPlayerInStartup: DisableOpenPlayerInStartup,
     private val enablePlayWhenAppIsClosed: EnablePlayWhenAppIsClosed,
     private val disablePlayWhenAppIsClosed: DisablePlayWhenAppIsClosed,
+    private val clearBooksUseCase: ClearBooks,
     isPlayWhenAppIsClosedEnabled: IsPlayWhenAppIsClosedEnabled,
     isOpenPlayerInStartup: IsOpenPlayerInStartup,
 ) : BaseViewModel() {
     private val _shouldPlayWhenAppIsClosed = MutableStateFlow(isPlayWhenAppIsClosedEnabled())
     private val _shouldOpenPlayerInStartup = MutableStateFlow(isOpenPlayerInStartup())
+    private val _showShowDeleteConfirmation = MutableStateFlow(false)
 
     val shouldPlayWhenAppIsClosed: StateFlow<Boolean> get() = _shouldPlayWhenAppIsClosed
     val shouldOpenPlayerInStartup: StateFlow<Boolean> get() = _shouldOpenPlayerInStartup
+    val showShowDeleteConfirmation: StateFlow<Boolean> get() = _showShowDeleteConfirmation
 
     fun changePlayWhenAppIsClosed(shouldPlayWhenAppIsClosed: Boolean) {
         if (shouldPlayWhenAppIsClosed) {
@@ -47,4 +51,17 @@ class SettingsViewModel @Inject constructor(
         _shouldOpenPlayerInStartup.update { shouldOpenPlayerInStartUp }
     }
 
+    fun clearBooks() {
+        launch {
+            clearBooksUseCase()
+        }
+    }
+
+    fun dismissDeleteConfirmation() {
+        _showShowDeleteConfirmation.value = false
+    }
+
+    fun showDeleteConfirmation() {
+        _showShowDeleteConfirmation.value = true
+    }
 }

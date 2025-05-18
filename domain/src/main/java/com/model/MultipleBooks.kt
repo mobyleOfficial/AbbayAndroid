@@ -7,6 +7,7 @@ data class MultipleBooks(
     override val progress: Long,
     override val duration: Long,
     override val speed: Float,
+    override val hasError: Boolean = false,
     val bookFileList: List<BookFile>,
     val currentBookPosition: Int = 0
 ) : Book

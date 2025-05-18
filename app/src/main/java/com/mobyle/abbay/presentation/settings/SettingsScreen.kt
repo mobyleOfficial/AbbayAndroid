@@ -8,6 +8,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mobyle.abbay.presentation.common.widgets.AbbayActionDialog
 import com.mobyle.abbay.presentation.common.widgets.AbbayScreen
 
 @Composable
@@ -17,6 +18,7 @@ fun SettingsScreen(
 ) {
     val shouldPlayWhenAppIsClosed by viewModel.shouldPlayWhenAppIsClosed.collectAsState()
     val shouldOpenPlayerInStartup by viewModel.shouldOpenPlayerInStartup.collectAsState()
+    val showShowDeleteConfirmation by viewModel.showShowDeleteConfirmation.collectAsState()
 
     AbbayScreen(
         title = "Settings",
@@ -45,15 +47,25 @@ fun SettingsScreen(
                         )
                     }
                 )
-                SettingItem(
-                    text = "Select App color",
-                    onClick = {}
-                )
+
                 SettingItem(
                     text = "Delete all books",
-                    onClick = {}
+                    onClick = viewModel::showDeleteConfirmation
                 )
             }
+        }
+
+        if (showShowDeleteConfirmation) {
+            AbbayActionDialog(
+                onDismiss = viewModel::dismissDeleteConfirmation,
+                title = "Delete Book",
+                body ="Are you sure you want to delete all books? This action cannot be undone.",
+                actionButtonTitle = "Delete",
+                onAction = {
+                    viewModel.clearBooks()
+                    viewModel.dismissDeleteConfirmation()
+                },
+            )
         }
     }
 }

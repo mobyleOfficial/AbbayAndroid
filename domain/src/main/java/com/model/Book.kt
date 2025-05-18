@@ -7,5 +7,6 @@ interface Book {
     val progress: Long
     val duration: Long
     val speed: Float
+    val hasError: Boolean
 }
 

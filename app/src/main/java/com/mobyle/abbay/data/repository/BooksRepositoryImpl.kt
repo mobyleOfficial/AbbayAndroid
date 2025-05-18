@@ -7,10 +7,16 @@ import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
 import com.repository.BooksRepository
+import kotlinx.coroutines.flow.MutableSharedFlow
 import javax.inject.Inject
 
 class BooksRepositoryImpl @Inject constructor(private val localDataSource: BooksLocalDataSource) :
     BooksRepository {
+
+    private val forceListUpdate = MutableSharedFlow<Unit>(
+        replay = 1
+    )
+
     override suspend fun getBookList(): List<Book> {
         val bookFilesList = localDataSource.getBookFilesList().map {
             it.toDomain()
@@ -30,4 +36,22 @@ class BooksRepositoryImpl @Inject constructor(private val localDataSource: Books
         localDataSource.addBookFileList(bookFilesList)
         localDataSource.addMultipleBooksList(multipleBooksList)
     }
+
+    override suspend fun deleteBook(book: Book) {
+        when(book) {
+           is MultipleBooks -> {
+               localDataSource.deleteMultipleFilesBook(book.id)
+           }
+           is BookFile -> {
+               localDataSource.deleteBook(book.id)
+           }
+        }
+    }
+
+    override suspend fun clearBooks() {
+        localDataSource.clearBooks()
+        forceListUpdate.tryEmit(Unit)
+    }
+
+    override fun onForceUpdateList() = forceListUpdate
 }

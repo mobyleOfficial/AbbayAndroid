@@ -8,6 +8,7 @@ import javax.inject.Inject
 class SettingsRepositoryImpl @Inject constructor(
     private val keyValueStore: KeyValueStore
 ) : SettingsRepository {
+
     override fun isPlayWhenAppIsClosedEnabled(): Boolean {
         val key = KeyValueStoreKeys.PLAY_WHEN_APP_IS_CLOSED
 
