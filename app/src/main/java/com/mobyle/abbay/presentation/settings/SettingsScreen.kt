@@ -11,6 +11,7 @@ import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.Switch
 import androidx.compose.material.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,6 +23,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mobyle.abbay.presentation.common.widgets.AbbayScreen
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Icon
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.style.TextAlign
+import com.mobyle.abbay.presentation.common.widgets.AbbayActionDialog
 
 @Composable
 fun SettingsScreen(
@@ -68,27 +78,15 @@ fun SettingsScreen(
         }
 
         if (showShowDeleteConfirmation) {
-            AlertDialog(
-                onDismissRequest = viewModel::dismissDeleteConfirmation,
-                title = { Text("Delete All Books") },
-                text = { Text("Are you sure you want to delete all books? This action cannot be undone.") },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            viewModel.clearBooks()
-                            viewModel.dismissDeleteConfirmation()
-                        }
-                    ) {
-                        Text("Delete")
-                    }
+            AbbayActionDialog(
+                onDismiss = viewModel::dismissDeleteConfirmation,
+                title = "Delete Book",
+                body ="Are you sure you want to delete all books? This action cannot be undone.",
+                actionButtonTitle = "Delete",
+                onAction = {
+                    viewModel.clearBooks()
+                    viewModel.dismissDeleteConfirmation()
                 },
-                dismissButton = {
-                    Button(
-                        onClick = viewModel::dismissDeleteConfirmation
-                    ) {
-                        Text("Cancel")
-                    }
-                }
             )
         }
     }

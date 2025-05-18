@@ -96,6 +96,7 @@ import androidx.compose.material3.TextButton
 import com.model.Book
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import com.mobyle.abbay.presentation.common.widgets.AbbayActionDialog
 import com.mobyle.abbay.presentation.utils.currentFraction
 import com.mobyle.abbay.presentation.utils.fileExists
 
@@ -628,40 +629,21 @@ fun BooksListScreen(
                             }
 
                             if (showDeleteDialog.value) {
-                                AlertDialog(
-                                    onDismissRequest = {
+                                AbbayActionDialog(
+                                    onDismiss = {
                                         showDeleteDialog.value = false
                                         bookToDelete.value = null
                                     },
-                                    title = {
-                                        Text("Delete Book")
-                                    },
-                                    text = {
-                                        Text("Are you sure you want to delete this book?")
-                                    },
-                                    confirmButton = {
-                                        TextButton(
-                                            onClick = {
-                                                bookToDelete.value?.let { book ->
-                                                    viewModel.removeBook(book)
-                                                }
-                                                showDeleteDialog.value = false
-                                                bookToDelete.value = null
-                                            }
-                                        ) {
-                                            Text("Delete", color = MaterialTheme.colorScheme.error)
+                                    title = "Delete Book",
+                                    body = "Are you sure you want to delete this book?",
+                                    actionButtonTitle = "Delete",
+                                    onAction = {
+                                        bookToDelete.value?.let { book ->
+                                            viewModel.removeBook(book)
                                         }
+                                        showDeleteDialog.value = false
+                                        bookToDelete.value = null
                                     },
-                                    dismissButton = {
-                                        TextButton(
-                                            onClick = {
-                                                showDeleteDialog.value = false
-                                                bookToDelete.value = null
-                                            }
-                                        ) {
-                                            Text("Cancel")
-                                        }
-                                    }
                                 )
                             }
                         }
