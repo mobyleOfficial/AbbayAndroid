@@ -1,6 +1,5 @@
 package com.mobyle.abbay.presentation.settings
 
-import android.util.Log
 import com.mobyle.abbay.infra.common.BaseViewModel
 import com.usecase.ClearBooks
 import com.usecase.DisableOpenPlayerInStartup

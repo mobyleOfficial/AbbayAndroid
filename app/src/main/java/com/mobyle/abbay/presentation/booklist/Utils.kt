@@ -13,7 +13,6 @@ import com.mobyle.abbay.presentation.utils.getAlbumTitle
 import com.mobyle.abbay.presentation.utils.getDuration
 import com.mobyle.abbay.presentation.utils.getFileName
 import com.mobyle.abbay.presentation.utils.getId
-import com.mobyle.abbay.presentation.utils.getTitle
 import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks

@@ -2,14 +2,12 @@ package com.mobyle.abbay.presentation.booklist
 
 import android.Manifest
 import android.os.Build
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.mobyle.abbay.infra.common.BaseViewModel
 import com.mobyle.abbay.presentation.utils.permissions.CheckPermissionsProvider
 import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
-import com.usecase.ClearBooks
 import com.usecase.DeleteBook
 import com.usecase.ForceUpdateList
 import com.usecase.GetBooksList

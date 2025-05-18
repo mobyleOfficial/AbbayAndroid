@@ -3,7 +3,6 @@ package com.mobyle.abbay.presentation.booklist
 import android.app.Activity
 import android.content.Context
 import android.media.MediaMetadataRetriever
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,7 +27,13 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.rememberBottomSheetScaffoldState
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -57,6 +62,8 @@ import androidx.core.content.ContextCompat.getString
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -72,33 +79,24 @@ import com.mobyle.abbay.presentation.booklist.widgets.BookItem
 import com.mobyle.abbay.presentation.booklist.widgets.BookListTopBar
 import com.mobyle.abbay.presentation.booklist.widgets.MiniPlayer
 import com.mobyle.abbay.presentation.common.mappers.toBook
+import com.mobyle.abbay.presentation.common.widgets.AbbayActionDialog
 import com.mobyle.abbay.presentation.utils.LaunchedEffectAndCollect
+import com.mobyle.abbay.presentation.utils.audioCursor
+import com.mobyle.abbay.presentation.utils.fileExists
 import com.mobyle.abbay.presentation.utils.getId
 import com.mobyle.abbay.presentation.utils.intermediateProgress
-import com.mobyle.abbay.presentation.utils.audioCursor
 import com.mobyle.abbay.presentation.utils.playBook
 import com.mobyle.abbay.presentation.utils.playMultipleBooks
 import com.mobyle.abbay.presentation.utils.prepareBook
 import com.mobyle.abbay.presentation.utils.prepareMultipleBooks
 import com.mobyle.abbay.presentation.utils.toHHMMSS
+import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Date
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
-import androidx.compose.material3.rememberSwipeToDismissBoxState
-import androidx.compose.material3.Icon
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.TextButton
-import com.model.Book
-import androidx.media3.common.PlaybackException
-import androidx.media3.common.Player
-import com.mobyle.abbay.presentation.common.widgets.AbbayActionDialog
-import com.mobyle.abbay.presentation.utils.currentFraction
-import com.mobyle.abbay.presentation.utils.fileExists
 
 private const val LAST_SELECTED_BOOK_ID = "LAST_SELECTED_BOOK_ID"
 private const val AUTO_DENIAL_THRESHOLD = 300

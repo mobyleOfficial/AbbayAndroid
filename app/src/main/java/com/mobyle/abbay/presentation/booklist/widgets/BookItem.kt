@@ -9,14 +9,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.widgets.BookThumbnail
@@ -24,9 +24,6 @@ import com.mobyle.abbay.presentation.common.widgets.SVGIcon
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
 import com.model.MultipleBooks
-import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Error
 
 @Composable
 fun BookItem(
