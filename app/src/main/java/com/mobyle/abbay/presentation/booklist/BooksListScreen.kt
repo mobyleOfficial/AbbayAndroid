@@ -95,6 +95,7 @@ import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Date
@@ -112,6 +113,7 @@ fun BooksListScreen(
     val context = LocalContext.current
     val density = LocalDensity.current
     val asyncScope = rememberCoroutineScope()
+    val updateBooksScope = rememberCoroutineScope()
     val fileFilterList = arrayOf("audio/*")
 
     // States
@@ -162,7 +164,8 @@ fun BooksListScreen(
         with(viewModel) {
             if (hasPermissions()) {
                 getBooksFolderPath()?.let {
-                    asyncScope.launch(Dispatchers.IO) {
+                    updateBooksScope.cancel()
+                    updateBooksScope.launch(Dispatchers.IO) {
                         try {
                             // give authorization to check persistent URI
                             val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
