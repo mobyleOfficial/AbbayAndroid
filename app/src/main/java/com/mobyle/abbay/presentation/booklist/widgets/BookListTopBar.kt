@@ -1,22 +1,32 @@
 package com.mobyle.abbay.presentation.booklist.widgets
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.getString
 import com.mobyle.abbay.R
+import com.mobyle.abbay.presentation.common.widgets.AbbaysDropdownItem
 import com.mobyle.abbay.presentation.common.widgets.SVGIcon
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -28,6 +38,7 @@ fun BookListTopBar(
     onRefresh: () -> Unit
 ) {
     val context = LocalContext.current
+    var showAddMenu by remember { mutableStateOf(false) }
 
     TopAppBar(
         title = {
@@ -46,27 +57,40 @@ fun BookListTopBar(
                 )
             }
 
-            openFolderSelector?.let {
-                IconButton(onClick = it) {
-                    SVGIcon(
-                        path = R.drawable.folder_plus,
-                        description = getString(
-                            context,
-                            R.string.book_list_top_bar_folder_button_description
-                        )
-                    )
-                }
-            }
-
-            IconButton(onClick = openFileSelector) {
-                SVGIcon(
-                    path = R.drawable.file_plus,
-                    description = getString(
-                        context,
-                        R.string.book_list_top_bar_file_button_description
-                    )
+            IconButton(onClick = { showAddMenu = true }) {
+                Icon(
+                    Icons.Filled.Add,
+                    contentDescription = "Add",
+                    tint = Color.White
                 )
             }
+
+            DropdownMenu(
+                expanded = showAddMenu,
+                onDismissRequest = { showAddMenu = false },
+                modifier = Modifier.background(MaterialTheme.colorScheme.primary),
+            ) {
+                openFolderSelector?.let {
+                    AbbaysDropdownItem(
+                        text = "Add Folder",
+                        imageUrl = R.drawable.folder_plus,
+                        onClick = {
+                            showAddMenu = false
+                            openFileSelector()
+                        }
+                    )
+                }
+
+                AbbaysDropdownItem(
+                    text = "Add File",
+                    imageUrl = R.drawable.file_plus,
+                    onClick = {
+                        showAddMenu = false
+                        openFileSelector()
+                    }
+                )
+            }
+
             IconButton(onClick = openSettings) {
                 Icon(
                     Icons.Filled.Settings,
