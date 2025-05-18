@@ -3,7 +3,7 @@ package com.usecase
 import com.repository.BooksRepository
 import javax.inject.Inject
 
-class GetBooksFolder @Inject constructor(
+class GetBooksFolderPath @Inject constructor(
     private val repository: BooksRepository
 ) {
     operator fun invoke() = repository.getBooksFolder()

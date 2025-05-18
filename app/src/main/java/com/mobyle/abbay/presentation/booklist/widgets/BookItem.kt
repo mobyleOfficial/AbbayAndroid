@@ -17,6 +17,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.widgets.BookThumbnail
@@ -32,30 +34,40 @@ fun BookItem(
     progress: String,
     intermediaryProgress: Long,
     currentMediaIndex: Int,
-    onClick: () -> Unit) {
+    onClick: () -> Unit
+) {
+    val bookColor = if(book.hasError) {
+        Color(0xff1f1113)
+    } else {
+        MaterialTheme.colorScheme.primary
+    }
     Column(
         modifier = Modifier
             .padding(top = 8.dp)
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.primary)
+            .background(bookColor)
             .clickable {
                 onClick.invoke()
             },
         verticalArrangement = Arrangement.SpaceEvenly,
     ) {
-        Row(modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)) {
+        Row(modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, bottom = 8.dp)) {
             BookThumbnail(book.thumbnail)
             Column(
                 verticalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         book.name,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(8.dp)
+                        modifier = Modifier.padding(8.dp).weight(1f)
                     )
                     if (book.hasError) {
-                        Spacer(modifier = Modifier.weight(1f))
                         Icon(
                             imageVector = Icons.Default.Error,
                             contentDescription = "Error playing file",

@@ -1,8 +1,9 @@
 package com.mobyle.abbay.presentation.booklist
 
 import android.app.Activity
-import android.content.Context
+import android.content.Intent
 import android.media.MediaMetadataRetriever
+import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -157,6 +158,29 @@ fun BooksListScreen(
         viewModel.shouldOpenPlayerInStartup()
     }
 
+    LifecycleEventEffect(event = Lifecycle.Event.ON_RESUME) {
+        with(viewModel) {
+            if (hasPermissions()) {
+                getBooksFolderPath()?.let {
+                    asyncScope.launch(Dispatchers.IO) {
+                        try {
+                            // give authorization to check persistent URI
+                            val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                            val uri = Uri.parse(it)
+                            context.contentResolver.takePersistableUriPermission(uri, takeFlags)
+                            delay(500)
+                            uri.getBooks(context)?.let {
+                                checkForNewBooks(it)
+                            }
+                        } catch (e: SecurityException) {
+                            e.printStackTrace()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     LaunchedEffect(viewModel.shouldOpenPlayerInStartup) {
         if (viewModel.shouldOpenPlayerInStartup && selectedBook?.hasError == false) {
             bottomSheetState.bottomSheetState.expand()
@@ -227,9 +251,10 @@ fun BooksListScreen(
     ) { uri ->
         uri?.let {
             viewModel.showLoading()
+            viewModel.saveBookFolderPath(it.toString())
             asyncScope.launch(Dispatchers.IO) {
                 delay(500)
-                uri.getBooks(context)?.let {
+                it.getBooks(context)?.let {
                     viewModel.addAllBookTypes(it)
                 }
             }

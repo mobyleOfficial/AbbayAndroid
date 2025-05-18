@@ -10,6 +10,7 @@ import com.model.BookFile
 import com.model.MultipleBooks
 import com.usecase.DeleteBook
 import com.usecase.ForceUpdateList
+import com.usecase.GetBooksFolderPath
 import com.usecase.GetBooksList
 import com.usecase.GetCurrentSelectedBook
 import com.usecase.IsOpenPlayerInStartup
@@ -30,12 +31,13 @@ class BooksListViewModel @Inject constructor(
     private val getBooksList: GetBooksList,
     private val upsertBookList: UpsertBookList,
     private val deleteBook: DeleteBook,
-    private val saveBookFolderPathUC: SaveBookFolderPath,
     private val saveCurrentSelectedBookUC: SaveCurrentSelectedBook,
+    val getBooksFolderPath: GetBooksFolderPath,
+    val saveBookFolderPath: SaveBookFolderPath,
     val getCurrentSelectedBook: GetCurrentSelectedBook,
     val isOpenPlayerInStartupUC: IsOpenPlayerInStartup,
+    val checkPermissionsProvider: CheckPermissionsProvider,
     forceUpdateList: ForceUpdateList,
-    checkPermissionsProvider: CheckPermissionsProvider,
 ) :
     BaseViewModel() {
     private val _uiState = MutableStateFlow<BooksListUiState>(BooksListUiState.Loading)
@@ -262,7 +264,18 @@ class BooksListViewModel @Inject constructor(
         }
     }
 
+    fun checkForNewBooks(newBooksList: List<Book>) {
+        val currentIds = booksList.map { it.id }.toSet()
+        val newBooks = newBooksList.filter { book ->
+            !currentIds.contains(book.id)
+        }
 
+        if (newBooks.isNotEmpty()) {
+            addAllBookTypes(newBooks)
+        }
+    }
+
+    fun hasPermissions() = checkPermissionsProvider.areAllPermissionsGranted(getPermissionsList())
 
     sealed class BooksListUiState {
         data class BookListSuccess(val audiobookList: List<Book>) :
