@@ -13,4 +13,12 @@ interface BooksRepository {
     suspend fun clearBooks()
 
     fun onForceUpdateList(): Flow<Unit>
+
+    fun saveBookFolderPath(path: String)
+
+    fun saveCurrentSelectedBook(id: String?)
+
+    fun getCurrentSelectedBook(): String?
+
+    fun getBooksFolder(): String?
 }

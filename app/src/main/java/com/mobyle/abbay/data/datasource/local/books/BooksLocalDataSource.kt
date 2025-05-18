@@ -17,4 +17,12 @@ interface BooksLocalDataSource {
     suspend fun deleteMultipleFilesBook(id: String)
 
     suspend fun clearBooks()
+
+    fun saveBookFolderPath(path: String)
+
+    fun saveCurrentSelectedBook(id: String?)
+
+    fun getCurrentSelectedBook(): String?
+
+    fun getBooksFolder(): String?
 }

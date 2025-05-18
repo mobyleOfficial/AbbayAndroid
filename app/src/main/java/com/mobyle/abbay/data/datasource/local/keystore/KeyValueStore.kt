@@ -15,14 +15,23 @@ class KeyValueStore @Inject constructor(private val sharedPrefs: SharedPreferenc
         }
     }
 
+    fun getStringStoredValue(key: KeyValueStoreKeys): String? {
+        return sharedPrefs.getString(key.name, null)
+    }
+
+    fun storeStringValue(key: KeyValueStoreKeys, value: String?) {
+        sharedPrefs.edit {
+            putString(key.name, value)
+        }
+    }
+
     fun deleteAllBookInformation() {
         sharedPrefs.edit {
-            remove(LAST_SELECTED_BOOK_ID)
+            remove(KeyValueStoreKeys.LAST_SELECTED_BOOK_ID.name)
         }
     }
 
     companion object {
         const val KEY = "Prefs"
-        const val LAST_SELECTED_BOOK_ID = "LAST_SELECTED_BOOK_ID"
     }
 }

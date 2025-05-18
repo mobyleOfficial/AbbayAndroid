@@ -10,7 +10,9 @@ import com.repository.BooksRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import javax.inject.Inject
 
-class BooksRepositoryImpl @Inject constructor(private val localDataSource: BooksLocalDataSource) :
+class BooksRepositoryImpl @Inject constructor(
+    private val localDataSource: BooksLocalDataSource
+) :
     BooksRepository {
 
     private val forceListUpdate = MutableSharedFlow<Unit>(
@@ -38,13 +40,14 @@ class BooksRepositoryImpl @Inject constructor(private val localDataSource: Books
     }
 
     override suspend fun deleteBook(book: Book) {
-        when(book) {
-           is MultipleBooks -> {
-               localDataSource.deleteMultipleFilesBook(book.id)
-           }
-           is BookFile -> {
-               localDataSource.deleteBook(book.id)
-           }
+        when (book) {
+            is MultipleBooks -> {
+                localDataSource.deleteMultipleFilesBook(book.id)
+            }
+
+            is BookFile -> {
+                localDataSource.deleteBook(book.id)
+            }
         }
     }
 
@@ -54,4 +57,12 @@ class BooksRepositoryImpl @Inject constructor(private val localDataSource: Books
     }
 
     override fun onForceUpdateList() = forceListUpdate
+
+    override fun saveBookFolderPath(path: String) = localDataSource.saveBookFolderPath(path)
+
+    override fun saveCurrentSelectedBook(id: String?) = localDataSource.saveCurrentSelectedBook(id)
+
+    override fun getCurrentSelectedBook() = localDataSource.getCurrentSelectedBook()
+
+    override fun getBooksFolder() = localDataSource.getBooksFolder()
 }

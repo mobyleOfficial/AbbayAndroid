@@ -11,7 +11,10 @@ import com.model.MultipleBooks
 import com.usecase.DeleteBook
 import com.usecase.ForceUpdateList
 import com.usecase.GetBooksList
+import com.usecase.GetCurrentSelectedBook
 import com.usecase.IsOpenPlayerInStartup
+import com.usecase.SaveBookFolderPath
+import com.usecase.SaveCurrentSelectedBook
 import com.usecase.UpsertBookList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +30,9 @@ class BooksListViewModel @Inject constructor(
     private val getBooksList: GetBooksList,
     private val upsertBookList: UpsertBookList,
     private val deleteBook: DeleteBook,
+    private val saveBookFolderPathUC: SaveBookFolderPath,
+    private val saveCurrentSelectedBookUC: SaveCurrentSelectedBook,
+    val getCurrentSelectedBook: GetCurrentSelectedBook,
     val isOpenPlayerInStartupUC: IsOpenPlayerInStartup,
     forceUpdateList: ForceUpdateList,
     checkPermissionsProvider: CheckPermissionsProvider,
@@ -139,6 +145,7 @@ class BooksListViewModel @Inject constructor(
     }
 
     fun selectBook(book: Book?) {
+        saveCurrentSelectedBookUC(book?.id)
         _selectedBook.tryEmit(book)
     }
 
@@ -254,6 +261,8 @@ class BooksListViewModel @Inject constructor(
             _uiState.emit(BooksListUiState.BookListSuccess(booksList.toList()))
         }
     }
+
+
 
     sealed class BooksListUiState {
         data class BookListSuccess(val audiobookList: List<Book>) :

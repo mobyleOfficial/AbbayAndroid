@@ -98,7 +98,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Date
 
-private const val LAST_SELECTED_BOOK_ID = "LAST_SELECTED_BOOK_ID"
 private const val AUTO_DENIAL_THRESHOLD = 300
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -387,35 +386,32 @@ fun BooksListScreen(
                             val bookList = state.audiobookList
 
                             if (selectedBook == null) {
-                                activity.getPreferences(Context.MODE_PRIVATE)?.let {
-                                    val id =
-                                        it.getString(LAST_SELECTED_BOOK_ID, "").orEmpty()
+                                val id = viewModel.getCurrentSelectedBook().orEmpty()
 
-                                    bookList.firstOrNull { book ->
-                                        book.id == id && !book.hasError
-                                    }?.let { book ->
-                                        viewModel.setCurrentProgress(
-                                            id = book.id,
-                                            progress = book.progress
-                                        )
+                                bookList.firstOrNull { book ->
+                                    book.id == id && !book.hasError
+                                }?.let { book ->
+                                    viewModel.setCurrentProgress(
+                                        id = book.id,
+                                        progress = book.progress
+                                    )
 
-                                        viewModel.selectBook(book)
+                                    viewModel.selectBook(book)
 
-                                        if (!player.isPlaying) {
-                                            if (book is MultipleBooks) {
-                                                player.prepareMultipleBooks(
-                                                    currentPosition = book.currentBookPosition,
-                                                    idList = book.bookFileList.map { it.id },
-                                                    progress = book.progress,
-                                                    isPlaying = viewModel.isPlaying
-                                                )
-                                            } else {
-                                                player.prepareBook(
-                                                    id = id,
-                                                    progress = book.progress,
-                                                    isPlaying = viewModel.isPlaying
-                                                )
-                                            }
+                                    if (!player.isPlaying) {
+                                        if (book is MultipleBooks) {
+                                            player.prepareMultipleBooks(
+                                                currentPosition = book.currentBookPosition,
+                                                idList = book.bookFileList.map { it.id },
+                                                progress = book.progress,
+                                                isPlaying = viewModel.isPlaying
+                                            )
+                                        } else {
+                                            player.prepareBook(
+                                                id = id,
+                                                progress = book.progress,
+                                                isPlaying = viewModel.isPlaying
+                                            )
                                         }
                                     }
                                 }
@@ -514,18 +510,6 @@ fun BooksListScreen(
                                                                             id = book.id,
                                                                             progress = book.progress
                                                                         )
-                                                                        activity.getPreferences(
-                                                                            Context.MODE_PRIVATE
-                                                                        )
-                                                                            ?.let { sharedPref ->
-                                                                                with(sharedPref.edit()) {
-                                                                                    putString(
-                                                                                        LAST_SELECTED_BOOK_ID,
-                                                                                        book.id
-                                                                                    )
-                                                                                    apply()
-                                                                                }
-                                                                            }
 
                                                                         viewModel.selectBook(book)
                                                                         player.playMultipleBooks(
@@ -579,18 +563,6 @@ fun BooksListScreen(
                                                                             id = book.id,
                                                                             progress = book.progress
                                                                         )
-                                                                        activity.getPreferences(
-                                                                            Context.MODE_PRIVATE
-                                                                        )
-                                                                            ?.let { sharedPref ->
-                                                                                with(sharedPref.edit()) {
-                                                                                    putString(
-                                                                                        LAST_SELECTED_BOOK_ID,
-                                                                                        book.id
-                                                                                    )
-                                                                                    apply()
-                                                                                }
-                                                                            }
 
                                                                         viewModel.selectBook(
                                                                             book
