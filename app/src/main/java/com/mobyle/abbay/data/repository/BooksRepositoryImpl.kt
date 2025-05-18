@@ -1,5 +1,6 @@
 package com.mobyle.abbay.data.repository
 
+import android.util.Log
 import com.mobyle.abbay.data.datasource.local.books.BooksLocalDataSource
 import com.mobyle.abbay.data.mappers.toDomain
 import com.mobyle.abbay.data.mappers.toEntity
@@ -7,10 +8,18 @@ import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
 import com.repository.BooksRepository
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import javax.inject.Inject
 
 class BooksRepositoryImpl @Inject constructor(private val localDataSource: BooksLocalDataSource) :
     BooksRepository {
+
+    private val forceListUpdate = MutableSharedFlow<Unit>(
+        replay = 1
+    )
+
     override suspend fun getBookList(): List<Book> {
         val bookFilesList = localDataSource.getBookFilesList().map {
             it.toDomain()
@@ -41,4 +50,11 @@ class BooksRepositoryImpl @Inject constructor(private val localDataSource: Books
            }
         }
     }
+
+    override suspend fun clearBooks() {
+        localDataSource.clearBooks()
+        forceListUpdate.tryEmit(Unit)
+    }
+
+    override fun onForceUpdateList() = forceListUpdate
 }

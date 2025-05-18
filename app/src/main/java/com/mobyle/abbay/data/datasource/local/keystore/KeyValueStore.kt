@@ -15,7 +15,14 @@ class KeyValueStore @Inject constructor(private val sharedPrefs: SharedPreferenc
         }
     }
 
+    fun deleteAllBookInformation() {
+        sharedPrefs.edit {
+            remove(LAST_SELECTED_BOOK_ID)
+        }
+    }
+
     companion object {
         const val KEY = "Prefs"
+        const val LAST_SELECTED_BOOK_ID = "LAST_SELECTED_BOOK_ID"
     }
 }

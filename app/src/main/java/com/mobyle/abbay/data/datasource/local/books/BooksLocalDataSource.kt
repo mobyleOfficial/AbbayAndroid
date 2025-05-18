@@ -15,4 +15,6 @@ interface BooksLocalDataSource {
     suspend fun deleteBook(id: String)
 
     suspend fun deleteMultipleFilesBook(id: String)
+
+    suspend fun clearBooks()
 }

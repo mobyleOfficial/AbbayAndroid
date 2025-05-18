@@ -2,20 +2,25 @@ package com.mobyle.abbay.presentation.booklist
 
 import android.Manifest
 import android.os.Build
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.mobyle.abbay.infra.common.BaseViewModel
 import com.mobyle.abbay.presentation.utils.permissions.CheckPermissionsProvider
 import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
+import com.usecase.ClearBooks
 import com.usecase.DeleteBook
+import com.usecase.ForceUpdateList
 import com.usecase.GetBooksList
 import com.usecase.IsOpenPlayerInStartup
 import com.usecase.UpsertBookList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -25,6 +30,7 @@ class BooksListViewModel @Inject constructor(
     private val upsertBookList: UpsertBookList,
     private val deleteBook: DeleteBook,
     val isOpenPlayerInStartupUC: IsOpenPlayerInStartup,
+    forceUpdateList: ForceUpdateList,
     checkPermissionsProvider: CheckPermissionsProvider,
 ) :
     BaseViewModel() {
@@ -53,6 +59,15 @@ class BooksListViewModel @Inject constructor(
         } else {
             _uiState.value = BooksListUiState.NoPermissionsGranted
         }
+
+        forceUpdateList()
+            .onEach {
+                booksList.clear()
+                booksIdList.value = emptyList()
+                _selectedBook.value = null
+                getAudiobookList()
+            }
+            .launchIn(viewModelScope)
     }
 
     fun getPermissionsList() = if (Build.VERSION.SDK_INT >= 33) {

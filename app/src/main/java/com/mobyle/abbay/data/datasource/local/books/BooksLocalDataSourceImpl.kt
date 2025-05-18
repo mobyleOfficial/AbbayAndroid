@@ -1,11 +1,15 @@
 package com.mobyle.abbay.data.datasource.local.books
 
 import com.mobyle.abbay.data.datasource.local.daos.BooksDao
+import com.mobyle.abbay.data.datasource.local.keystore.KeyValueStore
 import com.mobyle.abbay.data.model.BookFileEntity
 import com.mobyle.abbay.data.model.MultipleBooksEntity
 import javax.inject.Inject
 
-class BooksLocalDataSourceImpl @Inject constructor(private val booksDao: BooksDao) :
+class BooksLocalDataSourceImpl @Inject constructor(
+    private val booksDao: BooksDao,
+    private val keyValueStore: KeyValueStore
+) :
     BooksLocalDataSource {
     override suspend fun getBookFilesList(): List<BookFileEntity> = booksDao.getBookFilesList()
 
@@ -26,4 +30,9 @@ class BooksLocalDataSourceImpl @Inject constructor(private val booksDao: BooksDa
         booksDao.deleteMultipleBook(id)
     }
 
+    override suspend fun clearBooks() {
+        booksDao.deleteAllBookFiles()
+        booksDao.deleteAllMultipleBooks()
+        keyValueStore.deleteAllBookInformation()
+    }
 }

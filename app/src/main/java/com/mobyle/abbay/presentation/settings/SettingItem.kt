@@ -36,7 +36,8 @@ fun SettingItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .then(clickModifier).padding(vertical = 8.dp),
+                .then(clickModifier)
+                .padding(vertical = 8.dp),
         ) {
             Text(
                 text,

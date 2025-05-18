@@ -1,6 +1,8 @@
 package com.mobyle.abbay.presentation.settings
 
+import android.util.Log
 import com.mobyle.abbay.infra.common.BaseViewModel
+import com.usecase.ClearBooks
 import com.usecase.DisableOpenPlayerInStartup
 import com.usecase.DisablePlayWhenAppIsClosed
 import com.usecase.EnableOpenPlayerInStartup
@@ -19,6 +21,7 @@ class SettingsViewModel @Inject constructor(
     private val disableOpenPlayerInStartup: DisableOpenPlayerInStartup,
     private val enablePlayWhenAppIsClosed: EnablePlayWhenAppIsClosed,
     private val disablePlayWhenAppIsClosed: DisablePlayWhenAppIsClosed,
+    private val clearBooksUseCase: ClearBooks,
     isPlayWhenAppIsClosedEnabled: IsPlayWhenAppIsClosedEnabled,
     isOpenPlayerInStartup: IsOpenPlayerInStartup,
 ) : BaseViewModel() {
@@ -47,4 +50,9 @@ class SettingsViewModel @Inject constructor(
         _shouldOpenPlayerInStartup.update { shouldOpenPlayerInStartUp }
     }
 
+    fun clearBooks() {
+        launch {
+            clearBooksUseCase()
+        }
+    }
 }

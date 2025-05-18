@@ -26,4 +26,10 @@ interface BooksDao {
 
     @Query("DELETE FROM MultipleBooksEntity WHERE id = :id")
     suspend fun deleteMultipleBook(id: String)
+
+    @Query("DELETE FROM BookFileEntity")
+    suspend fun deleteAllBookFiles()
+
+    @Query("DELETE FROM MultipleBooksEntity")
+    suspend fun deleteAllMultipleBooks()
 }

@@ -20,26 +20,32 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 class DataModule {
     @Provides
-    fun provideBooksLocalDataSource(booksDao: BooksDao): BooksLocalDataSource =
-        BooksLocalDataSourceImpl(booksDao)
+    fun provideBooksLocalDataSource(
+        booksDao: BooksDao,
+        keyValueStore: KeyValueStore
+    ): BooksLocalDataSource =
+        BooksLocalDataSourceImpl(
+            booksDao = booksDao,
+            keyValueStore = keyValueStore
+        )
 
     @Singleton
     @Provides
     fun provideBooksRepository(
         localDataSource: BooksLocalDataSource
-    ): BooksRepository = BooksRepositoryImpl(localDataSource)
+    ): BooksRepository = BooksRepositoryImpl(localDataSource = localDataSource)
 
     @Singleton
     @Provides
     fun provideSettingsRepository(
         keyValueStore: KeyValueStore
-    ): SettingsRepository = SettingsRepositoryImpl(keyValueStore)
+    ): SettingsRepository = SettingsRepositoryImpl(keyValueStore = keyValueStore)
 
     @Singleton
     @Provides
     fun provideKeyValueStore(
         sharedPreferences: SharedPreferences
-    ): KeyValueStore = KeyValueStore(sharedPreferences)
+    ): KeyValueStore = KeyValueStore(sharedPrefs = sharedPreferences)
 
     @Provides
     fun provideSharedPrefs(context: Context): SharedPreferences {
