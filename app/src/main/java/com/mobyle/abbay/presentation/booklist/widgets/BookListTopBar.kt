@@ -33,7 +33,8 @@ fun BookListTopBar(
     openFileSelector: () -> Unit,
     openSettings: () -> Unit,
     onRefresh: () -> Unit,
-    hasSelectedFolder: Boolean = false
+    hasSelectedFolder: Boolean = false,
+    isContentEnabled: Boolean = true
 ) {
     val context = LocalContext.current
     var showAddMenu by remember { mutableStateOf(false) }
@@ -47,70 +48,71 @@ fun BookListTopBar(
             )
         },
         actions = {
-            IconButton(
-                onClick = onRefresh,
-                enabled = hasSelectedFolder
-            ) {
-                Icon(
-                    Icons.Filled.Refresh,
-                    contentDescription = "Refresh",
-                    tint = Color.White.copy(alpha = if (hasSelectedFolder) 1f else 0.5f)
-                )
-            }
-
-            if(!hasSelectedFolder) {
+            if (isContentEnabled) {
                 IconButton(
-                    onClick = { showAddMenu = true },
+                    onClick = onRefresh,
+                    enabled = hasSelectedFolder
                 ) {
                     Icon(
-                        Icons.Filled.Add,
-                        contentDescription = "Add",
-                        tint = Color.White
+                        Icons.Filled.Refresh,
+                        contentDescription = "Refresh",
+                        tint = Color.White.copy(alpha = if (hasSelectedFolder) 1f else 0.5f)
                     )
                 }
 
-                DropdownMenu(
-                    expanded = showAddMenu,
-                    onDismissRequest = { showAddMenu = false },
-                    modifier = Modifier.background(MaterialTheme.colorScheme.primary),
-                ) {
-                    AbbaysDropdownItem(
-                        text = "Add Folder",
-                        imageUrl = R.drawable.folder_plus,
-                        onClick = {
-                            showAddMenu = false
-                            openFolderSelector()
-                        },
-                    )
-
-                    AbbaysDropdownItem(
-                        text = "Add File",
-                        imageUrl = R.drawable.file_plus,
-                        onClick = {
-                            showAddMenu = false
-                            openFileSelector()
-                        }
-                    )
-                }
-            } else {
-                IconButton(onClick = openFileSelector) {
-                    SVGIcon(
-                        path = R.drawable.file_plus,
-                        description = getString(
-                            context,
-                            R.string.book_list_top_bar_file_button_description
+                if (!hasSelectedFolder) {
+                    IconButton(
+                        onClick = { showAddMenu = true },
+                    ) {
+                        Icon(
+                            Icons.Filled.Add,
+                            contentDescription = "Add",
+                            tint = Color.White
                         )
+                    }
+
+                    DropdownMenu(
+                        expanded = showAddMenu,
+                        onDismissRequest = { showAddMenu = false },
+                        modifier = Modifier.background(MaterialTheme.colorScheme.primary),
+                    ) {
+                        AbbaysDropdownItem(
+                            text = "Add Folder",
+                            imageUrl = R.drawable.folder_plus,
+                            onClick = {
+                                showAddMenu = false
+                                openFolderSelector()
+                            },
+                        )
+
+                        AbbaysDropdownItem(
+                            text = "Add File",
+                            imageUrl = R.drawable.file_plus,
+                            onClick = {
+                                showAddMenu = false
+                                openFileSelector()
+                            }
+                        )
+                    }
+                } else {
+                    IconButton(onClick = openFileSelector) {
+                        SVGIcon(
+                            path = R.drawable.file_plus,
+                            description = getString(
+                                context,
+                                R.string.book_list_top_bar_file_button_description
+                            )
+                        )
+                    }
+                }
+
+                IconButton(onClick = openSettings) {
+                    Icon(
+                        Icons.Filled.Settings,
+                        "menu",
+                        tint = Color.White,
                     )
                 }
-            }
-
-
-            IconButton(onClick = openSettings) {
-                Icon(
-                    Icons.Filled.Settings,
-                    "menu",
-                    tint = Color.White,
-                )
             }
         }
     )

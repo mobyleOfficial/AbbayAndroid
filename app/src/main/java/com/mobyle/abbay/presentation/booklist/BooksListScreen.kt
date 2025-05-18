@@ -426,7 +426,8 @@ fun BooksListScreen(
                                 }
                             }
                         },
-                        hasSelectedFolder = hasSelectedFolder
+                        hasSelectedFolder = hasSelectedFolder,
+                        isContentEnabled = booksListState is BookListSuccess || booksListState is NoBookSelected,
                     )
                 }) { innerPadding ->
                 Box(
