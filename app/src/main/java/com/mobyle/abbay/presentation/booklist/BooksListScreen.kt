@@ -401,6 +401,23 @@ fun BooksListScreen(
                     openSettings = navigateToSettings,
                     openFileSelector = {
                         openFileSelector.launch(fileFilterList)
+                    },
+                    onRefresh = {
+                        viewModel.getBooksFolderPath()?.let { path ->
+                            val uri = Uri.parse(path)
+                            asyncScope.launch(Dispatchers.IO) {
+                                try {
+                                    val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                                    context.contentResolver.takePersistableUriPermission(uri, takeFlags)
+                                    delay(500)
+                                    uri.getBooks(context)?.let { books ->
+                                        viewModel.checkForNewBooks(books)
+                                    }
+                                } catch (e: SecurityException) {
+                                    e.printStackTrace()
+                                }
+                            }
+                        }
                     }
                 )
             }) { innerPadding ->
