@@ -14,19 +14,24 @@ import androidx.compose.ui.unit.dp
 fun AbbaysDropdownItem(
     text: String,
     imageUrl: Int,
+    enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
+    val color = Color.White.copy(alpha = if (enabled) 1f else 0.5f)
+
     DropdownMenuItem(
         modifier = Modifier.background(MaterialTheme.colorScheme.primary),
-        onClick = onClick
+        onClick = onClick,
+        enabled = enabled
     ) {
         SVGIcon(
             path = imageUrl,
-            description = ""
+            description = "",
+            color = color,
         )
         Text(
             text = text,
-            color = Color.White,
+            color = color,
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(start = 8.dp)
         )

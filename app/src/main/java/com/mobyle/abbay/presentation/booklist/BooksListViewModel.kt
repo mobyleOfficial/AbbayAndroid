@@ -59,6 +59,9 @@ class BooksListViewModel @Inject constructor(
 
     var shouldOpenPlayerInStartup = false
 
+    private val _hasSelectedFolder = MutableStateFlow(getBooksFolderPath() != null)
+    val hasSelectedFolder: StateFlow<Boolean> get() = _hasSelectedFolder
+
     init {
         if (checkPermissionsProvider.areAllPermissionsGranted(getPermissionsList())) {
             getAudiobookList()
@@ -120,6 +123,7 @@ class BooksListViewModel @Inject constructor(
         newBookList.addAll(this.booksList)
         _uiState.emit(BooksListUiState.BookListSuccess(newBookList))
         booksIdList.emit(this.booksList)
+        _hasSelectedFolder.value = true
     }
 
     fun updateBookProgress(id: String, progress: Long) {

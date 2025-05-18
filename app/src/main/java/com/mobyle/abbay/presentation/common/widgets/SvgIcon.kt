@@ -8,9 +8,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 
 @Composable
-fun SVGIcon(modifier: Modifier = Modifier, path: Int, description: String = "") = Icon(
+fun SVGIcon(
+    modifier: Modifier = Modifier,
+    path: Int,
+    description: String = "",
+    color: Color = Color.White,
+) = Icon(
     imageVector = ImageVector.vectorResource(id = path),
     contentDescription = description,
-    tint = Color.White,
+    tint = color,
     modifier = modifier
 )

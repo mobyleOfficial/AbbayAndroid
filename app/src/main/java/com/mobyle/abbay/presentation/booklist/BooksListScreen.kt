@@ -140,6 +140,7 @@ fun BooksListScreen(
         }
     )
     val showErrorDialog = remember { mutableStateOf(false) }
+    val hasSelectedFolder by viewModel.hasSelectedFolder.collectAsState()
 
     LaunchedEffectAndCollect(viewModel.booksIdList) {
         asyncScope.launch(Dispatchers.IO) {
@@ -168,7 +169,8 @@ fun BooksListScreen(
                     updateBooksScope.launch(Dispatchers.IO) {
                         try {
                             // give authorization to check persistent URI
-                            val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                            val takeFlags =
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                             val uri = Uri.parse(it)
                             context.contentResolver.takePersistableUriPermission(uri, takeFlags)
                             delay(500)
@@ -393,34 +395,40 @@ fun BooksListScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.primary),
         ) {
-            Scaffold(topBar = {
-                BookListTopBar(
-                    openFolderSelector = {
-                        openFolderSelector.launch(null)
-                    },
-                    openSettings = navigateToSettings,
-                    openFileSelector = {
-                        openFileSelector.launch(fileFilterList)
-                    },
-                    onRefresh = {
-                        viewModel.getBooksFolderPath()?.let { path ->
-                            val uri = Uri.parse(path)
-                            asyncScope.launch(Dispatchers.IO) {
-                                try {
-                                    val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                                    context.contentResolver.takePersistableUriPermission(uri, takeFlags)
-                                    delay(500)
-                                    uri.getBooks(context)?.let { books ->
-                                        viewModel.checkForNewBooks(books)
+            Scaffold(
+                topBar = {
+                    BookListTopBar(
+                        openFolderSelector = {
+                            openFolderSelector.launch(null)
+                        },
+                        openSettings = navigateToSettings,
+                        openFileSelector = {
+                            openFileSelector.launch(fileFilterList)
+                        },
+                        onRefresh = {
+                            viewModel.getBooksFolderPath()?.let { path ->
+                                val uri = Uri.parse(path)
+                                asyncScope.launch(Dispatchers.IO) {
+                                    try {
+                                        val takeFlags =
+                                            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                                        context.contentResolver.takePersistableUriPermission(
+                                            uri,
+                                            takeFlags
+                                        )
+                                        delay(500)
+                                        uri.getBooks(context)?.let { books ->
+                                            viewModel.checkForNewBooks(books)
+                                        }
+                                    } catch (e: SecurityException) {
+                                        e.printStackTrace()
                                     }
-                                } catch (e: SecurityException) {
-                                    e.printStackTrace()
                                 }
                             }
-                        }
-                    }
-                )
-            }) { innerPadding ->
+                        },
+                        hasSelectedFolder = hasSelectedFolder
+                    )
+                }) { innerPadding ->
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
