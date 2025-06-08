@@ -12,8 +12,7 @@ import javax.inject.Inject
 
 class BooksRepositoryImpl @Inject constructor(
     private val localDataSource: BooksLocalDataSource
-) :
-    BooksRepository {
+) : BooksRepository {
 
     private val forceListUpdate = MutableSharedFlow<Unit>(
         replay = 1
@@ -65,4 +64,7 @@ class BooksRepositoryImpl @Inject constructor(
     override fun getCurrentSelectedBook() = localDataSource.getCurrentSelectedBook()
 
     override fun getBooksFolder() = localDataSource.getBooksFolder()
+    override fun hasShownReloadGuide() = localDataSource.hasShownReloadGuide()
+
+    override fun setReloadGuideAsShown() = localDataSource.setReloadGuideAsShown()
 }

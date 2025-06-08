@@ -21,4 +21,8 @@ interface BooksRepository {
     fun getCurrentSelectedBook(): String?
 
     fun getBooksFolder(): String?
+
+    fun hasShownReloadGuide() : Boolean
+
+    fun setReloadGuideAsShown()
 }

@@ -56,4 +56,12 @@ class BooksLocalDataSourceImpl @Inject constructor(
 
     override fun getBooksFolder() = keyValueStore
         .getStringStoredValue(KeyValueStoreKeys.BOOK_FOLDER_PATH)
+
+    override fun hasShownReloadGuide() = keyValueStore
+        .getBooleanStoredValue(KeyValueStoreKeys.RELOAD_GUIDE)
+
+    override fun setReloadGuideAsShown() {
+        keyValueStore
+            .storeBooleanValue(KeyValueStoreKeys.RELOAD_GUIDE, true)
+    }
 }

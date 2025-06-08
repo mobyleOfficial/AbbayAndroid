@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Intent
 import android.media.MediaMetadataRetriever
 import android.net.Uri
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -96,7 +95,6 @@ import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Date
@@ -142,6 +140,7 @@ fun BooksListScreen(
     val showErrorDialog = remember { mutableStateOf(false) }
     val hasSelectedFolder by viewModel.hasSelectedFolder.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val hasShownReloadGuide by viewModel.showReloadGuide.collectAsState()
 
     LaunchedEffectAndCollect(viewModel.booksIdList) {
         asyncScope.launch(Dispatchers.IO) {
@@ -169,6 +168,7 @@ fun BooksListScreen(
         }
     }
 
+    // Bug: se deletar um livro e adicionar der um reload o livro não volta a menos que force uma recomposição
     LaunchedEffect(Unit, viewModel.booksList, bottomSheetState.bottomSheetState.isCollapsed) {
         if (viewModel.booksList.isNotEmpty()) {
             val updatedList = viewModel.booksList.map {
@@ -382,27 +382,31 @@ fun BooksListScreen(
                             openFileSelector.launch(fileFilterList)
                         },
                         onRefresh = {
-                            if (!isRefreshing) {
-                                viewModel.getBooksFolderPath()?.let { path ->
-                                    val uri = Uri.parse(path)
-                                    asyncScope.launch(Dispatchers.IO) {
-                                        try {
-                                            val takeFlags =
-                                                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                                            context.contentResolver.takePersistableUriPermission(
-                                                uri,
-                                                takeFlags
-                                            )
-                                            viewModel.setRefreshingLoading()
-                                            delay(500)
-                                            uri.getBooks(context)?.let { books ->
-                                                viewModel.checkForNewBooks(books)
+                            if(hasShownReloadGuide) {
+                                if (!isRefreshing) {
+                                    viewModel.getBooksFolderPath()?.let { path ->
+                                        val uri = Uri.parse(path)
+                                        asyncScope.launch(Dispatchers.IO) {
+                                            try {
+                                                val takeFlags =
+                                                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                                                context.contentResolver.takePersistableUriPermission(
+                                                    uri,
+                                                    takeFlags
+                                                )
+                                                viewModel.setRefreshingLoading()
+                                                delay(500)
+                                                uri.getBooks(context)?.let { books ->
+                                                    viewModel.checkForNewBooks(books)
+                                                }
+                                            } catch (e: SecurityException) {
+                                                e.printStackTrace()
                                             }
-                                        } catch (e: SecurityException) {
-                                            e.printStackTrace()
                                         }
                                     }
                                 }
+                            } else {
+                                viewModel.showReloadGuide()
                             }
                         },
                         hasSelectedFolder = hasSelectedFolder,
@@ -750,6 +754,16 @@ fun BooksListScreen(
                 }
             }
         }
+    }
+
+    if (!hasShownReloadGuide) {
+        AbbayActionDialog(
+            onDismiss = viewModel::dismissReloadGuide,
+            title = "Reload Books",
+            body = "This will reload all books from the selected folder. Any books added individually will not be affected.",
+            actionButtonTitle = "Got it",
+            onAction = viewModel::dismissReloadGuide
+        )
     }
 
     if (showErrorDialog.value) {

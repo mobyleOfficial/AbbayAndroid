@@ -25,4 +25,8 @@ interface BooksLocalDataSource {
     fun getCurrentSelectedBook(): String?
 
     fun getBooksFolder(): String?
+
+    fun hasShownReloadGuide() : Boolean
+
+    fun setReloadGuideAsShown()
 }
