@@ -7,7 +7,12 @@ import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
 import com.repository.BooksRepository
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.zip
 import javax.inject.Inject
 
 class BooksRepositoryImpl @Inject constructor(
@@ -17,6 +22,24 @@ class BooksRepositoryImpl @Inject constructor(
     private val forceListUpdate = MutableSharedFlow<Unit>(
         replay = 1
     )
+
+    override fun observeBooksList(): Flow<List<Book>> {
+        with(localDataSource) {
+            return combine(
+                observeMultipleBooksList(),
+                observeBookFilesList()
+            ) { multipleBooks, bookFile ->
+                val multipleBooksDomain = multipleBooks.map {
+                    it.toDomain()
+                }
+                val bookFileDomain = bookFile.map {
+                    it.toDomain()
+                }
+
+                (multipleBooksDomain + bookFileDomain)
+            }
+        }
+    }
 
     override suspend fun getBookList(): List<Book> {
         val bookFilesList = localDataSource.getBookFilesList().map {

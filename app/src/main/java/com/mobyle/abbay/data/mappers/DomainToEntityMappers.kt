@@ -19,7 +19,8 @@ fun MultipleBooks.toEntity(): MultipleBooksEntity = MultipleBooksEntity(
     progress = progress,
     duration = duration,
     currentBookPosition = currentBookPosition,
-    speed = speed
+    speed = speed,
+    hasError = hasError
 )
 
 fun BookFile.toEntity() = BookFileEntity(
@@ -29,7 +30,8 @@ fun BookFile.toEntity() = BookFileEntity(
     thumbnail = thumbnail,
     progress = progress,
     duration = duration,
-    speed = speed
+    speed = speed,
+    hasError = hasError
 )
 
 private fun BookFileEntity.toJson() = Json.encodeToString(this)

@@ -84,7 +84,9 @@ import com.mobyle.abbay.presentation.common.widgets.AbbayActionDialog
 import com.mobyle.abbay.presentation.utils.LaunchedEffectAndCollect
 import com.mobyle.abbay.presentation.utils.audioCursor
 import com.mobyle.abbay.presentation.utils.fileExists
+import com.mobyle.abbay.presentation.utils.getFileName
 import com.mobyle.abbay.presentation.utils.getId
+import com.mobyle.abbay.presentation.utils.getTitle
 import com.mobyle.abbay.presentation.utils.intermediateProgress
 import com.mobyle.abbay.presentation.utils.playBook
 import com.mobyle.abbay.presentation.utils.playMultipleBooks
@@ -131,7 +133,7 @@ fun BooksListScreen(
         permissions = viewModel.getPermissionsList(),
         onPermissionsResult = { permissions ->
             if (permissions.entries.all { it.value }) {
-                viewModel.getAudiobookList()
+                viewModel.setUserHasPermissions()
             } else if (Date().time - permissionRequestAttemptTime.longValue < AUTO_DENIAL_THRESHOLD) {
                 openAppSettings()
             }
@@ -140,7 +142,6 @@ fun BooksListScreen(
     val showErrorDialog = remember { mutableStateOf(false) }
     val hasSelectedFolder by viewModel.hasSelectedFolder.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
-    val hasShownReloadGuide by viewModel.showReloadGuide.collectAsState()
 
     LaunchedEffectAndCollect(viewModel.booksIdList) {
         asyncScope.launch(Dispatchers.IO) {
@@ -211,18 +212,19 @@ fun BooksListScreen(
     ) { filesList ->
         asyncScope.launch(Dispatchers.IO) {
             if (filesList.isNotEmpty()) {
-                val newBooksList = filesList.filter { it.path != null }.map { uri ->
+                viewModel.updateBookList(filesList.filter { it.path != null }.map { uri ->
                     var id: String? = null
                     val metadataRetriever = MediaMetadataRetriever()
                     metadataRetriever.setDataSource(context, uri)
-                    context.audioCursor {
-                        id = it.getId()
+                    context.musicCursor {
+                        val title = it.getFileName()
+                        if ((uri.path?.split("/")?.lastOrNull()) == title.orEmpty()) {
+                            id = it.getId()
+                        }
                     }
 
                     metadataRetriever.toBook(context, id.orEmpty())
-                }
-
-                viewModel.updateBookList(newBooksList)
+                })
             }
         }
     }
@@ -382,7 +384,7 @@ fun BooksListScreen(
                             openFileSelector.launch(fileFilterList)
                         },
                         onRefresh = {
-                            if(hasShownReloadGuide) {
+                            if(viewModel.hasShownReloadGuide()) {
                                 if (!isRefreshing) {
                                     viewModel.getBooksFolderPath()?.let { path ->
                                         val uri = Uri.parse(path)
@@ -421,7 +423,15 @@ fun BooksListScreen(
                 ) {
                     when (val state = booksListState) {
                         is BookListSuccess -> {
+                            val showReloadGuide by viewModel.showReloadGuide.collectAsState()
                             val bookList = state.audiobookList
+
+                            LaunchedEffect(state.audiobookList) {
+                                if(state.audiobookList.isNotEmpty()) {
+                                    player.stop()
+                                    viewModel.selectBook(null)
+                                }
+                            }
 
                             if (selectedBook == null) {
                                 val id = viewModel.getCurrentSelectedBook().orEmpty()
@@ -654,6 +664,71 @@ fun BooksListScreen(
                                     },
                                 )
                             }
+
+                            if (showReloadGuide) {
+                                AbbayActionDialog(
+                                    onDismiss = viewModel::dismissReloadGuide,
+                                    title = "Reload Books",
+                                    body = "This will reload all books from the selected folder. Any books added individually will not be affected.",
+                                    actionButtonTitle = "Got it",
+                                    onAction = viewModel::dismissReloadGuide
+                                )
+                            }
+
+                            if (showErrorDialog.value) {
+                                AlertDialog(
+                                    onDismissRequest = {
+                                        showErrorDialog.value = false
+                                        viewModel.selectBook(null)
+                                    },
+                                    title = {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Error,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.error,
+                                                modifier = Modifier.padding(end = 8.dp)
+                                            )
+                                            Text(
+                                                "File Not Found",
+                                                style = MaterialTheme.typography.titleLarge,
+                                                color = MaterialTheme.colorScheme.error
+                                            )
+                                        }
+                                    },
+                                    text = {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(
+                                                "The audio file for this book could not be found.",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                textAlign = TextAlign.Center,
+                                                modifier = Modifier.padding(vertical = 8.dp)
+                                            )
+                                            Text(
+                                                "The file might have been moved or deleted.",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
+                                    },
+                                    confirmButton = {
+                                        TextButton(
+                                            onClick = {
+                                                showErrorDialog.value = false
+                                                viewModel.selectBook(null)
+                                            }
+                                        ) {
+                                            Text("OK", color = MaterialTheme.colorScheme.primary)
+                                        }
+                                    }
+                                )
+                            }
                         }
 
                         is NoBookSelected -> {
@@ -754,70 +829,5 @@ fun BooksListScreen(
                 }
             }
         }
-    }
-
-    if (!hasShownReloadGuide) {
-        AbbayActionDialog(
-            onDismiss = viewModel::dismissReloadGuide,
-            title = "Reload Books",
-            body = "This will reload all books from the selected folder. Any books added individually will not be affected.",
-            actionButtonTitle = "Got it",
-            onAction = viewModel::dismissReloadGuide
-        )
-    }
-
-    if (showErrorDialog.value) {
-        AlertDialog(
-            onDismissRequest = {
-                showErrorDialog.value = false
-                viewModel.selectBook(null)
-            },
-            title = {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Error,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-                    Text(
-                        "File Not Found",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            },
-            text = {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        "The audio file for this book could not be found.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                    Text(
-                        "The file might have been moved or deleted.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showErrorDialog.value = false
-                        viewModel.selectBook(null)
-                    }
-                ) {
-                    Text("OK", color = MaterialTheme.colorScheme.primary)
-                }
-            }
-        )
     }
 }

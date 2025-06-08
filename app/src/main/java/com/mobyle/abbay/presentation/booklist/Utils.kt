@@ -2,6 +2,7 @@ package com.mobyle.abbay.presentation.booklist
 
 import android.content.ContentResolver
 import android.content.Context
+import android.database.Cursor
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Environment
@@ -127,4 +128,17 @@ fun Book?.getThumb(context: Context): Book? {
     } catch (_: Exception) {
         this
     }
+}
+
+
+fun Context.musicCursor(block: (Cursor) -> Unit) {
+    contentResolver.query(
+        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null,
+        MediaStore.Audio.Media.DEFAULT_SORT_ORDER
+    )
+        ?.use { cursor ->
+            while (cursor.moveToNext()) {
+                block.invoke(cursor)
+            }
+        }
 }

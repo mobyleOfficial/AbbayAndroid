@@ -4,6 +4,9 @@ import com.model.Book
 import kotlinx.coroutines.flow.Flow
 
 interface BooksRepository {
+
+    fun observeBooksList(): Flow<List<Book>>
+
     suspend fun getBookList(): List<Book>
 
     suspend fun upsertBookList(booksList: List<Book>)
@@ -22,7 +25,7 @@ interface BooksRepository {
 
     fun getBooksFolder(): String?
 
-    fun hasShownReloadGuide() : Boolean
+    fun hasShownReloadGuide(): Boolean
 
     fun setReloadGuideAsShown()
 }

@@ -6,9 +6,16 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.mobyle.abbay.data.model.BookFileEntity
 import com.mobyle.abbay.data.model.MultipleBooksEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface BooksDao {
+    @Query("SELECT * FROM BookFileEntity")
+    fun observeBookFilesList(): Flow<List<BookFileEntity>>
+
+    @Query("SELECT * FROM MultipleBooksEntity")
+    fun observeMultipleBooksList(): Flow<List<MultipleBooksEntity>>
+
     @Query("SELECT * FROM BookFileEntity")
     suspend fun getBookFilesList(): List<BookFileEntity>
 

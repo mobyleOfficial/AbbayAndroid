@@ -2,8 +2,13 @@ package com.mobyle.abbay.data.datasource.local.books
 
 import com.mobyle.abbay.data.model.BookFileEntity
 import com.mobyle.abbay.data.model.MultipleBooksEntity
+import kotlinx.coroutines.flow.Flow
 
 interface BooksLocalDataSource {
+    fun observeMultipleBooksList(): Flow<List<MultipleBooksEntity>>
+
+    fun observeBookFilesList(): Flow<List<BookFileEntity>>
+
     suspend fun getBookFilesList(): List<BookFileEntity>
 
     suspend fun addBookFileList(filesList: List<BookFileEntity>)

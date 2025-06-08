@@ -12,6 +12,10 @@ class BooksLocalDataSourceImpl @Inject constructor(
     private val keyValueStore: KeyValueStore
 ) :
     BooksLocalDataSource {
+    override fun observeMultipleBooksList() = booksDao.observeMultipleBooksList()
+
+    override fun observeBookFilesList() = booksDao.observeBookFilesList()
+
     override suspend fun getBookFilesList(): List<BookFileEntity> = booksDao.getBookFilesList()
 
     override suspend fun addBookFileList(filesList: List<BookFileEntity>) =

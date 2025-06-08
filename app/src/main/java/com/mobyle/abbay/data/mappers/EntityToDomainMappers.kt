@@ -17,7 +17,8 @@ fun MultipleBooksEntity.toDomain(): MultipleBooks = MultipleBooks(
     progress = progress,
     duration = duration,
     currentBookPosition = currentBookPosition,
-    speed = speed
+    speed = speed,
+    hasError = hasError
 )
 
 fun BookFileEntity.toDomain() = BookFile(
@@ -27,7 +28,8 @@ fun BookFileEntity.toDomain() = BookFile(
     thumbnail = thumbnail,
     progress = progress,
     duration = duration,
-    speed = speed
+    speed = speed,
+    hasError = hasError
 )
 
 private fun String.toEntity() = Json.decodeFromString<BookFileEntity>(this)
