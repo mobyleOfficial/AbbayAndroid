@@ -178,7 +178,7 @@ fun BooksListScreen(
                 newBook
             }
 
-           // viewModel.updateBookList(updatedList)
+            viewModel.updateBookList(updatedList)
         }
     }
 
@@ -198,7 +198,7 @@ fun BooksListScreen(
     ) { filesList ->
         asyncScope.launch(Dispatchers.IO) {
             if (filesList.isNotEmpty()) {
-                viewModel.updateBookList(filesList.filter { it.path != null }.map { uri ->
+                val newBookList = filesList.filter { it.path != null }.mapNotNull { uri ->
                     var id: String? = null
                     val metadataRetriever = MediaMetadataRetriever()
                     metadataRetriever.setDataSource(context, uri)
@@ -209,8 +209,10 @@ fun BooksListScreen(
                         }
                     }
 
-                    metadataRetriever.toBook(context, id.orEmpty())
-                })
+                    metadataRetriever.toBook(context, id.orEmpty()).getThumb(context)
+                }
+
+                viewModel.updateBookList(newBookList)
             }
         }
     }
@@ -224,7 +226,11 @@ fun BooksListScreen(
             asyncScope.launch(Dispatchers.IO) {
                 delay(500)
                 it.getBooks(context)?.let {
-                    viewModel.addAllBookTypes(it)
+                    val booksWithThumbnails = it.mapNotNull { book ->
+                        book.getThumb(context)
+                    }
+
+                    viewModel.addAllBookTypes(booksWithThumbnails)
                 }
             }
         }
@@ -272,9 +278,7 @@ fun BooksListScreen(
     }
 
     LifecycleEventEffect(event = Lifecycle.Event.ON_PAUSE) {
-        selectedBook?.let {
-            viewModel.updateBookList()
-        }
+        viewModel.updateBookList()
     }
 
     LaunchedEffect(selectedBook) {
@@ -425,19 +429,6 @@ fun BooksListScreen(
                             val showReloadGuide by viewModel.showReloadGuide.collectAsState()
                             val bookList = state.audiobookList
 
-                            LaunchedEffect(state.audiobookList) {
-                                asyncScope.launch(Dispatchers.IO) {
-                                    val booksWithThumbnails = state.audiobookList
-                                        .mapNotNull { book ->
-                                            book.getThumb(context)
-                                        }
-
-                                    if (booksWithThumbnails.isNotEmpty()) {
-                                        viewModel.addThumbnails(booksWithThumbnails)
-                                    }
-                                }
-                            }
-
                             if (selectedBook == null) {
                                 val id = viewModel.getCurrentSelectedBook().orEmpty()
 
@@ -568,7 +559,12 @@ fun BooksListScreen(
 
                                                                     if (book.hasError) {
                                                                         showErrorDialog.value = true
-                                                                        viewModel.selectBook(null)
+
+                                                                        if (selectedBook?.id == book.id) {
+                                                                            viewModel.selectBook(
+                                                                                null
+                                                                            )
+                                                                        }
                                                                     } else {
                                                                         asyncScope.launch {
                                                                             bottomSheetState.bottomSheetState.expand()

@@ -117,20 +117,6 @@ class BooksListViewModel @Inject constructor(
         selectBook(book)
     }
 
-    fun addThumbnails(booksWithThumbList: List<Book>) = launch {
-//        val newList = this.booksList.map { book ->
-//            booksWithThumbList.firstOrNull { it.id == book.id }?.let {
-//                when (it) {
-//                    is MultipleBooks -> it.copy(thumbnail = it.thumbnail)
-//                    is BookFile -> it.copy(thumbnail = it.thumbnail)
-//                    else -> book
-//                }
-//            } ?: book
-//        }.toList()
-//
-//        upsertBookList(newList)
-    }
-
     fun addAllBookTypes(filesList: List<Book>) = launch {
         upsertBookList(filesList)
         _hasSelectedFolder.value = true
@@ -208,9 +194,9 @@ class BooksListViewModel @Inject constructor(
             }
         }
 
-        launch {
-            upsertBookList.invoke(booksList)
-        }
+//        launch {
+//            upsertBookList.invoke(booksList)
+//        }
     }
 
     fun showLoading() {
@@ -242,9 +228,9 @@ class BooksListViewModel @Inject constructor(
             }
             booksList[index] = updatedBook
 
-            launch {
-                upsertBookList(booksList)
-            }
+//            launch {
+//                upsertBookList(booksList)
+//            }
         }
     }
 
