@@ -97,7 +97,6 @@ fun Cursor.getDuration(): Long? {
     return getLongOrNull(getColumnIndex(MediaStore.Audio.Media.DURATION))
 }
 
-
 @androidx.annotation.OptIn(UnstableApi::class)
 fun MediaController.playBook(
     id: String,

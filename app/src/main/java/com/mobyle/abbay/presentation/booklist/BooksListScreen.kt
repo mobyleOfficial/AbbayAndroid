@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -143,20 +144,6 @@ fun BooksListScreen(
     val hasSelectedFolder by viewModel.hasSelectedFolder.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
 
-    LaunchedEffectAndCollect(viewModel.booksIdList) {
-        asyncScope.launch(Dispatchers.IO) {
-            it?.let {
-                val booksWithThumbnails = it.mapNotNull { book ->
-                    book.getThumb(context)
-                }
-
-                if (booksWithThumbnails.isNotEmpty()) {
-                    viewModel.addThumbnails(booksWithThumbnails)
-                }
-            }
-        }
-
-    }
 
     LifecycleEventEffect(event = Lifecycle.Event.ON_CREATE) {
         viewModel.shouldOpenPlayerInStartup()
@@ -169,7 +156,6 @@ fun BooksListScreen(
         }
     }
 
-    // Bug: se deletar um livro e adicionar der um reload o livro não volta a menos que force uma recomposição
     LaunchedEffect(Unit, viewModel.booksList, bottomSheetState.bottomSheetState.isCollapsed) {
         if (viewModel.booksList.isNotEmpty()) {
             val updatedList = viewModel.booksList.map {
@@ -192,7 +178,7 @@ fun BooksListScreen(
                 newBook
             }
 
-            viewModel.updateBookList(updatedList)
+           // viewModel.updateBookList(updatedList)
         }
     }
 
@@ -216,7 +202,7 @@ fun BooksListScreen(
                     var id: String? = null
                     val metadataRetriever = MediaMetadataRetriever()
                     metadataRetriever.setDataSource(context, uri)
-                    context.musicCursor {
+                    context.audioCursor {
                         val title = it.getFileName()
                         if ((uri.path?.split("/")?.lastOrNull()) == title.orEmpty()) {
                             id = it.getId()
@@ -287,7 +273,7 @@ fun BooksListScreen(
 
     LifecycleEventEffect(event = Lifecycle.Event.ON_PAUSE) {
         selectedBook?.let {
-            viewModel.updateBookList(it.id, player.currentPosition)
+            viewModel.updateBookList()
         }
     }
 
@@ -317,16 +303,6 @@ fun BooksListScreen(
                         playerIcon = playerIcon,
                         onPlayingChange = { isPlaying ->
                             viewModel.isPlaying.value = isPlaying
-
-
-                            if (!isPlaying) {
-                                selectedBook?.let {
-                                    viewModel.updateBookProgress(
-                                        it.id,
-                                        currentProgress
-                                    )
-                                }
-                            }
                         },
                         updateProgress = {
                             selectedBook?.let { book ->
@@ -384,27 +360,43 @@ fun BooksListScreen(
                             openFileSelector.launch(fileFilterList)
                         },
                         onRefresh = {
-                            if(viewModel.hasShownReloadGuide()) {
+                            if (viewModel.hasShownReloadGuide()) {
                                 if (!isRefreshing) {
                                     viewModel.getBooksFolderPath()?.let { path ->
                                         val uri = Uri.parse(path)
                                         asyncScope.launch(Dispatchers.IO) {
                                             try {
                                                 val takeFlags =
-                                                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                                                context.contentResolver.takePersistableUriPermission(
-                                                    uri,
-                                                    takeFlags
-                                                )
+                                                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                                // Check if we already have permissions
+                                                val hasPermission =
+                                                    context.contentResolver.persistedUriPermissions.any {
+                                                        it.uri == uri && it.isReadPermission
+                                                    }
+
+                                                if (!hasPermission) {
+                                                    // If we don't have permissions, request them again
+                                                    context.contentResolver.takePersistableUriPermission(
+                                                        uri,
+                                                        takeFlags
+                                                    )
+                                                }
+
                                                 viewModel.setRefreshingLoading()
                                                 delay(500)
                                                 uri.getBooks(context)?.let { books ->
                                                     viewModel.checkForNewBooks(books)
                                                 }
                                             } catch (e: SecurityException) {
-                                                e.printStackTrace()
+                                                // If we can't get permissions, prompt user to select folder again
+                                                viewModel.showLoading()
+                                                openFolderSelector.launch(null)
                                             }
                                         }
+                                    } ?: run {
+                                        // If no folder is selected, prompt user to select one
+                                        viewModel.showLoading()
+                                        openFolderSelector.launch(null)
                                     }
                                 }
                             } else {
@@ -421,15 +413,28 @@ fun BooksListScreen(
                         .fillMaxSize()
                         .padding(innerPadding)
                 ) {
+                    LaunchedEffect(booksListState) {
+                        if (booksListState is NoBookSelected) {
+                            player.stop()
+                            viewModel.selectBook(null)
+                        }
+                    }
+
                     when (val state = booksListState) {
                         is BookListSuccess -> {
                             val showReloadGuide by viewModel.showReloadGuide.collectAsState()
                             val bookList = state.audiobookList
 
                             LaunchedEffect(state.audiobookList) {
-                                if(state.audiobookList.isNotEmpty()) {
-                                    player.stop()
-                                    viewModel.selectBook(null)
+                                asyncScope.launch(Dispatchers.IO) {
+                                    val booksWithThumbnails = state.audiobookList
+                                        .mapNotNull { book ->
+                                            book.getThumb(context)
+                                        }
+
+                                    if (booksWithThumbnails.isNotEmpty()) {
+                                        viewModel.addThumbnails(booksWithThumbnails)
+                                    }
                                 }
                             }
 
@@ -547,13 +552,6 @@ fun BooksListScreen(
                                                                     if (selectedBook?.id != book.id &&
                                                                         !book.hasError
                                                                     ) {
-                                                                        selectedBook?.let {
-                                                                            viewModel.updateBookProgress(
-                                                                                it.id,
-                                                                                currentProgress
-                                                                            )
-                                                                        }
-
                                                                         viewModel.setCurrentProgress(
                                                                             id = book.id,
                                                                             progress = book.progress
@@ -600,13 +598,6 @@ fun BooksListScreen(
                                                                     if (selectedBook?.id != book.id &&
                                                                         !book.hasError
                                                                     ) {
-                                                                        selectedBook?.let {
-                                                                            viewModel.updateBookProgress(
-                                                                                it.id,
-                                                                                currentProgress
-                                                                            )
-                                                                        }
-
                                                                         viewModel.setCurrentProgress(
                                                                             id = book.id,
                                                                             progress = book.progress
@@ -658,6 +649,7 @@ fun BooksListScreen(
                                     onAction = {
                                         bookToDelete.value?.let { book ->
                                             viewModel.removeBook(book)
+                                            player.stop()
                                         }
                                         showDeleteDialog.value = false
                                         bookToDelete.value = null
@@ -712,7 +704,9 @@ fun BooksListScreen(
                                             Text(
                                                 "The file might have been moved or deleted.",
                                                 style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                                color = MaterialTheme.colorScheme.onSurface.copy(
+                                                    alpha = 0.7f
+                                                ),
                                                 textAlign = TextAlign.Center
                                             )
                                         }

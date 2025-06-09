@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -65,14 +66,18 @@ fun BookItem(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(8.dp).weight(1f)
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .weight(1f)
                     )
                     if (book.hasError) {
                         Icon(
                             imageVector = Icons.Default.Error,
                             contentDescription = "Error playing file",
                             tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(24.dp).padding(end = 8.dp)
+                            modifier = Modifier
+                                .size(24.dp)
+                                .padding(end = 8.dp)
                         )
                     }
                 }

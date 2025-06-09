@@ -63,8 +63,6 @@ class BooksListViewModel @Inject constructor(
 
     var hasBookSelected = _selectedBook.map { it != null }
 
-    val booksIdList = MutableStateFlow<List<Book?>>(emptyList())
-
     var shouldOpenPlayerInStartup = false
 
     private val _hasSelectedFolder = MutableStateFlow(getBooksFolderPath() != null)
@@ -86,17 +84,17 @@ class BooksListViewModel @Inject constructor(
             this.booksList.clear()
             this.booksList.addAll(domainBookList)
 
-            if (hasPermissions) {
-                val state = if (domainBookList.isEmpty()) {
+            val state = if (hasPermissions) {
+                if (domainBookList.isEmpty()) {
                     BooksListUiState.NoBookSelected
                 } else {
                     BooksListUiState.BookListSuccess(domainBookList)
                 }
-
-                _uiState.tryEmit(state)
             } else {
-                _uiState.value = BooksListUiState.NoPermissionsGranted
+                BooksListUiState.NoPermissionsGranted
             }
+
+            _uiState.tryEmit(state)
         }
             .launchIn(viewModelScope)
     }
@@ -112,7 +110,7 @@ class BooksListViewModel @Inject constructor(
     }
 
     fun updateBookList(booksList: List<Book>) = launch {
-        upsertBookList.invoke(booksList)
+        upsertBookList(booksList)
     }
 
     fun updateSelectedBook(book: Book) {
@@ -120,51 +118,22 @@ class BooksListViewModel @Inject constructor(
     }
 
     fun addThumbnails(booksWithThumbList: List<Book>) = launch {
-        val newList = this.booksList.map { book ->
-            booksWithThumbList.firstOrNull { it.id == book.id }?.let {
-                when (it) {
-                    is MultipleBooks -> it.copy(thumbnail = it.thumbnail)
-                    is BookFile -> it.copy(thumbnail = it.thumbnail)
-                    else -> book
-                }
-            } ?: book
-        }.toList()
-
-        upsertBookList.invoke(newList)
+//        val newList = this.booksList.map { book ->
+//            booksWithThumbList.firstOrNull { it.id == book.id }?.let {
+//                when (it) {
+//                    is MultipleBooks -> it.copy(thumbnail = it.thumbnail)
+//                    is BookFile -> it.copy(thumbnail = it.thumbnail)
+//                    else -> book
+//                }
+//            } ?: book
+//        }.toList()
+//
+//        upsertBookList(newList)
     }
 
     fun addAllBookTypes(filesList: List<Book>) = launch {
-        upsertBookList.invoke(filesList)
+        upsertBookList(filesList)
         _hasSelectedFolder.value = true
-    }
-
-    fun updateBookProgress(id: String, progress: Long) {
-        booksList.firstOrNull { it.id == id }?.let {
-
-            when (it) {
-                is BookFile -> {
-                    booksList[booksList.indexOf(it)] = it.copy(progress = progress)
-                }
-
-                is MultipleBooks -> {
-                    booksList[booksList.indexOf(it)] = it.copy(progress = progress)
-                }
-
-                else -> {}
-            }
-        }
-
-        _uiState.value = BooksListUiState.BookListSuccess(booksList.toList())
-    }
-
-    fun updateBookList(id: String, progress: Long) = launch {
-        updateBookProgress(id, progress)
-        upsertBookList.invoke(booksList)
-    }
-
-    fun selectBook(book: Book?) {
-        saveCurrentSelectedBookUC(book?.id)
-        _selectedBook.tryEmit(book)
     }
 
     fun setCurrentProgress(id: String, progress: Long) {
@@ -191,6 +160,16 @@ class BooksListViewModel @Inject constructor(
             selectBook(mappedBook)
         }
     }
+
+    fun updateBookList() = launch {
+        upsertBookList(booksList)
+    }
+
+    fun selectBook(book: Book?) {
+        saveCurrentSelectedBookUC(book?.id)
+        _selectedBook.tryEmit(book)
+    }
+
 
     fun updateBookPosition(id: String, position: Int) {
         val index = booksList.indexOfFirst { it.id == id }
