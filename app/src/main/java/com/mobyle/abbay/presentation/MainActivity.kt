@@ -25,7 +25,6 @@ import javax.inject.Inject
 
 /*
 * todo list:
-*  3. Handle bar in notification;
 *  5. Change name/image of book;
 *  7. Add themes;
 *  8. Add tabs;
