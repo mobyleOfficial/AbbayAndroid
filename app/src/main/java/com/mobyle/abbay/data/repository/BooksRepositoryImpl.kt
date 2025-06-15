@@ -19,10 +19,6 @@ class BooksRepositoryImpl @Inject constructor(
     private val localDataSource: BooksLocalDataSource
 ) : BooksRepository {
 
-    private val forceListUpdate = MutableSharedFlow<Unit>(
-        replay = 1
-    )
-
     override fun observeBooksList(): Flow<List<Book>> {
         with(localDataSource) {
             return combine(
@@ -75,14 +71,12 @@ class BooksRepositoryImpl @Inject constructor(
 
     override suspend fun clearBooks() {
         localDataSource.clearBooks()
-        forceListUpdate.tryEmit(Unit)
     }
-
-    override fun onForceUpdateList() = forceListUpdate
 
     override fun saveBookFolderPath(path: String) = localDataSource.saveBookFolderPath(path)
 
-    override fun saveCurrentSelectedBook(id: String?) = localDataSource.saveCurrentSelectedBook(id)
+    override fun saveCurrentSelectedBook(id: String?, position: Int?) =
+        localDataSource.saveCurrentSelectedBook(id, position)
 
     override fun getCurrentSelectedBook() = localDataSource.getCurrentSelectedBook()
 
@@ -90,4 +84,12 @@ class BooksRepositoryImpl @Inject constructor(
     override fun hasShownReloadGuide() = localDataSource.hasShownReloadGuide()
 
     override fun setReloadGuideAsShown() = localDataSource.setReloadGuideAsShown()
+
+    override suspend fun updateSelectedBook(progress: Long, position: Int?) =
+        localDataSource.updateSelectedBook(progress, position)
+
+    override fun isAppAlive() = localDataSource.isAppAlive()
+
+    override fun updateAppLifeStatus(isAlive: Boolean) =
+        localDataSource.updateAppLifeStatus(isAlive)
 }

@@ -39,4 +39,10 @@ interface BooksDao {
 
     @Query("DELETE FROM MultipleBooksEntity")
     suspend fun deleteAllMultipleBooks()
+
+    @Query("UPDATE BookFileEntity SET progress = :progress WHERE id = :id")
+    suspend fun updateBookFileProgress(id: String, progress: Long)
+
+    @Query("UPDATE MultipleBooksEntity SET progress = :progress, currentBookPosition = :currentPosition WHERE id = :id")
+    suspend fun updateMultipleBookProgress(id: String, currentPosition: Int, progress: Long)
 }

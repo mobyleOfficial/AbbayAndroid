@@ -15,11 +15,9 @@ interface BooksRepository {
 
     suspend fun clearBooks()
 
-    fun onForceUpdateList(): Flow<Unit>
-
     fun saveBookFolderPath(path: String)
 
-    fun saveCurrentSelectedBook(id: String?)
+    fun saveCurrentSelectedBook(id: String?, position: Int?)
 
     fun getCurrentSelectedBook(): String?
 
@@ -28,4 +26,10 @@ interface BooksRepository {
     fun hasShownReloadGuide(): Boolean
 
     fun setReloadGuideAsShown()
+
+    suspend fun updateSelectedBook(progress: Long, position: Int?)
+
+    fun isAppAlive(): Boolean
+
+    fun updateAppLifeStatus(isAlive: Boolean)
 }

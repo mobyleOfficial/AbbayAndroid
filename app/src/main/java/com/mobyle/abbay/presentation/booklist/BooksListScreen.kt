@@ -172,7 +172,7 @@ fun BooksListScreen(
                 }
 
                 if (newBook.hasError && selectedBook?.id == newBook.id) {
-                    viewModel.updateSelectedBook(newBook)
+                    viewModel.updateSelectedBook(newBook, newBook.getBookPosition())
                 }
 
                 newBook
@@ -258,7 +258,8 @@ fun BooksListScreen(
                 if (player.isPlaying) {
                     viewModel.setCurrentProgress(
                         id = it.id,
-                        progress = player.currentPosition
+                        progress = player.currentPosition,
+                        currentPosition = it.getBookPosition()
                     )
                 }
             }
@@ -312,7 +313,8 @@ fun BooksListScreen(
                             selectedBook?.let { book ->
                                 viewModel.setCurrentProgress(
                                     id = book.id,
-                                    progress = it
+                                    progress = it,
+                                    currentPosition = book.getBookPosition()
                                 )
                             }
                         },
@@ -331,7 +333,8 @@ fun BooksListScreen(
                             selectedBook?.let { book ->
                                 viewModel.updateBookSpeed(
                                     id = book.id,
-                                    speed = it
+                                    speed = it,
+                                    currentPosition = book.getBookPosition()
                                 )
                             }
                         },
@@ -420,7 +423,7 @@ fun BooksListScreen(
                     LaunchedEffect(booksListState) {
                         if (booksListState is NoBookSelected) {
                             player.stop()
-                            viewModel.selectBook(null)
+                            viewModel.selectBook(null, null)
                         }
                     }
 
@@ -437,10 +440,11 @@ fun BooksListScreen(
                                 }?.let { book ->
                                     viewModel.setCurrentProgress(
                                         id = book.id,
-                                        progress = book.progress
+                                        progress = book.progress,
+                                        currentPosition = book.getBookPosition()
                                     )
 
-                                    viewModel.selectBook(book)
+                                    viewModel.selectBook(book, book.getBookPosition())
 
                                     if (!player.isPlaying) {
                                         if (book is MultipleBooks) {
@@ -545,10 +549,14 @@ fun BooksListScreen(
                                                                     ) {
                                                                         viewModel.setCurrentProgress(
                                                                             id = book.id,
-                                                                            progress = book.progress
+                                                                            progress = book.progress,
+                                                                            currentPosition = book.getBookPosition()
                                                                         )
 
-                                                                        viewModel.selectBook(book)
+                                                                        viewModel.selectBook(
+                                                                            book,
+                                                                            book.getBookPosition()
+                                                                        )
                                                                         player.playMultipleBooks(
                                                                             currentPosition = book.currentBookPosition,
                                                                             idList = book.bookFileList.map { it.id },
@@ -562,6 +570,7 @@ fun BooksListScreen(
 
                                                                         if (selectedBook?.id == book.id) {
                                                                             viewModel.selectBook(
+                                                                                null,
                                                                                 null
                                                                             )
                                                                         }
@@ -596,11 +605,13 @@ fun BooksListScreen(
                                                                     ) {
                                                                         viewModel.setCurrentProgress(
                                                                             id = book.id,
-                                                                            progress = book.progress
+                                                                            progress = book.progress,
+                                                                            currentPosition = book.getBookPosition()
                                                                         )
 
                                                                         viewModel.selectBook(
-                                                                            book
+                                                                            book,
+                                                                            book.getBookPosition()
                                                                         )
 
                                                                         player.playBook(
@@ -613,6 +624,7 @@ fun BooksListScreen(
                                                                     if (book.hasError) {
                                                                         showErrorDialog.value = true
                                                                         viewModel.selectBook(
+                                                                            null,
                                                                             null
                                                                         )
                                                                     } else {
@@ -667,7 +679,7 @@ fun BooksListScreen(
                                 AlertDialog(
                                     onDismissRequest = {
                                         showErrorDialog.value = false
-                                        viewModel.selectBook(null)
+                                        viewModel.selectBook(null, null)
                                     },
                                     title = {
                                         Row(
@@ -711,7 +723,7 @@ fun BooksListScreen(
                                         TextButton(
                                             onClick = {
                                                 showErrorDialog.value = false
-                                                viewModel.selectBook(null)
+                                                viewModel.selectBook(null, null)
                                             }
                                         ) {
                                             Text("OK", color = MaterialTheme.colorScheme.primary)

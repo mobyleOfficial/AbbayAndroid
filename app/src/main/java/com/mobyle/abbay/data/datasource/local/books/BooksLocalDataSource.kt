@@ -25,7 +25,7 @@ interface BooksLocalDataSource {
 
     fun saveBookFolderPath(path: String)
 
-    fun saveCurrentSelectedBook(id: String?)
+    fun saveCurrentSelectedBook(id: String?, position: Int?)
 
     fun getCurrentSelectedBook(): String?
 
@@ -34,4 +34,10 @@ interface BooksLocalDataSource {
     fun hasShownReloadGuide() : Boolean
 
     fun setReloadGuideAsShown()
+
+    suspend fun updateSelectedBook(progress: Long, position: Int?)
+
+    fun isAppAlive(): Boolean
+
+    fun updateAppLifeStatus(isAlive: Boolean)
 }

@@ -19,19 +19,16 @@ import com.mobyle.abbay.infra.navigation.AbbayNavHost
 import com.mobyle.abbay.presentation.common.service.PlayerService
 import com.mobyle.abbay.presentation.common.theme.MyApplicationTheme
 import com.usecase.IsPlayWhenAppIsClosedEnabled
+import com.usecase.UpdateAppLifeStatus
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 /*
 * todo list:
-*  2. Show/change root folder;
 *  3. Handle bar in notification;
-*  4. Show all files in multibooks;
 *  5. Change name/image of book;
-*  6. Clear all data;
 *  7. Add themes;
 *  8. Add tabs;
-*  9. Handle deleted books;
 * 11. Handle dark mode;
 * */
 @ExperimentalMaterialApi
@@ -40,10 +37,17 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
     @Inject
     lateinit var isPlayWhenAppIsClosedEnabled: IsPlayWhenAppIsClosedEnabled
+
+    @Inject
+    lateinit var updateAppLifeStatus: UpdateAppLifeStatus
+
     private lateinit var controller: ListenableFuture<MediaController>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        updateAppLifeStatus(true)
+
         controller  =
             MediaController.Builder(
                 this,
@@ -72,6 +76,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+
+        updateAppLifeStatus(false)
 
         if (!isPlayWhenAppIsClosedEnabled()) {
             if(::controller.isInitialized) {

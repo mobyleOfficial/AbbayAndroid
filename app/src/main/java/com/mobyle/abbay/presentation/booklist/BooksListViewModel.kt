@@ -2,7 +2,6 @@ package com.mobyle.abbay.presentation.booklist
 
 import android.Manifest
 import android.os.Build
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.mobyle.abbay.infra.common.BaseViewModel
 import com.mobyle.abbay.presentation.utils.permissions.CheckPermissionsProvider
@@ -10,9 +9,7 @@ import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
 import com.usecase.DeleteBook
-import com.usecase.ForceUpdateList
 import com.usecase.GetBooksFolderPath
-import com.usecase.GetBooksList
 import com.usecase.GetCurrentSelectedBook
 import com.usecase.HasShownReloadGuide
 import com.usecase.IsOpenPlayerInStartup
@@ -27,14 +24,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class BooksListViewModel @Inject constructor(
-    //private val getBooksList: GetBooksList,
-    private val observeBooksList: ObserveBooksList,
     private val upsertBookList: UpsertBookList,
     private val deleteBook: DeleteBook,
     private val saveCurrentSelectedBookUC: SaveCurrentSelectedBook,
@@ -44,8 +38,8 @@ class BooksListViewModel @Inject constructor(
     val saveBookFolderPath: SaveBookFolderPath,
     val getCurrentSelectedBook: GetCurrentSelectedBook,
     val isOpenPlayerInStartupUC: IsOpenPlayerInStartup,
+    observeBooksList: ObserveBooksList,
     checkPermissionsProvider: CheckPermissionsProvider,
-    forceUpdateList: ForceUpdateList,
 ) :
     BaseViewModel() {
     private val _uiState = MutableStateFlow<BooksListUiState>(BooksListUiState.Loading)
@@ -113,8 +107,8 @@ class BooksListViewModel @Inject constructor(
         upsertBookList(booksList)
     }
 
-    fun updateSelectedBook(book: Book) {
-        selectBook(book)
+    fun updateSelectedBook(book: Book, currentPosition: Int?) {
+        selectBook(book, currentPosition)
     }
 
     fun addAllBookTypes(filesList: List<Book>) = launch {
@@ -122,7 +116,11 @@ class BooksListViewModel @Inject constructor(
         _hasSelectedFolder.value = true
     }
 
-    fun setCurrentProgress(id: String, progress: Long) {
+    fun setCurrentProgress(
+        id: String,
+        progress: Long,
+        currentPosition: Int?
+    ) {
         _currentProgress.tryEmit(progress)
         val index = booksList.indexOfFirst { it.id == id }
 
@@ -143,7 +141,7 @@ class BooksListViewModel @Inject constructor(
 
             booksList[index] = mappedBook
             _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
-            selectBook(mappedBook)
+            selectBook(mappedBook, currentPosition)
         }
     }
 
@@ -151,8 +149,8 @@ class BooksListViewModel @Inject constructor(
         upsertBookList(booksList)
     }
 
-    fun selectBook(book: Book?) {
-        saveCurrentSelectedBookUC(book?.id)
+    fun selectBook(book: Book?, position: Int?) {
+        saveCurrentSelectedBookUC(book?.id, position)
         _selectedBook.tryEmit(book)
     }
 
@@ -167,12 +165,16 @@ class BooksListViewModel @Inject constructor(
                 booksList[index] = book.copy(currentBookPosition = position)
 
                 _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
-                selectBook(book.copy(currentBookPosition = position))
+                selectBook(book.copy(currentBookPosition = position), position)
             }
         }
     }
 
-    fun updateBookSpeed(id: String, speed: Float) {
+    fun updateBookSpeed(
+        id: String,
+        speed: Float,
+        currentPosition: Int?
+    ) {
         booksList.firstOrNull { it.id == id }?.let {
             val newBook = when (it) {
                 is BookFile -> {
@@ -190,13 +192,9 @@ class BooksListViewModel @Inject constructor(
 
             newBook?.let { book ->
                 booksList[booksList.indexOf(it)] = book
-                selectBook(book)
+                selectBook(book, currentPosition)
             }
         }
-
-//        launch {
-//            upsertBookList.invoke(booksList)
-//        }
     }
 
     fun showLoading() {
@@ -213,7 +211,7 @@ class BooksListViewModel @Inject constructor(
 
             if (selectedBook.value?.id == book.id) {
                 _selectedBook.value = null
-                saveCurrentSelectedBookUC(null)
+                saveCurrentSelectedBookUC(null, null)
             }
         }
     }
@@ -227,10 +225,6 @@ class BooksListViewModel @Inject constructor(
                 else -> book
             }
             booksList[index] = updatedBook
-
-//            launch {
-//                upsertBookList(booksList)
-//            }
         }
     }
 

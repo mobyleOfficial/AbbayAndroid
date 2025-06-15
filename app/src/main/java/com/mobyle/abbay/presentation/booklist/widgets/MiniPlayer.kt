@@ -1,5 +1,6 @@
 package com.mobyle.abbay.presentation.booklist.widgets
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -348,6 +349,11 @@ private fun MultipleFilePlayer(
                 .padding(horizontal = 28.dp)
                 .padding(bottom = 30.dp, top = 16.dp),
         )
+
+        LaunchedEffect(player.currentMediaItemIndex) {
+            val index = player.currentMediaItemIndex
+            updateCurrentBookPosition(index)
+        }
 
         Box(
             Modifier

@@ -1,5 +1,6 @@
 package com.mobyle.abbay.data.datasource.local.books
 
+import android.util.Log
 import com.mobyle.abbay.data.datasource.local.daos.BooksDao
 import com.mobyle.abbay.data.datasource.local.keystore.KeyValueStore
 import com.mobyle.abbay.data.datasource.local.keystore.KeyValueStoreKeys
@@ -48,10 +49,15 @@ class BooksLocalDataSourceImpl @Inject constructor(
         )
     }
 
-    override fun saveCurrentSelectedBook(id: String?) {
+    override fun saveCurrentSelectedBook(id: String?, position: Int?) {
         keyValueStore.storeStringValue(
             KeyValueStoreKeys.LAST_SELECTED_BOOK_ID,
             id
+        )
+
+        keyValueStore.storeStringValue(
+            KeyValueStoreKeys.BOOK_POSITION,
+            position?.toString()
         )
     }
 
@@ -67,5 +73,42 @@ class BooksLocalDataSourceImpl @Inject constructor(
     override fun setReloadGuideAsShown() {
         keyValueStore
             .storeBooleanValue(KeyValueStoreKeys.RELOAD_GUIDE, true)
+    }
+
+    private fun updateCurrentBookPosition(position: Int?) {
+        keyValueStore
+            .storeStringValue(KeyValueStoreKeys.BOOK_POSITION, position?.toString())
+    }
+
+    override suspend fun updateSelectedBook(progress: Long, position: Int?) {
+        getCurrentSelectedBook()?.let { id ->
+            try {
+                updateCurrentBookPosition(position)
+
+                booksDao.updateMultipleBookProgress(
+                    id = id,
+                    progress = progress,
+                    currentPosition = position ?: 0
+                )
+
+                booksDao.updateBookFileProgress(
+                    id = id,
+                    progress = progress,
+                )
+            } catch (_: Exception) {
+                // do nothing
+            }
+        }
+    }
+
+    override fun isAppAlive() = keyValueStore.getBooleanStoredValue(
+        KeyValueStoreKeys.APP_LIFE_STATUS,
+    )
+
+    override fun updateAppLifeStatus(isAlive: Boolean) {
+        keyValueStore.storeBooleanValue(
+            KeyValueStoreKeys.APP_LIFE_STATUS,
+            isAlive
+        )
     }
 }
