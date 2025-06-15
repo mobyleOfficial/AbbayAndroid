@@ -1,6 +1,5 @@
 package com.mobyle.abbay.data.datasource.local.books
 
-import android.util.Log
 import com.mobyle.abbay.data.datasource.local.daos.BooksDao
 import com.mobyle.abbay.data.datasource.local.keystore.KeyValueStore
 import com.mobyle.abbay.data.datasource.local.keystore.KeyValueStoreKeys

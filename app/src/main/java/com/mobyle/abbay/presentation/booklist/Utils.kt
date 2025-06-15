@@ -2,7 +2,6 @@ package com.mobyle.abbay.presentation.booklist
 
 import android.content.ContentResolver
 import android.content.Context
-import android.database.Cursor
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Environment

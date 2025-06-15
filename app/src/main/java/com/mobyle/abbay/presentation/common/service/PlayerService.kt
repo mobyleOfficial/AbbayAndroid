@@ -1,16 +1,11 @@
 package com.mobyle.abbay.presentation.common.service
 
 import android.content.Intent
-import android.os.IBinder
-import android.util.Log
-import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import com.usecase.GetCurrentSelectedBook
 import com.usecase.IsAppAlive
-import com.usecase.SaveCurrentSelectedBook
 import com.usecase.UpdateSelectedBook
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -42,20 +37,19 @@ class PlayerService : MediaSessionService() {
         mediaSession?.player?.addListener(object : Player.Listener {
             override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
                 if (!playWhenReady) {
-                    mediaSession?.player?.let {
-                        serviceScope.launch {
-                            if (!isAppAlive()) {
-                                updateSelectedBook(
-                                    it.currentPosition,
-                                    it.currentMediaItemIndex
-                                )
-                            }
-                        }
-                    }
+                    mediaSession.updateInfo()
                 }
             }
-        })
 
+            override fun onPositionDiscontinuity(
+                oldPosition: Player.PositionInfo,
+                newPosition: Player.PositionInfo,
+                reason: Int
+            ) {
+                super.onPositionDiscontinuity(oldPosition, newPosition, reason)
+                mediaSession.updateInfo()
+            }
+        })
     }
 
     // The user dismissed the app from the recent tasks
@@ -69,17 +63,25 @@ class PlayerService : MediaSessionService() {
 
     override fun onDestroy() {
         mediaSession?.run {
-            serviceScope.launch {
-                updateSelectedBook(
-                    player.currentPosition,
-                    player.currentMediaItemIndex
-                )
-            }
+            updateInfo()
             player.release()
             release()
             mediaSession = null
         }
         serviceScope.cancel()
         super.onDestroy()
+    }
+
+    private fun MediaSession?.updateInfo() {
+        this?.player?.let {
+            serviceScope.launch {
+                if (!isAppAlive()) {
+                    updateSelectedBook(
+                        it.currentPosition,
+                        it.currentMediaItemIndex
+                    )
+                }
+            }
+        }
     }
 }

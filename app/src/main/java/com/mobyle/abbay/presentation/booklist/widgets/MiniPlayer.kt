@@ -1,6 +1,5 @@
 package com.mobyle.abbay.presentation.booklist.widgets
 
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
