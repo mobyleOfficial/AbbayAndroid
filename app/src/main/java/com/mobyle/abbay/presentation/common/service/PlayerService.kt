@@ -1,10 +1,16 @@
+@file:OptIn(ExperimentalMaterialApi::class)
+
 package com.mobyle.abbay.presentation.common.service
 
+import android.app.PendingIntent
 import android.content.Intent
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.mobyle.abbay.presentation.MainActivity
 import com.usecase.IsAppAlive
 import com.usecase.UpdateSelectedBook
 import dagger.hilt.android.AndroidEntryPoint
@@ -29,11 +35,27 @@ class PlayerService : MediaSessionService() {
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) = mediaSession
 
     // Create your player and media session in the onCreate lifecycle event
+    @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate() {
         super.onCreate()
 
         val player = ExoPlayer.Builder(this).build()
-        mediaSession = MediaSession.Builder(this, player).build()
+        
+        // Create PendingIntent to open the app when notification is tapped
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        mediaSession = MediaSession.Builder(this, player)
+            .setSessionActivity(pendingIntent)
+            .build()
         mediaSession?.player?.addListener(object : Player.Listener {
             override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
                 if (!playWhenReady) {
