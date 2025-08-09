@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mobyle.abbay.R
@@ -71,7 +72,7 @@ fun BookItem(
                     if (book.hasError) {
                         Icon(
                             imageVector = Icons.Default.Error,
-                            contentDescription = "Error playing file",
+                            contentDescription = stringResource(R.string.error_playing_file),
                             tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier
                                 .size(24.dp)
@@ -88,7 +89,7 @@ fun BookItem(
                         ) {
                             SVGIcon(
                                 path = R.drawable.ic_book,
-                                description = "Book Icon",
+                                description = stringResource(R.string.book_icon),
                                 modifier = Modifier.padding(start = 8.dp, end = 4.dp)
                             )
 
@@ -104,7 +105,7 @@ fun BookItem(
                     ) {
                         SVGIcon(
                             path = R.drawable.ic_clock,
-                            description = "Clock Icon",
+                            description = stringResource(R.string.clock_icon),
                             modifier = Modifier.padding(start = 8.dp, end = 4.dp)
                         )
                         val currentProgress = if (isSelected) {

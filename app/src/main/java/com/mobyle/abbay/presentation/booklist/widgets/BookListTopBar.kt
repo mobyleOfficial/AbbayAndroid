@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.getString
@@ -65,7 +66,7 @@ fun BookListTopBar(
                     } else {
                         Icon(
                             Icons.Filled.Refresh,
-                            contentDescription = "Refresh",
+                            contentDescription = stringResource(R.string.refresh_content_description),
                             tint = Color.White.copy(alpha = if (hasSelectedFolder) 1f else 0.5f)
                         )
                     }
@@ -77,7 +78,7 @@ fun BookListTopBar(
                     ) {
                         Icon(
                             Icons.Filled.Add,
-                            contentDescription = "Add",
+                            contentDescription = stringResource(R.string.add_content_description),
                             tint = Color.White
                         )
                     }
@@ -88,7 +89,7 @@ fun BookListTopBar(
                         modifier = Modifier.background(MaterialTheme.colorScheme.primary),
                     ) {
                         AbbaysDropdownItem(
-                            text = "Add Folder",
+                            text = stringResource(R.string.add_folder),
                             imageUrl = R.drawable.folder_plus,
                             onClick = {
                                 showAddMenu = false
@@ -97,7 +98,7 @@ fun BookListTopBar(
                         )
 
                         AbbaysDropdownItem(
-                            text = "Add File",
+                            text = stringResource(R.string.add_file),
                             imageUrl = R.drawable.file_plus,
                             onClick = {
                                 showAddMenu = false
@@ -120,7 +121,7 @@ fun BookListTopBar(
                 IconButton(onClick = openSettings) {
                     Icon(
                         Icons.Filled.Settings,
-                        "menu",
+                        stringResource(R.string.settings),
                         tint = Color.White,
                     )
                 }

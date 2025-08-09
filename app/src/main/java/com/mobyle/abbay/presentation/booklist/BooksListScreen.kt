@@ -649,9 +649,9 @@ fun BooksListScreen(
                                         showDeleteDialog.value = false
                                         bookToDelete.value = null
                                     },
-                                    title = "Delete Book",
-                                    body = "Are you sure you want to delete this book?",
-                                    actionButtonTitle = "Delete",
+                                    title = stringResource(R.string.delete_book_dialog_title),
+                                    body = stringResource(R.string.delete_book_dialog_body),
+                                    actionButtonTitle = stringResource(R.string.delete),
                                     onAction = {
                                         bookToDelete.value?.let { book ->
                                             viewModel.removeBook(book)
@@ -666,9 +666,9 @@ fun BooksListScreen(
                             if (showReloadGuide) {
                                 AbbayActionDialog(
                                     onDismiss = viewModel::dismissReloadGuide,
-                                    title = "Reload Books",
-                                    body = "This will reload all books from the selected folder. Any books added individually will not be affected.",
-                                    actionButtonTitle = "Got it",
+                                    title = stringResource(R.string.reload_books_dialog_title),
+                                    body = stringResource(R.string.reload_books_dialog_body),
+                                    actionButtonTitle = stringResource(R.string.got_it),
                                     onAction = viewModel::dismissReloadGuide
                                 )
                             }
@@ -690,7 +690,7 @@ fun BooksListScreen(
                                                 modifier = Modifier.padding(end = 8.dp)
                                             )
                                             Text(
-                                                "File Not Found",
+                                                stringResource(R.string.file_not_found_title),
                                                 style = MaterialTheme.typography.titleLarge,
                                                 color = MaterialTheme.colorScheme.error
                                             )
@@ -701,14 +701,14 @@ fun BooksListScreen(
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
                                             Text(
-                                                "The audio file for this book could not be found.",
+                                                stringResource(R.string.file_not_found_body),
                                                 style = MaterialTheme.typography.bodyLarge,
                                                 color = MaterialTheme.colorScheme.onSurface,
                                                 textAlign = TextAlign.Center,
                                                 modifier = Modifier.padding(vertical = 8.dp)
                                             )
                                             Text(
-                                                "The file might have been moved or deleted.",
+                                                stringResource(R.string.file_might_be_moved),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurface.copy(
                                                     alpha = 0.7f
@@ -724,7 +724,7 @@ fun BooksListScreen(
                                                 viewModel.selectBook(null, null)
                                             }
                                         ) {
-                                            Text("OK", color = MaterialTheme.colorScheme.primary)
+                                            Text(stringResource(R.string.ok), color = MaterialTheme.colorScheme.primary)
                                         }
                                     }
                                 )

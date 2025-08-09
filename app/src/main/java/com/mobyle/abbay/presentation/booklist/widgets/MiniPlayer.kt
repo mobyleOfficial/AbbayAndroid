@@ -63,6 +63,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -464,7 +465,7 @@ private fun BookFileItem(
         horizontalArrangement = Arrangement.Center
     ) {
         Text(
-            text = file?.fileName ?: "Unknown File",
+                            text = file?.fileName ?: stringResource(R.string.unknown_file),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.8f),
             maxLines = 1
@@ -472,7 +473,7 @@ private fun BookFileItem(
         Spacer(modifier = Modifier.width(8.dp))
         Icon(
             imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-            contentDescription = if (isExpanded) "Hide chapters" else "Show chapters",
+                            contentDescription = if (isExpanded) stringResource(R.string.hide_chapters) else stringResource(R.string.show_chapters),
             tint = Color.White
         )
     }
@@ -869,7 +870,7 @@ private fun ScreenLockedAlert(
                 modifier = Modifier.padding(end = 8.dp)
             )
             Text(
-                "Screen Locked",
+                stringResource(R.string.screen_locked),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -879,14 +880,14 @@ private fun ScreenLockedAlert(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                "Long press anywhere on the screen to unlock.",
+                stringResource(R.string.screen_locked_message),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
             Text(
-                "This prevents accidental touches while listening.",
+                stringResource(R.string.screen_locked_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center
@@ -895,7 +896,7 @@ private fun ScreenLockedAlert(
     }, confirmButton = {
         // No confirm button, unlock is by long press
     }, dismissButton = {
-        Text("Dismiss",
+        Text(stringResource(R.string.dismiss),
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier
                 .clickable { onDismissRequest() }
