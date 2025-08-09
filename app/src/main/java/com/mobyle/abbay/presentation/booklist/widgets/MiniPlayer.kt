@@ -207,6 +207,7 @@ private fun SingleFilePlayer(
         MiniPlayerContent(
             player = player,
             book = book,
+            isScreenLocked = isScreenLocked,
             onPlayingChange = onPlayingChange,
             progress = progress,
             playerIcon = playerIcon,
@@ -248,14 +249,20 @@ private fun SingleFilePlayer(
                 .fillMaxWidth()
                 .layoutId(LayoutId.TOP_CONTENT.id),
         ) {
-            BooksTopBar(book = book, isScreenLocked = isScreenLocked, onCollapseMiniPlayer = {
-                scope.launch {
-                    scaffoldState.bottomSheetState.collapse()
-                }
-            }, onSpeedChange = {
-                player.playbackParameters = player.playbackParameters.withSpeed(it)
-                updateBookSpeed(it)
-            }, onLockToggle = { onLockScreen(it) })
+            BooksTopBar(
+                book = book,
+                isScreenLocked = isScreenLocked,
+                onCollapseMiniPlayer = {
+                    scope.launch {
+                        scaffoldState.bottomSheetState.collapse()
+                    }
+                },
+                onSpeedChange = {
+                    player.playbackParameters = player.playbackParameters.withSpeed(it)
+                    updateBookSpeed(it)
+                },
+                onLockToggle = { onLockScreen(it) }
+            )
         }
 
         Box(
@@ -328,6 +335,7 @@ private fun MultipleFilePlayer(
         MiniPlayerContent(
             player = player,
             book = book,
+            isScreenLocked = isScreenLocked,
             onPlayingChange = onPlayingChange,
             progress = progress,
             playerIcon = playerIcon,
@@ -348,6 +356,11 @@ private fun MultipleFilePlayer(
                 .padding(horizontal = 28.dp)
                 .padding(bottom = 30.dp, top = 16.dp),
         )
+
+        LaunchedEffect(player.currentMediaItemIndex) {
+            val index = player.currentMediaItemIndex
+            updateCurrentBookPosition(index)
+        }
 
         Box(
             Modifier
@@ -634,6 +647,7 @@ private fun MiniPlayerContent(
     onPlayingChange: (Boolean) -> Unit,
     progress: Long,
     playerIcon: MutableState<ImageVector>,
+    isScreenLocked: Boolean,
     modifier: Modifier
 ) {
     Row(
@@ -643,6 +657,7 @@ private fun MiniPlayerContent(
                 .fillMaxWidth()
                 .layoutId(LayoutId.MINI_PLAYER.id)
         ),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         val intermediaryProgress = if (book is MultipleBooks) {
             book.bookFileList.intermediateProgress(book.currentBookPosition)
@@ -667,12 +682,20 @@ private fun MiniPlayerContent(
             }
         }
 
-        PlayerController(
-            player = player,
-            onPlayingChange = onPlayingChange,
-            position = progress,
-            playerIcon = playerIcon
-        )
+        if (isScreenLocked) {
+            Icon(
+                Icons.Default.Lock,
+                contentDescription = "",
+                tint = Color.White
+            )
+        } else {
+            PlayerController(
+                player = player,
+                onPlayingChange = onPlayingChange,
+                position = progress,
+                playerIcon = playerIcon
+            )
+        }
     }
 }
 

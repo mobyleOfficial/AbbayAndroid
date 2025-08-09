@@ -9,26 +9,36 @@ import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
 import com.usecase.DeleteBook
-import com.usecase.ForceUpdateList
-import com.usecase.GetBooksList
+import com.usecase.GetBooksFolderPath
+import com.usecase.GetCurrentSelectedBook
+import com.usecase.HasShownReloadGuide
 import com.usecase.IsOpenPlayerInStartup
+import com.usecase.ObserveBooksList
+import com.usecase.SaveBookFolderPath
+import com.usecase.SaveCurrentSelectedBook
+import com.usecase.SetReloadGuideAsShown
 import com.usecase.UpsertBookList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class BooksListViewModel @Inject constructor(
-    private val getBooksList: GetBooksList,
     private val upsertBookList: UpsertBookList,
     private val deleteBook: DeleteBook,
+    private val saveCurrentSelectedBookUC: SaveCurrentSelectedBook,
+    private val setReloadGuideAsShown: SetReloadGuideAsShown,
+    val hasShownReloadGuide: HasShownReloadGuide,
+    val getBooksFolderPath: GetBooksFolderPath,
+    val saveBookFolderPath: SaveBookFolderPath,
+    val getCurrentSelectedBook: GetCurrentSelectedBook,
     val isOpenPlayerInStartupUC: IsOpenPlayerInStartup,
-    forceUpdateList: ForceUpdateList,
+    observeBooksList: ObserveBooksList,
     checkPermissionsProvider: CheckPermissionsProvider,
 ) :
     BaseViewModel() {
@@ -47,25 +57,44 @@ class BooksListViewModel @Inject constructor(
 
     var hasBookSelected = _selectedBook.map { it != null }
 
-    val booksIdList = MutableStateFlow<List<Book?>>(emptyList())
-
     var shouldOpenPlayerInStartup = false
 
-    init {
-        if (checkPermissionsProvider.areAllPermissionsGranted(getPermissionsList())) {
-            getAudiobookList()
-        } else {
-            _uiState.value = BooksListUiState.NoPermissionsGranted
-        }
+    private val _hasSelectedFolder = MutableStateFlow(getBooksFolderPath() != null)
+    val hasSelectedFolder: StateFlow<Boolean> get() = _hasSelectedFolder
 
-        forceUpdateList()
-            .onEach {
-                booksList.clear()
-                booksIdList.value = emptyList()
-                _selectedBook.value = null
-                getAudiobookList()
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> get() = _isRefreshing
+
+    private val _showReloadGuide = MutableStateFlow(false)
+    val showReloadGuide: StateFlow<Boolean> get() = _showReloadGuide
+
+    private val hasPermissions =
+        MutableStateFlow(checkPermissionsProvider.areAllPermissionsGranted(getPermissionsList()))
+
+    init {
+        combine(
+            observeBooksList(), hasPermissions
+        ) { domainBookList, hasPermissions ->
+            this.booksList.clear()
+            this.booksList.addAll(domainBookList)
+
+            val state = if (hasPermissions) {
+                if (domainBookList.isEmpty()) {
+                    BooksListUiState.NoBookSelected
+                } else {
+                    BooksListUiState.BookListSuccess(domainBookList)
+                }
+            } else {
+                BooksListUiState.NoPermissionsGranted
             }
+
+            _uiState.tryEmit(state)
+        }
             .launchIn(viewModelScope)
+    }
+
+    fun setUserHasPermissions() {
+        hasPermissions.value = true
     }
 
     fun getPermissionsList() = if (Build.VERSION.SDK_INT >= 33) {
@@ -75,74 +104,23 @@ class BooksListViewModel @Inject constructor(
     }
 
     fun updateBookList(booksList: List<Book>) = launch {
-        this.booksList.clear()
-        this.booksList.addAll(booksList)
-        upsertBookList.invoke(booksList)
-        val newBookList = mutableListOf<Book>()
-        newBookList.addAll(this.booksList)
-        _uiState.emit(BooksListUiState.BookListSuccess(newBookList))
+        upsertBookList(booksList)
     }
 
-    fun updateSelectedBook(book: Book) {
-        selectBook(book)
-    }
-
-    fun addThumbnails(booksWithThumbList: List<Book>) = launch {
-        val newList = this.booksList.map { book ->
-            booksWithThumbList.firstOrNull { it.id == book.id }?.let {
-                when (it) {
-                    is MultipleBooks -> it.copy(thumbnail = it.thumbnail)
-                    is BookFile -> it.copy(thumbnail = it.thumbnail)
-                    else -> book
-                }
-            } ?: book
-        }.toList()
-
-        upsertBookList.invoke(newList)
-        this.booksList.clear()
-        this.booksList.addAll(newList)
-
-        _uiState.emit(BooksListUiState.BookListSuccess(this.booksList.toList()))
+    fun updateSelectedBook(book: Book, currentPosition: Int?) {
+        selectBook(book, currentPosition)
     }
 
     fun addAllBookTypes(filesList: List<Book>) = launch {
-        this.booksList.addAll(filesList)
-        upsertBookList.invoke(booksList)
-        val newBookList = mutableListOf<Book>()
-        newBookList.addAll(this.booksList)
-        _uiState.emit(BooksListUiState.BookListSuccess(newBookList))
-        booksIdList.emit(this.booksList)
+        upsertBookList(filesList)
+        _hasSelectedFolder.value = true
     }
 
-    fun updateBookProgress(id: String, progress: Long) {
-        booksList.firstOrNull { it.id == id }?.let {
-
-            when (it) {
-                is BookFile -> {
-                    booksList[booksList.indexOf(it)] = it.copy(progress = progress)
-                }
-
-                is MultipleBooks -> {
-                    booksList[booksList.indexOf(it)] = it.copy(progress = progress)
-                }
-
-                else -> {}
-            }
-        }
-
-        _uiState.value = BooksListUiState.BookListSuccess(booksList.toList())
-    }
-
-    fun updateBookList(id: String, progress: Long) = launch {
-        updateBookProgress(id, progress)
-        upsertBookList.invoke(booksList)
-    }
-
-    fun selectBook(book: Book?) {
-        _selectedBook.tryEmit(book)
-    }
-
-    fun setCurrentProgress(id: String, progress: Long) {
+    fun setCurrentProgress(
+        id: String,
+        progress: Long,
+        currentPosition: Int?
+    ) {
         _currentProgress.tryEmit(progress)
         val index = booksList.indexOfFirst { it.id == id }
 
@@ -163,9 +141,19 @@ class BooksListViewModel @Inject constructor(
 
             booksList[index] = mappedBook
             _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
-            selectBook(mappedBook)
+            selectBook(mappedBook, currentPosition)
         }
     }
+
+    fun updateBookList() = launch {
+        upsertBookList(booksList)
+    }
+
+    fun selectBook(book: Book?, position: Int?) {
+        saveCurrentSelectedBookUC(book?.id, position)
+        _selectedBook.tryEmit(book)
+    }
+
 
     fun updateBookPosition(id: String, position: Int) {
         val index = booksList.indexOfFirst { it.id == id }
@@ -177,11 +165,16 @@ class BooksListViewModel @Inject constructor(
                 booksList[index] = book.copy(currentBookPosition = position)
 
                 _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
-                selectBook(book.copy(currentBookPosition = position))
+                selectBook(book.copy(currentBookPosition = position), position)
             }
         }
     }
-    fun updateBookSpeed(id: String, speed: Float) {
+
+    fun updateBookSpeed(
+        id: String,
+        speed: Float,
+        currentPosition: Int?
+    ) {
         booksList.firstOrNull { it.id == id }?.let {
             val newBook = when (it) {
                 is BookFile -> {
@@ -192,32 +185,16 @@ class BooksListViewModel @Inject constructor(
                     it.copy(speed = speed)
                 }
 
-                else -> {null}
+                else -> {
+                    null
+                }
             }
 
             newBook?.let { book ->
                 booksList[booksList.indexOf(it)] = book
-                selectBook(book)
+                selectBook(book, currentPosition)
             }
         }
-
-        launch {
-            upsertBookList.invoke(booksList)
-            _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
-        }
-    }
-
-    fun getAudiobookList() = launch {
-        val booksList = getBooksList.invoke()
-        this.booksList.addAll(booksList)
-
-        val state = if (booksList.isEmpty()) {
-            BooksListUiState.NoBookSelected
-        } else {
-            BooksListUiState.BookListSuccess(booksList)
-        }
-
-        _uiState.emit(state)
     }
 
     fun showLoading() {
@@ -230,14 +207,11 @@ class BooksListViewModel @Inject constructor(
 
     fun removeBook(book: Book) {
         viewModelScope.launch {
-            val currentList = (_uiState.value as? BooksListUiState.BookListSuccess)?.audiobookList ?: return@launch
-            val updatedList = currentList.filter { it.id != book.id }
-            _uiState.value = BooksListUiState.BookListSuccess(updatedList)
-
             deleteBook.invoke(book)
 
             if (selectedBook.value?.id == book.id) {
                 _selectedBook.value = null
+                saveCurrentSelectedBookUC(null, null)
             }
         }
     }
@@ -251,8 +225,34 @@ class BooksListViewModel @Inject constructor(
                 else -> book
             }
             booksList[index] = updatedBook
-            _uiState.emit(BooksListUiState.BookListSuccess(booksList.toList()))
         }
+    }
+
+    fun checkForNewBooks(newBooksList: List<Book>) {
+        val currentIds = booksList.map { it.id }.toSet()
+        val newBooks = newBooksList.filter { book ->
+            !currentIds.contains(book.id)
+        }
+
+        if (newBooks.isNotEmpty()) {
+            addAllBookTypes(newBooks)
+        }
+        _isRefreshing.value = false
+    }
+
+    fun setRefreshingLoading() {
+        _isRefreshing.value = true
+    }
+
+    fun showReloadGuide() {
+        if (!hasShownReloadGuide()) {
+            _showReloadGuide.value = true
+        }
+    }
+
+    fun dismissReloadGuide() {
+        setReloadGuideAsShown()
+        _showReloadGuide.value = false
     }
 
     sealed class BooksListUiState {
@@ -269,6 +269,5 @@ class BooksListViewModel @Inject constructor(
     companion object {
         val API_32_OR_LESS_PERMISSIONS_LIST = listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
         val PERMISSIONS_LIST = listOf(Manifest.permission.READ_MEDIA_AUDIO)
-
     }
 }

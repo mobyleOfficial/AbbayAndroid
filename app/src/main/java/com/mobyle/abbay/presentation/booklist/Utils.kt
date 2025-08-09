@@ -128,3 +128,5 @@ fun Book?.getThumb(context: Context): Book? {
         this
     }
 }
+
+fun Book?.getBookPosition(): Int? = (this as? MultipleBooks)?.currentBookPosition

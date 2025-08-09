@@ -6,9 +6,16 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.mobyle.abbay.data.model.BookFileEntity
 import com.mobyle.abbay.data.model.MultipleBooksEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface BooksDao {
+    @Query("SELECT * FROM BookFileEntity")
+    fun observeBookFilesList(): Flow<List<BookFileEntity>>
+
+    @Query("SELECT * FROM MultipleBooksEntity")
+    fun observeMultipleBooksList(): Flow<List<MultipleBooksEntity>>
+
     @Query("SELECT * FROM BookFileEntity")
     suspend fun getBookFilesList(): List<BookFileEntity>
 
@@ -32,4 +39,10 @@ interface BooksDao {
 
     @Query("DELETE FROM MultipleBooksEntity")
     suspend fun deleteAllMultipleBooks()
+
+    @Query("UPDATE BookFileEntity SET progress = :progress WHERE id = :id")
+    suspend fun updateBookFileProgress(id: String, progress: Long)
+
+    @Query("UPDATE MultipleBooksEntity SET progress = :progress, currentBookPosition = :currentPosition WHERE id = :id")
+    suspend fun updateMultipleBookProgress(id: String, currentPosition: Int, progress: Long)
 }

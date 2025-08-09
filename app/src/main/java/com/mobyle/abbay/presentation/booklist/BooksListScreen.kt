@@ -1,8 +1,9 @@
 package com.mobyle.abbay.presentation.booklist
 
 import android.app.Activity
-import android.content.Context
+import android.content.Intent
 import android.media.MediaMetadataRetriever
+import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -83,6 +84,7 @@ import com.mobyle.abbay.presentation.common.widgets.AbbayActionDialog
 import com.mobyle.abbay.presentation.utils.LaunchedEffectAndCollect
 import com.mobyle.abbay.presentation.utils.audioCursor
 import com.mobyle.abbay.presentation.utils.fileExists
+import com.mobyle.abbay.presentation.utils.getFileName
 import com.mobyle.abbay.presentation.utils.getId
 import com.mobyle.abbay.presentation.utils.intermediateProgress
 import com.mobyle.abbay.presentation.utils.playBook
@@ -98,7 +100,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Date
 
-private const val LAST_SELECTED_BOOK_ID = "LAST_SELECTED_BOOK_ID"
 private const val AUTO_DENIAL_THRESHOLD = 300
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -131,28 +132,16 @@ fun BooksListScreen(
         permissions = viewModel.getPermissionsList(),
         onPermissionsResult = { permissions ->
             if (permissions.entries.all { it.value }) {
-                viewModel.getAudiobookList()
+                viewModel.setUserHasPermissions()
             } else if (Date().time - permissionRequestAttemptTime.longValue < AUTO_DENIAL_THRESHOLD) {
                 openAppSettings()
             }
         }
     )
     val showErrorDialog = remember { mutableStateOf(false) }
+    val hasSelectedFolder by viewModel.hasSelectedFolder.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
-    LaunchedEffectAndCollect(viewModel.booksIdList) {
-        asyncScope.launch(Dispatchers.IO) {
-            it?.let {
-                val booksWithThumbnails = it.mapNotNull { book ->
-                    book.getThumb(context)
-                }
-
-                if (booksWithThumbnails.isNotEmpty()) {
-                    viewModel.addThumbnails(booksWithThumbnails)
-                }
-            }
-        }
-
-    }
 
     LifecycleEventEffect(event = Lifecycle.Event.ON_CREATE) {
         viewModel.shouldOpenPlayerInStartup()
@@ -181,7 +170,7 @@ fun BooksListScreen(
                 }
 
                 if (newBook.hasError && selectedBook?.id == newBook.id) {
-                    viewModel.updateSelectedBook(newBook)
+                    viewModel.updateSelectedBook(newBook, newBook.getBookPosition())
                 }
 
                 newBook
@@ -207,18 +196,21 @@ fun BooksListScreen(
     ) { filesList ->
         asyncScope.launch(Dispatchers.IO) {
             if (filesList.isNotEmpty()) {
-                val newBooksList = filesList.filter { it.path != null }.map { uri ->
+                val newBookList = filesList.filter { it.path != null }.mapNotNull { uri ->
                     var id: String? = null
                     val metadataRetriever = MediaMetadataRetriever()
                     metadataRetriever.setDataSource(context, uri)
                     context.audioCursor {
-                        id = it.getId()
+                        val title = it.getFileName()
+                        if ((uri.path?.split("/")?.lastOrNull()) == title.orEmpty()) {
+                            id = it.getId()
+                        }
                     }
 
-                    metadataRetriever.toBook(context, id.orEmpty())
+                    metadataRetriever.toBook(context, id.orEmpty()).getThumb(context)
                 }
 
-                viewModel.updateBookList(newBooksList)
+                viewModel.updateBookList(newBookList)
             }
         }
     }
@@ -228,10 +220,15 @@ fun BooksListScreen(
     ) { uri ->
         uri?.let {
             viewModel.showLoading()
+            viewModel.saveBookFolderPath(it.toString())
             asyncScope.launch(Dispatchers.IO) {
                 delay(500)
-                uri.getBooks(context)?.let {
-                    viewModel.addAllBookTypes(it)
+                it.getBooks(context)?.let {
+                    val booksWithThumbnails = it.mapNotNull { book ->
+                        book.getThumb(context)
+                    }
+
+                    viewModel.addAllBookTypes(booksWithThumbnails)
                 }
             }
         }
@@ -259,7 +256,8 @@ fun BooksListScreen(
                 if (player.isPlaying) {
                     viewModel.setCurrentProgress(
                         id = it.id,
-                        progress = player.currentPosition
+                        progress = player.currentPosition,
+                        currentPosition = it.getBookPosition()
                     )
                 }
             }
@@ -279,9 +277,7 @@ fun BooksListScreen(
     }
 
     LifecycleEventEffect(event = Lifecycle.Event.ON_PAUSE) {
-        selectedBook?.let {
-            viewModel.updateBookList(it.id, player.currentPosition)
-        }
+        viewModel.updateBookList()
     }
 
     LaunchedEffect(selectedBook) {
@@ -310,22 +306,13 @@ fun BooksListScreen(
                         playerIcon = playerIcon,
                         onPlayingChange = { isPlaying ->
                             viewModel.isPlaying.value = isPlaying
-
-
-                            if (!isPlaying) {
-                                selectedBook?.let {
-                                    viewModel.updateBookProgress(
-                                        it.id,
-                                        currentProgress
-                                    )
-                                }
-                            }
                         },
                         updateProgress = {
                             selectedBook?.let { book ->
                                 viewModel.setCurrentProgress(
                                     id = book.id,
-                                    progress = it
+                                    progress = it,
+                                    currentPosition = book.getBookPosition()
                                 )
                             }
                         },
@@ -344,7 +331,8 @@ fun BooksListScreen(
                             selectedBook?.let { book ->
                                 viewModel.updateBookSpeed(
                                     id = book.id,
-                                    speed = it
+                                    speed = it,
+                                    currentPosition = book.getBookPosition()
                                 )
                             }
                         },
@@ -366,56 +354,110 @@ fun BooksListScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.primary),
         ) {
-            Scaffold(topBar = {
-                BookListTopBar(
-                    openFolderSelector = {
-                        openFolderSelector.launch(null)
-                    },
-                    openSettings = navigateToSettings,
-                    openFileSelector = {
-                        openFileSelector.launch(fileFilterList)
-                    }
-                )
-            }) { innerPadding ->
+            Scaffold(
+                topBar = {
+                    BookListTopBar(
+                        openFolderSelector = {
+                            openFolderSelector.launch(null)
+                        },
+                        openSettings = navigateToSettings,
+                        openFileSelector = {
+                            openFileSelector.launch(fileFilterList)
+                        },
+                        onRefresh = {
+                            if (viewModel.hasShownReloadGuide()) {
+                                if (!isRefreshing) {
+                                    viewModel.getBooksFolderPath()?.let { path ->
+                                        val uri = Uri.parse(path)
+                                        asyncScope.launch(Dispatchers.IO) {
+                                            try {
+                                                val takeFlags =
+                                                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                                // Check if we already have permissions
+                                                val hasPermission =
+                                                    context.contentResolver.persistedUriPermissions.any {
+                                                        it.uri == uri && it.isReadPermission
+                                                    }
+
+                                                if (!hasPermission) {
+                                                    // If we don't have permissions, request them again
+                                                    context.contentResolver.takePersistableUriPermission(
+                                                        uri,
+                                                        takeFlags
+                                                    )
+                                                }
+
+                                                viewModel.setRefreshingLoading()
+                                                delay(500)
+                                                uri.getBooks(context)?.let { books ->
+                                                    viewModel.checkForNewBooks(books)
+                                                }
+                                            } catch (e: SecurityException) {
+                                                // If we can't get permissions, prompt user to select folder again
+                                                viewModel.showLoading()
+                                                openFolderSelector.launch(null)
+                                            }
+                                        }
+                                    } ?: run {
+                                        // If no folder is selected, prompt user to select one
+                                        viewModel.showLoading()
+                                        openFolderSelector.launch(null)
+                                    }
+                                }
+                            } else {
+                                viewModel.showReloadGuide()
+                            }
+                        },
+                        hasSelectedFolder = hasSelectedFolder,
+                        isContentEnabled = booksListState is BookListSuccess || booksListState is NoBookSelected,
+                        isRefreshing = isRefreshing
+                    )
+                }) { innerPadding ->
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
                 ) {
+                    LaunchedEffect(booksListState) {
+                        if (booksListState is NoBookSelected) {
+                            player.stop()
+                            viewModel.selectBook(null, null)
+                        }
+                    }
+
                     when (val state = booksListState) {
                         is BookListSuccess -> {
+                            val showReloadGuide by viewModel.showReloadGuide.collectAsState()
                             val bookList = state.audiobookList
 
                             if (selectedBook == null) {
-                                activity.getPreferences(Context.MODE_PRIVATE)?.let {
-                                    val id =
-                                        it.getString(LAST_SELECTED_BOOK_ID, "").orEmpty()
+                                val id = viewModel.getCurrentSelectedBook().orEmpty()
 
-                                    bookList.firstOrNull { book ->
-                                        book.id == id && !book.hasError
-                                    }?.let { book ->
-                                        viewModel.setCurrentProgress(
-                                            id = book.id,
-                                            progress = book.progress
-                                        )
+                                bookList.firstOrNull { book ->
+                                    book.id == id && !book.hasError
+                                }?.let { book ->
+                                    viewModel.setCurrentProgress(
+                                        id = book.id,
+                                        progress = book.progress,
+                                        currentPosition = book.getBookPosition()
+                                    )
 
-                                        viewModel.selectBook(book)
+                                    viewModel.selectBook(book, book.getBookPosition())
 
-                                        if (!player.isPlaying) {
-                                            if (book is MultipleBooks) {
-                                                player.prepareMultipleBooks(
-                                                    currentPosition = book.currentBookPosition,
-                                                    idList = book.bookFileList.map { it.id },
-                                                    progress = book.progress,
-                                                    isPlaying = viewModel.isPlaying
-                                                )
-                                            } else {
-                                                player.prepareBook(
-                                                    id = id,
-                                                    progress = book.progress,
-                                                    isPlaying = viewModel.isPlaying
-                                                )
-                                            }
+                                    if (!player.isPlaying) {
+                                        if (book is MultipleBooks) {
+                                            player.prepareMultipleBooks(
+                                                currentPosition = book.currentBookPosition,
+                                                idList = book.bookFileList.map { it.id },
+                                                progress = book.progress,
+                                                isPlaying = viewModel.isPlaying
+                                            )
+                                        } else {
+                                            player.prepareBook(
+                                                id = id,
+                                                progress = book.progress,
+                                                isPlaying = viewModel.isPlaying
+                                            )
                                         }
                                     }
                                 }
@@ -503,31 +545,16 @@ fun BooksListScreen(
                                                                     if (selectedBook?.id != book.id &&
                                                                         !book.hasError
                                                                     ) {
-                                                                        selectedBook?.let {
-                                                                            viewModel.updateBookProgress(
-                                                                                it.id,
-                                                                                currentProgress
-                                                                            )
-                                                                        }
-
                                                                         viewModel.setCurrentProgress(
                                                                             id = book.id,
-                                                                            progress = book.progress
+                                                                            progress = book.progress,
+                                                                            currentPosition = book.getBookPosition()
                                                                         )
-                                                                        activity.getPreferences(
-                                                                            Context.MODE_PRIVATE
-                                                                        )
-                                                                            ?.let { sharedPref ->
-                                                                                with(sharedPref.edit()) {
-                                                                                    putString(
-                                                                                        LAST_SELECTED_BOOK_ID,
-                                                                                        book.id
-                                                                                    )
-                                                                                    apply()
-                                                                                }
-                                                                            }
 
-                                                                        viewModel.selectBook(book)
+                                                                        viewModel.selectBook(
+                                                                            book,
+                                                                            book.getBookPosition()
+                                                                        )
                                                                         player.playMultipleBooks(
                                                                             currentPosition = book.currentBookPosition,
                                                                             idList = book.bookFileList.map { it.id },
@@ -538,7 +565,13 @@ fun BooksListScreen(
 
                                                                     if (book.hasError) {
                                                                         showErrorDialog.value = true
-                                                                        viewModel.selectBook(null)
+
+                                                                        if (selectedBook?.id == book.id) {
+                                                                            viewModel.selectBook(
+                                                                                null,
+                                                                                null
+                                                                            )
+                                                                        }
                                                                     } else {
                                                                         asyncScope.launch {
                                                                             bottomSheetState.bottomSheetState.expand()
@@ -568,32 +601,15 @@ fun BooksListScreen(
                                                                     if (selectedBook?.id != book.id &&
                                                                         !book.hasError
                                                                     ) {
-                                                                        selectedBook?.let {
-                                                                            viewModel.updateBookProgress(
-                                                                                it.id,
-                                                                                currentProgress
-                                                                            )
-                                                                        }
-
                                                                         viewModel.setCurrentProgress(
                                                                             id = book.id,
-                                                                            progress = book.progress
+                                                                            progress = book.progress,
+                                                                            currentPosition = book.getBookPosition()
                                                                         )
-                                                                        activity.getPreferences(
-                                                                            Context.MODE_PRIVATE
-                                                                        )
-                                                                            ?.let { sharedPref ->
-                                                                                with(sharedPref.edit()) {
-                                                                                    putString(
-                                                                                        LAST_SELECTED_BOOK_ID,
-                                                                                        book.id
-                                                                                    )
-                                                                                    apply()
-                                                                                }
-                                                                            }
 
                                                                         viewModel.selectBook(
-                                                                            book
+                                                                            book,
+                                                                            book.getBookPosition()
                                                                         )
 
                                                                         player.playBook(
@@ -606,6 +622,7 @@ fun BooksListScreen(
                                                                     if (book.hasError) {
                                                                         showErrorDialog.value = true
                                                                         viewModel.selectBook(
+                                                                            null,
                                                                             null
                                                                         )
                                                                     } else {
@@ -638,10 +655,78 @@ fun BooksListScreen(
                                     onAction = {
                                         bookToDelete.value?.let { book ->
                                             viewModel.removeBook(book)
+                                            player.stop()
                                         }
                                         showDeleteDialog.value = false
                                         bookToDelete.value = null
                                     },
+                                )
+                            }
+
+                            if (showReloadGuide) {
+                                AbbayActionDialog(
+                                    onDismiss = viewModel::dismissReloadGuide,
+                                    title = "Reload Books",
+                                    body = "This will reload all books from the selected folder. Any books added individually will not be affected.",
+                                    actionButtonTitle = "Got it",
+                                    onAction = viewModel::dismissReloadGuide
+                                )
+                            }
+
+                            if (showErrorDialog.value) {
+                                AlertDialog(
+                                    onDismissRequest = {
+                                        showErrorDialog.value = false
+                                        viewModel.selectBook(null, null)
+                                    },
+                                    title = {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Error,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.error,
+                                                modifier = Modifier.padding(end = 8.dp)
+                                            )
+                                            Text(
+                                                "File Not Found",
+                                                style = MaterialTheme.typography.titleLarge,
+                                                color = MaterialTheme.colorScheme.error
+                                            )
+                                        }
+                                    },
+                                    text = {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(
+                                                "The audio file for this book could not be found.",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                textAlign = TextAlign.Center,
+                                                modifier = Modifier.padding(vertical = 8.dp)
+                                            )
+                                            Text(
+                                                "The file might have been moved or deleted.",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurface.copy(
+                                                    alpha = 0.7f
+                                                ),
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
+                                    },
+                                    confirmButton = {
+                                        TextButton(
+                                            onClick = {
+                                                showErrorDialog.value = false
+                                                viewModel.selectBook(null, null)
+                                            }
+                                        ) {
+                                            Text("OK", color = MaterialTheme.colorScheme.primary)
+                                        }
+                                    }
                                 )
                             }
                         }
@@ -744,60 +829,5 @@ fun BooksListScreen(
                 }
             }
         }
-    }
-
-    if (showErrorDialog.value) {
-        AlertDialog(
-            onDismissRequest = {
-                showErrorDialog.value = false
-                viewModel.selectBook(null)
-            },
-            title = {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Error,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-                    Text(
-                        "File Not Found",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            },
-            text = {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        "The audio file for this book could not be found.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                    Text(
-                        "The file might have been moved or deleted.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showErrorDialog.value = false
-                        viewModel.selectBook(null)
-                    }
-                ) {
-                    Text("OK", color = MaterialTheme.colorScheme.primary)
-                }
-            }
-        )
     }
 }
