@@ -8,11 +8,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.core.splashscreen.SplashScreen
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.navigation.compose.rememberNavController
@@ -38,38 +38,60 @@ class MainActivity : ComponentActivity() {
     lateinit var updateAppLifeStatus: UpdateAppLifeStatus
 
     private lateinit var controller: ListenableFuture<MediaController>
+    private var isPlayerReady = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        val splashScreen = installSplashScreen()
+
+        // Keep splash screen visible until player is ready
+        splashScreen.setKeepOnScreenCondition {
+            !isPlayerReady
+        }
 
         super.onCreate(savedInstanceState)
 
         updateAppLifeStatus(true)
 
-        controller  =
-            MediaController.Builder(
-                this,
-                SessionToken(this, ComponentName(this, PlayerService::class.java))
-            ).buildAsync()
+        // Initialize MediaController immediately
+        controller = MediaController.Builder(
+            this,
+            SessionToken(this, ComponentName(this, PlayerService::class.java))
+        ).buildAsync()
 
-        controller.addListener({
-            setContent {
-                val navController = rememberNavController()
 
-                MyApplicationTheme {
-                    // A surface container using the 'background' color from the theme
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.primary
-                    ) {
+        setContent {
+            val navController = rememberNavController()
+            val currentPlayer = remember {
+                mutableStateOf<MediaController?>(null)
+            }
+
+            LaunchedEffect(Unit) {
+                controller.addListener({
+                    try {
+                        currentPlayer.value = controller.get()
+                        isPlayerReady = true // This will dismiss the splash screen
+                    } catch (e: Exception) {
+                        // Handle error but still dismiss splash screen
+                        isPlayerReady = true
+                    }
+                }, MoreExecutors.directExecutor())
+            }
+
+            MyApplicationTheme {
+                // A surface container using the 'background' color from the theme
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.primary
+                ) {
+                    currentPlayer.value?.let { player ->
                         AbbayNavHost(
-                            player = controller.get(),
+                            player = player,
                             navController = navController
                         )
                     }
                 }
             }
-        }, MoreExecutors.directExecutor())
+        }
     }
 
     override fun onDestroy() {
@@ -78,7 +100,7 @@ class MainActivity : ComponentActivity() {
         updateAppLifeStatus(false)
 
         if (!isPlayWhenAppIsClosedEnabled()) {
-            if(::controller.isInitialized) {
+            if (::controller.isInitialized) {
                 controller.get().stop()
                 controller.get().release()
             }
