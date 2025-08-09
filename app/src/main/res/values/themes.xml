@@ -5,4 +5,10 @@
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
+
+    <style name="Theme.Abbay.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#333333</item>
+<!--        <item name="windowSplashScreenAnimatedIcon">@drawable/bally_logo</item>-->
+        <item name="postSplashScreenTheme">@style/Theme.Abbay</item>
+    </style>
 </resources>

@@ -9,6 +9,10 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.core.splashscreen.SplashScreen
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.navigation.compose.rememberNavController
@@ -23,13 +27,6 @@ import com.usecase.UpdateAppLifeStatus
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-/*
-* todo list:
-*  5. Change name/image of book;
-*  7. Add themes;
-*  8. Add tabs;
-* 11. Handle dark mode;
-* */
 @ExperimentalMaterialApi
 @ExperimentalPermissionsApi
 @AndroidEntryPoint
@@ -43,6 +40,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var controller: ListenableFuture<MediaController>
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
+
         super.onCreate(savedInstanceState)
 
         updateAppLifeStatus(true)
@@ -61,7 +60,7 @@ class MainActivity : ComponentActivity() {
                     // A surface container using the 'background' color from the theme
                     Surface(
                         modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
+                        color = MaterialTheme.colorScheme.primary
                     ) {
                         AbbayNavHost(
                             player = controller.get(),
