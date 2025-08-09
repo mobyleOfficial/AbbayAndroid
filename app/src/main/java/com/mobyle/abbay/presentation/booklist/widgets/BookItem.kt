@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mobyle.abbay.R
+import com.mobyle.abbay.presentation.common.theme.AbbayTextStyles
 import com.mobyle.abbay.presentation.common.widgets.BookThumbnail
 import com.mobyle.abbay.presentation.common.widgets.SVGIcon
 import com.mobyle.abbay.presentation.utils.toHHMMSS
@@ -36,7 +37,7 @@ fun BookItem(
     currentMediaIndex: Int,
     onClick: () -> Unit
 ) {
-    val bookColor = if(book.hasError) {
+    val bookColor = if (book.hasError) {
         Color(0xff1f1113)
     } else {
         MaterialTheme.colorScheme.primary
@@ -51,9 +52,11 @@ fun BookItem(
             },
         verticalArrangement = Arrangement.SpaceEvenly,
     ) {
-        Row(modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, bottom = 8.dp)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, bottom = 8.dp)
+        ) {
             BookThumbnail(book.thumbnail)
             Column(
                 verticalArrangement = Arrangement.Center,
@@ -64,7 +67,8 @@ fun BookItem(
                         book.name,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = AbbayTextStyles.bookTitleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier
                             .padding(8.dp)
                             .weight(1f)
@@ -95,7 +99,7 @@ fun BookItem(
 
                             Text(
                                 "$currentMediaIndex/${book.bookFileList.size - 1}",
-                                style = MaterialTheme.typography.titleSmall,
+                                style = AbbayTextStyles.subtitleText,
                             )
                         }
                     }
@@ -114,7 +118,7 @@ fun BookItem(
 
                         Text(
                             "$currentProgress/${book.duration.toHHMMSS()}",
-                            style = MaterialTheme.typography.titleSmall
+                            style = AbbayTextStyles.progressText
                         )
                     }
                 }

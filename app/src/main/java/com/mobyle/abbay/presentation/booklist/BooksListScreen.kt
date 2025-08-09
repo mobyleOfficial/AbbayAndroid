@@ -76,6 +76,7 @@ import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiStat
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.Loading
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.NoBookSelected
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.NoPermissionsGranted
+import com.mobyle.abbay.presentation.common.theme.AbbayTextStyles
 import com.mobyle.abbay.presentation.booklist.widgets.BookItem
 import com.mobyle.abbay.presentation.booklist.widgets.BookListTopBar
 import com.mobyle.abbay.presentation.booklist.widgets.MiniPlayer
@@ -744,11 +745,15 @@ fun BooksListScreen(
                                         getString(
                                             context,
                                             R.string.no_book_selected_primary_button_title
-                                        )
+                                        ),
+                                        style = AbbayTextStyles.buttonTextLarge
                                     )
                                 }
 
-                                Text(getString(context, R.string.no_book_selected_or))
+                                Text(
+                                    getString(context, R.string.no_book_selected_or),
+                                    style = AbbayTextStyles.subtitleText
+                                )
 
                                 Button(onClick = {
                                     asyncScope.launch {
@@ -759,7 +764,8 @@ fun BooksListScreen(
                                         text = getString(
                                             context,
                                             R.string.no_book_selected_secondary_button_title
-                                        )
+                                        ),
+                                        style = AbbayTextStyles.buttonTextLarge
                                     )
                                 }
                             }

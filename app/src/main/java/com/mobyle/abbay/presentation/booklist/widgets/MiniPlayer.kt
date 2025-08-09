@@ -80,6 +80,7 @@ import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.booklist.widgets.models.BookSpeed
 import com.mobyle.abbay.presentation.booklist.widgets.models.LayoutId
 import com.mobyle.abbay.presentation.common.mappers.toBookSpeed
+import com.mobyle.abbay.presentation.common.theme.AbbayTextStyles
 import com.mobyle.abbay.presentation.utils.currentFraction
 import com.mobyle.abbay.presentation.utils.intermediateProgress
 import com.mobyle.abbay.presentation.utils.toHHMMSS
@@ -465,15 +466,16 @@ private fun BookFileItem(
         horizontalArrangement = Arrangement.Center
     ) {
         Text(
-                            text = file?.fileName ?: stringResource(R.string.unknown_file),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.8f),
+            text = file?.fileName ?: stringResource(R.string.unknown_file),
+            style = AbbayTextStyles.chapterTitle,
             maxLines = 1
         )
         Spacer(modifier = Modifier.width(8.dp))
         Icon(
             imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                            contentDescription = if (isExpanded) stringResource(R.string.hide_chapters) else stringResource(R.string.show_chapters),
+            contentDescription = if (isExpanded) stringResource(R.string.hide_chapters) else stringResource(
+                R.string.show_chapters
+            ),
             tint = Color.White
         )
     }
@@ -517,8 +519,8 @@ private fun BookFilesList(
                 ) {
                     Text(
                         text = "${index + 1}",
-                        color = Color.White,
-                        style = MaterialTheme.typography.labelMedium
+                        style = AbbayTextStyles.buttonTextMedium,
+                        color = Color.White
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))

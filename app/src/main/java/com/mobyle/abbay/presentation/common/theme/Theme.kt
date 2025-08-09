@@ -17,40 +17,40 @@ import androidx.core.view.WindowCompat
 
 
 private val DarkColorScheme = darkColorScheme(
-    background = PrimaryColor,
-    surface = SurfaceColor,
-    onSurface = SurfaceColor,
-    onPrimary = PrimaryColor,
     primary = PrimaryColor,
     secondary = SecondaryColor,
-    tertiary = TertiaryColor
+    tertiary = TertiaryColor,
+    background = PrimaryColor,
+    surface = SurfaceColor,
+    onPrimary = OnPrimaryColor,
+    onSecondary = OnSecondaryColor,
+    onTertiary = OnTertiaryColor,
+    onBackground = OnBackgroundColor,
+    onSurface = OnSurfaceColor,
+    error = ErrorColor,
+    onError = OnErrorColor
 )
 
 private val LightColorScheme = lightColorScheme(
-    background = PrimaryColor,
-    surface = SurfaceColor,
-    onSurface = SurfaceColor,
-    onPrimary = SecondaryColor,
     primary = PrimaryColor,
     secondary = SecondaryColor,
-    tertiary = TertiaryColor
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    tertiary = TertiaryColor,
+    background = PrimaryColor,
+    surface = SurfaceColor,
+    onPrimary = OnPrimaryColor,
+    onSecondary = OnSecondaryColor,
+    onTertiary = OnTertiaryColor,
+    onBackground = OnBackgroundColor,
+    onSurface = OnSurfaceColor,
+    error = ErrorColor,
+    onError = OnErrorColor
 )
 
 @Composable
 fun MyApplicationTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    // Dynamic color is available on Android 12+ but can cause issues on Android 15
+    dynamicColor: Boolean = Build.VERSION.SDK_INT < 35, // Disable for Android 15+
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -73,7 +73,10 @@ fun MyApplicationTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = AbbayTypography(
+            primaryTextColor = colorScheme.onSurface,
+            secondaryTextColor = colorScheme.onSurface.copy(alpha = 0.7f),
+        ),
         content = content
     )
 }

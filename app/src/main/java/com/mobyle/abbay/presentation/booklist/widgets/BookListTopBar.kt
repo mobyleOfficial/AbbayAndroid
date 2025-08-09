@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.getString
 import com.mobyle.abbay.R
+import com.mobyle.abbay.presentation.common.theme.AbbayTextStyles
 import com.mobyle.abbay.presentation.common.widgets.AbbaysDropdownItem
 import com.mobyle.abbay.presentation.common.widgets.SVGIcon
 
@@ -47,7 +48,7 @@ fun BookListTopBar(
         title = {
             Text(
                 getString(context, R.string.book_list_top_bar_title),
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                style = AbbayTextStyles.bookTitleLarge,
                 color = Color.White
             )
         },
