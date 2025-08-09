@@ -56,8 +56,9 @@ fun AbbayActionDialog(
             } ?: run {
                 Text(
                     body,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        MaterialTheme.colorScheme.primary
+                    ),
                     textAlign = TextAlign.Start,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
