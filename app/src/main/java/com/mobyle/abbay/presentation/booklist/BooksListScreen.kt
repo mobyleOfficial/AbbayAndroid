@@ -77,12 +77,11 @@ import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiStat
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.Loading
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.NoBookSelected
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.NoPermissionsGranted
-import com.mobyle.abbay.presentation.common.theme.AbbayTextStyles
 import com.mobyle.abbay.presentation.booklist.widgets.BookItem
 import com.mobyle.abbay.presentation.booklist.widgets.BookListTopBar
 import com.mobyle.abbay.presentation.booklist.widgets.MiniPlayer
 import com.mobyle.abbay.presentation.common.mappers.toBook
-import com.mobyle.abbay.presentation.common.theme.SecondaryColor
+import com.mobyle.abbay.presentation.common.theme.AbbayTextStyles
 import com.mobyle.abbay.presentation.common.widgets.AbbayActionDialog
 import com.mobyle.abbay.presentation.utils.LaunchedEffectAndCollect
 import com.mobyle.abbay.presentation.utils.audioCursor
