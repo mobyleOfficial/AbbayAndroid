@@ -3,6 +3,8 @@ package com.mobyle.abbay.presentation.settings
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Switch
+import androidx.compose.material.SwitchDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -36,7 +38,11 @@ fun SettingsScreen(
                     content = {
                         Switch(
                             checked = shouldPlayWhenAppIsClosed,
-                            onCheckedChange = viewModel::changePlayWhenAppIsClosed
+                            onCheckedChange = viewModel::changePlayWhenAppIsClosed,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colorScheme.tertiary,
+                                checkedTrackColor = MaterialTheme.colorScheme.tertiary
+                            )
                         )
                     }
                 )
@@ -45,7 +51,11 @@ fun SettingsScreen(
                     content = {
                         Switch(
                             checked = shouldOpenPlayerInStartup,
-                            onCheckedChange = viewModel::changeOpenPlayerInStartUp
+                            onCheckedChange = viewModel::changeOpenPlayerInStartUp,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colorScheme.tertiary,
+                                checkedTrackColor = MaterialTheme.colorScheme.tertiary
+                            )
                         )
                     }
                 )

@@ -80,6 +80,10 @@ class BooksListViewModel @Inject constructor(
                 !currentIds.contains(book.id)
             }
 
+            if(domainBookList.isEmpty()) {
+                booksList.clear()
+            }
+
             val state = if (hasPermissions) {
                 if (newBooks.isNotEmpty()) {
                     booksList.addAll(newBooks)
