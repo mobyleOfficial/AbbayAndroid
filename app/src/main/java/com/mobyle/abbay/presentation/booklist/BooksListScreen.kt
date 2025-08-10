@@ -254,7 +254,7 @@ fun BooksListScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(Unit, player.isPlaying) {
         viewModel.isPlaying.value = player.isPlaying
     }
 
@@ -399,9 +399,10 @@ fun BooksListScreen(
                                                 delay(500)
                                                 uri.getBooks(context)?.let { books ->
                                                     // Generate thumbnails for all books before checking for new ones
-                                                    val booksWithThumbnails = books.mapNotNull { book ->
-                                                        book.getThumb(context)
-                                                    }
+                                                    val booksWithThumbnails =
+                                                        books.mapNotNull { book ->
+                                                            book.getThumb(context)
+                                                        }
                                                     viewModel.checkForNewBooks(booksWithThumbnails)
                                                 }
                                             } catch (e: SecurityException) {
