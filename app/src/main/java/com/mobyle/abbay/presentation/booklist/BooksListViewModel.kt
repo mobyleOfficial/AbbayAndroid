@@ -75,22 +75,26 @@ class BooksListViewModel @Inject constructor(
         combine(
             observeBooksList(), hasPermissions
         ) { domainBookList, hasPermissions ->
-            this.booksList.clear()
-            this.booksList.addAll(domainBookList)
+            val currentIds = booksList.map { it.id }.toSet()
+            val newBooks = domainBookList.filter { book ->
+                !currentIds.contains(book.id)
+            }
 
             val state = if (hasPermissions) {
-                if (domainBookList.isEmpty()) {
-                    BooksListUiState.NoBookSelected
+                if (newBooks.isNotEmpty()) {
+                    booksList.addAll(newBooks)
+                    BooksListUiState.BookListSuccess(booksList.toList())
+                } else if (booksList.isNotEmpty()) {
+                    BooksListUiState.BookListSuccess(booksList.toList())
                 } else {
-                    BooksListUiState.BookListSuccess(domainBookList)
+                    BooksListUiState.NoBookSelected
                 }
             } else {
                 BooksListUiState.NoPermissionsGranted
             }
 
             _uiState.tryEmit(state)
-        }
-            .launchIn(viewModelScope)
+        }.launchIn(viewModelScope)
     }
 
     fun setUserHasPermissions() {
@@ -207,6 +211,8 @@ class BooksListViewModel @Inject constructor(
 
     fun removeBook(book: Book) {
         viewModelScope.launch {
+            val index = booksList.indexOfFirst { it.id == book.id }
+            booksList.removeAt(index)
             deleteBook.invoke(book)
 
             if (selectedBook.value?.id == book.id) {
@@ -235,8 +241,12 @@ class BooksListViewModel @Inject constructor(
         }
 
         if (newBooks.isNotEmpty()) {
-            addAllBookTypes(newBooks)
+            updateBookList(newBooks)
+        } else {
+            _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
+            _hasSelectedFolder.value = true
         }
+
         _isRefreshing.value = false
     }
 
