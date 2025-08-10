@@ -392,7 +392,11 @@ fun BooksListScreen(
                                                 viewModel.setRefreshingLoading()
                                                 delay(500)
                                                 uri.getBooks(context)?.let { books ->
-                                                    viewModel.checkForNewBooks(books)
+                                                    // Generate thumbnails for all books before checking for new ones
+                                                    val booksWithThumbnails = books.mapNotNull { book ->
+                                                        book.getThumb(context)
+                                                    }
+                                                    viewModel.checkForNewBooks(booksWithThumbnails)
                                                 }
                                             } catch (e: SecurityException) {
                                                 // If we can't get permissions, prompt user to select folder again
