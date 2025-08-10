@@ -1,12 +1,65 @@
 <resources>
     <string name="app_name">Abbay</string>
     <string name="book_list_top_bar_title">Your Audiobooks</string>
-    <string name="book_list_top_bar_folder_button_description">Add folder icon</string>
-    <string name="book_list_top_bar_file_button_description">Add file icon</string>
-    <string name="no_book_selected_primary_button_title">Add a file</string>
-    <string name="no_book_selected_secondary_button_title">Add a folder</string>
-    <string name="no_book_selected_or">Or</string>
-    <string name="no_permission_error_title">We need some permissions to access your books!</string>
+    <string name="book_list_top_bar_folder_button_description">Add folder</string>
+    <string name="book_list_top_bar_file_button_description">Add file</string>
+    <string name="no_book_selected_primary_button_title">Add a File</string>
+    <string name="no_book_selected_secondary_button_title">Add a Folder</string>
+    <string name="no_book_selected_or">or</string>
+    <string name="no_permission_error_title">We need permissions to access your books</string>
     <string name="no_permission_error_button_text">Grant Permissions</string>
+    
+    <!-- Dialog strings -->
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="delete">Delete</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="got_it">Got it</string>
+    
+    <!-- Settings strings -->
+    <string name="settings">Settings</string>
+    <string name="play_when_app_closed">Play when app is closed</string>
+    <string name="open_player_in_startup">Open player on startup</string>
+    <string name="delete_all_books">Delete all books</string>
+    <string name="delete_all_books_dialog_title">Delete All Books</string>
+    <string name="delete_all_books_dialog_body">Are you sure you want to delete all books? This action cannot be undone.</string>
+    
+    <!-- Book list strings -->
+    <string name="refresh_content_description">Refresh</string>
+    <string name="add_content_description">Add</string>
+    <string name="add_folder">Add Folder</string>
+    <string name="add_file">Add File</string>
+    <string name="delete_content_description">Delete</string>
+    <string name="delete_book_dialog_title">Delete Book</string>
+    <string name="delete_book_dialog_body">Are you sure you want to delete this book?</string>
+    <string name="reload_books_dialog_title">Reload Books</string>
+    <string name="reload_books_dialog_body">This will reload all books from the selected folder. Books added individually will not be affected.</string>
+    <string name="file_not_found_title">File Not Found</string>
+    <string name="file_not_found_body">The audio file for this book could not be found.</string>
+    <string name="file_might_be_moved">The file may have been moved or deleted.</string>
+    
+    <!-- Player strings -->
+    <string name="unknown_file">Unknown File</string>
+    <string name="show_chapters">Show Chapters</string>
+    <string name="hide_chapters">Hide Chapters</string>
+    <string name="change_speed">Change Speed</string>
+    <string name="screen_locked">Screen Locked</string>
+    <string name="screen_locked_message">Long press anywhere on the screen to unlock</string>
+    <string name="screen_locked_subtitle">This prevents accidental touches while listening</string>
+    
+    <!-- Book item strings -->
+    <string name="error_playing_file">Error Playing File</string>
+    <string name="book_icon">Book Icon</string>
+    <string name="clock_icon">Clock Icon</string>
+    
+    <!-- Speed options -->
+    <string name="speed_half">0.5x</string>
+    <string name="speed_normal">1.0x</string>
+    <string name="speed_one_twenty_five">1.25x</string>
+    <string name="speed_one_fifty">1.5x</string>
+    <string name="speed_double">2.0x</string>
+    
+    <!-- Content descriptions -->
+    <string name="empty_content_description"></string>
 
 </resources>

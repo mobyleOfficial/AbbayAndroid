@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.BottomSheetScaffold
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
@@ -80,6 +81,7 @@ import com.mobyle.abbay.presentation.booklist.widgets.BookItem
 import com.mobyle.abbay.presentation.booklist.widgets.BookListTopBar
 import com.mobyle.abbay.presentation.booklist.widgets.MiniPlayer
 import com.mobyle.abbay.presentation.common.mappers.toBook
+import com.mobyle.abbay.presentation.common.theme.AbbayTextStyles
 import com.mobyle.abbay.presentation.common.widgets.AbbayActionDialog
 import com.mobyle.abbay.presentation.utils.LaunchedEffectAndCollect
 import com.mobyle.abbay.presentation.utils.audioCursor
@@ -412,7 +414,8 @@ fun BooksListScreen(
                         isContentEnabled = booksListState is BookListSuccess || booksListState is NoBookSelected,
                         isRefreshing = isRefreshing
                     )
-                }) { innerPadding ->
+                }, backgroundColor = MaterialTheme.colorScheme.primary
+            ) { innerPadding ->
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -649,9 +652,9 @@ fun BooksListScreen(
                                         showDeleteDialog.value = false
                                         bookToDelete.value = null
                                     },
-                                    title = "Delete Book",
-                                    body = "Are you sure you want to delete this book?",
-                                    actionButtonTitle = "Delete",
+                                    title = stringResource(R.string.delete_book_dialog_title),
+                                    body = stringResource(R.string.delete_book_dialog_body),
+                                    actionButtonTitle = stringResource(R.string.delete),
                                     onAction = {
                                         bookToDelete.value?.let { book ->
                                             viewModel.removeBook(book)
@@ -666,9 +669,9 @@ fun BooksListScreen(
                             if (showReloadGuide) {
                                 AbbayActionDialog(
                                     onDismiss = viewModel::dismissReloadGuide,
-                                    title = "Reload Books",
-                                    body = "This will reload all books from the selected folder. Any books added individually will not be affected.",
-                                    actionButtonTitle = "Got it",
+                                    title = stringResource(R.string.reload_books_dialog_title),
+                                    body = stringResource(R.string.reload_books_dialog_body),
+                                    actionButtonTitle = stringResource(R.string.got_it),
                                     onAction = viewModel::dismissReloadGuide
                                 )
                             }
@@ -690,7 +693,7 @@ fun BooksListScreen(
                                                 modifier = Modifier.padding(end = 8.dp)
                                             )
                                             Text(
-                                                "File Not Found",
+                                                stringResource(R.string.file_not_found_title),
                                                 style = MaterialTheme.typography.titleLarge,
                                                 color = MaterialTheme.colorScheme.error
                                             )
@@ -701,14 +704,14 @@ fun BooksListScreen(
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
                                             Text(
-                                                "The audio file for this book could not be found.",
+                                                stringResource(R.string.file_not_found_body),
                                                 style = MaterialTheme.typography.bodyLarge,
                                                 color = MaterialTheme.colorScheme.onSurface,
                                                 textAlign = TextAlign.Center,
                                                 modifier = Modifier.padding(vertical = 8.dp)
                                             )
                                             Text(
-                                                "The file might have been moved or deleted.",
+                                                stringResource(R.string.file_might_be_moved),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurface.copy(
                                                     alpha = 0.7f
@@ -724,7 +727,10 @@ fun BooksListScreen(
                                                 viewModel.selectBook(null, null)
                                             }
                                         ) {
-                                            Text("OK", color = MaterialTheme.colorScheme.primary)
+                                            Text(
+                                                stringResource(R.string.ok),
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
                                         }
                                     }
                                 )
@@ -733,33 +739,51 @@ fun BooksListScreen(
 
                         is NoBookSelected -> {
                             Column(
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.primary),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
                             ) {
-                                Button(onClick = {
-                                    openFileSelector.launch(fileFilterList)
-                                }) {
+                                Button(
+                                    onClick = {
+                                        openFileSelector.launch(fileFilterList)
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        backgroundColor = MaterialTheme.colorScheme.secondary,
+                                    )
+                                ) {
                                     Text(
                                         getString(
                                             context,
                                             R.string.no_book_selected_primary_button_title
-                                        )
+                                        ),
+                                        style = AbbayTextStyles.buttonTextLarge
+                                            .copy(color = MaterialTheme.colorScheme.primary)
                                     )
                                 }
 
-                                Text(getString(context, R.string.no_book_selected_or))
+                                Text(
+                                    getString(context, R.string.no_book_selected_or),
+                                    style = AbbayTextStyles.subtitleText
+                                )
 
-                                Button(onClick = {
-                                    asyncScope.launch {
-                                        openFolderSelector.launch(null)
-                                    }
-                                }) {
+                                Button(
+                                    onClick = {
+                                        asyncScope.launch {
+                                            openFolderSelector.launch(null)
+                                        }
+                                    }, colors = ButtonDefaults.buttonColors(
+                                        backgroundColor = MaterialTheme.colorScheme.secondary,
+                                    )
+                                ) {
                                     Text(
                                         text = getString(
                                             context,
                                             R.string.no_book_selected_secondary_button_title
-                                        )
+                                        ),
+                                        style = AbbayTextStyles.buttonTextLarge
+                                            .copy(color = MaterialTheme.colorScheme.primary)
                                     )
                                 }
                             }
@@ -769,10 +793,13 @@ fun BooksListScreen(
                         is GenericError -> {}
                         is Loading -> {
                             Box(
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.primary),
                             ) {
                                 CircularProgressIndicator(
-                                    modifier = Modifier.align(Alignment.Center)
+                                    modifier = Modifier.align(Alignment.Center),
+                                    color = MaterialTheme.colorScheme.tertiary
                                 )
                             }
                         }
@@ -781,12 +808,14 @@ fun BooksListScreen(
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center,
-                                modifier = Modifier.fillMaxSize()
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.primary)
                             ) {
                                 Text(
                                     stringResource(id = R.string.no_permission_error_title),
                                     style = TextStyle(
-                                        color = MaterialTheme.colorScheme.primary,
+                                        color = MaterialTheme.colorScheme.secondary,
                                         fontFamily = FontFamily.Default,
                                         fontWeight = FontWeight.Bold,
                                         textAlign = TextAlign.Center,
@@ -806,21 +835,23 @@ fun BooksListScreen(
                                         scaleY = 0.5f
                                     )
                                 )
-                                Button(onClick = {
-                                    asyncScope.launch {
-                                        permissionRequestAttemptTime.longValue = Date().time
-                                        permissionState.launchMultiplePermissionRequest()
-                                    }
-                                }, modifier = Modifier.padding(bottom = 16.dp)) {
+
+                                Button(
+                                    onClick = {
+                                        asyncScope.launch {
+                                            permissionRequestAttemptTime.longValue = Date().time
+                                            permissionState.launchMultiplePermissionRequest()
+                                        }
+                                    },
+                                    modifier = Modifier.padding(bottom = 16.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        backgroundColor = MaterialTheme.colorScheme.secondary,
+                                    )
+                                ) {
                                     Text(
                                         stringResource(id = R.string.no_permission_error_button_text),
-                                        style = TextStyle(
-                                            color = Color.White,
-                                            fontFamily = FontFamily.Default,
-                                            fontWeight = FontWeight.Medium,
-                                            textAlign = TextAlign.Center,
-                                            fontSize = 18.sp,
-                                        ),
+                                        style = AbbayTextStyles.buttonTextLarge
+                                            .copy(color = MaterialTheme.colorScheme.primary)
                                     )
                                 }
                             }

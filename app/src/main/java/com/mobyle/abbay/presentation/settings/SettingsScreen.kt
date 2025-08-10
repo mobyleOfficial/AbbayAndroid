@@ -7,7 +7,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.widgets.AbbayActionDialog
 import com.mobyle.abbay.presentation.common.widgets.AbbayScreen
 
@@ -21,7 +23,7 @@ fun SettingsScreen(
     val showShowDeleteConfirmation by viewModel.showShowDeleteConfirmation.collectAsState()
 
     AbbayScreen(
-        title = "Settings",
+        title = stringResource(R.string.settings),
         onClose = close
     ) {
         LazyColumn(
@@ -30,7 +32,7 @@ fun SettingsScreen(
         ) {
             item {
                 SettingItem(
-                    text = "Play when app is closed",
+                    text = stringResource(R.string.play_when_app_closed),
                     content = {
                         Switch(
                             checked = shouldPlayWhenAppIsClosed,
@@ -39,7 +41,7 @@ fun SettingsScreen(
                     }
                 )
                 SettingItem(
-                    text = "Open player in startup",
+                    text = stringResource(R.string.open_player_in_startup),
                     content = {
                         Switch(
                             checked = shouldOpenPlayerInStartup,
@@ -49,7 +51,7 @@ fun SettingsScreen(
                 )
 
                 SettingItem(
-                    text = "Delete all books",
+                    text = stringResource(R.string.delete_all_books),
                     onClick = viewModel::showDeleteConfirmation
                 )
             }
@@ -58,9 +60,9 @@ fun SettingsScreen(
         if (showShowDeleteConfirmation) {
             AbbayActionDialog(
                 onDismiss = viewModel::dismissDeleteConfirmation,
-                title = "Delete Book",
-                body ="Are you sure you want to delete all books? This action cannot be undone.",
-                actionButtonTitle = "Delete",
+                title = stringResource(R.string.delete_all_books_dialog_title),
+                body = stringResource(R.string.delete_all_books_dialog_body),
+                actionButtonTitle = stringResource(R.string.delete),
                 onAction = {
                     viewModel.clearBooks()
                     viewModel.dismissDeleteConfirmation()
