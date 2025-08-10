@@ -68,6 +68,9 @@ class BooksListViewModel @Inject constructor(
     private val _showReloadGuide = MutableStateFlow(false)
     val showReloadGuide: StateFlow<Boolean> get() = _showReloadGuide
 
+    private val _showBookEndedDialog = MutableStateFlow(false)
+    val showBookEndedDialog: StateFlow<Boolean> get() = _showBookEndedDialog
+
     private val hasPermissions =
         MutableStateFlow(checkPermissionsProvider.areAllPermissionsGranted(getPermissionsList()))
 
@@ -75,22 +78,30 @@ class BooksListViewModel @Inject constructor(
         combine(
             observeBooksList(), hasPermissions
         ) { domainBookList, hasPermissions ->
-            this.booksList.clear()
-            this.booksList.addAll(domainBookList)
+            val currentIds = booksList.map { it.id }.toSet()
+            val newBooks = domainBookList.filter { book ->
+                !currentIds.contains(book.id)
+            }
+
+            if (domainBookList.isEmpty()) {
+                booksList.clear()
+            }
 
             val state = if (hasPermissions) {
-                if (domainBookList.isEmpty()) {
-                    BooksListUiState.NoBookSelected
+                if (newBooks.isNotEmpty()) {
+                    booksList.addAll(newBooks)
+                    BooksListUiState.BookListSuccess(booksList.toList())
+                } else if (booksList.isNotEmpty()) {
+                    BooksListUiState.BookListSuccess(booksList.toList())
                 } else {
-                    BooksListUiState.BookListSuccess(domainBookList)
+                    BooksListUiState.NoBookSelected
                 }
             } else {
                 BooksListUiState.NoPermissionsGranted
             }
 
             _uiState.tryEmit(state)
-        }
-            .launchIn(viewModelScope)
+        }.launchIn(viewModelScope)
     }
 
     fun setUserHasPermissions() {
@@ -142,6 +153,26 @@ class BooksListViewModel @Inject constructor(
             booksList[index] = mappedBook
             _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
             selectBook(mappedBook, currentPosition)
+
+            when (mappedBook) {
+                is MultipleBooks -> {
+                    if (mappedBook.currentBookPosition == (mappedBook.bookFileList.size - 1) &&
+                        progress >= mappedBook.bookFileList.last().duration
+                    ) {
+                        _showBookEndedDialog.value = true
+                    }
+                }
+
+                is BookFile -> {
+                    if (progress >= mappedBook.duration) {
+                        _showBookEndedDialog.value = true
+                    }
+                }
+
+                else -> {
+
+                }
+            }
         }
     }
 
@@ -207,6 +238,8 @@ class BooksListViewModel @Inject constructor(
 
     fun removeBook(book: Book) {
         viewModelScope.launch {
+            val index = booksList.indexOfFirst { it.id == book.id }
+            booksList.removeAt(index)
             deleteBook.invoke(book)
 
             if (selectedBook.value?.id == book.id) {
@@ -235,8 +268,12 @@ class BooksListViewModel @Inject constructor(
         }
 
         if (newBooks.isNotEmpty()) {
-            addAllBookTypes(newBooks)
+            updateBookList(newBooks)
+        } else {
+            _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
+            _hasSelectedFolder.value = true
         }
+
         _isRefreshing.value = false
     }
 
@@ -253,6 +290,10 @@ class BooksListViewModel @Inject constructor(
     fun dismissReloadGuide() {
         setReloadGuideAsShown()
         _showReloadGuide.value = false
+    }
+
+    fun dismissBookEndedDialog() {
+        _showBookEndedDialog.value = false
     }
 
     sealed class BooksListUiState {

@@ -98,7 +98,7 @@ fun BookItem(
                             )
 
                             Text(
-                                "$currentMediaIndex/${book.bookFileList.size - 1}",
+                                "$currentMediaIndex/${book.bookFileList.size}",
                                 style = AbbayTextStyles.subtitleText,
                             )
                         }
