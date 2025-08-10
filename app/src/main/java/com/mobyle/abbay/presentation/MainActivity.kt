@@ -52,12 +52,10 @@ class MainActivity : ComponentActivity() {
 
         updateAppLifeStatus(true)
 
-        // Initialize MediaController immediately
         controller = MediaController.Builder(
             this,
             SessionToken(this, ComponentName(this, PlayerService::class.java))
         ).buildAsync()
-
 
         setContent {
             val navController = rememberNavController()
