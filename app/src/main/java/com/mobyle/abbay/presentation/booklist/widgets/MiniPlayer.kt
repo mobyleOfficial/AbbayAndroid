@@ -83,10 +83,12 @@ import com.mobyle.abbay.presentation.common.mappers.toBookSpeed
 import com.mobyle.abbay.presentation.common.theme.AbbayTextStyles
 import com.mobyle.abbay.presentation.utils.currentFraction
 import com.mobyle.abbay.presentation.utils.intermediateProgress
+import com.mobyle.abbay.presentation.utils.prepareBook
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
@@ -546,6 +548,7 @@ private fun BookFilesList(
 
 @Composable
 private fun PlayerController(
+    id: String,
     player: MediaController,
     position: Long,
     playerIcon: MutableState<ImageVector>,
@@ -559,6 +562,7 @@ private fun PlayerController(
         } else {
             player.seekTo(position)
             onPlayingChange(true)
+            player.prepareBook(id, position, MutableStateFlow(true))
             player.playWhenReady = true
             Icons.Default.Pause
         }
@@ -693,6 +697,7 @@ private fun MiniPlayerContent(
             )
         } else {
             PlayerController(
+                id = book.id,
                 player = player,
                 onPlayingChange = onPlayingChange,
                 position = progress,
@@ -732,8 +737,8 @@ private fun BookImage(
                 player.pause()
                 Icons.Default.Pause
             } else {
-                player.seekTo(progress)
                 onPlayingChange(true)
+                player.prepareBook(book.id, progress, MutableStateFlow(true))
                 player.playWhenReady = true
                 Icons.Default.PlayArrow
             }
@@ -834,10 +839,11 @@ private fun PlayerControls(
                 Icon(Icons.Default.Replay10, contentDescription = "", tint = Color.White)
             }
             PlayerController(
+                id = book.id,
                 player = player,
                 onPlayingChange = onPlayingChange,
                 position = progress,
-                playerIcon = playerIcon
+                playerIcon = playerIcon,
             )
             IconButton(onClick = {
                 val forwardTo = (progress + 10_000L).coerceAtMost(duration)
