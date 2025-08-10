@@ -15,6 +15,8 @@
     <string name="delete">Delete</string>
     <string name="dismiss">Dismiss</string>
     <string name="got_it">Got it</string>
+    <string name="book_ended_dialog_title">Book Finished</string>
+    <string name="book_ended_dialog_body">The audiobook has finished playing.</string>
     
     <!-- Settings strings -->
     <string name="settings">Settings</string>

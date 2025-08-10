@@ -143,7 +143,7 @@ fun BooksListScreen(
     val showErrorDialog = remember { mutableStateOf(false) }
     val hasSelectedFolder by viewModel.hasSelectedFolder.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
-
+    val hasBookEnded by viewModel.showBookEndedDialog.collectAsState()
 
     LifecycleEventEffect(event = Lifecycle.Event.ON_CREATE) {
         viewModel.shouldOpenPlayerInStartup()
@@ -179,6 +179,12 @@ fun BooksListScreen(
             }
 
             viewModel.updateBookList(updatedList)
+        }
+    }
+
+    LaunchedEffect(hasBookEnded) {
+        if (hasBookEnded) {
+            bottomSheetState.bottomSheetState.collapse()
         }
     }
 
@@ -737,6 +743,16 @@ fun BooksListScreen(
                                             )
                                         }
                                     }
+                                )
+                            }
+
+                            if (hasBookEnded) {
+                                AbbayActionDialog(
+                                    onDismiss = viewModel::dismissBookEndedDialog,
+                                    title = stringResource(R.string.book_ended_dialog_title),
+                                    body = stringResource(R.string.book_ended_dialog_body),
+                                    actionButtonTitle = stringResource(R.string.ok),
+                                    onAction = viewModel::dismissBookEndedDialog
                                 )
                             }
                         }
