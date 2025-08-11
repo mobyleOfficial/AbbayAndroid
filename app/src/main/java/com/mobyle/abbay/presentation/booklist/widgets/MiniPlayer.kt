@@ -438,7 +438,8 @@ private fun MultipleFilePlayer(
             modifier = Modifier.layoutId(LayoutId.LOCK_OVERLAY.id)
         ) {
             if (isScreenLocked) {
-                Box(modifier = Modifier
+                Box(
+                    modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.4f))
                     .combinedClickable(
@@ -502,14 +503,15 @@ private fun BookFilesList(
     ) {
         itemsIndexed(files) { index, file ->
             val isSelected = index == currentIndex
-            Row(modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onClick(index) }
-                .background(
-                    if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                    else Color.Transparent
-                )
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onClick(index) }
+                    .background(
+                        if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                        else Color.Transparent
+                    )
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
@@ -560,9 +562,12 @@ private fun PlayerController(
             player.pause()
             Icons.Default.PlayArrow
         } else {
+            if (!player.playWhenReady) {
+                player.prepareBook(id, position, MutableStateFlow(true))
+            }
+
             player.seekTo(position)
             onPlayingChange(true)
-            player.prepareBook(id, position, MutableStateFlow(true))
             player.playWhenReady = true
             Icons.Default.Pause
         }
@@ -616,7 +621,8 @@ private fun BooksTopBar(
             }
         }
 
-        DropdownMenu(expanded = speedMenuExpanded.value,
+        DropdownMenu(
+            expanded = speedMenuExpanded.value,
             onDismissRequest = { speedMenuExpanded.value = false }) {
             speedOptions.forEach { speedModel ->
                 DropdownMenuItem(onClick = {
@@ -728,22 +734,25 @@ private fun BookImage(
         contentDescription = ""
     )
 
-    Box(modifier = Modifier
-        .fillMaxSize()
-        .background(Color.Black.copy(alpha = 0.2f))
-        .clickable {
-            playerIcon.value = if (player.isPlaying) {
-                onPlayingChange(false)
-                player.pause()
-                Icons.Default.Pause
-            } else {
-                onPlayingChange(true)
-                player.prepareBook(book.id, progress, MutableStateFlow(true))
-                player.playWhenReady = true
-                Icons.Default.PlayArrow
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.2f))
+            .clickable {
+                playerIcon.value = if (player.isPlaying) {
+                    onPlayingChange(false)
+                    player.pause()
+                    Icons.Default.Pause
+                } else {
+                    if (!player.playWhenReady) {
+                        player.prepareBook(book.id, progress, MutableStateFlow(true))
+                    }
+                    player.playWhenReady = true
+                    onPlayingChange(true)
+                    Icons.Default.PlayArrow
+                }
             }
-        }
-        .clip(shape = RoundedCornerShape(percent = 10))) {
+            .clip(shape = RoundedCornerShape(percent = 10))) {
         Box(
             modifier = Modifier.align(Alignment.Center)
         ) {
@@ -797,16 +806,17 @@ private fun PlayerControls(
         Column(
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Slider(value = progress.toFloat() / duration, onValueChange = { percentage ->
-                onSliderValueChange(percentage)
-            }, onValueChangeFinished = {
-                val newPosition = (duration * slideValue).toLong()
-                player.seekTo(newPosition)
-                updateProgress(newPosition)
-            }, colors = SliderDefaults.colors(
-                thumbColor = MaterialTheme.colorScheme.tertiary,
-                activeTrackColor = MaterialTheme.colorScheme.tertiary
-            ), modifier = Modifier.fillMaxWidth()
+            Slider(
+                value = progress.toFloat() / duration, onValueChange = { percentage ->
+                    onSliderValueChange(percentage)
+                }, onValueChangeFinished = {
+                    val newPosition = (duration * slideValue).toLong()
+                    player.seekTo(newPosition)
+                    updateProgress(newPosition)
+                }, colors = SliderDefaults.colors(
+                    thumbColor = MaterialTheme.colorScheme.tertiary,
+                    activeTrackColor = MaterialTheme.colorScheme.tertiary
+                ), modifier = Modifier.fillMaxWidth()
             )
 
             Row(
@@ -904,7 +914,8 @@ private fun ScreenLockedAlert(
     }, confirmButton = {
         // No confirm button, unlock is by long press
     }, dismissButton = {
-        Text(stringResource(R.string.dismiss),
+        Text(
+            stringResource(R.string.dismiss),
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier
                 .clickable { onDismissRequest() }
