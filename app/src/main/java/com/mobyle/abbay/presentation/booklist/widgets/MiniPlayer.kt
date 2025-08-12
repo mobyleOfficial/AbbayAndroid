@@ -88,6 +88,7 @@ import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlin.math.max
@@ -440,15 +441,15 @@ private fun MultipleFilePlayer(
             if (isScreenLocked) {
                 Box(
                     modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.4f))
-                    .combinedClickable(
-                        onClick = {
-                            showScreenLockedAlert()
-                        }, onLongClick = {
-                            unlockScreen()
-                        }
-                    )
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.4f))
+                        .combinedClickable(
+                            onClick = {
+                                showScreenLockedAlert()
+                            }, onLongClick = {
+                                unlockScreen()
+                            }
+                        )
                 )
             }
         }
@@ -556,20 +557,25 @@ private fun PlayerController(
     playerIcon: MutableState<ImageVector>,
     onPlayingChange: (Boolean) -> Unit,
 ) {
+    val scope = rememberCoroutineScope()
     IconButton(onClick = {
-        playerIcon.value = if (player.isPlaying) {
-            onPlayingChange(false)
-            player.pause()
-            Icons.Default.PlayArrow
-        } else {
-            if (!player.playWhenReady) {
-                player.prepareBook(id, position, MutableStateFlow(true))
-            }
+        scope.launch {
+            if (player.isPlaying) {
+                onPlayingChange(false)
+                player.pause()
+                playerIcon.value = Icons.Default.PlayArrow
+            } else {
+                playerIcon.value = Icons.Default.Pause
 
-            player.seekTo(position)
-            onPlayingChange(true)
-            player.playWhenReady = true
-            Icons.Default.Pause
+                delay(300L)
+                if (!player.playWhenReady) {
+                    player.prepareBook(id, position, MutableStateFlow(true))
+                }
+
+                player.seekTo(position)
+                onPlayingChange(true)
+                player.playWhenReady = true
+            }
         }
     }) {
         Icon(playerIcon.value, contentDescription = "", tint = Color.White)
@@ -722,6 +728,8 @@ private fun BookImage(
     playerIcon: MutableState<ImageVector>,
     onPlayingChange: (Boolean) -> Unit
 ) {
+    val scope = rememberCoroutineScope()
+
     AsyncImage(
         contentScale = ContentScale.FillBounds,
         model = ImageRequest.Builder(LocalContext.current).data(book.thumbnail)
@@ -739,18 +747,22 @@ private fun BookImage(
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.2f))
             .clickable {
-                playerIcon.value = if (player.isPlaying) {
-                    onPlayingChange(false)
-                    player.pause()
-                    Icons.Default.Pause
-                } else {
-                    if (!player.playWhenReady) {
-                        player.prepareBook(book.id, progress, MutableStateFlow(true))
+                scope.launch {
+                    if (player.isPlaying) {
+                        onPlayingChange(false)
+                        player.pause()
+                        playerIcon.value = Icons.Default.Pause
+                    } else {
+                        playerIcon.value = Icons.Default.PlayArrow
+                        delay(300L)
+                        if (!player.playWhenReady) {
+                            player.prepareBook(book.id, progress, MutableStateFlow(true))
+                        }
+                        player.playWhenReady = true
+                        onPlayingChange(true)
                     }
-                    player.playWhenReady = true
-                    onPlayingChange(true)
-                    Icons.Default.PlayArrow
                 }
+
             }
             .clip(shape = RoundedCornerShape(percent = 10))) {
         Box(
