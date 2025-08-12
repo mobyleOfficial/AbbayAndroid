@@ -26,8 +26,6 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -188,16 +186,6 @@ fun BooksListScreen(
         }
     }
 
-    val playerIcon = remember {
-        val icon = if (player.isPlaying) {
-            Icons.Default.Pause
-        } else {
-            Icons.Default.PlayArrow
-        }
-
-        mutableStateOf(icon)
-    }
-
     // Launchers
     val openFileSelector = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenMultipleDocuments()
@@ -311,7 +299,6 @@ fun BooksListScreen(
                         book = it,
                         scaffoldState = bottomSheetState,
                         progress = it.progress,
-                        playerIcon = playerIcon,
                         onPlayingChange = { isPlaying ->
                             viewModel.isPlaying.value = isPlaying
                         },

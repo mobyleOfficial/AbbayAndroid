@@ -104,7 +104,6 @@ fun MiniPlayer(
     onPlayingChange: (Boolean) -> Unit,
     progress: Long,
     scaffoldState: BottomSheetScaffoldState,
-    playerIcon: MutableState<ImageVector>,
     updateCurrentBookPosition: (Int) -> Unit,
     updateProgress: (Long) -> Unit,
     updateBookSpeed: (Float) -> Unit,
@@ -113,6 +112,25 @@ fun MiniPlayer(
 ) {
     val isScreenLocked = remember { mutableStateOf(false) }
     val showUnlockDialog = remember { mutableStateOf(false) }
+
+    val playerIcon = remember {
+        val icon = if (player.isPlaying) {
+            Icons.Default.Pause
+        } else {
+            Icons.Default.PlayArrow
+        }
+
+        mutableStateOf(icon)
+    }
+
+    // Keep player icon in sync with actual player state
+    LaunchedEffect(player.isPlaying) {
+        playerIcon.value = if (player.isPlaying) {
+            Icons.Default.Pause
+        } else {
+            Icons.Default.PlayArrow
+        }
+    }
 
     if (book is BookFile) {
         SingleFilePlayer(
@@ -565,9 +583,7 @@ private fun PlayerController(
                 player.pause()
                 playerIcon.value = Icons.Default.PlayArrow
             } else {
-                playerIcon.value = Icons.Default.Pause
-
-                delay(300L)
+                delay(200L)
                 if (!player.playWhenReady) {
                     player.prepareBook(id, position, MutableStateFlow(true))
                 }
@@ -575,6 +591,7 @@ private fun PlayerController(
                 player.seekTo(position)
                 onPlayingChange(true)
                 player.playWhenReady = true
+                playerIcon.value = Icons.Default.Pause
             }
         }
     }) {
@@ -751,15 +768,15 @@ private fun BookImage(
                     if (player.isPlaying) {
                         onPlayingChange(false)
                         player.pause()
-                        playerIcon.value = Icons.Default.Pause
-                    } else {
                         playerIcon.value = Icons.Default.PlayArrow
-                        delay(300L)
+                    } else {
+                        delay(200L)
                         if (!player.playWhenReady) {
                             player.prepareBook(book.id, progress, MutableStateFlow(true))
                         }
                         player.playWhenReady = true
                         onPlayingChange(true)
+                        playerIcon.value = Icons.Default.Pause
                     }
                 }
 
@@ -768,12 +785,6 @@ private fun BookImage(
         Box(
             modifier = Modifier.align(Alignment.Center)
         ) {
-            playerIcon.value = if (player.isPlaying) {
-                Icons.Default.Pause
-            } else {
-                Icons.Default.PlayArrow
-            }
-
             Icon(playerIcon.value, contentDescription = "", tint = Color.White)
         }
     }
