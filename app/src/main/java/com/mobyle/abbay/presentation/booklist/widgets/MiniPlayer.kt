@@ -94,6 +94,8 @@ import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 
+private const val DELAY = 300L
+
 @OptIn(
     ExperimentalMaterialApi::class, ExperimentalMotionApi::class, ExperimentalFoundationApi::class
 )
@@ -583,7 +585,7 @@ private fun PlayerController(
                 player.pause()
                 playerIcon.value = Icons.Default.PlayArrow
             } else {
-                delay(200L)
+                delay(DELAY)
                 if (!player.playWhenReady) {
                     player.prepareBook(id, position, MutableStateFlow(true))
                 }
@@ -770,7 +772,7 @@ private fun BookImage(
                         player.pause()
                         playerIcon.value = Icons.Default.PlayArrow
                     } else {
-                        delay(200L)
+                        delay(DELAY)
                         if (!player.playWhenReady) {
                             player.prepareBook(book.id, progress, MutableStateFlow(true))
                         }
