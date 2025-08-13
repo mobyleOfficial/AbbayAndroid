@@ -574,32 +574,29 @@ private fun PlayerController(
     playerIcon: MutableState<ImageVector>,
     onPlayingChange: (Boolean) -> Unit,
 ) {
-    val scope = rememberCoroutineScope()
     IconButton(onClick = {
-        scope.launch {
-            if (player.isPlaying) {
-                onPlayingChange(false)
-                player.pause()
-                playerIcon.value = Icons.Default.PlayArrow
+        if (player.isPlaying) {
+            onPlayingChange(false)
+            player.pause()
+            playerIcon.value = Icons.Default.PlayArrow
+        } else {
+            if (player.playbackState == Player.STATE_READY) {
+                player.seekTo(position)
+                onPlayingChange(true)
+                player.playWhenReady = true
+                playerIcon.value = Icons.Default.Pause
             } else {
-                if (player.playbackState == Player.STATE_READY) {
-                    player.seekTo(position)
-                    onPlayingChange(true)
-                    player.playWhenReady = true
-                    playerIcon.value = Icons.Default.Pause
-                } else {
-                    player.addListener(object : Player.Listener {
-                        override fun onPlaybackStateChanged(state: Int) {
-                            if (state == Player.STATE_READY) {
-                                player.seekTo(position)
-                                onPlayingChange(true)
-                                player.playWhenReady = true
-                                playerIcon.value = Icons.Default.Pause
-                                player.removeListener(this)
-                            }
+                player.addListener(object : Player.Listener {
+                    override fun onPlaybackStateChanged(state: Int) {
+                        if (state == Player.STATE_READY) {
+                            player.seekTo(position)
+                            onPlayingChange(true)
+                            player.playWhenReady = true
+                            playerIcon.value = Icons.Default.Pause
+                            player.removeListener(this)
                         }
-                    })
-                }
+                    }
+                })
             }
         }
     }) {
@@ -752,8 +749,6 @@ private fun BookImage(
     playerIcon: MutableState<ImageVector>,
     onPlayingChange: (Boolean) -> Unit
 ) {
-    val scope = rememberCoroutineScope()
-
     AsyncImage(
         contentScale = ContentScale.FillBounds,
         model = ImageRequest.Builder(LocalContext.current).data(book.thumbnail)
@@ -771,32 +766,29 @@ private fun BookImage(
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.2f))
             .clickable {
-                scope.launch {
-                    if (player.isPlaying) {
-                        onPlayingChange(false)
-                        player.pause()
-                        playerIcon.value = Icons.Default.PlayArrow
+                if (player.isPlaying) {
+                    onPlayingChange(false)
+                    player.pause()
+                    playerIcon.value = Icons.Default.PlayArrow
+                } else {
+                    if (player.playbackState == Player.STATE_READY) {
+                        player.seekTo(progress)
+                        onPlayingChange(true)
+                        player.playWhenReady = true
+                        playerIcon.value = Icons.Default.Pause
                     } else {
-                        if (player.playbackState == Player.STATE_READY) {
-                            player.seekTo(progress)
-                            onPlayingChange(true)
-                            player.playWhenReady = true
-                            playerIcon.value = Icons.Default.Pause
-                        } else {
-                            player.addListener(object : Player.Listener {
-                                override fun onPlaybackStateChanged(state: Int) {
-                                    if (state == Player.STATE_READY) {
-                                        player.seekTo(progress)
-                                        onPlayingChange(true)
-                                        player.playWhenReady = true
-                                        playerIcon.value = Icons.Default.Pause
-                                    }
+                        player.addListener(object : Player.Listener {
+                            override fun onPlaybackStateChanged(state: Int) {
+                                if (state == Player.STATE_READY) {
+                                    player.seekTo(progress)
+                                    onPlayingChange(true)
+                                    player.playWhenReady = true
+                                    playerIcon.value = Icons.Default.Pause
                                 }
-                            })
-                        }
+                            }
+                        })
                     }
                 }
-
             }
             .clip(shape = RoundedCornerShape(percent = 10))) {
         Box(
@@ -806,19 +798,6 @@ private fun BookImage(
         }
     }
 }
-
-//player.addListener(object : Player.Listener {
-//    override fun onPlaybackStateChanged(state: Int) {
-//        if (state == Player.STATE_READY) {
-//            player.seekTo(progress)
-//            player.play()
-//            player.playWhenReady
-//            onPlayingChange(true)
-//            playerIcon.value = Icons.Default.Pause
-//            player.removeListener(this)
-//        }
-//    }
-//})
 
 @Composable
 private fun PlayerControls(
