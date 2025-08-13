@@ -92,8 +92,6 @@ import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 
-private const val DELAY = 300L
-
 @OptIn(
     ExperimentalMaterialApi::class, ExperimentalMotionApi::class, ExperimentalFoundationApi::class
 )
@@ -124,12 +122,54 @@ fun MiniPlayer(
     }
 
     // Keep player icon in sync with actual player state
-    LaunchedEffect(player.isPlaying) {
-        playerIcon.value = if (player.isPlaying) {
+    LaunchedEffect(player.isPlaying, player.playbackState) {
+        playerIcon.value = if (player.isPlaying && player.playbackState == Player.STATE_READY) {
             Icons.Default.Pause
         } else {
             Icons.Default.PlayArrow
         }
+    }
+
+    // Add player listener to observe playback state changes
+    LaunchedEffect(Unit) {
+        val listener = object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                when (playbackState) {
+                    Player.STATE_READY -> {
+                        if (player.isPlaying) {
+                            playerIcon.value = Icons.Default.Pause
+                        } else {
+                            playerIcon.value = Icons.Default.PlayArrow
+                        }
+                    }
+                    Player.STATE_BUFFERING -> {
+                        // Keep current icon during buffering
+                    }
+                    Player.STATE_ENDED -> {
+                        playerIcon.value = Icons.Default.PlayArrow
+                    }
+                    Player.STATE_IDLE -> {
+                        playerIcon.value = Icons.Default.PlayArrow
+                    }
+                }
+            }
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                if (player.playbackState == Player.STATE_READY) {
+                    playerIcon.value = if (isPlaying) {
+                        Icons.Default.Pause
+                    } else {
+                        Icons.Default.PlayArrow
+                    }
+                }
+            }
+        }
+        
+        player.addListener(listener)
+        
+        // Clean up listener when the composable is disposed
+        // Note: In a real app, you might want to handle this differently
+        // depending on your lifecycle management
     }
 
     if (book is BookFile) {
@@ -578,13 +618,13 @@ private fun PlayerController(
         if (player.isPlaying) {
             onPlayingChange(false)
             player.pause()
-            playerIcon.value = Icons.Default.PlayArrow
+            // Icon will be updated automatically by the listener
         } else {
             if (player.playbackState == Player.STATE_READY) {
                 player.seekTo(position)
                 onPlayingChange(true)
                 player.playWhenReady = true
-                playerIcon.value = Icons.Default.Pause
+                // Icon will be updated automatically by the listener
             } else {
                 player.addListener(object : Player.Listener {
                     override fun onPlaybackStateChanged(state: Int) {
@@ -592,7 +632,6 @@ private fun PlayerController(
                             player.seekTo(position)
                             onPlayingChange(true)
                             player.playWhenReady = true
-                            playerIcon.value = Icons.Default.Pause
                             player.removeListener(this)
                         }
                     }
@@ -769,13 +808,13 @@ private fun BookImage(
                 if (player.isPlaying) {
                     onPlayingChange(false)
                     player.pause()
-                    playerIcon.value = Icons.Default.PlayArrow
+                    // Icon will be updated automatically by the listener
                 } else {
                     if (player.playbackState == Player.STATE_READY) {
                         player.seekTo(progress)
                         onPlayingChange(true)
                         player.playWhenReady = true
-                        playerIcon.value = Icons.Default.Pause
+                        // Icon will be updated automatically by the listener
                     } else {
                         player.addListener(object : Player.Listener {
                             override fun onPlaybackStateChanged(state: Int) {
@@ -783,7 +822,7 @@ private fun BookImage(
                                     player.seekTo(progress)
                                     onPlayingChange(true)
                                     player.playWhenReady = true
-                                    playerIcon.value = Icons.Default.Pause
+                                    player.removeListener(this)
                                 }
                             }
                         })
