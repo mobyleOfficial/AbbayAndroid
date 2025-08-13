@@ -112,14 +112,14 @@ fun MediaController.playBook(
 
     if (playbackState == Player.STATE_READY) {
         isPlaying.value = true
-        playWhenReady = true
+        play()
     } else {
         addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
                 if (state == Player.STATE_READY) {
                     seekTo(progress)
                     isPlaying.value = true
-                    playWhenReady = true
+                    play()
                     removeListener(this)
                 }
             }
@@ -143,14 +143,14 @@ fun MediaController.playMultipleBooks(
 
     if (playbackState == Player.STATE_READY) {
         isPlaying.value = true
-        playWhenReady = true
+        play()
     } else {
         addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
                 if (state == Player.STATE_READY) {
                     seekTo(currentPosition, progress)
                     isPlaying.value = true
-                    playWhenReady = true
+                    play()
                     removeListener(this)
                 }
             }
@@ -174,8 +174,20 @@ fun MediaController.prepareBook(
         .setUri(uri)
         .build()
     addMediaItem(mediaItem)
-    seekTo(progress)
     prepare()
+
+    if (playbackState == Player.STATE_READY) {
+        seekTo(progress)
+    } else {
+        addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(state: Int) {
+                if (state == Player.STATE_READY) {
+                    seekTo(progress)
+                    removeListener(this)
+                }
+            }
+        })
+    }
 }
 fun Context.fileExists(id: String): Boolean {
     return try {

@@ -84,10 +84,12 @@ import com.mobyle.abbay.presentation.common.mappers.toBookSpeed
 import com.mobyle.abbay.presentation.common.theme.AbbayTextStyles
 import com.mobyle.abbay.presentation.utils.currentFraction
 import com.mobyle.abbay.presentation.utils.intermediateProgress
+import com.mobyle.abbay.presentation.utils.prepareBook
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
@@ -141,15 +143,19 @@ fun MiniPlayer(
                         } else {
                             playerIcon.value = Icons.Default.PlayArrow
                         }
+
+                        onPlayingChange(player.isPlaying)
                     }
                     Player.STATE_BUFFERING -> {
                         // Keep current icon during buffering
                     }
                     Player.STATE_ENDED -> {
                         playerIcon.value = Icons.Default.PlayArrow
+                        onPlayingChange(false)
                     }
                     Player.STATE_IDLE -> {
                         playerIcon.value = Icons.Default.PlayArrow
+                        onPlayingChange(false)
                     }
                 }
             }
@@ -161,6 +167,8 @@ fun MiniPlayer(
                     } else {
                         Icons.Default.PlayArrow
                     }
+
+                    onPlayingChange(isPlaying)
                 }
             }
         }
@@ -609,6 +617,7 @@ private fun BookFilesList(
 
 @Composable
 private fun PlayerController(
+    id: String,
     player: MediaController,
     position: Long,
     playerIcon: MutableState<ImageVector>,
@@ -618,20 +627,21 @@ private fun PlayerController(
         if (player.isPlaying) {
             onPlayingChange(false)
             player.pause()
-            // Icon will be updated automatically by the listener
         } else {
             if (player.playbackState == Player.STATE_READY) {
                 player.seekTo(position)
                 onPlayingChange(true)
-                player.playWhenReady = true
-                // Icon will be updated automatically by the listener
+                player.play()
             } else {
+                if(!player.playWhenReady) {
+                    player.prepareBook(id, position, MutableStateFlow(true))
+                }
                 player.addListener(object : Player.Listener {
                     override fun onPlaybackStateChanged(state: Int) {
                         if (state == Player.STATE_READY) {
                             player.seekTo(position)
                             onPlayingChange(true)
-                            player.playWhenReady = true
+                            player.play()
                             player.removeListener(this)
                         }
                     }
@@ -770,6 +780,7 @@ private fun MiniPlayerContent(
             )
         } else {
             PlayerController(
+                id = book.id,
                 player = player,
                 onPlayingChange = onPlayingChange,
                 position = progress,
@@ -808,20 +819,22 @@ private fun BookImage(
                 if (player.isPlaying) {
                     onPlayingChange(false)
                     player.pause()
-                    // Icon will be updated automatically by the listener
                 } else {
                     if (player.playbackState == Player.STATE_READY) {
                         player.seekTo(progress)
                         onPlayingChange(true)
-                        player.playWhenReady = true
-                        // Icon will be updated automatically by the listener
+                        player.play()
                     } else {
+                        if(!player.playWhenReady) {
+                            player.prepareBook(book.id, progress, MutableStateFlow(true))
+                        }
+
                         player.addListener(object : Player.Listener {
                             override fun onPlaybackStateChanged(state: Int) {
                                 if (state == Player.STATE_READY) {
                                     player.seekTo(progress)
                                     onPlayingChange(true)
-                                    player.playWhenReady = true
+                                    player.play()
                                     player.removeListener(this)
                                 }
                             }
@@ -920,6 +933,7 @@ private fun PlayerControls(
                 Icon(Icons.Default.Replay10, contentDescription = "", tint = Color.White)
             }
             PlayerController(
+                id = book.id,
                 player = player,
                 onPlayingChange = onPlayingChange,
                 position = progress,

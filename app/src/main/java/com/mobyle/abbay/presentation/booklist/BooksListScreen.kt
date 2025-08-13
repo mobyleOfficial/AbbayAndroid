@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,6 +27,8 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -240,10 +243,6 @@ fun BooksListScreen(
             }
 
         }
-    }
-
-    LaunchedEffect(Unit, player.isPlaying) {
-        viewModel.isPlaying.value = player.isPlaying
     }
 
     LaunchedEffectAndCollect(viewModel.isPlaying) {
