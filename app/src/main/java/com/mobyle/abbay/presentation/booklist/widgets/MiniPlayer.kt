@@ -569,7 +569,6 @@ private fun BookFilesList(
 
 @Composable
 private fun PlayerController(
-    id: String,
     player: MediaController,
     position: Long,
     playerIcon: MutableState<ImageVector>,
@@ -735,7 +734,6 @@ private fun MiniPlayerContent(
             )
         } else {
             PlayerController(
-                id = book.id,
                 player = player,
                 onPlayingChange = onPlayingChange,
                 position = progress,
@@ -904,7 +902,6 @@ private fun PlayerControls(
                 Icon(Icons.Default.Replay10, contentDescription = "", tint = Color.White)
             }
             PlayerController(
-                id = book.id,
                 player = player,
                 onPlayingChange = onPlayingChange,
                 position = progress,
