@@ -73,6 +73,7 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ExperimentalMotionApi
 import androidx.constraintlayout.compose.MotionLayout
 import androidx.constraintlayout.compose.MotionScene
+import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -83,13 +84,10 @@ import com.mobyle.abbay.presentation.common.mappers.toBookSpeed
 import com.mobyle.abbay.presentation.common.theme.AbbayTextStyles
 import com.mobyle.abbay.presentation.utils.currentFraction
 import com.mobyle.abbay.presentation.utils.intermediateProgress
-import com.mobyle.abbay.presentation.utils.prepareBook
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
@@ -585,15 +583,24 @@ private fun PlayerController(
                 player.pause()
                 playerIcon.value = Icons.Default.PlayArrow
             } else {
-                delay(DELAY)
-                if (!player.playWhenReady) {
-                    player.prepareBook(id, position, MutableStateFlow(true))
+                if (player.playbackState == Player.STATE_READY) {
+                    player.seekTo(position)
+                    onPlayingChange(true)
+                    player.playWhenReady = true
+                    playerIcon.value = Icons.Default.Pause
+                } else {
+                    player.addListener(object : Player.Listener {
+                        override fun onPlaybackStateChanged(state: Int) {
+                            if (state == Player.STATE_READY) {
+                                player.seekTo(position)
+                                onPlayingChange(true)
+                                player.playWhenReady = true
+                                playerIcon.value = Icons.Default.Pause
+                                player.removeListener(this)
+                            }
+                        }
+                    })
                 }
-
-                player.seekTo(position)
-                onPlayingChange(true)
-                player.playWhenReady = true
-                playerIcon.value = Icons.Default.Pause
             }
         }
     }) {
@@ -772,13 +779,23 @@ private fun BookImage(
                         player.pause()
                         playerIcon.value = Icons.Default.PlayArrow
                     } else {
-                        delay(DELAY)
-                        if (!player.playWhenReady) {
-                            player.prepareBook(book.id, progress, MutableStateFlow(true))
+                        if (player.playbackState == Player.STATE_READY) {
+                            player.seekTo(progress)
+                            onPlayingChange(true)
+                            player.playWhenReady = true
+                            playerIcon.value = Icons.Default.Pause
+                        } else {
+                            player.addListener(object : Player.Listener {
+                                override fun onPlaybackStateChanged(state: Int) {
+                                    if (state == Player.STATE_READY) {
+                                        player.seekTo(progress)
+                                        onPlayingChange(true)
+                                        player.playWhenReady = true
+                                        playerIcon.value = Icons.Default.Pause
+                                    }
+                                }
+                            })
                         }
-                        player.playWhenReady = true
-                        onPlayingChange(true)
-                        playerIcon.value = Icons.Default.Pause
                     }
                 }
 
@@ -791,6 +808,19 @@ private fun BookImage(
         }
     }
 }
+
+//player.addListener(object : Player.Listener {
+//    override fun onPlaybackStateChanged(state: Int) {
+//        if (state == Player.STATE_READY) {
+//            player.seekTo(progress)
+//            player.play()
+//            player.playWhenReady
+//            onPlayingChange(true)
+//            playerIcon.value = Icons.Default.Pause
+//            player.removeListener(this)
+//        }
+//    }
+//})
 
 @Composable
 private fun PlayerControls(

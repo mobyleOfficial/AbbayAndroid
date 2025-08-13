@@ -17,6 +17,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import com.model.Book
@@ -108,8 +109,22 @@ fun MediaController.playBook(
         progress = progress,
         isPlaying = isPlaying
     )
-    isPlaying.value = true
-    playWhenReady = true
+
+    if (playbackState == Player.STATE_READY) {
+        isPlaying.value = true
+        playWhenReady = true
+    } else {
+        addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(state: Int) {
+                if (state == Player.STATE_READY) {
+                    seekTo(progress)
+                    isPlaying.value = true
+                    playWhenReady = true
+                    removeListener(this)
+                }
+            }
+        })
+    }
 }
 
 @androidx.annotation.OptIn(UnstableApi::class)
@@ -125,8 +140,22 @@ fun MediaController.playMultipleBooks(
         progress = progress,
         isPlaying = isPlaying
     )
-    isPlaying.value = true
-    playWhenReady = true
+
+    if (playbackState == Player.STATE_READY) {
+        isPlaying.value = true
+        playWhenReady = true
+    } else {
+        addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(state: Int) {
+                if (state == Player.STATE_READY) {
+                    seekTo(currentPosition, progress)
+                    isPlaying.value = true
+                    playWhenReady = true
+                    removeListener(this)
+                }
+            }
+        })
+    }
 }
 
 @androidx.annotation.OptIn(UnstableApi::class)
