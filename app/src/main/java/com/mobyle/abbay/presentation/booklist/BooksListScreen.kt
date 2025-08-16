@@ -429,43 +429,52 @@ fun BooksListScreen(
                         is BookListSuccess -> {
                             val showReloadGuide by viewModel.showReloadGuide.collectAsState()
                             val bookList = state.audiobookList
-
-                            if (selectedBook == null) {
-                                val id = viewModel.getCurrentSelectedBook().orEmpty()
-
-                                bookList.firstOrNull { book ->
-                                    book.id == id && !book.hasError
-                                }?.let { book ->
-                                    viewModel.setCurrentProgress(
-                                        id = book.id,
-                                        progress = book.progress,
-                                        currentPosition = book.getBookPosition()
-                                    )
-
-                                    viewModel.selectBook(book, book.getBookPosition())
-
-                                    if (!player.isPlaying) {
-                                        if (book is MultipleBooks) {
-                                            player.prepareMultipleBooks(
-                                                currentPosition = book.currentBookPosition,
-                                                idList = book.bookFileList.map { it.id },
-                                                progress = book.progress,
-                                                isPlaying = viewModel.isPlaying
-                                            )
-                                        } else {
-                                            player.prepareBook(
-                                                id = id,
-                                                progress = book.progress,
-                                                isPlaying = viewModel.isPlaying
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
                             val bookToDelete = remember { mutableStateOf<Book?>(null) }
                             val showDeleteDialog = remember {
                                 mutableStateOf(false)
+                            }
+
+                            LaunchedEffect(selectedBook?.id) {
+                                viewModel.isPlaying.value = player.isPlaying
+
+                                if (selectedBook != null) {
+                                    viewModel.setCurrentProgress(
+                                        id = selectedBook!!.id,
+                                        progress = selectedBook!!.progress,
+                                        currentPosition = selectedBook.getBookPosition()
+                                    )
+                                } else {
+                                    val id = viewModel.getCurrentSelectedBook().orEmpty()
+
+                                    bookList.firstOrNull { book ->
+                                        book.id == id && !book.hasError
+                                    }?.let { book ->
+                                        viewModel.selectBook(book, book.getBookPosition())
+
+                                        viewModel.setCurrentProgress(
+                                            id = book.id,
+                                            progress = book.progress,
+                                            currentPosition = book.getBookPosition()
+                                        )
+
+                                        if (!player.isPlaying) {
+                                            if (book is MultipleBooks) {
+                                                player.prepareMultipleBooks(
+                                                    currentPosition = book.currentBookPosition,
+                                                    idList = book.bookFileList.map { it.id },
+                                                    progress = book.progress,
+                                                    isPlaying = viewModel.isPlaying
+                                                )
+                                            } else {
+                                                player.prepareBook(
+                                                    id = id,
+                                                    progress = book.progress,
+                                                    isPlaying = viewModel.isPlaying
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                             }
 
                             Column {
