@@ -2,6 +2,7 @@ package com.mobyle.abbay.data.datasource.local.books
 
 import com.mobyle.abbay.data.model.BookFileEntity
 import com.mobyle.abbay.data.model.MultipleBooksEntity
+import com.model.Book
 import kotlinx.coroutines.flow.Flow
 
 interface BooksLocalDataSource {
@@ -9,13 +10,12 @@ interface BooksLocalDataSource {
 
     fun observeBookFilesList(): Flow<List<BookFileEntity>>
 
-    suspend fun getBookFilesList(): List<BookFileEntity>
+    suspend fun getBooksList(): List<Book>
 
-    suspend fun addBookFileList(filesList: List<BookFileEntity>)
-
-    suspend fun getMultipleBooksList(): List<MultipleBooksEntity>
-
-    suspend fun addMultipleBooksList(booksList: List<MultipleBooksEntity>)
+    suspend fun upsertBooksList(
+        singleFileBooksList: List<BookFileEntity>,
+        multipleBooksList: List<MultipleBooksEntity>
+    )
 
     suspend fun deleteBook(id: String)
 
@@ -31,7 +31,7 @@ interface BooksLocalDataSource {
 
     fun getBooksFolder(): String?
 
-    fun hasShownReloadGuide() : Boolean
+    fun hasShownReloadGuide(): Boolean
 
     fun setReloadGuideAsShown()
 

@@ -79,19 +79,23 @@ class BooksListViewModel @Inject constructor(
             observeBooksList(), hasPermissions
         ) { domainBookList, hasPermissions ->
             val currentIds = booksList.map { it.id }.toSet()
-            val newBooks = domainBookList.filter { book ->
-                !currentIds.contains(book.id)
-            }
-
-            if (domainBookList.isEmpty()) {
-                booksList.clear()
-            }
+            val newBooks = domainBookList.map { book ->
+                if (currentIds.contains(book.id)) {
+                    booksList.firstOrNull { it.id == book.id }?.let {
+                        it
+                    } ?: run {
+                        book
+                    }
+                } else {
+                    book
+                }
+            }.distinctBy { it.id }
 
             val state = if (hasPermissions) {
+                booksList.clear()
+                booksList.addAll(newBooks)
+
                 if (newBooks.isNotEmpty()) {
-                    booksList.addAll(newBooks)
-                    BooksListUiState.BookListSuccess(booksList.toList())
-                } else if (booksList.isNotEmpty()) {
                     BooksListUiState.BookListSuccess(booksList.toList())
                 } else {
                     BooksListUiState.NoBookSelected
@@ -263,17 +267,20 @@ class BooksListViewModel @Inject constructor(
 
     fun checkForNewBooks(newBooksList: List<Book>) {
         val currentIds = booksList.map { it.id }.toSet()
-        val newBooks = newBooksList.filter { book ->
-            !currentIds.contains(book.id)
-        }
+        val newBooks = newBooksList.map { book ->
+            if (currentIds.contains(book.id)) {
+                booksList.firstOrNull { it.id == book.id }?.let {
+                    it
+                } ?: run {
+                    book
+                }
+            } else {
+                book
+            }
+        }.distinctBy { it.id }
 
-        if (newBooks.isNotEmpty()) {
-            updateBookList(newBooks)
-        } else {
-            _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
-            _hasSelectedFolder.value = true
-        }
-
+        updateBookList(newBooks)
+        _hasSelectedFolder.value = true
         _isRefreshing.value = false
     }
 
