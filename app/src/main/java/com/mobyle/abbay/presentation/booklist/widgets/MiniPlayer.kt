@@ -693,7 +693,7 @@ private fun BooksTopBar(
                     text = currentSpeed.value.text, color = Color.White
                 )
                 Icon(
-                    Icons.Default.Speed, contentDescription = "Change speed", tint = Color.White
+                    Icons.Default.Speed, contentDescription = stringResource(R.string.change_speed_content_description), tint = Color.White
                 )
             }
         }

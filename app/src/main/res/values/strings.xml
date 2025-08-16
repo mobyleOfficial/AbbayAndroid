@@ -63,5 +63,9 @@
     
     <!-- Content descriptions -->
     <string name="empty_content_description"></string>
+    
+    <!-- Additional strings found in code -->
+    <string name="delete_content_description_short">Delete</string>
+    <string name="change_speed_content_description">Change speed</string>
 
 </resources>

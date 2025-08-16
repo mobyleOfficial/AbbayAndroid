@@ -513,7 +513,7 @@ fun BooksListScreen(
                                                     ) {
                                                         Icon(
                                                             imageVector = Icons.Default.Delete,
-                                                            contentDescription = "Delete",
+                                                            contentDescription = stringResource(R.string.delete_content_description_short),
                                                             tint = Color.White
                                                         )
                                                     }
@@ -735,7 +735,7 @@ fun BooksListScreen(
                                         ) {
                                             Text(
                                                 stringResource(R.string.ok),
-                                                color = MaterialTheme.colorScheme.primary
+                                                color = Color.White
                                             )
                                         }
                                     }
