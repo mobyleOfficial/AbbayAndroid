@@ -8,6 +8,7 @@ data class MultipleBooks(
     override val duration: Long,
     override val speed: Float,
     override val hasError: Boolean = false,
+    override val type: BookType,
     val bookFileList: List<BookFile>,
     val currentBookPosition: Int = 0
 ) : Book

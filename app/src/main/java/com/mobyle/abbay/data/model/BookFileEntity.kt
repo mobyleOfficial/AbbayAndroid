@@ -14,5 +14,6 @@ class BookFileEntity(
     val progress: Long,
     val duration: Long,
     val speed: Float,
-    val hasError: Boolean
+    val hasError: Boolean,
+    val type: BookTypeEntity
 )

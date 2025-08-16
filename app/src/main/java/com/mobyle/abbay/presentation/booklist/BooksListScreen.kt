@@ -94,6 +94,7 @@ import com.mobyle.abbay.presentation.utils.prepareMultipleBooks
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
 import com.model.BookFile
+import com.model.BookType
 import com.model.MultipleBooks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -203,10 +204,14 @@ fun BooksListScreen(
                         }
                     }
 
-                    metadataRetriever.toBook(context, id.orEmpty()).getThumb(context)
+                    metadataRetriever.toBook(
+                        context = context,
+                        id = id.orEmpty(),
+                        type = BookType.FILE
+                    ).getThumb(context)
                 }
 
-                viewModel.updateBookList(newBookList)
+                viewModel.updateBookList(newBookList + viewModel.booksList)
             }
         }
     }
@@ -219,7 +224,10 @@ fun BooksListScreen(
             viewModel.saveBookFolderPath(it.toString())
             asyncScope.launch(Dispatchers.IO) {
                 delay(500)
-                it.getBooks(context)?.let {
+                it.getBooks(
+                    context = context,
+                    type = BookType.FOLDER
+                )?.let {
                     val booksWithThumbnails = it.mapNotNull { book ->
                         book.getThumb(context)
                     }
@@ -262,6 +270,7 @@ fun BooksListScreen(
         player.addListener(object : Player.Listener {
             override fun onPlayerError(error: PlaybackException) {
                 selectedBook?.let { book ->
+                    player.stop()
                     viewModel.markBookAsError(book)
                 }
             }
@@ -380,7 +389,10 @@ fun BooksListScreen(
 
                                                 viewModel.setRefreshingLoading()
                                                 delay(500)
-                                                uri.getBooks(context)?.let { books ->
+                                                uri.getBooks(
+                                                    context = context,
+                                                    type = BookType.FOLDER
+                                                )?.let { books ->
                                                     // Generate thumbnails for all books before checking for new ones
                                                     val booksWithThumbnails =
                                                         books.mapNotNull { book ->
@@ -680,6 +692,15 @@ fun BooksListScreen(
                             }
 
                             if (showErrorDialog.value) {
+                                LaunchedEffect(Unit) {
+                                    player.stop()
+                                    selectedBook?.let {
+                                        if (selectedBook?.hasError == false) {
+                                            viewModel.markBookAsError(it)
+                                        }
+                                    }
+                                }
+
                                 AlertDialog(
                                     onDismissRequest = {
                                         showErrorDialog.value = false

@@ -7,6 +7,7 @@ import com.mobyle.abbay.infra.common.BaseViewModel
 import com.mobyle.abbay.presentation.utils.permissions.CheckPermissionsProvider
 import com.model.Book
 import com.model.BookFile
+import com.model.BookType
 import com.model.MultipleBooks
 import com.usecase.DeleteBook
 import com.usecase.GetBooksFolderPath
@@ -93,7 +94,7 @@ class BooksListViewModel @Inject constructor(
 
             val state = if (hasPermissions) {
                 booksList.clear()
-                booksList.addAll(newBooks)
+                booksList.addAll(newBooks.sortedBy { it.name })
 
                 if (newBooks.isNotEmpty()) {
                     BooksListUiState.BookListSuccess(booksList.toList())
@@ -262,6 +263,8 @@ class BooksListViewModel @Inject constructor(
                 else -> book
             }
             booksList[index] = updatedBook
+
+            _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
         }
     }
 
@@ -279,7 +282,9 @@ class BooksListViewModel @Inject constructor(
             }
         }.distinctBy { it.id }
 
-        updateBookList(newBooks)
+        val individualBooks = booksList.filter { it.type == BookType.FILE }
+
+        updateBookList(newBooks + individualBooks)
         _hasSelectedFolder.value = true
         _isRefreshing.value = false
     }
