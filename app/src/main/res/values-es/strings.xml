@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Abbay</string>
+    <string name="book_list_top_bar_title">Tus Audiolibros</string>
+    <string name="book_list_top_bar_folder_button_description">Agregar carpeta</string>
+    <string name="book_list_top_bar_file_button_description">Agregar archivo</string>
+    <string name="no_book_selected_primary_button_title">Agregar un Archivo</string>
+    <string name="no_book_selected_secondary_button_title">Agregar una Carpeta</string>
+    <string name="no_book_selected_or">o</string>
+    <string name="no_permission_error_title">Necesitamos permisos para acceder a tus libros</string>
+    <string name="no_permission_error_button_text">Conceder Permisos</string>
+    
+    <!-- Dialog strings -->
+    <string name="cancel">Cancelar</string>
+    <string name="ok">OK</string>
+    <string name="delete">Eliminar</string>
+    <string name="dismiss">Descartar</string>
+    <string name="got_it">Entendido</string>
+    <string name="book_ended_dialog_title">Libro Finalizado</string>
+    <string name="book_ended_dialog_body">El audiolibro ha terminado de reproducirse.</string>
+    
+    <!-- Settings strings -->
+    <string name="settings">Configuración</string>
+    <string name="play_when_app_closed">Reproducir cuando la app esté cerrada</string>
+    <string name="open_player_in_startup">Mantener libro abierto al abrir la app</string>
+    <string name="delete_all_books">Eliminar todos los libros</string>
+    <string name="delete_all_books_dialog_title">Eliminar Todos los Libros</string>
+    <string name="delete_all_books_dialog_body">¿Estás seguro de que quieres eliminar todos los libros? Esta acción no se puede deshacer.</string>
+    
+    <!-- Book list strings -->
+    <string name="refresh_content_description">Actualizar</string>
+    <string name="add_content_description">Agregar</string>
+    <string name="add_folder">Agregar Carpeta</string>
+    <string name="add_file">Agregar Archivo</string>
+    <string name="delete_content_description">Eliminar</string>
+    <string name="delete_book_dialog_title">Eliminar Libro</string>
+    <string name="delete_book_dialog_body">¿Estás seguro de que quieres eliminar este libro?</string>
+    <string name="reload_books_dialog_title">Actualizar Libros</string>
+    <string name="reload_books_dialog_body">Esto actualizará tu lista de libros. Los libros agregados individualmente no se verán afectados.</string>
+    <string name="file_not_found_title">Archivo No Encontrado</string>
+    <string name="file_not_found_body">No se pudo encontrar el archivo de este libro.</string>
+    <string name="file_might_be_moved">El archivo puede haber sido movido o eliminado.</string>
+    
+    <!-- Player strings -->
+    <string name="unknown_file">Archivo Desconocido</string>
+    <string name="show_chapters">Mostrar Capítulos</string>
+    <string name="hide_chapters">Ocultar Capítulos</string>
+    <string name="change_speed">Cambiar Velocidad</string>
+    <string name="screen_locked">Pantalla Bloqueada</string>
+    <string name="screen_locked_message">Mantén presionado en cualquier lugar de la pantalla para desbloquear</string>
+    <string name="screen_locked_subtitle">Esto evita toques accidentales durante la narración</string>
+    
+    <!-- Book item strings -->
+    <string name="error_playing_file">Error al Reproducir Archivo</string>
+    <string name="book_icon">Icono del Libro</string>
+    <string name="clock_icon">Icono del Reloj</string>
+    
+    <!-- Speed options -->
+    <string name="speed_half">0.5x</string>
+    <string name="speed_normal">1.0x</string>
+    <string name="speed_one_twenty_five">1.25x</string>
+    <string name="speed_one_fifty">1.5x</string>
+    <string name="speed_double">2.0x</string>
+    
+    <!-- Content descriptions -->
+    <string name="empty_content_description"></string>
+    
+    <!-- Additional strings found in code -->
+    <string name="delete_content_description_short">Eliminar</string>
+    <string name="change_speed_content_description">Cambiar velocidad</string>
+
+</resources>
