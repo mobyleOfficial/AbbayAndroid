@@ -7,6 +7,7 @@ import com.mobyle.abbay.infra.common.BaseViewModel
 import com.mobyle.abbay.presentation.utils.permissions.CheckPermissionsProvider
 import com.model.Book
 import com.model.BookFile
+import com.model.BookType
 import com.model.MultipleBooks
 import com.usecase.DeleteBook
 import com.usecase.GetBooksFolderPath
@@ -59,6 +60,8 @@ class BooksListViewModel @Inject constructor(
 
     var shouldOpenPlayerInStartup = false
 
+    var isScreenLocked = MutableStateFlow(false)
+
     private val _hasSelectedFolder = MutableStateFlow(getBooksFolderPath() != null)
     val hasSelectedFolder: StateFlow<Boolean> get() = _hasSelectedFolder
 
@@ -79,19 +82,23 @@ class BooksListViewModel @Inject constructor(
             observeBooksList(), hasPermissions
         ) { domainBookList, hasPermissions ->
             val currentIds = booksList.map { it.id }.toSet()
-            val newBooks = domainBookList.filter { book ->
-                !currentIds.contains(book.id)
-            }
-
-            if (domainBookList.isEmpty()) {
-                booksList.clear()
-            }
+            val newBooks = domainBookList.map { book ->
+                if (currentIds.contains(book.id)) {
+                    booksList.firstOrNull { it.id == book.id }?.let {
+                        it
+                    } ?: run {
+                        book
+                    }
+                } else {
+                    book
+                }
+            }.distinctBy { it.id }
 
             val state = if (hasPermissions) {
+                booksList.clear()
+                booksList.addAll(newBooks.sortedBy { it.name })
+
                 if (newBooks.isNotEmpty()) {
-                    booksList.addAll(newBooks)
-                    BooksListUiState.BookListSuccess(booksList.toList())
-                } else if (booksList.isNotEmpty()) {
                     BooksListUiState.BookListSuccess(booksList.toList())
                 } else {
                     BooksListUiState.NoBookSelected
@@ -125,6 +132,15 @@ class BooksListViewModel @Inject constructor(
     fun addAllBookTypes(filesList: List<Book>) = launch {
         upsertBookList(filesList)
         _hasSelectedFolder.value = true
+    }
+
+    fun addBooksFromNewFolder(filesList: List<Book>) {
+        val newBooks = filesList.distinctBy { it.id }
+        val individualBooks = booksList.filter { it.type == BookType.FILE }
+
+        updateBookList(newBooks + individualBooks)
+        _hasSelectedFolder.value = true
+        _isRefreshing.value = false
     }
 
     fun setCurrentProgress(
@@ -258,22 +274,29 @@ class BooksListViewModel @Inject constructor(
                 else -> book
             }
             booksList[index] = updatedBook
+
+            _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
         }
     }
 
     fun checkForNewBooks(newBooksList: List<Book>) {
         val currentIds = booksList.map { it.id }.toSet()
-        val newBooks = newBooksList.filter { book ->
-            !currentIds.contains(book.id)
-        }
+        val newBooks = newBooksList.map { book ->
+            if (currentIds.contains(book.id)) {
+                booksList.firstOrNull { it.id == book.id }?.let {
+                    it
+                } ?: run {
+                    book
+                }
+            } else {
+                book
+            }
+        }.distinctBy { it.id }
 
-        if (newBooks.isNotEmpty()) {
-            updateBookList(newBooks)
-        } else {
-            _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
-            _hasSelectedFolder.value = true
-        }
+        val individualBooks = booksList.filter { it.type == BookType.FILE }
 
+        updateBookList(newBooks + individualBooks)
+        _hasSelectedFolder.value = true
         _isRefreshing.value = false
     }
 
@@ -294,6 +317,10 @@ class BooksListViewModel @Inject constructor(
 
     fun dismissBookEndedDialog() {
         _showBookEndedDialog.value = false
+    }
+
+    fun updateIsScreenLocked(isDisabled: Boolean) {
+        isScreenLocked.value = isDisabled
     }
 
     sealed class BooksListUiState {

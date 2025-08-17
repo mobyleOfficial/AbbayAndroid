@@ -1,8 +1,10 @@
 package com.mobyle.abbay.data.mappers
 
 import com.mobyle.abbay.data.model.BookFileEntity
+import com.mobyle.abbay.data.model.BookTypeEntity
 import com.mobyle.abbay.data.model.MultipleBooksEntity
 import com.model.BookFile
+import com.model.BookType
 import com.model.MultipleBooks
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -20,7 +22,8 @@ fun MultipleBooks.toEntity(): MultipleBooksEntity = MultipleBooksEntity(
     duration = duration,
     currentBookPosition = currentBookPosition,
     speed = speed,
-    hasError = hasError
+    hasError = hasError,
+    type = type.toEntity()
 )
 
 fun BookFile.toEntity() = BookFileEntity(
@@ -31,7 +34,13 @@ fun BookFile.toEntity() = BookFileEntity(
     progress = progress,
     duration = duration,
     speed = speed,
-    hasError = hasError
+    hasError = hasError,
+    type = type.toEntity()
 )
+
+private fun BookType.toEntity(): BookTypeEntity = when (this) {
+    BookType.FILE -> BookTypeEntity.FILE
+    else -> BookTypeEntity.FOLDER
+}
 
 private fun BookFileEntity.toJson() = Json.encodeToString(this)

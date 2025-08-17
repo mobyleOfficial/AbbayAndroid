@@ -15,6 +15,7 @@ import com.mobyle.abbay.presentation.utils.getFileName
 import com.mobyle.abbay.presentation.utils.getId
 import com.model.Book
 import com.model.BookFile
+import com.model.BookType
 import com.model.MultipleBooks
 import java.io.File
 
@@ -48,7 +49,7 @@ fun Uri.resolveContentUri(context: Context): String? {
     return File(base, split[1]).canonicalPath
 }
 
-fun Uri.getBooks(context: Context): List<Book>? {
+fun Uri.getBooks(context: Context, type: BookType): List<Book>? {
     return this.resolveContentUri(context)?.let { folderPath ->
         val contentResolver: ContentResolver = context.contentResolver
         val bookUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
@@ -78,7 +79,8 @@ fun Uri.getBooks(context: Context): List<Book>? {
                                 thumbnail = thumbnail,
                                 progress = progress,
                                 duration = duration,
-                                speed = 1f
+                                speed = 1f,
+                                type = type
                             )
 
                             filesHashMap[fileFolderPath]?.let {

@@ -34,23 +34,17 @@ class BooksRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getBookList(): List<Book> {
-        val bookFilesList = localDataSource.getBookFilesList().map {
-            it.toDomain()
-        }
-
-        val booksFolderList = localDataSource.getMultipleBooksList().map {
-            it.toDomain()
-        }
-
-        return booksFolderList + bookFilesList
+        return localDataSource.getBooksList()
     }
 
     override suspend fun upsertBookList(booksList: List<Book>) {
         val multipleBooksList = booksList.filterIsInstance<MultipleBooks>().map { it.toEntity() }
         val bookFilesList = booksList.filterIsInstance<BookFile>().map { it.toEntity() }
 
-        localDataSource.addBookFileList(bookFilesList)
-        localDataSource.addMultipleBooksList(multipleBooksList)
+        localDataSource.upsertBooksList(
+            singleFileBooksList = bookFilesList,
+            multipleBooksList = multipleBooksList
+        )
     }
 
     override suspend fun deleteBook(book: Book) {

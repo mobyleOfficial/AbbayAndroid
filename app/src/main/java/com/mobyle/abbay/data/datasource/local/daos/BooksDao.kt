@@ -4,8 +4,11 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
+import com.mobyle.abbay.data.mappers.toDomain
 import com.mobyle.abbay.data.model.BookFileEntity
 import com.mobyle.abbay.data.model.MultipleBooksEntity
+import com.model.Book
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -45,4 +48,30 @@ interface BooksDao {
 
     @Query("UPDATE MultipleBooksEntity SET progress = :progress, currentBookPosition = :currentPosition WHERE id = :id")
     suspend fun updateMultipleBookProgress(id: String, currentPosition: Int, progress: Long)
+
+    @Transaction
+    suspend fun deleteAllBooks(
+    ) {
+        deleteAllBookFiles()
+        deleteAllMultipleBooks()
+    }
+
+    @Transaction
+    suspend fun upsertBooksList(
+        multipleBooksList: List<MultipleBooksEntity>,
+        singleFileBooksList: List<BookFileEntity>
+    ) {
+        deleteAllBooks()
+        insertMultipleBooksList(multipleBooksList)
+        insertBookFilesList(singleFileBooksList)
+    }
+
+    @Transaction
+    suspend fun getBooksList(): List<Book> {
+        return getBookFilesList().map {
+            it.toDomain()
+        } + getMultipleBooksList().map {
+            it.toDomain()
+        }
+    }
 }

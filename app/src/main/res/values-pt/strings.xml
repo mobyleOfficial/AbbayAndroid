@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Abbay</string>
+    <string name="book_list_top_bar_title">Seus Audiobooks</string>
+    <string name="book_list_top_bar_folder_button_description">Adicionar pasta</string>
+    <string name="book_list_top_bar_file_button_description">Adicionar arquivo</string>
+    <string name="no_book_selected_primary_button_title">Adicionar um Arquivo</string>
+    <string name="no_book_selected_secondary_button_title">Adicionar uma Pasta</string>
+    <string name="no_book_selected_or">ou</string>
+    <string name="no_permission_error_title">Precisamos de permissões para acessar seus livros</string>
+    <string name="no_permission_error_button_text">Conceder Permissões</string>
+    
+    <!-- Dialog strings -->
+    <string name="cancel">Cancelar</string>
+    <string name="ok">OK</string>
+    <string name="delete">Excluir</string>
+    <string name="dismiss">Descartar</string>
+    <string name="got_it">Entendi</string>
+    <string name="book_ended_dialog_title">Livro Finalizado</string>
+    <string name="book_ended_dialog_body">O audiobook terminou de tocar.</string>
+    
+    <!-- Settings strings -->
+    <string name="settings">Configurações</string>
+    <string name="play_when_app_closed">Tocar quando o app estiver fechado</string>
+    <string name="open_player_in_startup">Manter livro aberto ao abrir o app</string>
+    <string name="change_folder">Mudar pasta de livros</string>
+    <string name="delete_all_books">Excluir todos os livros</string>
+    <string name="delete_all_books_dialog_title">Excluir Todos os Livros</string>
+    <string name="delete_all_books_dialog_body">Tem certeza de que deseja excluir todos os livros? Esta ação não pode ser desfeita.</string>
+    
+    <!-- Book list strings -->
+    <string name="refresh_content_description">Atualizar</string>
+    <string name="add_content_description">Adicionar</string>
+    <string name="add_folder">Adicionar Pasta</string>
+    <string name="add_file">Adicionar Arquivo</string>
+    <string name="delete_content_description">Excluir</string>
+    <string name="delete_book_dialog_title">Excluir Livro</string>
+    <string name="delete_book_dialog_body">Tem certeza de que deseja excluir este livro?</string>
+    <string name="reload_books_dialog_title">Atualizar Livros</string>
+    <string name="reload_books_dialog_body">Isso atualizará a sua lista de livros. Livros adicionados individualmente não serão afetados.</string>
+    <string name="file_not_found_title">Arquivo Não Encontrado</string>
+    <string name="file_not_found_body">O arquivo deste livro não pôde ser encontrado.</string>
+    <string name="file_might_be_moved">O arquivo pode ter sido movido ou excluído.</string>
+    
+    <!-- Player strings -->
+    <string name="unknown_file">Arquivo Desconhecido</string>
+    <string name="show_chapters">Mostrar Capítulos</string>
+    <string name="hide_chapters">Ocultar Capítulos</string>
+    <string name="change_speed">Alterar Velocidade</string>
+    <string name="screen_locked">Tela Bloqueada</string>
+    <string name="screen_locked_message">Mantenha pressionado em qualquer lugar da tela para desbloquear</string>
+    <string name="screen_locked_subtitle">Isso evita toques acidentais durante a narração</string>
+    
+    <!-- Book item strings -->
+    <string name="error_playing_file">Erro ao Reproduzir Arquivo</string>
+    <string name="book_icon">Ícone do Livro</string>
+    <string name="clock_icon">Ícone do Relógio</string>
+    
+    <!-- Speed options -->
+    <string name="speed_half">0.5x</string>
+    <string name="speed_normal">1.0x</string>
+    <string name="speed_one_twenty_five">1.25x</string>
+    <string name="speed_one_fifty">1.5x</string>
+    <string name="speed_double">2.0x</string>
+    
+    <!-- Content descriptions -->
+    <string name="empty_content_description"></string>
+    
+    <!-- Additional strings found in code -->
+    <string name="delete_content_description_short">Excluir</string>
+    <string name="change_speed_content_description">Alterar velocidade</string>
+
+</resources>

@@ -8,12 +8,17 @@ import android.net.Uri
 import androidx.core.net.toUri
 import com.mobyle.abbay.presentation.booklist.widgets.models.BookSpeed
 import com.model.BookFile
+import com.model.BookType
 import com.model.MultipleBooks
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
-fun MediaMetadataRetriever.toBook(context: Context, id: String): BookFile {
+fun MediaMetadataRetriever.toBook(
+    context: Context,
+    id: String,
+    type: BookType
+): BookFile {
     val fileName = extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
     val title = extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM)
     val duration = extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION) ?: "0L"
@@ -34,7 +39,8 @@ fun MediaMetadataRetriever.toBook(context: Context, id: String): BookFile {
         },
         progress = 0L,
         duration = duration.toLong(),
-        speed = 1f
+        speed = 1f,
+        type = type,
     )
 }
 
@@ -63,7 +69,8 @@ fun List<BookFile>.toMultipleBooks(): MultipleBooks? {
             progress = 0L,
             duration = this.sumOf { it.duration },
             currentBookPosition = 0,
-            speed = 1f
+            speed = 1f,
+            type = firstBook.type
         )
     }
 }
@@ -91,7 +98,7 @@ fun getImageUriFromBitmap(context: Context, bitmap: Bitmap, name: String): Uri {
 }
 
 fun Float.toBookSpeed(): BookSpeed {
-    return when(this) {
+    return when (this) {
         0.5f -> BookSpeed.Half
         1.25f -> BookSpeed.OnePointTwoFive
         1.5f -> BookSpeed.OnePointFive

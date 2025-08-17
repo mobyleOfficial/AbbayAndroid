@@ -15,5 +15,6 @@ data class MultipleBooksEntity(
     val duration: Long,
     val currentBookPosition: Int = 0,
     val speed: Float,
-    val hasError: Boolean
+    val hasError: Boolean,
+    val type: BookTypeEntity
 )

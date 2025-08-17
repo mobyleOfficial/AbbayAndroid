@@ -8,5 +8,5 @@ interface Book {
     val duration: Long
     val speed: Float
     val hasError: Boolean
+    val type: BookType
 }
-

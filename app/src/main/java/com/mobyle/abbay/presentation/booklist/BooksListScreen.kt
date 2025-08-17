@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Intent
 import android.media.MediaMetadataRetriever
 import android.net.Uri
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -27,8 +26,6 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -62,7 +59,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.getString
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.media3.common.PlaybackException
@@ -97,6 +93,7 @@ import com.mobyle.abbay.presentation.utils.prepareMultipleBooks
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
 import com.model.BookFile
+import com.model.BookType
 import com.model.MultipleBooks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -108,7 +105,7 @@ private const val AUTO_DENIAL_THRESHOLD = 300
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun BooksListScreen(
-    viewModel: BooksListViewModel = hiltViewModel(),
+    viewModel: BooksListViewModel,
     player: MediaController,
     navigateToSettings: () -> Unit,
     openAppSettings: () -> Unit,
@@ -128,9 +125,6 @@ fun BooksListScreen(
     var componentHeight by remember { mutableStateOf(0.dp) }
     val activity = LocalContext.current as Activity
     val permissionRequestAttemptTime = remember { mutableLongStateOf(0) }
-    val isGestureDisabled = remember {
-        mutableStateOf(true)
-    }
     val permissionState = rememberMultiplePermissionsState(
         permissions = viewModel.getPermissionsList(),
         onPermissionsResult = { permissions ->
@@ -145,7 +139,7 @@ fun BooksListScreen(
     val hasSelectedFolder by viewModel.hasSelectedFolder.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val hasBookEnded by viewModel.showBookEndedDialog.collectAsState()
-
+    val isScreenLocked by viewModel.isScreenLocked.collectAsState()
     LifecycleEventEffect(event = Lifecycle.Event.ON_CREATE) {
         viewModel.shouldOpenPlayerInStartup()
     }
@@ -206,10 +200,14 @@ fun BooksListScreen(
                         }
                     }
 
-                    metadataRetriever.toBook(context, id.orEmpty()).getThumb(context)
+                    metadataRetriever.toBook(
+                        context = context,
+                        id = id.orEmpty(),
+                        type = BookType.FILE
+                    ).getThumb(context)
                 }
 
-                viewModel.updateBookList(newBookList)
+                viewModel.updateBookList(newBookList + viewModel.booksList)
             }
         }
     }
@@ -222,7 +220,10 @@ fun BooksListScreen(
             viewModel.saveBookFolderPath(it.toString())
             asyncScope.launch(Dispatchers.IO) {
                 delay(500)
-                it.getBooks(context)?.let {
+                it.getBooks(
+                    context = context,
+                    type = BookType.FOLDER
+                )?.let {
                     val booksWithThumbnails = it.mapNotNull { book ->
                         book.getThumb(context)
                     }
@@ -235,13 +236,15 @@ fun BooksListScreen(
 
     // SideEffects
     BackHandler {
-        asyncScope.launch {
-            if (bottomSheetState.bottomSheetState.isCollapsed) {
-                activity.finishAffinity()
-            } else {
-                bottomSheetState.bottomSheetState.collapse()
-            }
+        if (!isScreenLocked) {
+            asyncScope.launch {
+                if (bottomSheetState.bottomSheetState.isCollapsed) {
+                    activity.finishAffinity()
+                } else {
+                    bottomSheetState.bottomSheetState.collapse()
+                }
 
+            }
         }
     }
 
@@ -265,6 +268,7 @@ fun BooksListScreen(
         player.addListener(object : Player.Listener {
             override fun onPlayerError(error: PlaybackException) {
                 selectedBook?.let { book ->
+                    player.stop()
                     viewModel.markBookAsError(book)
                 }
             }
@@ -279,9 +283,8 @@ fun BooksListScreen(
         if (selectedBook?.hasError == true) {
             showErrorDialog.value = true
             bottomSheetState.bottomSheetState.collapse()
+            viewModel.updateIsScreenLocked(false)
         }
-
-        isGestureDisabled.value = selectedBook?.hasError == false
     }
 
     BottomSheetScaffold(
@@ -296,6 +299,7 @@ fun BooksListScreen(
                     MiniPlayer(
                         player = player,
                         book = it,
+                        isScreenLocked = isScreenLocked,
                         scaffoldState = bottomSheetState,
                         progress = it.progress,
                         onPlayingChange = { isPlaying ->
@@ -318,9 +322,7 @@ fun BooksListScreen(
                                 )
                             }
                         },
-                        onDisableGesture = {
-                            isGestureDisabled.value = !it
-                        },
+                        onLockScreen = viewModel::updateIsScreenLocked,
                         updateBookSpeed = {
                             selectedBook?.let { book ->
                                 viewModel.updateBookSpeed(
@@ -340,7 +342,7 @@ fun BooksListScreen(
                 }
             }
         },
-        sheetGesturesEnabled = isGestureDisabled.value,
+        sheetGesturesEnabled = !isScreenLocked,
         sheetPeekHeight = if (hasBookSelected) 72.dp else 0.dp,
     ) {
         Box(
@@ -383,7 +385,10 @@ fun BooksListScreen(
 
                                                 viewModel.setRefreshingLoading()
                                                 delay(500)
-                                                uri.getBooks(context)?.let { books ->
+                                                uri.getBooks(
+                                                    context = context,
+                                                    type = BookType.FOLDER
+                                                )?.let { books ->
                                                     // Generate thumbnails for all books before checking for new ones
                                                     val booksWithThumbnails =
                                                         books.mapNotNull { book ->
@@ -513,7 +518,7 @@ fun BooksListScreen(
                                                     ) {
                                                         Icon(
                                                             imageVector = Icons.Default.Delete,
-                                                            contentDescription = "Delete",
+                                                            contentDescription = stringResource(R.string.delete_content_description_short),
                                                             tint = Color.White
                                                         )
                                                     }
@@ -683,6 +688,15 @@ fun BooksListScreen(
                             }
 
                             if (showErrorDialog.value) {
+                                LaunchedEffect(Unit) {
+                                    player.stop()
+                                    selectedBook?.let {
+                                        if (selectedBook?.hasError == false) {
+                                            viewModel.markBookAsError(it)
+                                        }
+                                    }
+                                }
+
                                 AlertDialog(
                                     onDismissRequest = {
                                         showErrorDialog.value = false
@@ -735,7 +749,7 @@ fun BooksListScreen(
                                         ) {
                                             Text(
                                                 stringResource(R.string.ok),
-                                                color = MaterialTheme.colorScheme.primary
+                                                color = Color.White
                                             )
                                         }
                                     }

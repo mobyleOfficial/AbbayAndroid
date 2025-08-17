@@ -23,6 +23,7 @@
     <string name="play_when_app_closed">Play when app is closed</string>
     <string name="open_player_in_startup">Open player on startup</string>
     <string name="delete_all_books">Delete all books</string>
+    <string name="change_folder">Change books folder</string>
     <string name="delete_all_books_dialog_title">Delete All Books</string>
     <string name="delete_all_books_dialog_body">Are you sure you want to delete all books? This action cannot be undone.</string>
     
@@ -63,5 +64,9 @@
     
     <!-- Content descriptions -->
     <string name="empty_content_description"></string>
+    
+    <!-- Additional strings found in code -->
+    <string name="delete_content_description_short">Delete</string>
+    <string name="change_speed_content_description">Change speed</string>
 
 </resources>
