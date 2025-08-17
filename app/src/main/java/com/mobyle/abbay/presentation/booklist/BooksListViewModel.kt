@@ -98,6 +98,10 @@ class BooksListViewModel @Inject constructor(
                 booksList.clear()
                 booksList.addAll(newBooks.sortedBy { it.name })
 
+                if (!booksList.map { it.id }.contains(selectedBook.value?.id)) {
+                    _selectedBook.value = null
+                }
+
                 if (newBooks.isNotEmpty()) {
                     BooksListUiState.BookListSuccess(booksList.toList())
                 } else {
@@ -200,7 +204,6 @@ class BooksListViewModel @Inject constructor(
         saveCurrentSelectedBookUC(book?.id, position)
         _selectedBook.tryEmit(book)
     }
-
 
     fun updateBookPosition(id: String, position: Int) {
         val index = booksList.indexOfFirst { it.id == id }

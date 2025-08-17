@@ -50,7 +50,10 @@ fun AbbayNavHost(
 
         modal(NavigationItem.Settings.route) {
             SettingsScreen(
-                booksViewModel = viewModel
+                booksViewModel = viewModel,
+                onStopPlayer = {
+                    player.stop()
+                }
             ) {
                 navController.popBackStack()
             }

@@ -279,7 +279,11 @@ fun BooksListScreen(
         viewModel.updateBookList()
     }
 
-    LaunchedEffect(selectedBook) {
+    LaunchedEffect(selectedBook?.id) {
+        if (selectedBook == null) {
+            player.stop()
+        }
+
         if (selectedBook?.hasError == true) {
             showErrorDialog.value = true
             bottomSheetState.bottomSheetState.collapse()

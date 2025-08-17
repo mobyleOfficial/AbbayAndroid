@@ -25,11 +25,13 @@ import com.model.BookType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
     booksViewModel: BooksListViewModel,
+    onStopPlayer: () -> Unit,
     close: () -> Unit
 ) {
     val shouldPlayWhenAppIsClosed by viewModel.shouldPlayWhenAppIsClosed.collectAsState()
@@ -44,6 +46,8 @@ fun SettingsScreen(
         uri?.let {
             booksViewModel.showLoading()
             booksViewModel.saveBookFolderPath(it.toString())
+            booksViewModel.selectBook(null, null)
+            onStopPlayer()
             asyncScope.launch(Dispatchers.IO) {
                 delay(500)
                 it.getBooks(
@@ -117,6 +121,7 @@ fun SettingsScreen(
                 body = stringResource(R.string.delete_all_books_dialog_body),
                 actionButtonTitle = stringResource(R.string.delete),
                 onAction = {
+                    onStopPlayer()
                     viewModel.clearBooks()
                     viewModel.dismissDeleteConfirmation()
                 },
