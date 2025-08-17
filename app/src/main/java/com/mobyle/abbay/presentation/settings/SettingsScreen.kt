@@ -25,7 +25,6 @@ import com.model.BookType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Composable
 fun SettingsScreen(
@@ -37,6 +36,7 @@ fun SettingsScreen(
     val shouldPlayWhenAppIsClosed by viewModel.shouldPlayWhenAppIsClosed.collectAsState()
     val shouldOpenPlayerInStartup by viewModel.shouldOpenPlayerInStartup.collectAsState()
     val showShowDeleteConfirmation by viewModel.showShowDeleteConfirmation.collectAsState()
+    val showChangeFolderConfirmation by viewModel.showChangeFolderConfirmation.collectAsState()
     val asyncScope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -103,7 +103,7 @@ fun SettingsScreen(
                 SettingItem(
                     text = stringResource(R.string.change_folder),
                     onClick = {
-                        openFolderSelector.launch(null)
+                        viewModel.showChangeFolderConfirmation()
                     }
                 )
 
@@ -124,6 +124,19 @@ fun SettingsScreen(
                     onStopPlayer()
                     viewModel.clearBooks()
                     viewModel.dismissDeleteConfirmation()
+                },
+            )
+        }
+
+        if (showChangeFolderConfirmation) {
+            AbbayActionDialog(
+                onDismiss = viewModel::dismissChangeFolderConfirmation,
+                title = stringResource(R.string.change_folder_dialog_title),
+                body = stringResource(R.string.change_folder_dialog_body),
+                actionButtonTitle = stringResource(R.string.change),
+                onAction = {
+                    viewModel.dismissChangeFolderConfirmation()
+                    openFolderSelector.launch(null)
                 },
             )
         }

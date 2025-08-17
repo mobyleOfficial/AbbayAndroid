@@ -27,10 +27,12 @@ class SettingsViewModel @Inject constructor(
     private val _shouldPlayWhenAppIsClosed = MutableStateFlow(isPlayWhenAppIsClosedEnabled())
     private val _shouldOpenPlayerInStartup = MutableStateFlow(isOpenPlayerInStartup())
     private val _showShowDeleteConfirmation = MutableStateFlow(false)
+    private val _showChangeFolderConfirmation = MutableStateFlow(false)
 
     val shouldPlayWhenAppIsClosed: StateFlow<Boolean> get() = _shouldPlayWhenAppIsClosed
     val shouldOpenPlayerInStartup: StateFlow<Boolean> get() = _shouldOpenPlayerInStartup
     val showShowDeleteConfirmation: StateFlow<Boolean> get() = _showShowDeleteConfirmation
+    val showChangeFolderConfirmation: StateFlow<Boolean> get() = _showChangeFolderConfirmation
 
     fun changePlayWhenAppIsClosed(shouldPlayWhenAppIsClosed: Boolean) {
         if (shouldPlayWhenAppIsClosed) {
@@ -63,5 +65,13 @@ class SettingsViewModel @Inject constructor(
 
     fun showDeleteConfirmation() {
         _showShowDeleteConfirmation.value = true
+    }
+
+    fun dismissChangeFolderConfirmation() {
+        _showChangeFolderConfirmation.value = false
+    }
+
+    fun showChangeFolderConfirmation() {
+        _showChangeFolderConfirmation.value = true
     }
 }

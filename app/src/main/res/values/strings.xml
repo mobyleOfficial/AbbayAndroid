@@ -13,6 +13,7 @@
     <string name="cancel">Cancel</string>
     <string name="ok">OK</string>
     <string name="delete">Delete</string>
+    <string name="change">Change</string>
     <string name="dismiss">Dismiss</string>
     <string name="got_it">Got it</string>
     <string name="book_ended_dialog_title">Book Finished</string>
@@ -26,6 +27,8 @@
     <string name="change_folder">Change books folder</string>
     <string name="delete_all_books_dialog_title">Delete All Books</string>
     <string name="delete_all_books_dialog_body">Are you sure you want to delete all books? This action cannot be undone.</string>
+    <string name="change_folder_dialog_title">Change Books Folder</string>
+    <string name="change_folder_dialog_body">Are you sure you want to change the books folder? This will replace all current books with the ones from the new folder.</string>
     
     <!-- Book list strings -->
     <string name="refresh_content_description">Refresh</string>
