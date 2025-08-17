@@ -47,7 +47,7 @@
     <string name="hide_chapters">Hide Chapters</string>
     <string name="change_speed">Change Speed</string>
     <string name="screen_locked">Screen Locked</string>
-    <string name="screen_locked_message">Long press anywhere on the screen to unlock</string>
+    <string name="screen_locked_message">Double click anywhere on the screen to unlock</string>
     <string name="screen_locked_subtitle">This prevents accidental touches while listening</string>
     
     <!-- Book item strings -->

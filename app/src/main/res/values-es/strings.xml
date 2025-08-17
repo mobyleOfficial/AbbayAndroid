@@ -48,7 +48,7 @@
     <string name="hide_chapters">Ocultar Capítulos</string>
     <string name="change_speed">Cambiar Velocidad</string>
     <string name="screen_locked">Pantalla Bloqueada</string>
-    <string name="screen_locked_message">Mantén presionado en cualquier lugar de la pantalla para desbloquear</string>
+    <string name="screen_locked_message">Toque dos veces en cualquier parte de la pantalla para desbloquear</string>
     <string name="screen_locked_subtitle">Esto evita toques accidentales durante la narración</string>
     
     <!-- Book item strings -->

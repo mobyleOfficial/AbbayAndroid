@@ -974,48 +974,54 @@ private fun PlayerControls(
 private fun ScreenLockedAlert(
     onDismissRequest: () -> Unit
 ) {
-    AlertDialog(onDismissRequest = onDismissRequest, title = {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Lock,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(end = 8.dp)
-            )
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text(
+                    stringResource(R.string.screen_locked),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        },
+        text = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    stringResource(R.string.screen_locked_message),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+                Text(
+                    stringResource(R.string.screen_locked_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center
+                )
+            }
+        },
+        confirmButton = {
+            // No confirm button, unlock is by long press
+        },
+        dismissButton = {
             Text(
-                stringResource(R.string.screen_locked),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
+                stringResource(R.string.dismiss),
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier
+                    .clickable { onDismissRequest() }
+                    .padding(8.dp))
         }
-    }, text = {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                stringResource(R.string.screen_locked_message),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-            Text(
-                stringResource(R.string.screen_locked_subtitle),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                textAlign = TextAlign.Center
-            )
-        }
-    }, confirmButton = {
-        // No confirm button, unlock is by long press
-    }, dismissButton = {
-        Text(
-            stringResource(R.string.dismiss),
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .clickable { onDismissRequest() }
-                .padding(8.dp))
-    })
+    )
 }
