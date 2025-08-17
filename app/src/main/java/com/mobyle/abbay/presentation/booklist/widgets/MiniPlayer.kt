@@ -104,14 +104,14 @@ fun MiniPlayer(
     book: Book,
     onPlayingChange: (Boolean) -> Unit,
     progress: Long,
+    isScreenLocked: Boolean,
     scaffoldState: BottomSheetScaffoldState,
     updateCurrentBookPosition: (Int) -> Unit,
     updateProgress: (Long) -> Unit,
     updateBookSpeed: (Float) -> Unit,
-    onDisableGesture: (Boolean) -> Unit,
+    onLockScreen: (Boolean) -> Unit,
     modifier: Modifier
 ) {
-    val isScreenLocked = remember { mutableStateOf(false) }
     val showUnlockDialog = remember { mutableStateOf(false) }
 
     val playerIcon = remember {
@@ -147,13 +147,16 @@ fun MiniPlayer(
 
                         onPlayingChange(player.isPlaying)
                     }
+
                     Player.STATE_BUFFERING -> {
                         // Keep current icon during buffering
                     }
+
                     Player.STATE_ENDED -> {
                         playerIcon.value = Icons.Default.PlayArrow
                         onPlayingChange(false)
                     }
+
                     Player.STATE_IDLE -> {
                         playerIcon.value = Icons.Default.PlayArrow
                         onPlayingChange(false)
@@ -173,9 +176,9 @@ fun MiniPlayer(
                 }
             }
         }
-        
+
         player.addListener(listener)
-        
+
         // Clean up listener when the composable is disposed
         // Note: In a real app, you might want to handle this differently
         // depending on your lifecycle management
@@ -185,23 +188,19 @@ fun MiniPlayer(
         SingleFilePlayer(
             player = player,
             book = book,
-            isScreenLocked = isScreenLocked.value,
+            isScreenLocked = isScreenLocked,
             onPlayingChange = onPlayingChange,
             progress = progress,
             scaffoldState = scaffoldState,
             playerIcon = playerIcon,
             onLockScreen = {
-                if (it) {
-                    onDisableGesture(true)
-                }
-                isScreenLocked.value = it
+                onLockScreen(true)
             },
             showScreenLockedAlert = {
                 showUnlockDialog.value = true
             },
             unlockScreen = {
-                onDisableGesture(false)
-                isScreenLocked.value = false
+                onLockScreen(false)
             },
             updateProgress = updateProgress,
             updateBookSpeed = updateBookSpeed,
@@ -211,27 +210,23 @@ fun MiniPlayer(
         MultipleFilePlayer(
             player = player,
             book = book,
-            isScreenLocked = isScreenLocked.value,
+            isScreenLocked = isScreenLocked,
             onPlayingChange = onPlayingChange,
             progress = progress,
             scaffoldState = scaffoldState,
             playerIcon = playerIcon,
             updateProgress = updateProgress,
             onLockScreen = {
-                if (it) {
-                    onDisableGesture(true)
-                }
-                isScreenLocked.value = it
+                onLockScreen(true)
             },
             showScreenLockedAlert = {
                 showUnlockDialog.value = true
             },
             unlockScreen = {
-                onDisableGesture(false)
-                isScreenLocked.value = false
+                onLockScreen(false)
             },
             updateCurrentBookPosition = updateCurrentBookPosition,
-            onDisableGesture = onDisableGesture,
+            onDisableGesture = onLockScreen,
             updateBookSpeed = updateBookSpeed,
             modifier = modifier
         )
@@ -345,11 +340,14 @@ private fun SingleFilePlayer(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color.Black.copy(alpha = 0.4f))
-                        .combinedClickable(onClick = {
-                            showScreenLockedAlert()
-                        }, onLongClick = {
-                            unlockScreen()
-                        })
+                        .combinedClickable(
+                            onClick = {
+                                showScreenLockedAlert()
+                            },
+                            onDoubleClick = {
+                                unlockScreen()
+                            }
+                        )
                 )
             }
         }
@@ -518,7 +516,8 @@ private fun MultipleFilePlayer(
                         .combinedClickable(
                             onClick = {
                                 showScreenLockedAlert()
-                            }, onLongClick = {
+                            },
+                            onDoubleClick = {
                                 unlockScreen()
                             }
                         )
@@ -645,7 +644,7 @@ private fun PlayerController(
                 onPlayingChange(true)
                 player.play()
             } else {
-                if(!player.playWhenReady) {
+                if (!player.playWhenReady) {
                     player.prepareBook(id, position, MutableStateFlow(true))
                 }
                 player.addListener(object : Player.Listener {
@@ -705,7 +704,9 @@ private fun BooksTopBar(
                     text = currentSpeed.value.text, color = Color.White
                 )
                 Icon(
-                    Icons.Default.Speed, contentDescription = stringResource(R.string.change_speed_content_description), tint = Color.White
+                    Icons.Default.Speed,
+                    contentDescription = stringResource(R.string.change_speed_content_description),
+                    tint = Color.White
                 )
             }
         }
@@ -837,7 +838,7 @@ private fun BookImage(
                         onPlayingChange(true)
                         player.play()
                     } else {
-                        if(!player.playWhenReady) {
+                        if (!player.playWhenReady) {
                             player.prepareBook(book.id, progress, MutableStateFlow(true))
                         }
 

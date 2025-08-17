@@ -60,6 +60,8 @@ class BooksListViewModel @Inject constructor(
 
     var shouldOpenPlayerInStartup = false
 
+    var isScreenLocked = MutableStateFlow(false)
+
     private val _hasSelectedFolder = MutableStateFlow(getBooksFolderPath() != null)
     val hasSelectedFolder: StateFlow<Boolean> get() = _hasSelectedFolder
 
@@ -315,6 +317,10 @@ class BooksListViewModel @Inject constructor(
 
     fun dismissBookEndedDialog() {
         _showBookEndedDialog.value = false
+    }
+
+    fun updateIsScreenLocked(isDisabled: Boolean) {
+        isScreenLocked.value = isDisabled
     }
 
     sealed class BooksListUiState {

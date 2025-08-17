@@ -59,7 +59,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.getString
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.media3.common.PlaybackException
@@ -126,9 +125,6 @@ fun BooksListScreen(
     var componentHeight by remember { mutableStateOf(0.dp) }
     val activity = LocalContext.current as Activity
     val permissionRequestAttemptTime = remember { mutableLongStateOf(0) }
-    val isGestureDisabled = remember {
-        mutableStateOf(true)
-    }
     val permissionState = rememberMultiplePermissionsState(
         permissions = viewModel.getPermissionsList(),
         onPermissionsResult = { permissions ->
@@ -143,7 +139,7 @@ fun BooksListScreen(
     val hasSelectedFolder by viewModel.hasSelectedFolder.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val hasBookEnded by viewModel.showBookEndedDialog.collectAsState()
-
+    val isScreenLocked by viewModel.isScreenLocked.collectAsState()
     LifecycleEventEffect(event = Lifecycle.Event.ON_CREATE) {
         viewModel.shouldOpenPlayerInStartup()
     }
@@ -240,13 +236,15 @@ fun BooksListScreen(
 
     // SideEffects
     BackHandler {
-        asyncScope.launch {
-            if (bottomSheetState.bottomSheetState.isCollapsed) {
-                activity.finishAffinity()
-            } else {
-                bottomSheetState.bottomSheetState.collapse()
-            }
+        if (!isScreenLocked) {
+            asyncScope.launch {
+                if (bottomSheetState.bottomSheetState.isCollapsed) {
+                    activity.finishAffinity()
+                } else {
+                    bottomSheetState.bottomSheetState.collapse()
+                }
 
+            }
         }
     }
 
@@ -285,9 +283,8 @@ fun BooksListScreen(
         if (selectedBook?.hasError == true) {
             showErrorDialog.value = true
             bottomSheetState.bottomSheetState.collapse()
+            viewModel.updateIsScreenLocked(false)
         }
-
-        isGestureDisabled.value = selectedBook?.hasError == false
     }
 
     BottomSheetScaffold(
@@ -302,6 +299,7 @@ fun BooksListScreen(
                     MiniPlayer(
                         player = player,
                         book = it,
+                        isScreenLocked = isScreenLocked,
                         scaffoldState = bottomSheetState,
                         progress = it.progress,
                         onPlayingChange = { isPlaying ->
@@ -324,9 +322,7 @@ fun BooksListScreen(
                                 )
                             }
                         },
-                        onDisableGesture = {
-                            isGestureDisabled.value = !it
-                        },
+                        onLockScreen = viewModel::updateIsScreenLocked,
                         updateBookSpeed = {
                             selectedBook?.let { book ->
                                 viewModel.updateBookSpeed(
@@ -346,7 +342,7 @@ fun BooksListScreen(
                 }
             }
         },
-        sheetGesturesEnabled = isGestureDisabled.value,
+        sheetGesturesEnabled = !isScreenLocked,
         sheetPeekHeight = if (hasBookSelected) 72.dp else 0.dp,
     ) {
         Box(
