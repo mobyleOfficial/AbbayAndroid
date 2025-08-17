@@ -829,7 +829,9 @@ private fun BookImage(
     AsyncImage(
         contentScale = ContentScale.FillBounds,
         model = ImageRequest.Builder(LocalContext.current).data(book.thumbnail)
-            .fallback(R.drawable.file_music).error(R.drawable.file_music).crossfade(true).build(),
+            .fallback(R.drawable.file_music)
+            .error(R.drawable.file_music)
+            .crossfade(true).build(),
         modifier = modifier.then(
             Modifier
                 .fillMaxSize()

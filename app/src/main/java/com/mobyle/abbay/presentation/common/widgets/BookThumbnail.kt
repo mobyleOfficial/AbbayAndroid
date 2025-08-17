@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -22,7 +23,8 @@ fun BookThumbnail(byteArray: String?, modifier: Modifier = Modifier) {
         .width(64.dp)
 
     Box(
-        modifier = modifier.then(defaultModifier)
+        modifier = modifier.then(defaultModifier),
+        contentAlignment = Alignment.Center
     ) {
         AsyncImage(
             contentScale = ContentScale.FillBounds,
@@ -32,7 +34,8 @@ fun BookThumbnail(byteArray: String?, modifier: Modifier = Modifier) {
                 .error(R.drawable.file_music)
                 .crossfade(true)
                 .build(),
-            contentDescription = ""
+            contentDescription = "",
+            modifier = Modifier.matchParentSize()
         )
     }
 }
