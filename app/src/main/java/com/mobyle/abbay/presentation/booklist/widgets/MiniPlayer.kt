@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.BottomSheetScaffoldState
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
@@ -115,21 +116,21 @@ fun MiniPlayer(
     val showUnlockDialog = remember { mutableStateOf(false) }
 
     val playerIcon = remember {
-        val icon = if (player.isPlaying) {
-            Icons.Default.Pause
+        val state = if (player.isPlaying) {
+            PlayingState.PLAYING
         } else {
-            Icons.Default.PlayArrow
+            PlayingState.PAUSED
         }
 
-        mutableStateOf(icon)
+        mutableStateOf(state)
     }
 
     // Keep player icon in sync with actual player state
     LaunchedEffect(player.isPlaying, player.playbackState) {
         playerIcon.value = if (player.isPlaying && player.playbackState == Player.STATE_READY) {
-            Icons.Default.Pause
+            PlayingState.PLAYING
         } else {
-            Icons.Default.PlayArrow
+            PlayingState.PAUSED
         }
     }
 
@@ -140,9 +141,9 @@ fun MiniPlayer(
                 when (playbackState) {
                     Player.STATE_READY -> {
                         if (player.isPlaying) {
-                            playerIcon.value = Icons.Default.Pause
+                            playerIcon.value = PlayingState.PLAYING
                         } else {
-                            playerIcon.value = Icons.Default.PlayArrow
+                            playerIcon.value = PlayingState.PAUSED
                         }
 
                         onPlayingChange(player.isPlaying)
@@ -153,12 +154,12 @@ fun MiniPlayer(
                     }
 
                     Player.STATE_ENDED -> {
-                        playerIcon.value = Icons.Default.PlayArrow
+                        playerIcon.value = PlayingState.PAUSED
                         onPlayingChange(false)
                     }
 
                     Player.STATE_IDLE -> {
-                        playerIcon.value = Icons.Default.PlayArrow
+                        playerIcon.value = PlayingState.PAUSED
                         onPlayingChange(false)
                     }
                 }
@@ -167,9 +168,9 @@ fun MiniPlayer(
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 if (player.playbackState == Player.STATE_READY) {
                     playerIcon.value = if (isPlaying) {
-                        Icons.Default.Pause
+                        PlayingState.PLAYING
                     } else {
-                        Icons.Default.PlayArrow
+                        PlayingState.PAUSED
                     }
 
                     onPlayingChange(isPlaying)
@@ -249,7 +250,7 @@ private fun SingleFilePlayer(
     isScreenLocked: Boolean,
     progress: Long,
     scaffoldState: BottomSheetScaffoldState,
-    playerIcon: MutableState<ImageVector>,
+    playerIcon: MutableState<PlayingState>,
     unlockScreen: () -> Unit,
     showScreenLockedAlert: () -> Unit,
     onLockScreen: (Boolean) -> Unit,
@@ -364,7 +365,7 @@ private fun MultipleFilePlayer(
     isScreenLocked: Boolean,
     progress: Long,
     scaffoldState: BottomSheetScaffoldState,
-    playerIcon: MutableState<ImageVector>,
+    playerIcon: MutableState<PlayingState>,
     unlockScreen: () -> Unit,
     showScreenLockedAlert: () -> Unit,
     onLockScreen: (Boolean) -> Unit,
@@ -631,36 +632,49 @@ private fun PlayerController(
     id: String,
     player: MediaController,
     position: Long,
-    playerIcon: MutableState<ImageVector>,
+    playerIcon: MutableState<PlayingState>,
     onPlayingChange: (Boolean) -> Unit,
 ) {
-    IconButton(onClick = {
-        if (player.isPlaying) {
-            onPlayingChange(false)
-            player.pause()
-        } else {
-            if (player.playbackState == Player.STATE_READY) {
-                player.seekTo(position)
-                onPlayingChange(true)
-                player.play()
-            } else {
-                if (!player.playWhenReady) {
-                    player.prepareBook(id, position, MutableStateFlow(true))
-                }
-                player.addListener(object : Player.Listener {
-                    override fun onPlaybackStateChanged(state: Int) {
-                        if (state == Player.STATE_READY) {
-                            player.seekTo(position)
-                            onPlayingChange(true)
-                            player.play()
-                            player.removeListener(this)
+    IconButton(
+        onClick = {
+            if (playerIcon.value != PlayingState.LOADING) {
+                if (player.isPlaying) {
+                    onPlayingChange(false)
+                    player.pause()
+                } else {
+                    if (player.playbackState == Player.STATE_READY) {
+                        player.seekTo(position)
+                        onPlayingChange(true)
+                        player.play()
+                    } else {
+                        playerIcon.value = PlayingState.LOADING
+                        if (!player.playWhenReady) {
+                            player.prepareBook(id, position, MutableStateFlow(true))
                         }
+                        player.addListener(object : Player.Listener {
+                            override fun onPlaybackStateChanged(state: Int) {
+                                if (state == Player.STATE_READY) {
+                                    player.seekTo(position)
+                                    onPlayingChange(true)
+                                    player.play()
+                                    player.removeListener(this)
+                                }
+                            }
+                        })
                     }
-                })
+                }
             }
         }
-    }) {
-        Icon(playerIcon.value, contentDescription = "", tint = Color.White)
+    ) {
+        playerIcon.value.toIcon()?.let {
+            Icon(it, contentDescription = "", tint = Color.White)
+        } ?: run {
+            CircularProgressIndicator(
+                modifier = Modifier.background(Color.Transparent),
+                color = Color.White,
+                strokeWidth = 2.dp
+            )
+        }
     }
 }
 
@@ -749,7 +763,7 @@ private fun MiniPlayerContent(
     book: Book,
     onPlayingChange: (Boolean) -> Unit,
     progress: Long,
-    playerIcon: MutableState<ImageVector>,
+    playerIcon: MutableState<PlayingState>,
     isScreenLocked: Boolean,
     modifier: Modifier
 ) {
@@ -809,7 +823,7 @@ private fun BookImage(
     progress: Long,
     player: MediaController,
     book: Book,
-    playerIcon: MutableState<ImageVector>,
+    playerIcon: MutableState<PlayingState>,
     onPlayingChange: (Boolean) -> Unit
 ) {
     AsyncImage(
@@ -829,29 +843,33 @@ private fun BookImage(
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.2f))
             .clickable {
-                if (player.isPlaying) {
-                    onPlayingChange(false)
-                    player.pause()
-                } else {
-                    if (player.playbackState == Player.STATE_READY) {
-                        player.seekTo(progress)
-                        onPlayingChange(true)
-                        player.play()
+                if (playerIcon.value != PlayingState.LOADING) {
+                    if (player.isPlaying) {
+                        onPlayingChange(false)
+                        player.pause()
                     } else {
-                        if (!player.playWhenReady) {
-                            player.prepareBook(book.id, progress, MutableStateFlow(true))
-                        }
+                        if (player.playbackState == Player.STATE_READY) {
+                            player.seekTo(progress)
+                            onPlayingChange(true)
+                            player.play()
+                        } else {
+                            playerIcon.value = PlayingState.LOADING
 
-                        player.addListener(object : Player.Listener {
-                            override fun onPlaybackStateChanged(state: Int) {
-                                if (state == Player.STATE_READY) {
-                                    player.seekTo(progress)
-                                    onPlayingChange(true)
-                                    player.play()
-                                    player.removeListener(this)
-                                }
+                            if (!player.playWhenReady) {
+                                player.prepareBook(book.id, progress, MutableStateFlow(true))
                             }
-                        })
+
+                            player.addListener(object : Player.Listener {
+                                override fun onPlaybackStateChanged(state: Int) {
+                                    if (state == Player.STATE_READY) {
+                                        player.seekTo(progress)
+                                        onPlayingChange(true)
+                                        player.play()
+                                        player.removeListener(this)
+                                    }
+                                }
+                            })
+                        }
                     }
                 }
             }
@@ -859,7 +877,9 @@ private fun BookImage(
         Box(
             modifier = Modifier.align(Alignment.Center)
         ) {
-            Icon(playerIcon.value, contentDescription = "", tint = Color.White)
+            playerIcon.value.toIcon()?.let {
+                Icon(it, contentDescription = "", tint = Color.White)
+            }
         }
     }
 }
@@ -870,7 +890,7 @@ private fun PlayerControls(
     book: Book,
     receivedDuration: Long? = null,
     progress: Long,
-    playerIcon: MutableState<ImageVector>,
+    playerIcon: MutableState<PlayingState>,
     onPlayingChange: (Boolean) -> Unit,
     updateProgress: (Long) -> Unit,
     modifier: Modifier
@@ -1024,4 +1044,18 @@ private fun ScreenLockedAlert(
                     .padding(8.dp))
         }
     )
+}
+
+private enum class PlayingState {
+    PAUSED,
+    PLAYING,
+    LOADING
+}
+
+private fun PlayingState.toIcon(): ImageVector? {
+    return when (this) {
+        PlayingState.PLAYING -> Icons.Default.Pause
+        PlayingState.PAUSED -> Icons.Default.PlayArrow
+        PlayingState.LOADING -> null
+    }
 }
