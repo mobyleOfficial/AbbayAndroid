@@ -49,15 +49,19 @@ interface BooksDao {
     @Query("UPDATE MultipleBooksEntity SET progress = :progress, currentBookPosition = :currentPosition WHERE id = :id")
     suspend fun updateMultipleBookProgress(id: String, currentPosition: Int, progress: Long)
 
-    /**
-     * Transaction: Delete all book files and insert new ones atomically
-     */
+    @Transaction
+    suspend fun deleteAllBooks(
+    ) {
+        deleteAllBookFiles()
+        deleteAllMultipleBooks()
+    }
+
     @Transaction
     suspend fun upsertBooksList(
         multipleBooksList: List<MultipleBooksEntity>,
         singleFileBooksList: List<BookFileEntity>
     ) {
-        deleteAllBookFiles()
+        deleteAllBooks()
         insertMultipleBooksList(multipleBooksList)
         insertBookFilesList(singleFileBooksList)
     }

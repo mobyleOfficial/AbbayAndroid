@@ -38,8 +38,7 @@ class BooksLocalDataSourceImpl @Inject constructor(
     }
 
     override suspend fun clearBooks() {
-        booksDao.deleteAllBookFiles()
-        booksDao.deleteAllMultipleBooks()
+        booksDao.deleteAllBooks()
         keyValueStore.deleteAllBookInformation()
     }
 

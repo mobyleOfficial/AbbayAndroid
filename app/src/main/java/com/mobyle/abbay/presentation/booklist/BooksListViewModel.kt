@@ -132,6 +132,15 @@ class BooksListViewModel @Inject constructor(
         _hasSelectedFolder.value = true
     }
 
+    fun addBooksFromNewFolder(filesList: List<Book>) {
+        val newBooks = filesList.distinctBy { it.id }
+        val individualBooks = booksList.filter { it.type == BookType.FILE }
+
+        updateBookList(newBooks + individualBooks)
+        _hasSelectedFolder.value = true
+        _isRefreshing.value = false
+    }
+
     fun setCurrentProgress(
         id: String,
         progress: Long,

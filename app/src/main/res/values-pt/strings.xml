@@ -23,6 +23,7 @@
     <string name="settings">Configurações</string>
     <string name="play_when_app_closed">Tocar quando o app estiver fechado</string>
     <string name="open_player_in_startup">Manter livro aberto ao abrir o app</string>
+    <string name="change_folder">Mudar pasta de livros</string>
     <string name="delete_all_books">Excluir todos os livros</string>
     <string name="delete_all_books_dialog_title">Excluir Todos os Livros</string>
     <string name="delete_all_books_dialog_body">Tem certeza de que deseja excluir todos os livros? Esta ação não pode ser desfeita.</string>

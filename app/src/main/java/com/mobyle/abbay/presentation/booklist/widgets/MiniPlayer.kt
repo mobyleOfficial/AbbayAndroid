@@ -462,12 +462,17 @@ private fun MultipleFilePlayer(
                 }
 
                 AnimatedVisibility(
-                    visible = swipeProgress == 1f, modifier = Modifier.padding(top = 8.dp)
+                    visible = swipeProgress == 1f,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
                 ) {
                     BookFileItem(
-                        file = files.getOrNull(currentIndex), onClick = {
+                        file = files.getOrNull(currentIndex),
+                        onClick = {
                             showChapters.value = !showChapters.value
-                        }, isExpanded = showChapters.value
+                        },
+                        isExpanded = showChapters.value
                     )
                 }
 
@@ -538,7 +543,8 @@ private fun BookFileItem(
         Text(
             text = file?.fileName ?: stringResource(R.string.unknown_file),
             style = AbbayTextStyles.chapterTitle,
-            maxLines = 1
+            textAlign = TextAlign.Center,
+            maxLines = 2
         )
         Spacer(modifier = Modifier.width(8.dp))
         Icon(

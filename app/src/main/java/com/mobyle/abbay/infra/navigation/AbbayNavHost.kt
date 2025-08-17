@@ -7,16 +7,19 @@ import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.media3.session.MediaController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.mobyle.abbay.presentation.booklist.BooksListScreen
+import com.mobyle.abbay.presentation.booklist.BooksListViewModel
 import com.mobyle.abbay.presentation.settings.SettingsScreen
 
 @Composable
 fun AbbayNavHost(
+    viewModel: BooksListViewModel = hiltViewModel(),
     modifier: Modifier = Modifier,
     navController: NavHostController,
     player: MediaController,
@@ -33,6 +36,7 @@ fun AbbayNavHost(
             route = NavigationItem.BookList.route,
         ) {
             BooksListScreen(
+                viewModel = viewModel,
                 player = player,
                 openAppSettings = {
                     val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -45,7 +49,9 @@ fun AbbayNavHost(
         }
 
         modal(NavigationItem.Settings.route) {
-            SettingsScreen {
+            SettingsScreen(
+                booksViewModel = viewModel
+            ) {
                 navController.popBackStack()
             }
         }

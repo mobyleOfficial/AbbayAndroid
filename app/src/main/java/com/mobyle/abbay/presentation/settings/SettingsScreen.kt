@@ -1,5 +1,7 @@
 package com.mobyle.abbay.presentation.settings
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Switch
@@ -8,21 +10,55 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mobyle.abbay.R
+import com.mobyle.abbay.presentation.booklist.BooksListViewModel
+import com.mobyle.abbay.presentation.booklist.getBooks
+import com.mobyle.abbay.presentation.booklist.getThumb
 import com.mobyle.abbay.presentation.common.widgets.AbbayActionDialog
 import com.mobyle.abbay.presentation.common.widgets.AbbayScreen
+import com.model.BookType
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
+    booksViewModel: BooksListViewModel,
     close: () -> Unit
 ) {
     val shouldPlayWhenAppIsClosed by viewModel.shouldPlayWhenAppIsClosed.collectAsState()
     val shouldOpenPlayerInStartup by viewModel.shouldOpenPlayerInStartup.collectAsState()
     val showShowDeleteConfirmation by viewModel.showShowDeleteConfirmation.collectAsState()
+    val asyncScope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    val openFolderSelector = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        uri?.let {
+            booksViewModel.showLoading()
+            booksViewModel.saveBookFolderPath(it.toString())
+            asyncScope.launch(Dispatchers.IO) {
+                delay(500)
+                it.getBooks(
+                    context = context,
+                    type = BookType.FOLDER
+                )?.let {
+                    val booksWithThumbnails = it.mapNotNull { book ->
+                        book.getThumb(context)
+                    }
+
+                    booksViewModel.addBooksFromNewFolder(booksWithThumbnails)
+                }
+            }
+        }
+    }
 
     AbbayScreen(
         title = stringResource(R.string.settings),
@@ -57,6 +93,13 @@ fun SettingsScreen(
                                 checkedTrackColor = MaterialTheme.colorScheme.tertiary
                             )
                         )
+                    }
+                )
+
+                SettingItem(
+                    text = stringResource(R.string.change_folder),
+                    onClick = {
+                        openFolderSelector.launch(null)
                     }
                 )
 

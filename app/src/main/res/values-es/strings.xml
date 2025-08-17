@@ -23,6 +23,7 @@
     <string name="settings">Configuración</string>
     <string name="play_when_app_closed">Reproducir cuando la app esté cerrada</string>
     <string name="open_player_in_startup">Mantener libro abierto al abrir la app</string>
+    <string name="change_folder">Change books folder</string>
     <string name="delete_all_books">Eliminar todos los libros</string>
     <string name="delete_all_books_dialog_title">Eliminar Todos los Libros</string>
     <string name="delete_all_books_dialog_body">¿Estás seguro de que quieres eliminar todos los libros? Esta acción no se puede deshacer.</string>

@@ -106,7 +106,7 @@ private const val AUTO_DENIAL_THRESHOLD = 300
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun BooksListScreen(
-    viewModel: BooksListViewModel = hiltViewModel(),
+    viewModel: BooksListViewModel,
     player: MediaController,
     navigateToSettings: () -> Unit,
     openAppSettings: () -> Unit,
