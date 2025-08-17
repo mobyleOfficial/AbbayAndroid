@@ -68,6 +68,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ExperimentalMotionApi
@@ -538,13 +539,15 @@ private fun BookFileItem(
             .fillMaxWidth()
             .clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
             text = file?.fileName ?: stringResource(R.string.unknown_file),
             style = AbbayTextStyles.chapterTitle,
             textAlign = TextAlign.Center,
-            maxLines = 2
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 2,
+            modifier = Modifier.weight(1f)
         )
         Spacer(modifier = Modifier.width(8.dp))
         Icon(
@@ -552,7 +555,8 @@ private fun BookFileItem(
             contentDescription = if (isExpanded) stringResource(R.string.hide_chapters) else stringResource(
                 R.string.show_chapters
             ),
-            tint = Color.White
+            tint = Color.White,
+            modifier = Modifier.size(24.dp)
         )
     }
 }
@@ -608,7 +612,9 @@ private fun BookFilesList(
                         text = file.fileName,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.tertiary,
-                        maxLines = 1
+                        textAlign = TextAlign.Start,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 2,
                     )
                     Text(
                         text = file.duration.toHHMMSS(),
