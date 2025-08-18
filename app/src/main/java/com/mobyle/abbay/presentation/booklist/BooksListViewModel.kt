@@ -276,8 +276,20 @@ class BooksListViewModel @Inject constructor(
                 is MultipleBooks -> book.copy(hasError = true)
                 else -> book
             }
+
+            if (updatedBook.id == selectedBook.value?.id) {
+                val selectedBook = _selectedBook.value
+
+                _selectedBook.value = when (selectedBook) {
+                    is MultipleBooks -> selectedBook.copy(hasError = true)
+                    is BookFile -> selectedBook.copy(hasError = true)
+                    else -> selectedBook
+                }
+            }
+
             booksList[index] = updatedBook
 
+            updateBookList(booksList)
             _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
         }
     }

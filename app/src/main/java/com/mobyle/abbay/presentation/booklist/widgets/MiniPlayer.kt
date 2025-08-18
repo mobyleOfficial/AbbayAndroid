@@ -75,6 +75,7 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ExperimentalMotionApi
 import androidx.constraintlayout.compose.MotionLayout
 import androidx.constraintlayout.compose.MotionScene
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import coil.compose.AsyncImage
@@ -114,6 +115,7 @@ fun MiniPlayer(
     modifier: Modifier
 ) {
     val showUnlockDialog = remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     val playerIcon = remember {
         val state = if (player.isPlaying) {
@@ -176,13 +178,16 @@ fun MiniPlayer(
                     onPlayingChange(isPlaying)
                 }
             }
+
+            override fun onPlayerError(error: PlaybackException) {
+                onLockScreen(false)
+                scope.launch {
+                    scaffoldState.bottomSheetState.collapse()
+                }
+            }
         }
 
         player.addListener(listener)
-
-        // Clean up listener when the composable is disposed
-        // Note: In a real app, you might want to handle this differently
-        // depending on your lifecycle management
     }
 
     if (book is BookFile) {

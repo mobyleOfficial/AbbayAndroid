@@ -280,11 +280,8 @@ fun BooksListScreen(
     }
 
     LaunchedEffect(selectedBook?.id) {
-        if (selectedBook == null) {
-            player.stop()
-        }
-
         if (selectedBook?.hasError == true) {
+            player.stop()
             showErrorDialog.value = true
             bottomSheetState.bottomSheetState.collapse()
             viewModel.updateIsScreenLocked(false)

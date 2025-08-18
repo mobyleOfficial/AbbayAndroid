@@ -42,6 +42,7 @@ fun BookItem(
     } else {
         MaterialTheme.colorScheme.primary
     }
+
     Column(
         modifier = Modifier
             .padding(top = 8.dp)
