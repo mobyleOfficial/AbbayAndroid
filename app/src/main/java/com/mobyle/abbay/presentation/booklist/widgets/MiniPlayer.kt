@@ -393,10 +393,6 @@ private fun MultipleFilePlayer(
     val currentIndex = book.currentBookPosition
     val duration = book.bookFileList[book.currentBookPosition].duration
 
-    LaunchedEffect(showChapters.value) {
-        onDisableGesture(showChapters.value)
-    }
-
     LaunchedEffect(swipeProgress) {
         if (swipeProgress < 1f) {
             showChapters.value = false
