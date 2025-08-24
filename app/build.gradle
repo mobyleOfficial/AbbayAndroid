@@ -62,6 +62,7 @@ dependencies {
     implementation libs.androidx.core.ktx
     implementation libs.bundles.lifecycle
     implementation libs.androidx.activity.compose
+    implementation libs.androidx.startup
     
     // Compose BOM and UI
     implementation platform(libs.androidx.compose.bom)
