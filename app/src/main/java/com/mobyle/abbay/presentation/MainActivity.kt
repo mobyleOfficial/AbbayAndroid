@@ -15,7 +15,6 @@ import androidx.media3.session.MediaController
 import androidx.navigation.compose.rememberNavController
 import androidx.startup.AppInitializer
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.common.util.concurrent.ListenableFuture
 import com.mobyle.abbay.infra.navigation.AbbayNavHost
 import com.mobyle.abbay.infra.startup.PlayerInitializer
 import com.mobyle.abbay.presentation.common.theme.MyApplicationTheme
@@ -42,7 +41,7 @@ class MainActivity : ComponentActivity() {
 
         // Keep splash screen visible until player is ready
         splashScreen.setKeepOnScreenCondition {
-            !(isPlayerReady)
+            !isPlayerReady
         }
 
         super.onCreate(savedInstanceState)
