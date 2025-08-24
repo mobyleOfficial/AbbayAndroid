@@ -162,9 +162,9 @@ fun MediaController.playMultipleBooks(
 fun MediaController.prepareBook(
     id: String,
     progress: Long,
-    isPlaying: MutableStateFlow<Boolean>,
+    isPlaying: MutableStateFlow<Boolean>? = null,
 ) {
-    isPlaying.value = false
+    isPlaying?.value = false
     pause()
     clearMediaItems()
     val uri =

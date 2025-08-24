@@ -393,10 +393,6 @@ private fun MultipleFilePlayer(
     val currentIndex = book.currentBookPosition
     val duration = book.bookFileList[book.currentBookPosition].duration
 
-    LaunchedEffect(showChapters.value) {
-        onDisableGesture(showChapters.value)
-    }
-
     LaunchedEffect(swipeProgress) {
         if (swipeProgress < 1f) {
             showChapters.value = false
@@ -647,26 +643,17 @@ private fun PlayerController(
                     onPlayingChange(false)
                     player.pause()
                 } else {
-                    if (player.playbackState == Player.STATE_READY) {
-                        player.seekTo(position)
-                        onPlayingChange(true)
-                        player.play()
-                    } else {
-                        playerIcon.value = PlayingState.LOADING
-                        if (!player.playWhenReady) {
-                            player.prepareBook(id, position, MutableStateFlow(true))
-                        }
-                        player.addListener(object : Player.Listener {
-                            override fun onPlaybackStateChanged(state: Int) {
-                                if (state == Player.STATE_READY) {
-                                    player.seekTo(position)
-                                    onPlayingChange(true)
-                                    player.play()
-                                    player.removeListener(this)
-                                }
+                    player.prepareBook(id, position)
+                    player.addListener(object : Player.Listener {
+                        override fun onPlaybackStateChanged(state: Int) {
+                            if (state == Player.STATE_READY) {
+                                player.seekTo(position)
+                                onPlayingChange(true)
+                                player.play()
+                                player.removeListener(this)
                             }
-                        })
-                    }
+                        }
+                    })
                 }
             }
         }
@@ -860,12 +847,7 @@ private fun BookImage(
                             onPlayingChange(true)
                             player.play()
                         } else {
-                            playerIcon.value = PlayingState.LOADING
-
-                            if (!player.playWhenReady) {
-                                player.prepareBook(book.id, progress, MutableStateFlow(true))
-                            }
-
+                            player.prepareBook(book.id, progress, MutableStateFlow(true))
                             player.addListener(object : Player.Listener {
                                 override fun onPlaybackStateChanged(state: Int) {
                                     if (state == Player.STATE_READY) {

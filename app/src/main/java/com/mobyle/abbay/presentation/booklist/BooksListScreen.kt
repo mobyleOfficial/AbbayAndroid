@@ -462,23 +462,6 @@ fun BooksListScreen(
                                             progress = book.progress,
                                             currentPosition = book.getBookPosition()
                                         )
-
-                                        if (!player.isPlaying) {
-                                            if (book is MultipleBooks) {
-                                                player.prepareMultipleBooks(
-                                                    currentPosition = book.currentBookPosition,
-                                                    idList = book.bookFileList.map { it.id },
-                                                    progress = book.progress,
-                                                    isPlaying = viewModel.isPlaying
-                                                )
-                                            } else {
-                                                player.prepareBook(
-                                                    id = id,
-                                                    progress = book.progress,
-                                                    isPlaying = viewModel.isPlaying
-                                                )
-                                            }
-                                        }
                                     }
                                 }
                             }

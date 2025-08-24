@@ -349,7 +349,7 @@ class BooksListViewModel @Inject constructor(
         data object NoPermissionsGranted : BooksListUiState()
     }
 
-    companion object {
+    private companion object {
         val API_32_OR_LESS_PERMISSIONS_LIST = listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
         val PERMISSIONS_LIST = listOf(Manifest.permission.READ_MEDIA_AUDIO)
     }
