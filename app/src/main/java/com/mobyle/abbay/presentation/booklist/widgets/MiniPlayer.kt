@@ -429,8 +429,10 @@ private fun MultipleFilePlayer(
         )
 
         LaunchedEffect(player.currentMediaItemIndex) {
-            val index = player.currentMediaItemIndex
-            updateCurrentBookPosition(index)
+            if (player.playWhenReady) {
+                val index = player.currentMediaItemIndex
+                updateCurrentBookPosition(index)
+            }
         }
 
         Box(
@@ -661,6 +663,8 @@ private fun PlayerController(
                         }
                     }
 
+                    playerIcon.value = PlayingState.LOADING
+
                     player.addListener(object : Player.Listener {
                         override fun onPlaybackStateChanged(state: Int) {
                             if (state == Player.STATE_READY) {
@@ -882,6 +886,8 @@ private fun BookImage(
                                     )
                                 }
                             }
+
+                            playerIcon.value = PlayingState.LOADING
 
                             player.addListener(object : Player.Listener {
                                 override fun onPlaybackStateChanged(state: Int) {

@@ -71,5 +71,8 @@
     <!-- Additional strings found in code -->
     <string name="delete_content_description_short">Delete</string>
     <string name="change_speed_content_description">Change speed</string>
+    
+    <!-- Version strings -->
+    <string name="app_version">Version %1$s</string>
 
 </resources>
