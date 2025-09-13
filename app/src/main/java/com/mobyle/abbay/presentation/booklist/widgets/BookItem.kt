@@ -1,7 +1,6 @@
 package com.mobyle.abbay.presentation.booklist.widgets
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,6 +23,7 @@ import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.theme.AbbayTextStyles
 import com.mobyle.abbay.presentation.common.widgets.BookThumbnail
 import com.mobyle.abbay.presentation.common.widgets.SVGIcon
+import com.mobyle.abbay.presentation.utils.debounceClick
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
 import com.model.MultipleBooks
@@ -48,7 +48,7 @@ fun BookItem(
             .padding(top = 8.dp)
             .fillMaxWidth()
             .background(bookColor)
-            .clickable {
+            .debounceClick {
                 onClick.invoke()
             },
         verticalArrangement = Arrangement.SpaceEvenly,

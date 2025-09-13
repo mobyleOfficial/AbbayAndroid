@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -86,6 +85,7 @@ import com.mobyle.abbay.presentation.booklist.widgets.models.LayoutId
 import com.mobyle.abbay.presentation.common.mappers.toBookSpeed
 import com.mobyle.abbay.presentation.common.theme.AbbayTextStyles
 import com.mobyle.abbay.presentation.utils.currentFraction
+import com.mobyle.abbay.presentation.utils.debounceClick
 import com.mobyle.abbay.presentation.utils.intermediateProgress
 import com.mobyle.abbay.presentation.utils.playMultipleBooks
 import com.mobyle.abbay.presentation.utils.prepareBook
@@ -539,7 +539,7 @@ private fun BookFileItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
+            .debounceClick { onClick() },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -585,7 +585,7 @@ private fun BookFilesList(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onClick(index) }
+                    .debounceClick { onClick(index) }
                     .background(
                         if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                         else Color.Transparent
@@ -857,7 +857,7 @@ private fun BookImage(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.2f))
-            .clickable {
+            .debounceClick {
                 if (playerIcon.value != PlayingState.LOADING) {
                     if (player.isPlaying) {
                         onPlayingChange(false)
@@ -1081,7 +1081,7 @@ private fun ScreenLockedAlert(
                 stringResource(R.string.dismiss),
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier
-                    .clickable { onDismissRequest() }
+                    .debounceClick { onDismissRequest() }
                     .padding(8.dp))
         }
     )
