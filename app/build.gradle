@@ -9,6 +9,12 @@ plugins {
     id 'com.google.firebase.crashlytics'
 }
 
+def localProperties = new Properties()
+def localPropertiesFile = project.rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(new FileInputStream(localPropertiesFile))
+}
+
 android {
     namespace 'com.mobyle.abbay'
     compileSdk 34
@@ -26,63 +32,69 @@ android {
         }
     }
 
-    buildTypes {
+    signingConfigs {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            storeFile file("C:\\Users\\Abe\\Documents\\Keystore\\keystore.jks")
+            storePassword localProperties["KEYSTORE_PASSWORD"]
+            keyAlias localProperties["KEY_ALIAS"]
+            keyPassword localProperties["KEY_PASSWORD"]
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
     kotlinOptions {
         jvmTarget = '17'
     }
+
     buildFeatures {
         compose true
     }
+
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
     }
+
     packagingOptions {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
     }
-
 }
 
 dependencies {
     // Project modules
     implementation project(':domain')
-    
+
     // AndroidX Core
     implementation libs.androidx.documentfile
     implementation libs.androidx.core.ktx
     implementation libs.bundles.lifecycle
     implementation libs.androidx.activity.compose
     implementation libs.androidx.startup
-    
+
     // Compose BOM and UI
     implementation platform(libs.androidx.compose.bom)
     implementation libs.bundles.compose
     implementation libs.androidx.constraintlayout.compose
-    
+
     // Navigation
     implementation libs.androidx.navigation.compose
-    
+
     // Media3
     implementation libs.bundles.media3
-    
+
     // Room
     implementation libs.bundles.room
     kapt libs.androidx.room.compiler
-    
+
     // Hilt
     implementation libs.bundles.hilt.implementation
     kapt libs.bundles.hilt.kapt
-    
+
     // Work Manager
     implementation libs.androidx.work.runtime.ktx
 
@@ -91,24 +103,24 @@ dependencies {
     // Image Loading
     implementation libs.bundles.coil
     implementation libs.glide.compose
-    
+
     // Material Design
     implementation libs.material
-    
+
     // Permissions
     implementation libs.accompanist.permissions
-    
+
     // Serialization
     implementation libs.kotlinx.serialization.json.legacy
     implementation libs.kotlinx.serialization.json
-    
+
     // Testing
     testImplementation libs.junit
     androidTestImplementation libs.bundles.testing.android
     androidTestImplementation platform(libs.androidx.compose.bom.test)
     androidTestImplementation libs.bundles.testing.compose
     debugImplementation libs.bundles.testing.compose.debug
-    
+
     // Firebase
     implementation libs.firebase.crashlytics
     implementation libs.firebase.analytics

@@ -87,6 +87,7 @@ import com.mobyle.abbay.presentation.common.mappers.toBookSpeed
 import com.mobyle.abbay.presentation.common.theme.AbbayTextStyles
 import com.mobyle.abbay.presentation.utils.currentFraction
 import com.mobyle.abbay.presentation.utils.intermediateProgress
+import com.mobyle.abbay.presentation.utils.playMultipleBooks
 import com.mobyle.abbay.presentation.utils.prepareBook
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
@@ -232,7 +233,6 @@ fun MiniPlayer(
                 onLockScreen(false)
             },
             updateCurrentBookPosition = updateCurrentBookPosition,
-            onDisableGesture = onLockScreen,
             updateBookSpeed = updateBookSpeed,
             modifier = modifier
         )
@@ -377,7 +377,6 @@ private fun MultipleFilePlayer(
     onPlayingChange: (Boolean) -> Unit,
     updateCurrentBookPosition: (Int) -> Unit,
     updateProgress: (Long) -> Unit,
-    onDisableGesture: (Boolean) -> Unit,
     updateBookSpeed: (Float) -> Unit,
     modifier: Modifier
 ) {
@@ -630,9 +629,9 @@ private fun BookFilesList(
 
 @Composable
 private fun PlayerController(
-    id: String,
+    book: Book,
     player: MediaController,
-    position: Long,
+    progress: Long,
     playerIcon: MutableState<PlayingState>,
     onPlayingChange: (Boolean) -> Unit,
 ) {
@@ -643,11 +642,29 @@ private fun PlayerController(
                     onPlayingChange(false)
                     player.pause()
                 } else {
-                    player.prepareBook(id, position)
+                    when (book) {
+                        is MultipleBooks -> {
+                            player.playMultipleBooks(
+                                currentPosition = book.currentBookPosition,
+                                idList = book.bookFileList.map { it.id },
+                                progress = book.progress,
+                                isPlaying = MutableStateFlow(true)
+                            )
+                        }
+
+                        is BookFile -> {
+                            player.prepareBook(
+                                id = book.id,
+                                progress = progress,
+                                isPlaying = MutableStateFlow(true)
+                            )
+                        }
+                    }
+
                     player.addListener(object : Player.Listener {
                         override fun onPlaybackStateChanged(state: Int) {
                             if (state == Player.STATE_READY) {
-                                player.seekTo(position)
+                                player.seekTo(progress)
                                 onPlayingChange(true)
                                 player.play()
                                 player.removeListener(this)
@@ -799,10 +816,10 @@ private fun MiniPlayerContent(
             )
         } else {
             PlayerController(
-                id = book.id,
+                book = book,
                 player = player,
                 onPlayingChange = onPlayingChange,
-                position = progress,
+                progress = progress,
                 playerIcon = playerIcon
             )
         }
@@ -847,7 +864,25 @@ private fun BookImage(
                             onPlayingChange(true)
                             player.play()
                         } else {
-                            player.prepareBook(book.id, progress, MutableStateFlow(true))
+                            when (book) {
+                                is MultipleBooks -> {
+                                    player.playMultipleBooks(
+                                        currentPosition = book.currentBookPosition,
+                                        idList = book.bookFileList.map { it.id },
+                                        progress = book.progress,
+                                        isPlaying = MutableStateFlow(true)
+                                    )
+                                }
+
+                                is BookFile -> {
+                                    player.prepareBook(
+                                        id = book.id,
+                                        progress = progress,
+                                        isPlaying = MutableStateFlow(true)
+                                    )
+                                }
+                            }
+
                             player.addListener(object : Player.Listener {
                                 override fun onPlaybackStateChanged(state: Int) {
                                     if (state == Player.STATE_READY) {
@@ -940,39 +975,50 @@ private fun PlayerControls(
         Row(
             modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            IconButton(onClick = {
-                val newPosition = (progress - 30_000L).coerceAtLeast(0L)
-                player.seekTo(newPosition)
-                updateProgress(newPosition)
-            }) {
+            IconButton(
+                onClick = {
+                    val newPosition = (progress - 30_000L).coerceAtLeast(0L)
+                    player.seekTo(newPosition)
+                    updateProgress(newPosition)
+                }
+            ) {
                 Icon(Icons.Default.Replay30, contentDescription = "", tint = Color.White)
             }
-            IconButton(onClick = {
-                val forwardTo = (progress - 10_000L).coerceAtMost(duration)
-                player.seekTo(forwardTo)
-                updateProgress(forwardTo)
-            }) {
+            IconButton(
+                onClick = {
+                    val forwardTo = (progress - 10_000L).coerceAtMost(duration)
+                    player.seekTo(forwardTo)
+                    updateProgress(forwardTo)
+                }
+            ) {
                 Icon(Icons.Default.Replay10, contentDescription = "", tint = Color.White)
             }
+
             PlayerController(
-                id = book.id,
+                book = book,
                 player = player,
                 onPlayingChange = onPlayingChange,
-                position = progress,
+                progress = progress,
                 playerIcon = playerIcon,
             )
-            IconButton(onClick = {
-                val forwardTo = (progress + 10_000L).coerceAtMost(duration)
-                player.seekTo(forwardTo)
-                updateProgress(forwardTo)
-            }) {
+
+            IconButton(
+                onClick = {
+                    val forwardTo = (progress + 10_000L).coerceAtMost(duration)
+                    player.seekTo(forwardTo)
+                    updateProgress(forwardTo)
+                }
+            ) {
                 Icon(Icons.Default.Forward10, contentDescription = "", tint = Color.White)
             }
-            IconButton(onClick = {
-                val forwardTo = (progress + 30_000L).coerceAtMost(duration)
-                player.seekTo(forwardTo)
-                updateProgress(forwardTo)
-            }) {
+
+            IconButton(
+                onClick = {
+                    val forwardTo = (progress + 30_000L).coerceAtMost(duration)
+                    player.seekTo(forwardTo)
+                    updateProgress(forwardTo)
+                }
+            ) {
                 Icon(Icons.Default.Forward30, contentDescription = "", tint = Color.White)
             }
         }
