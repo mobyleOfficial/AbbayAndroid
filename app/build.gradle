@@ -17,12 +17,12 @@ if (localPropertiesFile.exists()) {
 
 android {
     namespace 'com.mobyle.abbay'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId "com.mobyle.abbay"
         minSdk 28
-        targetSdk 34
+        targetSdk 35
         versionCode 1
         versionName "1.0"
 
