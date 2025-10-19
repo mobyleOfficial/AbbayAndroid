@@ -100,6 +100,8 @@ import java.util.Date
 
 private const val AUTO_DENIAL_THRESHOLD = 300
 
+private const val UPDATE_PROGRESS_REFRESH_RATE = 3
+
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun BooksListScreen(
@@ -247,6 +249,8 @@ fun BooksListScreen(
     }
 
     LaunchedEffectAndCollect(viewModel.isPlaying) {
+        var count = 0
+
         while (it == true) {
             selectedBook?.let {
                 if (player.isPlaying) {
@@ -258,7 +262,13 @@ fun BooksListScreen(
                 }
             }
 
+            if (count == UPDATE_PROGRESS_REFRESH_RATE) {
+                viewModel.updateBookList()
+                count = 0
+            }
+
             delay(1000)
+            count++
         }
     }
 
@@ -271,10 +281,6 @@ fun BooksListScreen(
                 }
             }
         })
-    }
-
-    LifecycleEventEffect(event = Lifecycle.Event.ON_PAUSE) {
-        viewModel.updateBookList()
     }
 
     LaunchedEffect(selectedBook?.id) {
