@@ -122,7 +122,6 @@ fun BooksListScreen(
     val currentProgress by viewModel.currentProgress.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
     val hasBookSelected by viewModel.hasBookSelected.collectAsState(false)
-    var componentHeight by remember { mutableStateOf(0.dp) }
     val activity = LocalContext.current as Activity
     val permissionRequestAttemptTime = remember { mutableLongStateOf(0) }
     val permissionState = rememberMultiplePermissionsState(
@@ -317,6 +316,7 @@ fun BooksListScreen(
                                     progress = it,
                                     currentPosition = book.getBookPosition()
                                 )
+                                viewModel.updateBookList()
                             }
                         },
                         updateCurrentBookPosition = {
@@ -325,6 +325,7 @@ fun BooksListScreen(
                                     id = book.id,
                                     position = it
                                 )
+                                viewModel.updateBookList()
                             }
                         },
                         onLockScreen = viewModel::updateIsScreenLocked,
@@ -338,11 +339,6 @@ fun BooksListScreen(
                             }
                         },
                         modifier = Modifier
-                            .onGloballyPositioned {
-                                componentHeight = with(density) {
-                                    it.size.height.toDp()
-                                }
-                            }
                     )
                 }
             }
