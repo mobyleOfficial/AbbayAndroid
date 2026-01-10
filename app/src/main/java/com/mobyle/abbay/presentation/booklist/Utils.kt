@@ -96,13 +96,21 @@ fun Uri.getBooks(context: Context, type: BookType): List<Book>? {
             } while (bookCursor.moveToNext())
             bookCursor.close()
 
-            val filesList = filesHashMap.mapValues {
-                if (it.value.size == 1) {
-                    it.value.first()
+            val filesList = filesHashMap.mapValues { entry ->
+                val fileFolderPath = entry.key
+                // Only group as MultipleBooks if the folder is not the root folder
+                if (fileFolderPath == folderPath) {
+                    // Files in root folder: return as individual BookFile objects
+                    entry.value
                 } else {
-                    it.value.toMultipleBooks()
+                    // Files in subfolders: group them
+                    if (entry.value.size == 1) {
+                        listOf(entry.value.first())
+                    } else {
+                        listOf(entry.value.toMultipleBooks())
+                    }
                 }
-            }.values.toList().filterNotNull()
+            }.values.flatten().filterNotNull()
 
             filesList.toList()
         } else {
