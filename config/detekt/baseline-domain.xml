@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>NewLineAtEndOfFile:BookFile.kt$com.model.BookFile.kt</ID>
+    <ID>NewLineAtEndOfFile:BookType.kt$com.model.BookType.kt</ID>
+    <ID>NewLineAtEndOfFile:ClearBooks.kt$com.usecase.ClearBooks.kt</ID>
+    <ID>NewLineAtEndOfFile:DeleteBook.kt$com.usecase.DeleteBook.kt</ID>
+    <ID>NewLineAtEndOfFile:DisableOpenPlayerInStartup.kt$com.usecase.DisableOpenPlayerInStartup.kt</ID>
+    <ID>NewLineAtEndOfFile:DisablePlayWhenAppIsClosed.kt$com.usecase.DisablePlayWhenAppIsClosed.kt</ID>
+    <ID>NewLineAtEndOfFile:EnableOpenPlayerInStartup.kt$com.usecase.EnableOpenPlayerInStartup.kt</ID>
+    <ID>NewLineAtEndOfFile:EnablePlayWhenAppIsClosed.kt$com.usecase.EnablePlayWhenAppIsClosed.kt</ID>
+    <ID>NewLineAtEndOfFile:GetBooksFolderPath.kt$com.usecase.GetBooksFolderPath.kt</ID>
+    <ID>NewLineAtEndOfFile:GetBooksList.kt$com.usecase.GetBooksList.kt</ID>
+    <ID>NewLineAtEndOfFile:GetCurrentSelectedBook.kt$com.usecase.GetCurrentSelectedBook.kt</ID>
+    <ID>NewLineAtEndOfFile:HasShownReloadGuide.kt$com.usecase.HasShownReloadGuide.kt</ID>
+    <ID>NewLineAtEndOfFile:IsAppAlive.kt$com.usecase.IsAppAlive.kt</ID>
+    <ID>NewLineAtEndOfFile:IsOpenPlayerInStartup.kt$com.usecase.IsOpenPlayerInStartup.kt</ID>
+    <ID>NewLineAtEndOfFile:IsPlayWhenAppIsClosedEnabled.kt$com.usecase.IsPlayWhenAppIsClosedEnabled.kt</ID>
+    <ID>NewLineAtEndOfFile:MultipleBooks.kt$com.model.MultipleBooks.kt</ID>
+    <ID>NewLineAtEndOfFile:ObserveBooksList.kt$com.usecase.ObserveBooksList.kt</ID>
+    <ID>NewLineAtEndOfFile:SaveBookFolderPath.kt$com.usecase.SaveBookFolderPath.kt</ID>
+    <ID>NewLineAtEndOfFile:SaveCurrentSelectedBook.kt$com.usecase.SaveCurrentSelectedBook.kt</ID>
+    <ID>NewLineAtEndOfFile:SetReloadGuideAsShown.kt$com.usecase.SetReloadGuideAsShown.kt</ID>
+    <ID>NewLineAtEndOfFile:SettingsRepository.kt$com.repository.SettingsRepository.kt</ID>
+    <ID>NewLineAtEndOfFile:UpdateAppLifeStatus.kt$com.usecase.UpdateAppLifeStatus.kt</ID>
+    <ID>NewLineAtEndOfFile:UpdateSelectedBook.kt$com.usecase.UpdateSelectedBook.kt</ID>
+    <ID>NewLineAtEndOfFile:UpsertBookList.kt$com.usecase.UpsertBookList.kt</ID>
+    <ID>TooManyFunctions:BooksRepository.kt$BooksRepository</ID>
+  </CurrentIssues>
+</SmellBaseline>

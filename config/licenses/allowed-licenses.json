@@ -1,0 +1,17 @@
+{
+  "allowedLicenses": [
+    { "moduleLicense": "Apache License, Version 2.0" },
+    { "moduleLicense": "MIT License" },
+    { "moduleLicense": "The 2-Clause BSD License" },
+    { "moduleLicense": "The 3-Clause BSD License" },
+    { "moduleLicense": "BSD License" },
+    { "moduleLicense": "ISC License" },
+    { "moduleLicense": "zlib License" },
+    { "moduleLicense": "The Unlicense" },
+    { "moduleLicense": "Public Domain" },
+    { "moduleLicense": "Android Software Development Kit License", "moduleName": "com.google.android.gms:.*" },
+    { "moduleLicense": "Android Software Development Kit License", "moduleName": "com.google.firebase:.*" },
+    { "moduleLicense": "Android Software Development Kit License", "moduleName": "com.google.android.datatransport:.*" },
+    { "moduleLicense": "Android Software Development Kit License", "moduleName": "com.google.android.odml:.*" }
+  ]
+}

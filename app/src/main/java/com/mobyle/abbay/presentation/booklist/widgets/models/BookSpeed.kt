@@ -7,3 +7,7 @@ sealed class BookSpeed(open val speed: Float, open val text: String) {
     data object OnePointFive : BookSpeed(1.5f, "1.5x")
     data object Double : BookSpeed(2f, "2.0x")
 }
+
+fun Float.toBookSpeed(): BookSpeed =
+    listOf(BookSpeed.Half, BookSpeed.OnePointTwoFive, BookSpeed.OnePointFive, BookSpeed.Double)
+        .firstOrNull { it.speed == this } ?: BookSpeed.Normal

@@ -4,12 +4,14 @@ Abbay is an Android audiobook player app built with Jetpack Compose and ExoPlaye
 
 ## Features
 
-- 📚 Browse and play audiobooks (single or multiple chapters)
-- ⏩ Skip forward/backward by 10 seconds
-- 🎚️ Change playback speed
+- 📚 Browse and play audiobooks from folders or single files (MP3, M4A/M4B, Opus, FLAC, …)
+- 📖 Chapters from CUE sheets, M4B/MP4, ID3 and Matroska/Ogg tags, or one per file; chapter list, swipe the cover to change chapter
+- ⏩ Small and large skips (15 s / 30 s / 5 min by default); hold a skip button to repeat it; double-tap the cover to skip
+- 🎚️ Speed 0.5–3.5× per book, with presets and a default for new books
+- ✏️ Book details: edit title, author, narrator and description, choose a cover (folder image, embedded, gallery or web), sort files by track number
+- 🌓 Themes: System, Light, Dark, Black, and wallpaper colors on Android 12+
 - 🔒 Lock the player screen to prevent accidental touches
-- 📖 View and select chapters in multi-chapter books
-- 🎵 Modern UI with Jetpack Compose
+- 🛡️ Crash reports and usage statistics can be turned off in Settings; no ads, no accounts
 
 ## Screenshots
 
@@ -19,41 +21,63 @@ Abbay is an Android audiobook player app built with Jetpack Compose and ExoPlaye
 
 ### Prerequisites
 
-- Android Studio (latest recommended)
-- Android device or emulator (API 23+)
+- Android Studio (latest recommended), JDK 21
+- Android device or emulator (API 29+ / Android 10+)
+- `app/google-services.json` (not committed; CI writes it from a secret). For local debug builds any syntactically valid file for the package `com.mobyle.abbay` works.
 
 ### Build & Run
 
-1. Clone this repository:
-    ```sh
-    git clone https://github.com/yourusername/abbay-android.git
-    cd abbay-android
-    ```
+```sh
+./gradlew assembleDebug                                   # build
+./gradlew test                                            # unit tests
+./gradlew :app:verifyRoborazziDebug                       # screenshot tests (recordRoborazziDebug to update)
+./gradlew lint detekt ktlintCheck checkModuleBoundaries   # static analysis
+./gradlew checkLicense                                    # dependency license check
+```
 
-2. Open the project in Android Studio.
+### Performance and Baseline Profile
 
-3. Click **Run** ▶️ to build and launch the app.
+`:benchmark` holds the Macrobenchmarks (cold start, library scrolling) and the Baseline Profile generator; they run against the `release` build (debug-signed when the publishing keystore is absent) on a device or emulator with a library loaded:
+
+```sh
+./gradlew :benchmark:connectedBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.mobyle.abbay.benchmark.StartupAndScrollBenchmark
+./gradlew :benchmark:connectedBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.mobyle.abbay.benchmark.BaselineProfileGenerator
+```
+
+The generator needs a rooted device (an emulator `google_apis` image after `adb root`) or Android 13+. Copy the profile it writes under `benchmark/build/outputs/connected_android_test_additional_output/` to `app/src/main/baseline-prof.txt` and commit it after UI changes to startup, the library or the player.
 
 ## Project Structure
 
-- `app/src/main/java/com/mobyle/abbay/presentation/booklist/widgets/`
-    - `MiniPlayer.kt` – Main player UI and logic
-    - `models/` – UI models and enums
-- `app/src/main/res/raw/`
-    - `motion_scene.json5` – MotionLayout scene for player transitions
+| Module | Content |
+|---|---|
+| `app` | Presentation (Compose UI, ViewModels, the playback service, Cast, widgets), infrastructure (navigation, audio processing), `Application`, DI wiring |
+| `domain` | Pure Kotlin: models, repository interfaces, use cases |
+| `data` | Room database (schema v3 + migrations), DataStore settings, SAF library scanner, tags and covers, background scans (WorkManager), repository implementations |
+| `benchmark` | Macrobenchmarks and the Baseline Profile generator (test module, against the release build) |
 
-## Key Libraries
+Inside `app/src/main/java/com/mobyle/abbay/`:
 
-- [Jetpack Compose](https://developer.android.com/jetpack/compose)
-- [ExoPlayer](https://exoplayer.dev/)
-- [Coil](https://coil-kt.github.io/coil/) (for image loading)
-- [Media3](https://developer.android.com/guide/topics/media/media3)
+| Folder | Content |
+|---|---|
+| `presentation/playback/` | `PlaybackService` (Media3 `MediaLibraryService`: notification with skip buttons, position saving, auto-stop, error handling), the player commands, and `PlayerControllerImpl`, the implementation of the domain `PlayerController` |
+| `presentation/cast/` | Cast: the files, or the audio with its effects as a live WAV stream |
+| `presentation/widget/` | Glance home-screen widgets |
+| `infra/dsp/` | Audio processing: silence trimming, equalizer, balance, loudness, pitch, resampler; RNNoise noise reduction through JNI (C sources in `app/src/main/cpp/`) |
+
+- `app/src/main/java/com/mobyle/abbay/presentation/booklist/widgets/MiniPlayer.kt` – The player (mini player and expanded state); its parts are in `widgets/player/`
+- `app/src/main/java/com/mobyle/abbay/presentation/bookdetails/` – Book details and metadata editing
+- `app/src/release/` – Release-only manifest (profileable from the shell, for the benchmarks)
+- `app/src/main/res/raw/motion_scene.json5` – MotionLayout scene for player transitions
+- `config/` – detekt, ktlint, license-check and module-boundary configuration
 
 ## Customization
 
-- **Playback Speed:** Tap the speed icon in the top bar to change.
-- **Screen Lock:** Tap the lock icon to lock/unlock the player.
-- **Files:** Tap the file name to view/select book file.
+- **Playback Speed:** Tap the speed button in the player's top bar.
+- **Chapters:** Tap the chapter name under the cover to open the chapter list.
+- **Screen Lock:** Tap the lock icon to lock; double-tap the locked player to unlock.
+- **Book details:** Player overflow menu → Book details, or long-press a book → Edit details.
+- **Theme, language and display:** Settings → Appearance (theme, cover on the lock screen, keep the screen on while charging, seek-bar times, language).
+- **Licenses, source code and privacy:** Settings → About.
 
 ## Contributing
 

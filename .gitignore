@@ -8,7 +8,7 @@
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
 .DS_Store
-/build
+build/
 /captures
 .externalNativeBuild
 .cxx
@@ -16,3 +16,19 @@ local.properties
 
 # Firebase configuration (contains sensitive API keys)
 app/google-services.json
+
+# Local tool working files
+.claude/
+
+# Never commit reverse-engineering material or third-party app packages
+docs/reverse-engineering/
+re-workspace/
+*.xapk
+*.apks
+
+# Roborazzi comparison artifacts
+*_actual.png
+*_compare.png
+
+# Kotlin compiler cache
+.kotlin/

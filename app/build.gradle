@@ -2,12 +2,14 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'org.jetbrains.kotlin.plugin.compose'
-    id 'kotlin-kapt'
+    id 'com.google.devtools.ksp'
     id 'com.google.dagger.hilt.android'
     id 'kotlin-parcelize'
     id 'org.jetbrains.kotlin.plugin.serialization'
     id 'com.google.gms.google-services'
     id 'com.google.firebase.crashlytics'
+    id 'com.github.jk1.dependency-license-report'
+    id 'io.github.takahirom.roborazzi'
 }
 
 def localProperties = new Properties()
@@ -22,7 +24,7 @@ android {
 
     defaultConfig {
         applicationId "com.mobyle.abbay"
-        minSdk 28
+        minSdk 29
         targetSdk 35
         versionCode 3
         versionName "1.0"
@@ -42,6 +44,32 @@ android {
         }
     }
 
+    buildTypes {
+        // R8 and resource shrinking: without them the release APK was 72–77 MB against the 15 MB budget.
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // The publishing keystore when it is on this machine; otherwise the debug key, so the release build can
+            // be installed and measured (the :benchmark module). Google Play refuses debug-signed uploads.
+            signingConfig signingConfigs.release.storeFile.exists() ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    // Noise reduction: RNNoise and its JNI bridge (src/main/cpp).
+    ndkVersion '28.2.13676358'
+    externalNativeBuild {
+        cmake {
+            path 'src/main/cpp/CMakeLists.txt'
+            version '3.22.1'
+        }
+    }
+
+    // Instrumented tests read the same audio fixtures as the unit tests.
+    sourceSets {
+        androidTest.assets.srcDirs += files("$projectDir/src/test/resources")
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21
@@ -56,6 +84,12 @@ android {
         buildConfig true
     }
 
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
+
     packagingOptions {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
@@ -64,8 +98,9 @@ android {
 }
 
 dependencies {
-    // Project modules
+    // Project modules (presentation imports only :domain; the others are referenced from DI wiring)
     implementation project(':domain')
+    implementation project(':data')
 
     // AndroidX Core
     implementation libs.androidx.documentfile
@@ -82,21 +117,27 @@ dependencies {
     // Navigation
     implementation libs.androidx.navigation.compose
 
-    // Media3
+    // Media3: the player, the media session, Cast
     implementation libs.bundles.media3
+    implementation libs.androidx.media3.common
+    implementation libs.androidx.media3.cast
+    // The Cast route button and its dialogs
+    implementation libs.androidx.mediarouter
+    implementation libs.androidx.appcompat
 
-    // Room
-    implementation libs.bundles.room
-    kapt libs.androidx.room.compiler
+    // Home screen widgets
+    implementation libs.androidx.glance.appwidget
 
     // Hilt
     implementation libs.bundles.hilt.implementation
-    kapt libs.bundles.hilt.kapt
+    ksp libs.bundles.hilt.compilers
 
     // Work Manager
     implementation libs.androidx.work.runtime.ktx
 
     implementation libs.androidx.splashscreen
+    // Installs the Baseline Profile (src/main/baseline-prof.txt) on devices without Play's cloud profiles.
+    implementation libs.androidx.profileinstaller
 
     // Image Loading
     implementation libs.bundles.coil
@@ -105,16 +146,17 @@ dependencies {
     // Material Design
     implementation libs.material
 
-    // Permissions
-    implementation libs.accompanist.permissions
-
     // Serialization
     implementation libs.kotlinx.serialization.json.legacy
     implementation libs.kotlinx.serialization.json
 
     // Testing
     testImplementation libs.junit
+    testImplementation platform(libs.androidx.compose.bom)
+    testImplementation libs.bundles.testing.screenshot
+    testImplementation libs.kotlinx.coroutines.test
     androidTestImplementation libs.bundles.testing.android
+    androidTestImplementation libs.androidx.test.runner
     androidTestImplementation platform(libs.androidx.compose.bom.test)
     androidTestImplementation libs.bundles.testing.compose
     debugImplementation libs.bundles.testing.compose.debug
@@ -124,7 +166,96 @@ dependencies {
     implementation libs.firebase.analytics
 }
 
-// Allow references to generated code
-kapt {
-    correctErrorTypes true
+// License check: only MIT-compatible licenses may ship in the release build.
+licenseReport {
+    configurations = ['releaseRuntimeClasspath']
+    excludeOwnGroup = true
+    excludeBoms = true
+    allowedLicensesFile = rootProject.file('config/licenses/allowed-licenses.json')
+    filters = [new com.github.jk1.license.filter.LicenseBundleNormalizer(
+        bundlePath: rootProject.file('config/licenses/license-normalizer-bundle.json').path,
+        createDefaultTransformationRules: true
+    )]
+}
+
+/**
+ * About → Open-source licenses: `licenses.json` in each variant's assets, made from the
+ * license report (only the libraries of that variant's runtime classpath) and the asset and bundled-source tables of
+ * CREDITS.md.
+ */
+abstract class LicenseNoticesTask extends DefaultTask {
+    @InputFile
+    abstract RegularFileProperty getLicenseReport()
+
+    @InputFile
+    abstract RegularFileProperty getCredits()
+
+    @Input
+    abstract SetProperty<String> getModules()
+
+    @OutputDirectory
+    abstract DirectoryProperty getOutputDirectory()
+
+    @TaskAction
+    void write() {
+        def report = new groovy.json.JsonSlurper().parse(licenseReport.get().asFile)
+        def wanted = modules.get()
+        def libraries = report.dependencies.findAll { wanted.contains(it.moduleName) }.collect { dependency ->
+            def license = dependency.moduleLicenses ? dependency.moduleLicenses[0] : [:]
+            [name: dependency.moduleName, version: dependency.moduleVersion ?: '', license: license.moduleLicense ?: '',
+             url: license.moduleLicenseUrl ?: '']
+        }.sort { it.name }
+        def notices = [
+            bundled: creditsTable('Bundled source code'),
+            assets: creditsTable('Assets'),
+            libraries: libraries,
+        ]
+        def output = outputDirectory.get().file('licenses.json').asFile
+        output.parentFile.mkdirs()
+        output.text = groovy.json.JsonOutput.toJson(notices)
+    }
+
+    /** Rows of the markdown table under `## [heading]`: first column = name, second = source, third = license. */
+    private List<Map<String, String>> creditsTable(String heading) {
+        def lines = credits.get().asFile.readLines()
+        def start = lines.findIndexOf { it.trim() == "## ${heading}" }
+        if (start < 0) return []
+        def rows = lines.drop(start + 1).dropWhile { !it.startsWith('|') }.takeWhile { it.startsWith('|') }.drop(2)
+        rows.collect { row ->
+            def cells = row.split('\\|').collect { it.trim() }.findAll { true }.drop(1)
+            [name: cells[0].replace('`', ''), source: cells[1].replace('`', ''), license: cells[2].replace('`', '')]
+        }
+    }
+}
+
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        def runtimeClasspath = configurations.named("${variant.name}RuntimeClasspath")
+        def notices = tasks.register("generate${variant.name.capitalize()}LicenseNotices", LicenseNoticesTask) {
+            dependsOn 'generateLicenseReport'
+            licenseReport.set(layout.buildDirectory.file('reports/dependency-license/project-licenses-for-check-license-task.json'))
+            credits.set(rootProject.layout.projectDirectory.file('CREDITS.md'))
+            modules.set(provider {
+                runtimeClasspath.get().incoming.resolutionResult.allComponents
+                    .collect { it.moduleVersion }
+                    .findAll { it != null && it.group }
+                    .collect { "${it.group}:${it.name}".toString() } as Set
+            })
+            outputDirectory.set(layout.buildDirectory.dir("generated/licenseNotices/${variant.name}"))
+        }
+        variant.sources.assets?.addGeneratedSourceDirectory(notices) { it.outputDirectory }
+    }
+}
+
+roborazzi {
+    outputDir = file('src/test/screenshots')
+}
+
+// Compose screenshot tests need the debug-only ui-test-manifest activity; they run in testDebugUnitTest.
+tasks.withType(Test).configureEach {
+    if (name.endsWith('ReleaseUnitTest')) {
+        // Compose UI tests need the debug-only ui-test-manifest.
+        exclude '**/screenshots/**'
+        exclude '**/abbay/ui/**'
+    }
 }
