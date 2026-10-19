@@ -71,6 +71,10 @@ robolectric = "4.14.1"
 firebase-crashlytics = "18.6.2"
 firebase-analytics = "21.5.1"
 
+# Ads: the library banner (AdMob) and the consent form where the law requires one (UMP)
+play-services-ads = "23.6.0"
+user-messaging-platform = "3.2.0"
+
 [libraries]
 # Startup, Baseline Profile and Macrobenchmark
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version = "1.3.1" }
@@ -166,6 +170,10 @@ robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "
 # Firebase
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics", version.ref = "firebase-crashlytics" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics", version.ref = "firebase-analytics" }
+
+# Ads
+play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "play-services-ads" }
+user-messaging-platform = { group = "com.google.android.ump", name = "user-messaging-platform", version.ref = "user-messaging-platform" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

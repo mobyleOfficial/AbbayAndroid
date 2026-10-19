@@ -27,6 +27,7 @@ internal object SettingsKeys {
     val themeMode = stringPreferencesKey("themeMode")
     val dynamicColor = booleanPreferencesKey("dynamicColor")
     val shareDiagnostics = booleanPreferencesKey("shareDiagnostics")
+    val showAds = booleanPreferencesKey("showAds")
     val autoStopAfterPauseMinutes = intPreferencesKey("autoStopAfterPauseMin")
     val smartRewind = stringPreferencesKey("smartRewind")
     val sleepDefaultMinutes = intPreferencesKey("sleepDefaultMinutes")

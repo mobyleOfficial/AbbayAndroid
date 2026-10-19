@@ -171,7 +171,13 @@
     <string name="settings_dynamic_color">Usar cores do papel de parede</string>
     <string name="settings_privacy">Privacidade</string>
     <string name="settings_share_diagnostics">Enviar relatórios de falhas e estatísticas de uso</string>
-    <string name="settings_privacy_text">Quando ativado, o Abbay envia relatórios de falhas e contagens de quais recursos são usados ao Firebase (Google). Nunca envia nomes de arquivos, títulos de livros nem nada que você digite. O Abbay não tem contas nem anúncios.</string>
+    <string name="settings_privacy_text">Quando ativado, o Abbay envia relatórios de falhas e contagens de quais recursos são usados ao Firebase (Google). Nunca envia nomes de arquivos, títulos de livros nem nada que você digite. O Abbay não tem contas.</string>
+    <string name="settings_show_ads">Mostrar anúncios</string>
+    <string name="settings_show_ads_text">Um banner pequeno no rodapé da biblioteca, nunca em tela cheia. Os anúncios não são personalizados: o Abbay não compartilha seu ID de publicidade. As mudanças valem na próxima vez que você abrir o app.</string>
+    <string name="settings_ad_privacy_options">Opções de privacidade dos anúncios</string>
+    <string name="disable_ads_dialog_title">Desativar anúncios?</string>
+    <string name="disable_ads_dialog_body">Os anúncios nos ajudam a manter o Abbay gratuito e atualizado. Se desativá-los, feche e abra o app novamente para que a mudança tenha efeito.</string>
+    <string name="disable_ads_dialog_action">Desativar</string>
     <string name="player_quick_actions">Ações rápidas</string>
     <string name="player_sleep_timer">Timer de sono</string>
     <string name="player_sleep_timer_running">Timer de sono, faltam %1$s</string>

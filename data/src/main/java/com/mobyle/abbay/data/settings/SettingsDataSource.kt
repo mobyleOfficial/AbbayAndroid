@@ -36,6 +36,7 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
             preferences[SettingsKeys.themeMode] = updated.themeMode.name
             preferences[SettingsKeys.dynamicColor] = updated.dynamicColor
             preferences[SettingsKeys.shareDiagnostics] = updated.shareDiagnostics
+            preferences[SettingsKeys.showAds] = updated.showAds
             updated.pendingCoverBookId?.let { preferences[SettingsKeys.pendingCoverBookId] = it }
                 ?: preferences.remove(SettingsKeys.pendingCoverBookId)
             preferences[SettingsKeys.autoStopAfterPauseMinutes] = updated.autoStopAfterPauseMinutes
@@ -119,6 +120,7 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
             themeMode = enumOrDefault(preferences[SettingsKeys.themeMode], defaults.themeMode),
             dynamicColor = preferences.valueOr(SettingsKeys.dynamicColor, defaults.dynamicColor),
             shareDiagnostics = preferences.valueOr(SettingsKeys.shareDiagnostics, defaults.shareDiagnostics),
+            showAds = preferences.valueOr(SettingsKeys.showAds, defaults.showAds),
             autoStopAfterPauseMinutes = preferences.valueOr(SettingsKeys.autoStopAfterPauseMinutes, defaults.autoStopAfterPauseMinutes),
             smartRewind = enumOrDefault(preferences[SettingsKeys.smartRewind], defaults.smartRewind),
             sleepDefaultMinutes = preferences.valueOr(SettingsKeys.sleepDefaultMinutes, defaults.sleepDefaultMinutes),

@@ -39,6 +39,7 @@ class SettingsDataSourceTest {
                 themeMode = ThemeMode.BLACK,
                 dynamicColor = true,
                 shareDiagnostics = false,
+                showAds = false,
                 pendingCoverBookId = "7",
                 defaultSpeed = 1.25f
             )
@@ -47,6 +48,7 @@ class SettingsDataSourceTest {
         assertEquals(ThemeMode.BLACK, stored.themeMode)
         assertEquals(true, stored.dynamicColor)
         assertEquals(false, stored.shareDiagnostics)
+        assertEquals(false, stored.showAds)
         assertEquals("7", stored.pendingCoverBookId)
         assertEquals(1.25f, stored.defaultSpeed)
 

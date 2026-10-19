@@ -36,6 +36,8 @@ data class AppSettings(
     val dynamicColor: Boolean = false,
     /** "Send crash reports and usage statistics". */
     val shareDiagnostics: Boolean = true,
+    /** "Show ads": the banner at the bottom of the library. Read once at startup; a change applies on the next launch. */
+    val showAds: Boolean = true,
     /** Paused this long, the service stops itself; 0 means never. */
     val autoStopAfterPauseMinutes: Int = 30,
     /** Rewind on resume after a pause. */

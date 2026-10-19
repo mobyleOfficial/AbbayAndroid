@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Switch
 import androidx.compose.material.SwitchDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,6 +24,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.mobyle.abbay.R
+import com.mobyle.abbay.infra.ads.LocalAdsSession
+import com.mobyle.abbay.presentation.common.widgets.AbbayActionDialog
 import com.mobyle.abbay.presentation.common.widgets.AbbayDropdownMenu
 import com.mobyle.abbay.presentation.common.widgets.AbbayMenuItem
 import com.settings.AppLanguage
@@ -72,7 +76,7 @@ fun AppearanceSettings(viewModel: SettingsViewModel) {
     }
 }
 
-/** "Send crash reports and usage statistics" and what is sent. */
+/** "Send crash reports and usage statistics", "Show ads" and what is sent. */
 @Composable
 fun PrivacySettings(viewModel: SettingsViewModel) {
     val shareDiagnostics by viewModel.shareDiagnostics.collectAsState()
@@ -80,11 +84,47 @@ fun PrivacySettings(viewModel: SettingsViewModel) {
         SettingItem(text = stringResource(R.string.settings_share_diagnostics)) {
             SettingSwitch(shareDiagnostics, viewModel::changeShareDiagnostics)
         }
+        AdsSettings(viewModel)
         Text(
             text = stringResource(R.string.settings_privacy_text),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        )
+    }
+}
+
+/** "Show ads", read at startup, and the ad consent choices where the law requires them. */
+@Composable
+private fun AdsSettings(viewModel: SettingsViewModel) {
+    val showAds by viewModel.showAds.collectAsState()
+    val showDisableAdsConfirmation by viewModel.showDisableAdsConfirmation.collectAsState()
+    val adsSession = LocalAdsSession.current
+    val isPrivacyOptionsRequired = adsSession?.isPrivacyOptionsRequired?.collectAsState()?.value == true
+    val activity = LocalContext.current as? Activity
+
+    SettingItem(text = stringResource(R.string.settings_show_ads)) {
+        SettingSwitch(showAds, viewModel::changeShowAds)
+    }
+    Text(
+        text = stringResource(R.string.settings_show_ads_text),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+    )
+    if (isPrivacyOptionsRequired && activity != null) {
+        SettingItem(text = stringResource(R.string.settings_ad_privacy_options), onClick = { adsSession?.showPrivacyOptions(activity) })
+    }
+
+    if (showDisableAdsConfirmation) {
+        AbbayActionDialog(
+            onDismiss = viewModel::dismissDisableAdsConfirmation,
+            title = stringResource(R.string.disable_ads_dialog_title),
+            body = stringResource(R.string.disable_ads_dialog_body),
+            actionButtonTitle = stringResource(R.string.disable_ads_dialog_action),
+            onAction = viewModel::confirmDisableAds,
+            icon = Icons.Default.Info,
+            isDestructive = false,
         )
     }
 }

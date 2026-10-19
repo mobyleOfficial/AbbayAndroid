@@ -172,7 +172,13 @@
     <string name="settings_dynamic_color">Use wallpaper colors</string>
     <string name="settings_privacy">Privacy</string>
     <string name="settings_share_diagnostics">Send crash reports and usage statistics</string>
-    <string name="settings_privacy_text">When on, Abbay sends crash reports and counts of which features are used to Firebase (Google). It never sends file names, book titles, or anything you type. Abbay has no accounts and no ads.</string>
+    <string name="settings_privacy_text">When on, Abbay sends crash reports and counts of which features are used to Firebase (Google). It never sends file names, book titles, or anything you type. Abbay has no accounts.</string>
+    <string name="settings_show_ads">Show ads</string>
+    <string name="settings_show_ads_text">A small banner at the bottom of the library, never full screen. Ads are not personalized: Abbay does not share your advertising ID. Changes apply the next time you open the app.</string>
+    <string name="settings_ad_privacy_options">Ad privacy choices</string>
+    <string name="disable_ads_dialog_title">Turn off ads?</string>
+    <string name="disable_ads_dialog_body">Ads help us keep Abbay free and maintained. If you turn them off, close and reopen the app for the change to take effect.</string>
+    <string name="disable_ads_dialog_action">Turn off</string>
     <string name="player_quick_actions">Quick actions</string>
     <string name="player_sleep_timer">Sleep timer</string>
     <string name="player_sleep_timer_running">Sleep timer, %1$s left</string>

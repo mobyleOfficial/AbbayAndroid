@@ -11,7 +11,7 @@ Abbay is an Android audiobook player app built with Jetpack Compose and ExoPlaye
 - ✏️ Book details: edit title, author, narrator and description, choose a cover (folder image, embedded, gallery or web), sort files by track number
 - 🌓 Themes: System, Light, Dark, Black, and wallpaper colors on Android 12+
 - 🔒 Lock the player screen to prevent accidental touches
-- 🛡️ Crash reports and usage statistics can be turned off in Settings; no ads, no accounts
+- 🛡️ Crash reports, usage statistics and the library's ad banner (never full screen, never personalized) can be turned off in Settings; no accounts
 
 ## Screenshots
 

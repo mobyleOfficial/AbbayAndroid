@@ -11,6 +11,10 @@ plugins {
     id 'com.github.jk1.dependency-license-report'
 }
 
+/** Google's sample AdMob ids: they only serve test ads (developers.google.com/admob/android/test-ads). */
+def ADMOB_SAMPLE_APP_ID = 'ca-app-pub-3940256099942544~3347511713'
+def ADMOB_SAMPLE_BANNER_ID = 'ca-app-pub-3940256099942544/9214589741'
+
 def localProperties = new Properties()
 def localPropertiesFile = project.rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
@@ -32,6 +36,11 @@ android {
         vectorDrawables {
             useSupportLibrary true
         }
+
+        // AdMob: the real ids come from local.properties (ADMOB_APP_ID, ADMOB_BANNER_ID); without them, Google's
+        // sample ids, which only serve test ads. Debug builds always use the sample ids.
+        manifestPlaceholders = [admobAppId: localProperties["ADMOB_APP_ID"] ?: ADMOB_SAMPLE_APP_ID]
+        buildConfigField "String", "ADMOB_BANNER_ID", "\"${localProperties["ADMOB_BANNER_ID"] ?: ADMOB_SAMPLE_BANNER_ID}\""
     }
 
     signingConfigs {
@@ -44,6 +53,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            manifestPlaceholders = [admobAppId: ADMOB_SAMPLE_APP_ID]
+            buildConfigField "String", "ADMOB_BANNER_ID", "\"${ADMOB_SAMPLE_BANNER_ID}\""
+        }
         // R8 and resource shrinking: without them the release APK was 72–77 MB against the 15 MB budget.
         release {
             minifyEnabled true
@@ -163,6 +176,10 @@ dependencies {
     // Firebase
     implementation libs.firebase.crashlytics
     implementation libs.firebase.analytics
+
+    // Ads: the library banner and the consent form
+    implementation libs.play.services.ads
+    implementation libs.user.messaging.platform
 }
 
 // License check: only MIT-compatible licenses may ship in the release build.
