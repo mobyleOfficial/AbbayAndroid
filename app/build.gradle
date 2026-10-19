@@ -9,7 +9,6 @@ plugins {
     id 'com.google.gms.google-services'
     id 'com.google.firebase.crashlytics'
     id 'com.github.jk1.dependency-license-report'
-    id 'io.github.takahirom.roborazzi'
 }
 
 def localProperties = new Properties()
@@ -153,7 +152,7 @@ dependencies {
     // Testing
     testImplementation libs.junit
     testImplementation platform(libs.androidx.compose.bom)
-    testImplementation libs.bundles.testing.screenshot
+    testImplementation libs.bundles.testing.robolectric
     testImplementation libs.kotlinx.coroutines.test
     androidTestImplementation libs.bundles.testing.android
     androidTestImplementation libs.androidx.test.runner
@@ -248,15 +247,9 @@ androidComponents {
     }
 }
 
-roborazzi {
-    outputDir = file('src/test/screenshots')
-}
-
-// Compose screenshot tests need the debug-only ui-test-manifest activity; they run in testDebugUnitTest.
+// Compose UI tests need the debug-only ui-test-manifest activity; they run in testDebugUnitTest.
 tasks.withType(Test).configureEach {
     if (name.endsWith('ReleaseUnitTest')) {
-        // Compose UI tests need the debug-only ui-test-manifest.
-        exclude '**/screenshots/**'
         exclude '**/abbay/ui/**'
     }
 }

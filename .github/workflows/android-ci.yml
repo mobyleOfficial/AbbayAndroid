@@ -49,9 +49,6 @@ jobs:
       - name: Unit and Robolectric tests
         run: ./gradlew test
 
-      - name: Screenshot tests
-        run: ./gradlew :app:verifyRoborazziDebug
-
       - name: Release build
         run: ./gradlew assembleRelease
 

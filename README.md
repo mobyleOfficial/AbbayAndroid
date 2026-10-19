@@ -30,7 +30,6 @@ Abbay is an Android audiobook player app built with Jetpack Compose and ExoPlaye
 ```sh
 ./gradlew assembleDebug                                   # build
 ./gradlew test                                            # unit tests
-./gradlew :app:verifyRoborazziDebug                       # screenshot tests (recordRoborazziDebug to update)
 ./gradlew lint detekt ktlintCheck checkModuleBoundaries   # static analysis
 ./gradlew checkLicense                                    # dependency license check
 ```

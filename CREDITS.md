@@ -23,7 +23,7 @@ The full, generated list of shipped libraries (including transitive ones) is pro
 | Coil (compose, svg) | 2.7.0 / 2.4.0 | Apache-2.0 | Image loading |
 | Glide Compose | 1.0.0-beta01 | BSD-2-Clause + Apache-2.0 | Image loading (to be consolidated on Coil) |
 | Material Components for Android | 1.12.0 | Apache-2.0 | Theme |
-| Robolectric, Roborazzi (test only) | 4.14.1 / 1.32.2 | MIT / Apache-2.0 | Screenshot and JVM UI tests |
+| Robolectric (test only) | 4.14.1 | MIT | JVM UI tests |
 | Firebase Crashlytics, Firebase Analytics | 18.6.2 / 21.5.1 | Apache-2.0 SDKs; Google service terms | Crash reports, usage counters |
 
 ## Bundled source code
