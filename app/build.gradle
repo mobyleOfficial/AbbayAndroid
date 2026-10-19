@@ -232,7 +232,8 @@ androidComponents {
     onVariants(selector().all()) { variant ->
         def runtimeClasspath = configurations.named("${variant.name}RuntimeClasspath")
         def notices = tasks.register("generate${variant.name.capitalize()}LicenseNotices", LicenseNoticesTask) {
-            dependsOn 'generateLicenseReport'
+            // checkLicensePreparation adds the JSON renderer that writes the report read below.
+            dependsOn 'checkLicensePreparation', 'generateLicenseReport'
             licenseReport.set(layout.buildDirectory.file('reports/dependency-license/project-licenses-for-check-license-task.json'))
             credits.set(rootProject.layout.projectDirectory.file('CREDITS.md'))
             modules.set(provider {
