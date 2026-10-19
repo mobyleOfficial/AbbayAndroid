@@ -1,14 +1,18 @@
 package com.mobyle.abbay.presentation.settings
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Switch
 import androidx.compose.material.SwitchDefaults
 import androidx.compose.material3.MaterialTheme
@@ -16,7 +20,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -27,51 +30,41 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.mobyle.abbay.BuildConfig
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel
-import com.mobyle.abbay.presentation.booklist.getBooks
-import com.mobyle.abbay.presentation.booklist.getThumb
 import com.mobyle.abbay.presentation.common.widgets.AbbayActionDialog
 import com.mobyle.abbay.presentation.common.widgets.AbbayScreen
-import com.model.BookType
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
     booksViewModel: BooksListViewModel,
     onStopPlayer: () -> Unit,
+    openDiagnostics: () -> Unit = {},
+    openLicenses: () -> Unit = {},
+    openConverter: (() -> Unit)? = null,
     close: () -> Unit
 ) {
     val shouldPlayWhenAppIsClosed by viewModel.shouldPlayWhenAppIsClosed.collectAsState()
     val shouldOpenPlayerInStartup by viewModel.shouldOpenPlayerInStartup.collectAsState()
     val showShowDeleteConfirmation by viewModel.showShowDeleteConfirmation.collectAsState()
     val showChangeFolderConfirmation by viewModel.showChangeFolderConfirmation.collectAsState()
-    val asyncScope = rememberCoroutineScope()
-    val context = LocalContext.current
+
+    val libraryRoots by viewModel.libraryRoots.collectAsState()
+    val settings by viewModel.listeningSettings.collectAsState()
 
     val openFolderSelector = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
         uri?.let {
-            booksViewModel.showLoading()
-            booksViewModel.saveBookFolderPath(it.toString())
             booksViewModel.selectBook(null, null)
             onStopPlayer()
-            asyncScope.launch(Dispatchers.IO) {
-                delay(500)
-                it.getBooks(
-                    context = context,
-                    type = BookType.FOLDER
-                )?.let {
-                    val booksWithThumbnails = it.mapNotNull { book ->
-                        book.getThumb(context)
-                    }
-
-                    booksViewModel.addBooksFromNewFolder(booksWithThumbnails)
-                }
-            }
+            viewModel.changeFolder(it.toString())
         }
+    }
+
+    val addFolderSelector = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        uri?.let { viewModel.addFolder(it.toString()) }
     }
 
     AbbayScreen(
@@ -110,6 +103,7 @@ fun SettingsScreen(
                     }
                 )
 
+                SectionHeader(R.string.settings_library)
                 SettingItem(
                     text = stringResource(R.string.change_folder),
                     onClick = {
@@ -122,23 +116,45 @@ fun SettingsScreen(
                     onClick = viewModel::showDeleteConfirmation
                 )
             }
-            
-            item {
-                // App version display at the bottom
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
+
+            if (libraryRoots.isNotEmpty()) {
+                item {
                     Text(
-                        text = stringResource(R.string.app_version, BuildConfig.VERSION_NAME),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        textAlign = TextAlign.Center
+                        text = stringResource(R.string.settings_library_folders),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
                     )
                 }
+
+                items(items = libraryRoots, key = { root -> root.id }) { root ->
+                    LibraryFolderItem(
+                        root = root,
+                        canRemove = libraryRoots.size > 1,
+                        onRemove = { viewModel.removeFolder(root.id) }
+                    )
+                }
+
+                item {
+                    SettingItem(
+                        text = stringResource(R.string.settings_add_library_folder),
+                        onClick = { addFolderSelector.launch(null) }
+                    )
+                }
+
+                // Hidden when the device has no Opus encoder (About → Diagnostics says why).
+                openConverter?.let { open -> item { SettingItem(text = stringResource(R.string.converter_title), onClick = open) } }
             }
+
+            item { LibraryPreferenceSettings(settings, viewModel::changeListeningSettings) }
+
+            item { BackupSettings(viewModel) }
+
+            item { ListeningSettings(viewModel) }
+
+            item { AppearanceSettings(viewModel) }
+
+            item { AboutSettings(viewModel, openDiagnostics, openLicenses) }
         }
 
         if (showShowDeleteConfirmation) {
@@ -149,6 +165,7 @@ fun SettingsScreen(
                 actionButtonTitle = stringResource(R.string.delete),
                 onAction = {
                     onStopPlayer()
+                    booksViewModel.selectBook(null, null)
                     viewModel.clearBooks()
                     viewModel.dismissDeleteConfirmation()
                 },
@@ -165,6 +182,42 @@ fun SettingsScreen(
                     viewModel.dismissChangeFolderConfirmation()
                     openFolderSelector.launch(null)
                 },
+            )
+        }
+    }
+}
+
+private fun openSourceCode(context: Context, url: String) {
+    try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+    } catch (_: ActivityNotFoundException) {
+        // No browser installed: nothing to open.
+    }
+}
+
+/** About: diagnostics, licenses, source code, privacy statement, version. */
+@Composable
+private fun AboutSettings(viewModel: SettingsViewModel, openDiagnostics: () -> Unit, openLicenses: () -> Unit) {
+    val context = LocalContext.current
+    val sourceCodeUrl = stringResource(R.string.source_code_url)
+    Column {
+        SectionHeader(R.string.settings_about)
+        SettingItem(text = stringResource(R.string.diagnostics_title), onClick = openDiagnostics)
+        SettingItem(text = stringResource(R.string.settings_licenses), onClick = openLicenses)
+        SettingItem(text = stringResource(R.string.settings_source_code), onClick = { openSourceCode(context, sourceCodeUrl) })
+        SectionHeader(R.string.settings_privacy)
+        PrivacySettings(viewModel)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = stringResource(R.string.app_version, BuildConfig.VERSION_NAME),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
             )
         }
     }

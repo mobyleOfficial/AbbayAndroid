@@ -35,6 +35,7 @@ fun BookItem(
     progress: String,
     intermediaryProgress: Long,
     currentMediaIndex: Int,
+    onLongClick: (() -> Unit)? = null,
     onClick: () -> Unit
 ) {
     val bookColor = if (book.hasError) {
@@ -48,7 +49,7 @@ fun BookItem(
             .padding(top = 8.dp)
             .fillMaxWidth()
             .background(bookColor)
-            .debounceClick {
+            .debounceClick(onLongClick = onLongClick) {
                 onClick.invoke()
             },
         verticalArrangement = Arrangement.SpaceEvenly,
@@ -115,7 +116,9 @@ fun BookItem(
                         )
                         val currentProgress = if (isSelected) {
                             progress
-                        } else intermediaryProgress.plus(book.progress).toHHMMSS()
+                        } else {
+                            intermediaryProgress.plus(book.progress).toHHMMSS()
+                        }
 
                         Text(
                             "$currentProgress/${book.duration.toHHMMSS()}",

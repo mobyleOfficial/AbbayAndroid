@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<baseline version="1.0">
+    <file name="src/main/java/com/mobyle/abbay/data/database/AbbayDatabase.kt">
+        <error line="11" column="16" source="standard:trailing-comma-on-call-site" />
+    </file>
+    <file name="src/main/java/com/mobyle/abbay/data/datasource/local/books/BooksLocalDataSource.kt">
+        <error line="16" column="9" source="standard:function-signature" />
+        <error line="17" column="9" source="standard:function-signature" />
+        <error line="17" column="53" source="standard:function-signature" />
+        <error line="17" column="53" source="standard:trailing-comma-on-declaration-site" />
+        <error line="43" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/mobyle/abbay/data/datasource/local/books/BooksLocalDataSourceImpl.kt">
+        <error line="12" column="5" source="standard:class-signature" />
+        <error line="13" column="5" source="standard:class-signature" />
+        <error line="13" column="45" source="standard:class-signature" />
+        <error line="13" column="45" source="standard:trailing-comma-on-declaration-site" />
+        <error line="21" column="9" source="standard:function-signature" />
+        <error line="22" column="9" source="standard:function-signature" />
+        <error line="22" column="53" source="standard:function-signature" />
+        <error line="22" column="53" source="standard:trailing-comma-on-declaration-site" />
+        <error line="26" column="54" source="standard:trailing-comma-on-call-site" />
+        <error line="48" column="17" source="standard:trailing-comma-on-call-site" />
+        <error line="55" column="15" source="standard:trailing-comma-on-call-site" />
+        <error line="60" column="33" source="standard:trailing-comma-on-call-site" />
+        <error line="91" column="52" source="standard:trailing-comma-on-call-site" />
+        <error line="111" column="20" source="standard:trailing-comma-on-call-site" />
+        <error line="114" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/mobyle/abbay/data/datasource/local/daos/BooksDao.kt">
+        <error line="53" column="32" source="standard:parameter-list-spacing" />
+        <error line="53" column="32" source="standard:paren-spacing" />
+        <error line="53" column="32" source="standard:function-signature" />
+        <error line="61" column="9" source="standard:function-signature" />
+        <error line="62" column="9" source="standard:function-signature" />
+        <error line="62" column="50" source="standard:function-signature" />
+        <error line="62" column="50" source="standard:trailing-comma-on-declaration-site" />
+        <error line="70" column="44" source="standard:function-expression-body" />
+    </file>
+    <file name="src/main/java/com/mobyle/abbay/data/datasource/local/keystore/KeyValueStore.kt">
+        <error line="8" column="64" source="standard:function-expression-body" />
+        <error line="18" column="63" source="standard:function-expression-body" />
+        <error line="37" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/mobyle/abbay/data/datasource/local/keystore/KeyValueStoreKeys.kt">
+        <error line="10" column="18" source="standard:trailing-comma-on-declaration-site" />
+        <error line="11" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/mobyle/abbay/data/di/DataModule.kt">
+        <error line="24" column="9" source="standard:function-signature" />
+        <error line="25" column="9" source="standard:function-signature" />
+        <error line="25" column="37" source="standard:function-signature" />
+        <error line="25" column="37" source="standard:trailing-comma-on-declaration-site" />
+        <error line="26" column="30" source="standard:function-signature" />
+        <error line="29" column="42" source="standard:trailing-comma-on-call-site" />
+        <error line="35" column="9" source="standard:function-signature" />
+        <error line="35" column="46" source="standard:function-signature" />
+        <error line="35" column="46" source="standard:trailing-comma-on-declaration-site" />
+        <error line="36" column="26" source="standard:function-signature" />
+        <error line="41" column="9" source="standard:function-signature" />
+        <error line="41" column="37" source="standard:function-signature" />
+        <error line="41" column="37" source="standard:trailing-comma-on-declaration-site" />
+        <error line="47" column="9" source="standard:function-signature" />
+        <error line="47" column="45" source="standard:function-signature" />
+        <error line="47" column="45" source="standard:trailing-comma-on-declaration-site" />
+        <error line="51" column="65" source="standard:function-expression-body" />
+        <error line="54" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/mobyle/abbay/data/di/RoomModule.kt">
+        <error line="19" column="83" source="standard:function-signature" />
+        <error line="23" column="40" source="standard:trailing-comma-on-call-site" />
+        <error line="27" column="62" source="standard:function-signature" />
+    </file>
+    <file name="src/main/java/com/mobyle/abbay/data/mappers/DomainToEntityMappers.kt">
+        <error line="17" column="10" source="standard:trailing-comma-on-call-site" />
+        <error line="26" column="27" source="standard:trailing-comma-on-call-site" />
+        <error line="38" column="27" source="standard:trailing-comma-on-call-site" />
+        <error line="46" column="63" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/mobyle/abbay/data/mappers/EntityToDomainMappers.kt">
+        <error line="40" column="55" source="standard:keyword-spacing" />
+        <error line="45" column="75" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/mobyle/abbay/data/model/BookFileEntity.kt">
+        <error line="18" column="29" source="standard:trailing-comma-on-declaration-site" />
+        <error line="19" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/mobyle/abbay/data/model/BookTypeEntity.kt">
+        <error line="5" column="9" source="standard:trailing-comma-on-declaration-site" />
+        <error line="6" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/mobyle/abbay/data/model/MultipleBooksEntity.kt">
+        <error line="19" column="29" source="standard:trailing-comma-on-declaration-site" />
+        <error line="20" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/mobyle/abbay/data/repository/BooksRepositoryImpl.kt">
+        <error line="15" column="5" source="standard:class-signature" />
+        <error line="15" column="54" source="standard:class-signature" />
+        <error line="15" column="54" source="standard:trailing-comma-on-declaration-site" />
+        <error line="22" column="39" source="standard:trailing-comma-on-call-site" />
+        <error line="36" column="52" source="standard:function-expression-body" />
+        <error line="46" column="50" source="standard:trailing-comma-on-call-site" />
+        <error line="68" column="72" source="standard:function-signature" />
+        <error line="78" column="78" source="standard:function-signature" />
+        <error line="83" column="57" source="standard:function-signature" />
+        <error line="85" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/mobyle/abbay/data/repository/SettingsRepositoryImpl.kt">
+        <error line="9" column="5" source="standard:class-signature" />
+        <error line="9" column="45" source="standard:class-signature" />
+        <error line="9" column="45" source="standard:trailing-comma-on-declaration-site" />
+        <error line="47" column="1" source="standard:final-newline" />
+    </file>
+</baseline>

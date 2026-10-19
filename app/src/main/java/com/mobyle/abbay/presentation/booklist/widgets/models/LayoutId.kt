@@ -6,4 +6,4 @@ enum class LayoutId(val id: String) {
     THUMBNAIL("thumbnail"),
     TOP_CONTENT("topContent"),
     LOCK_OVERLAY("lockOverlay"),
-} 
+}

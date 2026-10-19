@@ -1,0 +1,37 @@
+# Builds upon detekt's default rule set.
+# Adjustments for Compose and Android.
+naming:
+  FunctionNaming:
+    ignoreAnnotated: ['Composable']
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][_A-Za-z0-9]*'
+
+complexity:
+  LongParameterList:
+    ignoreAnnotated: ['Composable', 'Inject', 'AssistedInject']
+    ignoreDefaultParameters: true
+  TooManyFunctions:
+    ignoreOverridden: true
+    ignoreAnnotated: ['Dao']
+    thresholdInInterfaces: 20
+
+style:
+  MagicNumber:
+    # Binary format parsers read fields at offsets defined by the format specifications; DSP formulas use the
+    # constants of the decibel and RBJ Audio EQ Cookbook formulas.
+    excludes: ['**/test/**', '**/androidTest/**', '**/chapters/**', '**/infra/dsp/**']
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreAnnotated: ['Composable', 'Preview']
+  UnusedPrivateMember:
+    ignoreAnnotated: ['Preview']
+  MaxLineLength:
+    maxLineLength: 140
+  ReturnCount:
+    excludeGuardClauses: true
+    excludeReturnFromLambda: true
+    excludes: ['**/test/**', '**/chapters/**']
+  LoopWithTooManyJumpStatements:
+    excludes: ['**/test/**', '**/chapters/**']
+  DestructuringDeclarationWithTooManyEntries:
+    maxDestructuringEntries: 5

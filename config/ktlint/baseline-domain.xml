@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<baseline version="1.0">
+    <file name="src/main/java/com/model/BookFile.kt">
+        <error line="12" column="25" source="standard:trailing-comma-on-declaration-site" />
+        <error line="13" column="8" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/model/BookType.kt">
+        <error line="5" column="9" source="standard:trailing-comma-on-declaration-site" />
+        <error line="6" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/model/MultipleBooks.kt">
+        <error line="13" column="37" source="standard:trailing-comma-on-declaration-site" />
+        <error line="14" column="8" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/repository/SettingsRepository.kt">
+        <error line="3" column="1" source="standard:no-unused-imports" />
+        <error line="17" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/usecase/ClearBooks.kt">
+        <error line="3" column="1" source="standard:no-unused-imports" />
+        <error line="8" column="5" source="standard:class-signature" />
+        <error line="8" column="44" source="standard:class-signature" />
+        <error line="8" column="44" source="standard:trailing-comma-on-declaration-site" />
+        <error line="13" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/usecase/DeleteBook.kt">
+        <error line="8" column="5" source="standard:class-signature" />
+        <error line="8" column="44" source="standard:class-signature" />
+        <error line="8" column="44" source="standard:trailing-comma-on-declaration-site" />
+        <error line="13" column="2" source="standard:final-newline" />
+        <error line="13" column="2" source="standard:no-trailing-spaces" />
+    </file>
+    <file name="src/main/java/com/usecase/DisableOpenPlayerInStartup.kt">
+        <error line="8" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/usecase/DisablePlayWhenAppIsClosed.kt">
+        <error line="8" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/usecase/EnableOpenPlayerInStartup.kt">
+        <error line="8" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/usecase/EnablePlayWhenAppIsClosed.kt">
+        <error line="8" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/usecase/GetBooksFolderPath.kt">
+        <error line="7" column="5" source="standard:class-signature" />
+        <error line="7" column="44" source="standard:class-signature" />
+        <error line="7" column="44" source="standard:trailing-comma-on-declaration-site" />
+        <error line="10" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/usecase/GetBooksList.kt">
+        <error line="8" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/usecase/GetCurrentSelectedBook.kt">
+        <error line="7" column="5" source="standard:class-signature" />
+        <error line="7" column="44" source="standard:class-signature" />
+        <error line="7" column="44" source="standard:trailing-comma-on-declaration-site" />
+        <error line="10" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/usecase/HasShownReloadGuide.kt">
+        <error line="7" column="5" source="standard:class-signature" />
+        <error line="7" column="44" source="standard:class-signature" />
+        <error line="7" column="44" source="standard:trailing-comma-on-declaration-site" />
+        <error line="10" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/usecase/IsAppAlive.kt">
+        <error line="3" column="1" source="standard:no-unused-imports" />
+        <error line="8" column="5" source="standard:class-signature" />
+        <error line="8" column="44" source="standard:class-signature" />
+        <error line="8" column="44" source="standard:trailing-comma-on-declaration-site" />
+        <error line="11" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/usecase/IsOpenPlayerInStartup.kt">
+        <error line="8" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/usecase/IsPlayWhenAppIsClosedEnabled.kt">
+        <error line="8" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/usecase/ObserveBooksList.kt">
+        <error line="8" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/usecase/SaveBookFolderPath.kt">
+        <error line="7" column="5" source="standard:class-signature" />
+        <error line="7" column="44" source="standard:class-signature" />
+        <error line="7" column="44" source="standard:trailing-comma-on-declaration-site" />
+        <error line="10" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/usecase/SaveCurrentSelectedBook.kt">
+        <error line="7" column="5" source="standard:class-signature" />
+        <error line="7" column="44" source="standard:class-signature" />
+        <error line="7" column="44" source="standard:trailing-comma-on-declaration-site" />
+        <error line="9" column="55" source="standard:function-signature" />
+        <error line="11" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/usecase/SetReloadGuideAsShown.kt">
+        <error line="7" column="5" source="standard:class-signature" />
+        <error line="7" column="44" source="standard:class-signature" />
+        <error line="7" column="44" source="standard:trailing-comma-on-declaration-site" />
+        <error line="10" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/usecase/UpdateAppLifeStatus.kt">
+        <error line="7" column="5" source="standard:class-signature" />
+        <error line="7" column="44" source="standard:class-signature" />
+        <error line="7" column="44" source="standard:trailing-comma-on-declaration-site" />
+        <error line="10" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/usecase/UpdateSelectedBook.kt">
+        <error line="7" column="5" source="standard:class-signature" />
+        <error line="7" column="44" source="standard:class-signature" />
+        <error line="7" column="44" source="standard:trailing-comma-on-declaration-site" />
+        <error line="9" column="77" source="standard:function-signature" />
+        <error line="11" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/com/usecase/UpsertBookList.kt">
+        <error line="9" column="1" source="standard:final-newline" />
+    </file>
+</baseline>

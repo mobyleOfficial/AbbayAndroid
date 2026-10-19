@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Book placeholder, drawn for Abbay (MIT). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path android:fillColor="#FF3A3A40" android:pathData="M0,0H24V24H0Z" />
+    <path android:fillColor="#FF8A8A90" android:pathData="M6,5C7.5,4.3 9.5,4.3 11.2,5.3V18.5C9.5,17.5 7.5,17.5 6,18.2ZM12.8,5.3C14.5,4.3 16.5,4.3 18,5V18.2C16.5,17.5 14.5,17.5 12.8,18.5Z" />
+</vector>

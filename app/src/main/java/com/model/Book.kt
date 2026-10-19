@@ -1,1 +1,0 @@
-var hasError: Boolean = false 
