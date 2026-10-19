@@ -22,10 +22,11 @@ class TrackMetadataDataSource @Inject constructor(@ApplicationContext private va
         if (isAccessLost || (platformMetadata?.hasAudio == true && platformMetadata.durationMs > 0)) return platformResult
 
         return when (val probeResult = readWithExtractors(documentUri)) {
-            is DataResult.Success -> probeResult.value
-                ?.takeIf { it.hasAudio }
-                ?.let { DataResult.Success(platformMetadata.mergedWith(it)) }
-                ?: platformResult
+            is DataResult.Success ->
+                probeResult.value
+                    ?.takeIf { it.hasAudio }
+                    ?.let { DataResult.Success(platformMetadata.mergedWith(it)) }
+                    ?: platformResult
             is DataResult.Failure -> platformResult
         }
     }

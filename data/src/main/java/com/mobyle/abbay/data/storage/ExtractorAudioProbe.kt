@@ -15,13 +15,13 @@ import androidx.media3.extractor.SeekMap
 import androidx.media3.extractor.TrackOutput
 import androidx.media3.extractor.amr.AmrExtractor
 import androidx.media3.extractor.flac.FlacExtractor
+import androidx.media3.extractor.metadata.id3.TextInformationFrame
 import androidx.media3.extractor.mkv.MatroskaExtractor
 import androidx.media3.extractor.mp3.Mp3Extractor
 import androidx.media3.extractor.mp4.Mp4Extractor
 import androidx.media3.extractor.ogg.OggExtractor
 import androidx.media3.extractor.ts.AdtsExtractor
 import androidx.media3.extractor.wav.WavExtractor
-import androidx.media3.extractor.metadata.id3.TextInformationFrame
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 
@@ -55,8 +55,14 @@ object ExtractorAudioProbe {
 
     /** The containers of the accepted extensions (`02` §2); MP4 first, the audiobook format. */
     private fun audioExtractors(): List<Extractor> = listOf(
-        Mp4Extractor(), Mp3Extractor(), AdtsExtractor(), OggExtractor(), FlacExtractor(), WavExtractor(),
-        MatroskaExtractor(), AmrExtractor(),
+        Mp4Extractor(),
+        Mp3Extractor(),
+        AdtsExtractor(),
+        OggExtractor(),
+        FlacExtractor(),
+        WavExtractor(),
+        MatroskaExtractor(),
+        AmrExtractor(),
     )
 
     @Suppress("SwallowedException", "TooGenericExceptionCaught") // A failing sniff only means "not this format".
