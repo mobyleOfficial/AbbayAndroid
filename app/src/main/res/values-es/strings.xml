@@ -171,7 +171,13 @@
     <string name="settings_dynamic_color">Usar colores del fondo de pantalla</string>
     <string name="settings_privacy">Privacidad</string>
     <string name="settings_share_diagnostics">Enviar informes de errores y estadísticas de uso</string>
-    <string name="settings_privacy_text">Si está activado, Abbay envía informes de errores y recuentos de las funciones usadas a Firebase (Google). Nunca envía nombres de archivo, títulos de libros ni nada que escribas. Abbay no tiene cuentas ni anuncios.</string>
+    <string name="settings_privacy_text">Si está activado, Abbay envía informes de errores y recuentos de las funciones usadas a Firebase (Google). Nunca envía nombres de archivo, títulos de libros ni nada que escribas. Abbay no tiene cuentas.</string>
+    <string name="settings_show_ads">Mostrar anuncios</string>
+    <string name="settings_show_ads_text">Un banner pequeño al pie de la biblioteca, nunca a pantalla completa. Los anuncios no son personalizados: Abbay no comparte tu ID de publicidad. Los cambios se aplican la próxima vez que abras la app.</string>
+    <string name="settings_ad_privacy_options">Opciones de privacidad de los anuncios</string>
+    <string name="disable_ads_dialog_title">¿Desactivar los anuncios?</string>
+    <string name="disable_ads_dialog_body">Los anuncios nos ayudan a mantener Abbay gratis y actualizado. Si los desactivas, cierra y vuelve a abrir la app para que el cambio surta efecto.</string>
+    <string name="disable_ads_dialog_action">Desactivar</string>
     <string name="player_quick_actions">Acciones rápidas</string>
     <string name="player_sleep_timer">Temporizador de sueño</string>
     <string name="player_sleep_timer_running">Temporizador de sueño, quedan %1$s</string>
@@ -489,6 +495,9 @@
     <string name="settings_library">Biblioteca</string>
     <string name="settings_default_tab">Pestaña al abrir la app</string>
     <string name="settings_tab_automatic">Automática</string>
+    <string name="settings_library_tabs">Pestañas de la biblioteca</string>
+    <string name="settings_tab_move_up">Mover %1$s hacia arriba</string>
+    <string name="settings_tab_move_down">Mover %1$s hacia abajo</string>
     <string name="settings_library_layout">Vista de la biblioteca</string>
     <string name="settings_rescan_on_start">Revisar la biblioteca al abrir la app</string>
     <string name="rescan_off">Desactivado</string>

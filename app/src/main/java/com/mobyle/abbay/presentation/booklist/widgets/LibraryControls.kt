@@ -44,6 +44,7 @@ import com.model.ScanStatus
 @Composable
 fun LibraryControls(
     tab: LibraryTab,
+    tabs: List<LibraryTab>,
     sortOrder: LibrarySortOrder,
     sortAscending: Boolean,
     layout: LibraryLayout,
@@ -52,7 +53,6 @@ fun LibraryControls(
     onSortOrderSelected: (LibrarySortOrder) -> Unit,
     onLayoutSelected: (LibraryLayout) -> Unit,
 ) {
-    val tabs = LibraryTab.entries
     Row(
         modifier = Modifier
             .fillMaxWidth()

@@ -12,6 +12,7 @@
     { "moduleLicense": "Android Software Development Kit License", "moduleName": "com.google.android.gms:.*" },
     { "moduleLicense": "Android Software Development Kit License", "moduleName": "com.google.firebase:.*" },
     { "moduleLicense": "Android Software Development Kit License", "moduleName": "com.google.android.datatransport:.*" },
-    { "moduleLicense": "Android Software Development Kit License", "moduleName": "com.google.android.odml:.*" }
+    { "moduleLicense": "Android Software Development Kit License", "moduleName": "com.google.android.odml:.*" },
+    { "moduleLicense": "Android Software Development Kit License", "moduleName": "com.google.android.ump:.*" }
   ]
 }

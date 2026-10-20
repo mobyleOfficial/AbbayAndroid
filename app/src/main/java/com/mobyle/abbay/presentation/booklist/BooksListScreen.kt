@@ -64,6 +64,7 @@ import com.library.FolderLocation
 import com.library.FolderTree
 import com.library.LibraryLayout
 import com.mobyle.abbay.R
+import com.mobyle.abbay.infra.ads.AdBanner
 import com.mobyle.abbay.infra.cast.CastButton
 import com.mobyle.abbay.infra.navigation.LibraryDestinations
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.BookListSuccess
@@ -431,12 +432,14 @@ fun BooksListScreen(
         }
     }
 
+    // The mini player covers the bottom of the library; the ad banner sits above it.
+    val miniPlayerHeight = if (hasBookSelected && !isWide) 72.dp else 0.dp
     Box(modifier = Modifier.fillMaxSize()) {
         BottomSheetScaffold(
             scaffoldState = bottomSheetState,
             sheetContent = { if (!isWide) playerPane(bottomSheetState) },
             sheetGesturesEnabled = !isScreenLocked && !isWide,
-            sheetPeekHeight = if (hasBookSelected && !isWide) 72.dp else 0.dp,
+            sheetPeekHeight = miniPlayerHeight,
         ) {
             Row(modifier = Modifier.fillMaxSize()) {
                 Box(
@@ -520,6 +523,7 @@ fun BooksListScreen(
 
                                     LibraryControls(
                                         tab = libraryState.tab,
+                                        tabs = libraryState.tabs,
                                         sortOrder = libraryState.sortOrder,
                                         sortAscending = libraryState.sortAscending,
                                         layout = libraryState.layout,
@@ -537,6 +541,7 @@ fun BooksListScreen(
                                         if (state.audiobookList.isEmpty()) {
                                             LibraryTabEmptyState(
                                                 tab = libraryState.tab,
+                                                visibleTabs = libraryState.tabs,
                                                 isScanning = libraryState.scanStatus.isScanning,
                                                 onShowTab = viewModel::selectTab,
                                             )
@@ -611,6 +616,8 @@ fun BooksListScreen(
                                             ),
                                         )
                                     }
+
+                                    AdBanner(modifier = Modifier.padding(bottom = miniPlayerHeight))
 
                                     if (showDeleteDialog.value) {
                                         AbbayActionDialog(

@@ -36,6 +36,7 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
             preferences[SettingsKeys.themeMode] = updated.themeMode.name
             preferences[SettingsKeys.dynamicColor] = updated.dynamicColor
             preferences[SettingsKeys.shareDiagnostics] = updated.shareDiagnostics
+            preferences[SettingsKeys.showAds] = updated.showAds
             updated.pendingCoverBookId?.let { preferences[SettingsKeys.pendingCoverBookId] = it }
                 ?: preferences.remove(SettingsKeys.pendingCoverBookId)
             preferences[SettingsKeys.autoStopAfterPauseMinutes] = updated.autoStopAfterPauseMinutes
@@ -119,6 +120,7 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
             themeMode = enumOrDefault(preferences[SettingsKeys.themeMode], defaults.themeMode),
             dynamicColor = preferences.valueOr(SettingsKeys.dynamicColor, defaults.dynamicColor),
             shareDiagnostics = preferences.valueOr(SettingsKeys.shareDiagnostics, defaults.shareDiagnostics),
+            showAds = preferences.valueOr(SettingsKeys.showAds, defaults.showAds),
             autoStopAfterPauseMinutes = preferences.valueOr(SettingsKeys.autoStopAfterPauseMinutes, defaults.autoStopAfterPauseMinutes),
             smartRewind = enumOrDefault(preferences[SettingsKeys.smartRewind], defaults.smartRewind),
             sleepDefaultMinutes = preferences.valueOr(SettingsKeys.sleepDefaultMinutes, defaults.sleepDefaultMinutes),
@@ -167,6 +169,8 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
         preferences[SettingsKeys.hiddenQuickActions] = updated.hiddenQuickActions.mapTo(mutableSetOf()) { it.name }
         preferences[SettingsKeys.language] = updated.language.name
         preferences[SettingsKeys.castProcessedAudio] = updated.castProcessedAudio
+        preferences[SettingsKeys.libraryTabOrder] = updated.libraryTabOrder.joinToString(TAB_SEPARATOR) { it.name }
+        preferences[SettingsKeys.hiddenLibraryTabs] = updated.hiddenLibraryTabs.mapTo(mutableSetOf()) { it.name }
     }
 
     private fun AppSettings.withDisplaySettings(preferences: Preferences): AppSettings = copy(
@@ -180,6 +184,11 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
             .mapNotNullTo(mutableSetOf()) { name -> QuickAction.entries.firstOrNull { it.name == name } },
         language = enumOrDefault(preferences[SettingsKeys.language], language),
         castProcessedAudio = preferences.valueOr(SettingsKeys.castProcessedAudio, castProcessedAudio),
+        libraryTabOrder = preferences[SettingsKeys.libraryTabOrder]?.split(TAB_SEPARATOR)
+            ?.mapNotNull { name -> LibraryTab.entries.firstOrNull { it.name == name } }
+            ?: libraryTabOrder,
+        hiddenLibraryTabs = preferences[SettingsKeys.hiddenLibraryTabs].orEmpty()
+            .mapNotNullTo(mutableSetOf()) { name -> LibraryTab.entries.firstOrNull { it.name == name } },
     )
 
     private inline fun <reified T : Enum<T>> enumOrDefault(name: String?, default: T): T =
@@ -187,3 +196,5 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
 
     private fun <T> Preferences.valueOr(key: Preferences.Key<T>, default: T): T = this[key] ?: default
 }
+
+private const val TAB_SEPARATOR = ","

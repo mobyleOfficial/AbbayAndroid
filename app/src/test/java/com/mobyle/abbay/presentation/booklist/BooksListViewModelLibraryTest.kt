@@ -71,6 +71,23 @@ class BooksListViewModelLibraryTest {
     }
 
     @Test
+    fun `hidden tabs are left out and never selected`() {
+        val viewModel = factory(
+            AppSettings(
+                libraryTab = LibraryTab.IN_PROGRESS,
+                libraryTabOrder = listOf(LibraryTab.ALL, LibraryTab.NEW, LibraryTab.FINISHED, LibraryTab.IN_PROGRESS),
+                hiddenLibraryTabs = setOf(LibraryTab.IN_PROGRESS, LibraryTab.FINISHED),
+            ),
+        ).booksListViewModel()
+
+        assertEquals(listOf(LibraryTab.ALL, LibraryTab.NEW), viewModel.libraryState.value.tabs)
+        assertEquals(LibraryTab.ALL, viewModel.libraryState.value.tab)
+
+        viewModel.selectTab(LibraryTab.FINISHED)
+        assertEquals(LibraryTab.ALL, viewModel.libraryState.value.tab)
+    }
+
+    @Test
     fun `selecting a tab filters the list`() {
         val viewModel = factory().booksListViewModel()
 

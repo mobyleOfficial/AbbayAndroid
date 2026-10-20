@@ -51,6 +51,7 @@ class SettingsViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
     private val _showShowDeleteConfirmation = MutableStateFlow(false)
     private val _showChangeFolderConfirmation = MutableStateFlow(false)
+    private val _showDisableAdsConfirmation = MutableStateFlow(false)
     private val _backupResults = MutableSharedFlow<BackupResult>(extraBufferCapacity = 1)
     private val _language = MutableStateFlow(getAppLanguage())
 
@@ -65,6 +66,10 @@ class SettingsViewModel @Inject constructor(
     val themeMode: StateFlow<ThemeMode> = settings.mapState { it.themeMode }
     val dynamicColor: StateFlow<Boolean> = settings.mapState { it.dynamicColor }
     val shareDiagnostics: StateFlow<Boolean> = settings.mapState { it.shareDiagnostics }
+    val showAds: StateFlow<Boolean> = settings.mapState { it.showAds }
+
+    /** Turning ads off asks first: they keep the app going, and the change applies on the next launch. */
+    val showDisableAdsConfirmation: StateFlow<Boolean> get() = _showDisableAdsConfirmation
 
     /** Playback and sleep timer settings. */
     val listeningSettings: StateFlow<AppSettings> get() = settings
@@ -92,6 +97,23 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun changeShareDiagnostics(isEnabled: Boolean) = viewModelScope.launch { updateAppSettings { it.copy(shareDiagnostics = isEnabled) } }
+
+    fun changeShowAds(isEnabled: Boolean) {
+        if (isEnabled) {
+            viewModelScope.launch { updateAppSettings { it.copy(showAds = true) } }
+        } else {
+            _showDisableAdsConfirmation.value = true
+        }
+    }
+
+    fun confirmDisableAds() {
+        _showDisableAdsConfirmation.value = false
+        viewModelScope.launch { updateAppSettings { it.copy(showAds = false) } }
+    }
+
+    fun dismissDisableAdsConfirmation() {
+        _showDisableAdsConfirmation.value = false
+    }
 
     /** Every playback and sleep timer setting is a field of [AppSettings]; the screen passes the change. */
     fun changeListeningSettings(transform: (AppSettings) -> AppSettings) {

@@ -27,6 +27,7 @@ internal object SettingsKeys {
     val themeMode = stringPreferencesKey("themeMode")
     val dynamicColor = booleanPreferencesKey("dynamicColor")
     val shareDiagnostics = booleanPreferencesKey("shareDiagnostics")
+    val showAds = booleanPreferencesKey("showAds")
     val autoStopAfterPauseMinutes = intPreferencesKey("autoStopAfterPauseMin")
     val smartRewind = stringPreferencesKey("smartRewind")
     val sleepDefaultMinutes = intPreferencesKey("sleepDefaultMinutes")
@@ -67,6 +68,10 @@ internal object SettingsKeys {
     val hiddenQuickActions = stringSetPreferencesKey("hiddenQuickActions")
     val language = stringPreferencesKey("language")
     val castProcessedAudio = booleanPreferencesKey("castProcessedAudio")
+
+    /** Tab names joined by commas: a string set would not keep the order. */
+    val libraryTabOrder = stringPreferencesKey("libraryTabOrder")
+    val hiddenLibraryTabs = stringSetPreferencesKey("hiddenLibraryTabs")
 
     /** One key per book: subtitle charsets are rare, so they do not get a column. */
     fun subtitleCharset(bookId: Long) = stringPreferencesKey("subtitleCharset.$bookId")

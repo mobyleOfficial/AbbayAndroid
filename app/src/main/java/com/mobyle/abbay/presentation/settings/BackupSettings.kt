@@ -46,9 +46,9 @@ fun BackupSettings(viewModel: SettingsViewModel) {
 
     Column {
         SettingItem(text = stringResource(R.string.settings_save_progress_in_folders)) {
-            SettingSwitch(settings.saveProgressInFolders) { enabled ->
+            SettingSwitch(settings.saveProgressInFolders, onCheckedChange = { enabled ->
                 viewModel.changeListeningSettings { it.copy(saveProgressInFolders = enabled) }
-            }
+            })
         }
         SectionHeader(R.string.settings_backup)
         SettingItem(text = stringResource(R.string.settings_export_backup), onClick = { exporter.launch(backupFileName()) })

@@ -214,9 +214,13 @@ class BooksListViewModel @Inject constructor(
             selectedTab,
             combine(roots, scanStatus, legacyFolderToReselect) { roots, scan, legacyFolder -> Triple(roots, scan, legacyFolder) },
         ) { books, settings, tab, (roots, scan, legacyFolder) ->
-            val effectiveTab = tab ?: settings.libraryTab ?: sortAndFilterBooks.defaultTab(books)
+            val visibleTabs = settings.visibleLibraryTabs
+            // A tab hidden in Settings is skipped, whether picked in this session or as the default.
+            val effectiveTab = listOfNotNull(tab, settings.libraryTab).firstOrNull { it in visibleTabs }
+                ?: sortAndFilterBooks.defaultTab(books, visibleTabs)
             _libraryState.value = LibraryUiState(
                 tab = effectiveTab,
+                tabs = visibleTabs,
                 sortOrder = settings.librarySortOrder,
                 sortAscending = settings.librarySortAscending,
                 layout = settings.libraryLayout,
@@ -641,6 +645,8 @@ class BooksListViewModel @Inject constructor(
 
     data class LibraryUiState(
         val tab: LibraryTab = LibraryTab.ALL,
+        /** The tabs shown, in the order chosen in Settings. */
+        val tabs: List<LibraryTab> = LibraryTab.entries,
         val sortOrder: LibrarySortOrder = LibrarySortOrder.RECENTLY_PLAYED,
         val sortAscending: Boolean = false,
         val layout: LibraryLayout = LibraryLayout.LIST,

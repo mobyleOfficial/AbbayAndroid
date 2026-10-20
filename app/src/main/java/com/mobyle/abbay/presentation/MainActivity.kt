@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
@@ -35,6 +36,8 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.mobyle.abbay.R
+import com.mobyle.abbay.infra.ads.AdsSession
+import com.mobyle.abbay.infra.ads.LocalAdsSession
 import com.mobyle.abbay.infra.common.ChargingScreenKeeper
 import com.mobyle.abbay.infra.language.AppLanguageStore
 import com.mobyle.abbay.infra.navigation.AbbayNavHost
@@ -62,6 +65,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var applySharedCover: ApplySharedCover
+
+    @Inject
+    lateinit var adsSession: AdsSession
 
     /** The same instance the navigation host uses (both are scoped to this activity). */
     private val booksViewModel: BooksListViewModel by viewModels()
@@ -91,6 +97,7 @@ class MainActivity : ComponentActivity() {
             chargingScreenKeeper.setEnabled(it.keepScreenOnWhileCharging)
         }.launchIn(lifecycleScope)
         playerController.connect()
+        lifecycleScope.launch { adsSession.start(this@MainActivity) }
         handleSharedImage(intent)
         if (savedInstanceState == null) handleLaunchAction(intent)
 
@@ -124,10 +131,12 @@ class MainActivity : ComponentActivity() {
                                 .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
                         ) {
                             if (playerState.value.isConnected) {
-                                AbbayNavHost(
-                                    viewModel = booksViewModel,
-                                    navController = navController
-                                )
+                                CompositionLocalProvider(LocalAdsSession provides adsSession) {
+                                    AbbayNavHost(
+                                        viewModel = booksViewModel,
+                                        navController = navController
+                                    )
+                                }
                             }
                         }
                     }
