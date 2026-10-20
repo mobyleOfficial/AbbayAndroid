@@ -68,6 +68,10 @@ internal object SettingsKeys {
     val language = stringPreferencesKey("language")
     val castProcessedAudio = booleanPreferencesKey("castProcessedAudio")
 
+    /** Tab names joined by commas: a string set would not keep the order. */
+    val libraryTabOrder = stringPreferencesKey("libraryTabOrder")
+    val hiddenLibraryTabs = stringSetPreferencesKey("hiddenLibraryTabs")
+
     /** One key per book: subtitle charsets are rare, so they do not get a column. */
     fun subtitleCharset(bookId: Long) = stringPreferencesKey("subtitleCharset.$bookId")
 

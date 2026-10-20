@@ -167,6 +167,8 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
         preferences[SettingsKeys.hiddenQuickActions] = updated.hiddenQuickActions.mapTo(mutableSetOf()) { it.name }
         preferences[SettingsKeys.language] = updated.language.name
         preferences[SettingsKeys.castProcessedAudio] = updated.castProcessedAudio
+        preferences[SettingsKeys.libraryTabOrder] = updated.libraryTabOrder.joinToString(TAB_SEPARATOR) { it.name }
+        preferences[SettingsKeys.hiddenLibraryTabs] = updated.hiddenLibraryTabs.mapTo(mutableSetOf()) { it.name }
     }
 
     private fun AppSettings.withDisplaySettings(preferences: Preferences): AppSettings = copy(
@@ -180,6 +182,11 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
             .mapNotNullTo(mutableSetOf()) { name -> QuickAction.entries.firstOrNull { it.name == name } },
         language = enumOrDefault(preferences[SettingsKeys.language], language),
         castProcessedAudio = preferences.valueOr(SettingsKeys.castProcessedAudio, castProcessedAudio),
+        libraryTabOrder = preferences[SettingsKeys.libraryTabOrder]?.split(TAB_SEPARATOR)
+            ?.mapNotNull { name -> LibraryTab.entries.firstOrNull { it.name == name } }
+            ?: libraryTabOrder,
+        hiddenLibraryTabs = preferences[SettingsKeys.hiddenLibraryTabs].orEmpty()
+            .mapNotNullTo(mutableSetOf()) { name -> LibraryTab.entries.firstOrNull { it.name == name } },
     )
 
     private inline fun <reified T : Enum<T>> enumOrDefault(name: String?, default: T): T =
@@ -187,3 +194,5 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
 
     private fun <T> Preferences.valueOr(key: Preferences.Key<T>, default: T): T = this[key] ?: default
 }
+
+private const val TAB_SEPARATOR = ","

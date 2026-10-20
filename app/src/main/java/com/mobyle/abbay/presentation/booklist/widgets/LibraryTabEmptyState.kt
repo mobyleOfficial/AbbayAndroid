@@ -33,10 +33,16 @@ import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
 
 /**
  * What a library tab shows when it has no books: why it is empty and, where it helps, a way to
- * the related tab. While a scan is running it says books are being looked for instead.
+ * the related tab (when it is not hidden). While a scan is running it says books are being looked for instead.
  */
 @Composable
-fun LibraryTabEmptyState(tab: LibraryTab, isScanning: Boolean, onShowTab: (LibraryTab) -> Unit, modifier: Modifier = Modifier) {
+fun LibraryTabEmptyState(
+    tab: LibraryTab,
+    visibleTabs: List<LibraryTab>,
+    isScanning: Boolean,
+    onShowTab: (LibraryTab) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -53,7 +59,7 @@ fun LibraryTabEmptyState(tab: LibraryTab, isScanning: Boolean, onShowTab: (Libra
         val content = tab.emptyStateContent()
         Icon(content.icon, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(ICON_SIZE.dp))
         EmptyStateTexts(content.titleResource, content.bodyResource)
-        content.action?.let { (labelResource, target) ->
+        content.action?.takeIf { (_, target) -> target in visibleTabs }?.let { (labelResource, target) ->
             AbbayTextButton(onClick = { onShowTab(target) }) { Text(stringResource(labelResource)) }
         }
     }

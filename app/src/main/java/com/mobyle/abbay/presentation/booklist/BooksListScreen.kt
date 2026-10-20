@@ -520,6 +520,7 @@ fun BooksListScreen(
 
                                     LibraryControls(
                                         tab = libraryState.tab,
+                                        tabs = libraryState.tabs,
                                         sortOrder = libraryState.sortOrder,
                                         sortAscending = libraryState.sortAscending,
                                         layout = libraryState.layout,
@@ -537,6 +538,7 @@ fun BooksListScreen(
                                         if (state.audiobookList.isEmpty()) {
                                             LibraryTabEmptyState(
                                                 tab = libraryState.tab,
+                                                visibleTabs = libraryState.tabs,
                                                 isScanning = libraryState.scanStatus.isScanning,
                                                 onShowTab = viewModel::selectTab,
                                             )
