@@ -2,6 +2,7 @@ package com.mobyle.abbay.data.settings
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.effects.NoiseReductionLevel
+import com.library.LibraryTab
 import com.settings.AppLanguage
 import com.settings.AppSettings
 import com.settings.NotificationSkipButtons
@@ -72,6 +73,8 @@ class SettingsDataSourceTest {
             hiddenQuickActions = setOf(QuickAction.REPEAT, QuickAction.SKIP_INTRO_OUTRO),
             language = AppLanguage.PORTUGUESE,
             castProcessedAudio = false,
+            libraryTabOrder = listOf(LibraryTab.ALL, LibraryTab.FINISHED, LibraryTab.NEW, LibraryTab.IN_PROGRESS),
+            hiddenLibraryTabs = setOf(LibraryTab.NEW),
         )
 
         dataSource.updateSettings { changed }

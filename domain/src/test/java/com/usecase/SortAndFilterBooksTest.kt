@@ -78,4 +78,10 @@ class SortAndFilterBooksTest {
         assertEquals(LibraryTab.IN_PROGRESS, sortAndFilter.defaultTab(books))
         assertEquals(LibraryTab.ALL, sortAndFilter.defaultTab(books.filter { it.state != BookState.IN_PROGRESS }))
     }
+
+    @Test
+    fun `default tab skips hidden tabs`() {
+        assertEquals(LibraryTab.ALL, sortAndFilter.defaultTab(books, listOf(LibraryTab.NEW, LibraryTab.ALL)))
+        assertEquals(LibraryTab.NEW, sortAndFilter.defaultTab(books, listOf(LibraryTab.NEW, LibraryTab.FINISHED)))
+    }
 }

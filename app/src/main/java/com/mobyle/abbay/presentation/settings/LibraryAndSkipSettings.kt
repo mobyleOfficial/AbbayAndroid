@@ -15,14 +15,14 @@ import com.settings.NotificationSkipButtons
 import com.settings.QuickAction
 import com.settings.RescanOnStart
 
-/** Settings → Library preferences: default tab, layout, rescan on start, missing books. */
+/** Settings → Library preferences: default tab, layout, rescan on start, missing books, tabs. */
 @Composable
 internal fun LibraryPreferenceSettings(settings: AppSettings, change: ((AppSettings) -> AppSettings) -> Unit) {
     Column {
         ChoiceSetting(
             label = stringResource(R.string.settings_default_tab),
             // null = the automatic tab (In progress when something is in progress, else New).
-            options = listOf<LibraryTab?>(null) + LibraryTab.entries,
+            options = listOf<LibraryTab?>(null) + settings.visibleLibraryTabs,
             selected = settings.libraryTab,
             optionLabel = { tab -> stringResource(tab?.labelResource() ?: R.string.settings_tab_automatic) },
             onSelect = { tab -> change { it.copy(libraryTab = tab) } },
@@ -48,6 +48,7 @@ internal fun LibraryPreferenceSettings(settings: AppSettings, change: ((AppSetti
             optionLabel = { days -> pluralStringResource(R.plurals.settings_days, days, days) },
             onSelect = { days -> change { it.copy(missingBookRetentionDays = days) } },
         )
+        LibraryTabSettings(settings, change)
     }
 }
 

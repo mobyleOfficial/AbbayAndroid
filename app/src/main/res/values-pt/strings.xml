@@ -495,6 +495,9 @@
     <string name="settings_library">Biblioteca</string>
     <string name="settings_default_tab">Aba ao abrir o app</string>
     <string name="settings_tab_automatic">Automática</string>
+    <string name="settings_library_tabs">Abas da biblioteca</string>
+    <string name="settings_tab_move_up">Mover %1$s para cima</string>
+    <string name="settings_tab_move_down">Mover %1$s para baixo</string>
     <string name="settings_library_layout">Exibição da biblioteca</string>
     <string name="settings_rescan_on_start">Verificar a biblioteca ao abrir o app</string>
     <string name="rescan_off">Desligado</string>

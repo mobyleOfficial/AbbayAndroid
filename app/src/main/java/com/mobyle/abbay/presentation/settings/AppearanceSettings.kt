@@ -181,10 +181,11 @@ private fun ThemeSetting(themeMode: ThemeMode, onChange: (ThemeMode) -> Unit) {
 }
 
 @Composable
-internal fun SettingSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+internal fun SettingSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, enabled: Boolean = true) {
     Switch(
         checked = checked,
         onCheckedChange = onCheckedChange,
+        enabled = enabled,
         colors = SwitchDefaults.colors(
             checkedThumbColor = MaterialTheme.colorScheme.tertiary,
             checkedTrackColor = MaterialTheme.colorScheme.tertiary,
