@@ -66,6 +66,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
 @HiltViewModel
@@ -454,7 +455,10 @@ class BooksListViewModel @Inject constructor(
     fun saveBookmarkNote(bookmarkId: Long, note: String) = viewModelScope.launch { updateBookmarkNote(bookmarkId, note) }
 
     fun requestPlay(bookId: String) {
-        bookWithId(bookId)?.let { _playRequests.trySend(it) }
+        bookWithId(bookId)?.let { _playRequests.trySend(it) } ?: viewModelScope.launch {
+            val added = withTimeoutOrNull(NEW_BOOK_WAIT_MS) { liveBooks.first { books -> books.any { it.id == bookId } } }
+            added?.firstOrNull { it.id == bookId }?.let { _playRequests.trySend(it) }
+        }
     }
 
     fun queue(book: Book, playNext: Boolean) = viewModelScope.launch {
@@ -627,4 +631,5 @@ class BooksListViewModel @Inject constructor(
 }
 
 private const val QUEUE_DECISION_MS = 1_500L
+private const val NEW_BOOK_WAIT_MS = 5_000L
 private const val IS_CONVERTER_ENABLED = false

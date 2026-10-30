@@ -18,7 +18,7 @@ interface LibriVoxRepository {
 
     fun observeDownloads(): Flow<Map<String, LibriVoxDownload>>
 
-    suspend fun add(book: LibriVoxBook, allowsCellular: Boolean): DataResult<String>
+    suspend fun add(book: LibriVoxBook, allowsCellular: Boolean, download: Boolean = true): DataResult<String>
 
     suspend fun startDownload(bookId: String, allowsCellular: Boolean)
 

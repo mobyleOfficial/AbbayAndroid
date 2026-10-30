@@ -627,4 +627,5 @@
     <string name="librivox_remove_download_title">Remove the download?</string>
     <string name="librivox_remove_download_body">The downloaded chapters are deleted. The book stays in your library and plays over the internet.</string>
     <string name="librivox_remove_download_confirm">Remove</string>
+    <string name="librivox_listen_without_download">Listen without downloading</string>
 </resources>

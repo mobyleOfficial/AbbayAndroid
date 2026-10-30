@@ -7,6 +7,7 @@ import com.mobyle.abbay.fakes.ViewModelFactory
 import com.player.PlayerError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -153,6 +154,18 @@ class BooksListViewModelPlayerTest {
 
         assertTrue(player.commands.contains("stop"))
         assertEquals(listOf("validateRoots", "quickScan"), factory.libraryRepository.calls)
+    }
+
+    @Test
+    fun `playing a book that was just added waits for it to reach the library`() = runTest(testDispatcher) {
+        val viewModel = factory.booksListViewModel()
+        val requested = async { viewModel.playRequests.first() }
+
+        viewModel.requestPlay(multipleFilesBook.id.replace("201", "301"))
+        val added = multipleFilesBook.copy(id = "301")
+        factory.libraryRepository.books.value = factory.libraryRepository.books.value + added
+
+        assertEquals("301", withTimeout(1_000L) { requested.await() }.id)
     }
 
     @Test

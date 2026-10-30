@@ -2,20 +2,30 @@ package com.mobyle.abbay.presentation.librivox
 
 import android.text.format.Formatter
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Podcasts
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.rememberScaffoldState
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -28,10 +38,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -56,7 +71,7 @@ fun LibriVoxBookScreen(
     val state by viewModel.state.collectAsState()
     val libraryBookId by viewModel.libraryBookId.collectAsState()
     val download by viewModel.download.collectAsState()
-    val isStarting by viewModel.isStarting.collectAsState()
+    val starting by viewModel.starting.collectAsState()
     val cellularPromptBytes by viewModel.cellularPromptBytes.collectAsState()
     var isConfirmingRemoval by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
@@ -64,13 +79,15 @@ fun LibriVoxBookScreen(
     val scaffoldState = rememberScaffoldState()
     val addFailedMessage = stringResource(R.string.librivox_add_failed)
     LaunchedEffect(Unit) { viewModel.addFailed.collect { scaffoldState.snackbarHostState.showSnackbar(addFailedMessage) } }
+    LaunchedEffect(Unit) { viewModel.listen.collect(onListen) }
 
     val action = PrimaryAction(
         libraryBookId = libraryBookId,
         isEnabled = state is LibriVoxBookState.Loaded,
-        isBusy = isStarting,
+        starting = starting,
         onDownload = viewModel::download,
         onListen = onListen,
+        onStream = viewModel::listenWithoutDownloading,
     )
 
     AbbayScreen(
@@ -120,7 +137,13 @@ private fun BookPage(
             .background(Brush.verticalGradient(0f to tint, HERO_FADE to MaterialTheme.colorScheme.primary)),
     ) {
         item { Hero(book, isPlaceholder = state !is LibriVoxBookState.Loaded) }
-        item { ActionButton(action, modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) }
+        item {
+            ActionButton(
+                action,
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = if (action.isInLibrary) 16.dp else 8.dp),
+            )
+        }
+        if (!action.isInLibrary) item { StreamButton(action) }
         download?.let { current ->
             item { DownloadSummary(current, onPause = viewModel::pauseDownload, onResume = viewModel::resumeDownload) }
         }
@@ -171,6 +194,36 @@ private fun Credit() {
 }
 
 @Composable
+private fun StreamButton(action: PrimaryAction) {
+    val label = stringResource(R.string.librivox_listen_without_download)
+    val isStreaming = action.starting == LibriVoxAddMode.STREAM
+    Row(
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .padding(start = 20.dp, end = 20.dp, bottom = 16.dp)
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clip(CircleShape)
+            .background(AbbayColors.content.copy(alpha = STREAM_BUTTON_ALPHA))
+            .clickable(enabled = action.isEnabled && action.isIdle, role = Role.Button, onClick = action.onStream)
+            .semantics { if (isStreaming) contentDescription = label },
+    ) {
+        if (isStreaming) {
+            CircularProgressIndicator(color = AbbayColors.content, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+        } else {
+            Icon(Icons.Outlined.Podcasts, contentDescription = null, tint = AbbayColors.content, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(
+                label,
+                style = MaterialTheme.typography.titleSmall,
+                color = AbbayColors.content.copy(alpha = if (action.isEnabled) 1f else SECONDARY_ALPHA)
+            )
+        }
+    }
+}
+
+@Composable
 private fun DownloadMenu(isComplete: Boolean, onRemove: () -> Unit) {
     var isExpanded by remember { mutableStateOf(false) }
     IconButton(onClick = { isExpanded = true }) {
@@ -212,11 +265,16 @@ private fun CellularDownloadDialog(bytes: Long, onAnswer: (useMobileData: Boolea
 internal class PrimaryAction(
     val libraryBookId: String?,
     val isEnabled: Boolean,
-    val isBusy: Boolean,
+    val starting: LibriVoxAddMode?,
     val onDownload: () -> Unit,
     val onListen: (String) -> Unit,
+    val onStream: () -> Unit,
 ) {
     val isInLibrary: Boolean get() = libraryBookId != null
+
+    val isBusy: Boolean get() = starting == LibriVoxAddMode.DOWNLOAD
+
+    val isIdle: Boolean get() = starting == null
 
     fun perform() {
         val bookId = libraryBookId
@@ -225,6 +283,7 @@ internal class PrimaryAction(
 }
 
 private const val ACTION_ITEM_INDEX = 1
+private const val STREAM_BUTTON_ALPHA = 0.12f
 private const val PLACEHOLDER_ROWS = 6
 private const val HERO_FADE = 0.35f
 internal const val SECONDARY_ALPHA = 0.75f

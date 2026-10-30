@@ -60,11 +60,13 @@ class LibriVoxRepositoryImpl @Inject constructor(
             books.associate { details -> details.book.id.toString() to downloadOf(details, active[details.book.id].orEmpty()) }
         }.distinctUntilChanged()
 
-    override suspend fun add(book: LibriVoxBook, allowsCellular: Boolean): DataResult<String> = withContext(Dispatchers.IO) {
+    override suspend fun add(book: LibriVoxBook, allowsCellular: Boolean, download: Boolean): DataResult<String> = withContext(
+        Dispatchers.IO
+    ) {
         if (book.sections.isEmpty()) return@withContext DataResult.Failure(DataError.NOT_AN_AUDIOBOOK)
         dao.getBookByLibriVoxId(book.id)?.let { existing ->
             if (existing.hidden) dao.updateBook(existing.copy(hidden = false))
-            control.start(existing.id, allowsCellular)
+            if (download) control.start(existing.id, allowsCellular)
             return@withContext DataResult.Success(existing.id.toString())
         }
         val sidecarId = UUID.randomUUID().toString()
@@ -90,10 +92,10 @@ class LibriVoxRepositoryImpl @Inject constructor(
             metadataComplete = true,
             sidecarId = sidecarId,
             librivoxId = book.id,
-            librivoxDownload = LibriVoxDownloadMode.ACTIVE.name,
+            librivoxDownload = (if (download) LibriVoxDownloadMode.ACTIVE else LibriVoxDownloadMode.OFF).name,
         )
         val bookId = dao.insertBookWithTracks(entity, tracksOf(book))
-        scheduler.enqueue(bookId, allowsCellular, ExistingWorkPolicy.KEEP)
+        if (download) scheduler.enqueue(bookId, allowsCellular, ExistingWorkPolicy.KEEP)
         DataResult.Success(bookId.toString())
     }
 

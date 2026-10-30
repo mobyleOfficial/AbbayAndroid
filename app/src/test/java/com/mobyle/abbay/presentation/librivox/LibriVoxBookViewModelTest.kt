@@ -21,16 +21,18 @@ import com.usecase.RemoveLibriVoxDownload
 import com.usecase.StartLibriVoxDownload
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.transformWhile
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -90,7 +92,7 @@ class LibriVoxBookViewModelTest {
 
         details.tryEmit(DataResult.Success(LibriVoxDetails(preview, isAwaitingTitles = true)))
         viewModel.download()
-        assertTrue(viewModel.isStarting.value)
+        assertEquals(LibriVoxAddMode.DOWNLOAD, viewModel.starting.value)
         assertEquals(emptyList<Pair<LibriVoxBook, Boolean>>(), repository.added)
 
         details.tryEmit(DataResult.Success(LibriVoxDetails(final, isAwaitingTitles = false)))
@@ -98,6 +100,20 @@ class LibriVoxBookViewModelTest {
 
         assertEquals(listOf(final to true), repository.added)
         assertEquals("book-alice", viewModel.libraryBookId.value)
+    }
+
+    @Test
+    fun `listening without downloading adds the book for streaming and opens it`() = runTest {
+        val repository = FakeLibriVoxRepository(detailsFlow = flowOf(DataResult.Success(LibriVoxDetails(final, isAwaitingTitles = false))))
+        val viewModel = viewModel(repository)
+        val opened = async { viewModel.listen.first() }
+
+        viewModel.listenWithoutDownloading()
+
+        assertEquals("book-alice", opened.await())
+        assertEquals(listOf(final), repository.addedForStreaming)
+        assertEquals(emptyList<Pair<LibriVoxBook, Boolean>>(), repository.added)
+        assertNull(viewModel.starting.value)
     }
 
     @Test

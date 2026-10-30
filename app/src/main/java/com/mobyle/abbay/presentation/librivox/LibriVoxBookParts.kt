@@ -119,7 +119,7 @@ internal fun ActionButton(action: PrimaryAction, modifier: Modifier = Modifier) 
             .heightIn(min = 52.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.tertiary.copy(alpha = if (action.isEnabled) 1f else DISABLED_ALPHA))
-            .clickable(enabled = action.isEnabled && !action.isBusy, role = Role.Button, onClick = action::perform)
+            .clickable(enabled = action.isEnabled && action.isIdle, role = Role.Button, onClick = action::perform)
             .semantics { if (action.isBusy) contentDescription = label },
     ) {
         if (action.isBusy) {
@@ -138,7 +138,7 @@ internal fun ActionButton(action: PrimaryAction, modifier: Modifier = Modifier) 
 
 @Composable
 internal fun CompactActionButton(action: PrimaryAction) {
-    AbbayTextButton(onClick = action::perform, enabled = !action.isBusy) {
+    AbbayTextButton(onClick = action::perform, enabled = action.isIdle) {
         Icon(if (action.isInLibrary) Icons.Rounded.PlayArrow else Icons.Rounded.Download, contentDescription = null)
         Spacer(Modifier.width(4.dp))
         Text(stringResource(if (action.isInLibrary) R.string.librivox_listen else R.string.librivox_download))

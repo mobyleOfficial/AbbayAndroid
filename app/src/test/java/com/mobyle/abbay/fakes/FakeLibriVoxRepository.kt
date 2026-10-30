@@ -21,6 +21,7 @@ class FakeLibriVoxRepository(
     val downloads = MutableStateFlow<Map<String, LibriVoxDownload>>(emptyMap())
     val searches = mutableListOf<String>()
     val added = mutableListOf<Pair<LibriVoxBook, Boolean>>()
+    val addedForStreaming = mutableListOf<LibriVoxBook>()
     val started = mutableListOf<Pair<String, Boolean>>()
     val paused = mutableListOf<String>()
     val removed = mutableListOf<String>()
@@ -37,8 +38,8 @@ class FakeLibriVoxRepository(
 
     override fun observeDownloads(): Flow<Map<String, LibriVoxDownload>> = downloads
 
-    override suspend fun add(book: LibriVoxBook, allowsCellular: Boolean): DataResult<String> {
-        added += book to allowsCellular
+    override suspend fun add(book: LibriVoxBook, allowsCellular: Boolean, download: Boolean): DataResult<String> {
+        if (download) added += book to allowsCellular else addedForStreaming += book
         val bookId = "book-${book.id}"
         libraryIds.value = libraryIds.value + (book.id to bookId)
         return DataResult.Success(bookId)

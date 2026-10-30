@@ -31,6 +31,11 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+enum class LibriVoxAddMode {
+    DOWNLOAD,
+    STREAM,
+}
+
 sealed interface LibriVoxBookState {
     val book: LibriVoxBook
 
@@ -72,8 +77,8 @@ class LibriVoxBookViewModel @Inject constructor(
         bookId?.let { downloads[it] }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    private val mutableIsStarting = MutableStateFlow(false)
-    val isStarting: StateFlow<Boolean> = mutableIsStarting.asStateFlow()
+    private val mutableStarting = MutableStateFlow<LibriVoxAddMode?>(null)
+    val starting: StateFlow<LibriVoxAddMode?> = mutableStarting.asStateFlow()
 
     private val mutableCellularPromptBytes = MutableStateFlow<Long?>(null)
     val cellularPromptBytes: StateFlow<Long?> = mutableCellularPromptBytes.asStateFlow()
@@ -81,7 +86,10 @@ class LibriVoxBookViewModel @Inject constructor(
     private val addFailures = Channel<Unit>(Channel.CONFLATED)
     val addFailed: Flow<Unit> = addFailures.receiveAsFlow()
 
-    private var isDownloadPending = false
+    private val listenRequests = Channel<String>(Channel.CONFLATED)
+    val listen: Flow<String> = listenRequests.receiveAsFlow()
+
+    private var pendingAction: LibriVoxAddMode? = null
     private var loadJob: Job? = null
 
     init {
@@ -101,22 +109,18 @@ class LibriVoxBookViewModel @Inject constructor(
             }
             val loaded = state.value as? LibriVoxBookState.Loaded
             if (loaded?.isAwaitingTitles == true) mutableState.value = loaded.copy(isAwaitingTitles = false)
-            if (isDownloadPending) {
-                isDownloadPending = false
-                mutableIsStarting.value = false
-                download()
+            val pending = pendingAction ?: return@launch
+            pendingAction = null
+            mutableStarting.value = null
+            when (pending) {
+                LibriVoxAddMode.DOWNLOAD -> download()
+                LibriVoxAddMode.STREAM -> listenWithoutDownloading()
             }
         }
     }
 
     fun download() {
-        val loaded = state.value as? LibriVoxBookState.Loaded ?: return
-        if (libraryBookId.value != null || mutableIsStarting.value) return
-        if (loaded.isAwaitingTitles) {
-            isDownloadPending = true
-            mutableIsStarting.value = true
-            return
-        }
+        val loaded = readyToAdd(LibriVoxAddMode.DOWNLOAD) ?: return
         when (val decision = CellularDownloadPolicy.decide(loaded.book.totalBytes, getNetworkStatus())) {
             is CellularDownloadPolicy.Decision.Proceed -> start(loaded.book, decision.allowsCellular)
             CellularDownloadPolicy.Decision.AskUser -> mutableCellularPromptBytes.value = loaded.book.totalBytes
@@ -127,6 +131,29 @@ class LibriVoxBookViewModel @Inject constructor(
         mutableCellularPromptBytes.value = null
         val loaded = state.value as? LibriVoxBookState.Loaded ?: return
         if (useMobileData != null) start(loaded.book, allowsCellular = useMobileData)
+    }
+
+    fun listenWithoutDownloading() {
+        val loaded = readyToAdd(LibriVoxAddMode.STREAM) ?: return
+        mutableStarting.value = LibriVoxAddMode.STREAM
+        viewModelScope.launch {
+            when (val result = addLibriVoxBook(loaded.book, allowsCellular = false, download = false)) {
+                is DataResult.Success -> listenRequests.trySend(result.value)
+                is DataResult.Failure -> addFailures.trySend(Unit)
+            }
+            mutableStarting.value = null
+        }
+    }
+
+    private fun readyToAdd(mode: LibriVoxAddMode): LibriVoxBookState.Loaded? {
+        val loaded = state.value as? LibriVoxBookState.Loaded ?: return null
+        if (libraryBookId.value != null || mutableStarting.value != null) return null
+        if (loaded.isAwaitingTitles) {
+            pendingAction = mode
+            mutableStarting.value = mode
+            return null
+        }
+        return loaded
     }
 
     fun resumeDownload() {
@@ -147,10 +174,10 @@ class LibriVoxBookViewModel @Inject constructor(
     }
 
     private fun start(book: LibriVoxBook, allowsCellular: Boolean) {
-        mutableIsStarting.value = true
+        mutableStarting.value = LibriVoxAddMode.DOWNLOAD
         viewModelScope.launch {
             if (addLibriVoxBook(book, allowsCellular) is DataResult.Failure) addFailures.trySend(Unit)
-            mutableIsStarting.value = false
+            mutableStarting.value = null
         }
     }
 
