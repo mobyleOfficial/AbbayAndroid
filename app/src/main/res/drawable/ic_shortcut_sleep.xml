@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Crescent moon in a circle, drawn for Abbay (MIT). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:fillColor="#FF1E8E3E"
+        android:pathData="M24,4A20,20 0,1 1,24 44A20,20 0,1 1,24 4Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M27,13A12,12 0,1 0,35 29A9.6,9.6 0,0 1,27 13Z" />
+</vector>

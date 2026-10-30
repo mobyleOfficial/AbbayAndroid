@@ -1,5 +1,6 @@
 package com.model
 
+/** A book made of several audio files; [currentBookPosition] is the index of the current track. */
 data class MultipleBooks(
     override val id: String,
     override val name: String,
@@ -10,5 +11,17 @@ data class MultipleBooks(
     override val hasError: Boolean = false,
     override val type: BookType,
     val bookFileList: List<BookFile>,
-    val currentBookPosition: Int = 0
-) : Book
+    val currentBookPosition: Int = 0,
+    override val author: String? = null,
+    override val state: BookState = BookState.NEW,
+    override val addedAt: Long = 0L,
+    override val lastPlayedAt: Long? = null,
+    override val chapters: List<Chapter> = emptyList(),
+    override val lastPausedAt: Long? = null,
+    override val narrator: String? = null,
+    override val rootId: Long? = null,
+    override val relativePath: String = "",
+) : Book {
+    override val bookPositionMs: Long
+        get() = bookFileList.take(currentBookPosition).sumOf { it.duration } + progress
+}

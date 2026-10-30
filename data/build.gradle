@@ -1,0 +1,82 @@
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    id 'com.google.devtools.ksp'
+    id 'com.google.dagger.hilt.android'
+    id 'androidx.room'
+    id 'org.jetbrains.kotlin.plugin.serialization'
+}
+
+android {
+    namespace 'com.mobyle.abbay.data'
+    compileSdk 35
+
+    defaultConfig {
+        minSdk 29
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+
+    kotlinOptions {
+        jvmTarget = '21'
+    }
+}
+
+room {
+    schemaDirectory "$projectDir/schemas"
+}
+
+android.testOptions {
+    // The instrumentation APK needs a current target or Play Protect blocks it on real devices.
+    targetSdk 35
+}
+
+android.sourceSets {
+    // MigrationTestHelper reads the exported schemas from the test assets.
+    androidTest.assets.srcDirs += files("$projectDir/schemas")
+    // Synthetic audio fixtures are shared with the app's playback tests (CREDITS.md).
+    test.resources.srcDirs += files("$rootDir/app/src/test/resources")
+}
+
+dependencies {
+    implementation project(':domain')
+
+    implementation libs.androidx.core.ktx
+    implementation libs.kotlinx.coroutines.core
+
+    // Room
+    implementation libs.androidx.room.runtime
+    implementation libs.androidx.room.ktx
+    ksp libs.androidx.room.compiler
+
+    // Hilt
+    implementation libs.hilt.android
+    ksp libs.hilt.android.compiler
+
+    // Settings
+    implementation libs.androidx.datastore.preferences
+
+    // Background scans
+    implementation libs.androidx.work.runtime.ktx
+    implementation libs.hilt.work
+    ksp libs.hilt.compiler
+
+    // Exact duration of VBR MP3 files without a Xing/VBRI header
+    implementation libs.androidx.media3.common
+    implementation libs.androidx.media3.extractor
+
+    // Serialization
+    implementation libs.kotlinx.serialization.json
+
+    testImplementation libs.junit
+    testImplementation libs.kotlinx.coroutines.test
+    testImplementation libs.robolectric
+
+    androidTestImplementation libs.androidx.room.testing
+    androidTestImplementation libs.androidx.test.junit
+    androidTestImplementation libs.androidx.test.runner
+}

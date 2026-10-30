@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="converter_channel">Conversor Opus</string>
+    <string name="converter_notification_title">Convertendo para Opus</string>
+    <plurals name="converter_notification_text">
+        <item quantity="one">%1$d de %2$d arquivo · cerca de %3$s a economizar</item>
+        <item quantity="other">%1$d de %2$d arquivos · cerca de %3$s a economizar</item>
+    </plurals>
+</resources>

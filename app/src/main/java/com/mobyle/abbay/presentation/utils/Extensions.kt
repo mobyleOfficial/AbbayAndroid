@@ -1,29 +1,24 @@
 package com.mobyle.abbay.presentation.utils
 
-import android.content.Context
-import android.database.Cursor
-import android.net.Uri
-import android.provider.MediaStore
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.material.BottomSheetScaffoldState
 import androidx.compose.material.BottomSheetValue
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.core.database.getLongOrNull
-import androidx.core.database.getStringOrNull
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
-import androidx.media3.common.util.UnstableApi
-import androidx.media3.session.MediaController
 import com.model.Book
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import java.io.File
 
 @OptIn(ExperimentalMaterialApi::class)
 val BottomSheetScaffoldState.currentFraction: Float
@@ -54,13 +49,11 @@ fun Long.toHHMMSS(): String {
 private fun <T> rememberFlowWithLifecycle(
     flow: Flow<T>,
     lifecycleOwner: LifecycleOwner
-): Flow<T> {
-    return remember(flow, lifecycleOwner) {
-        flow.flowWithLifecycle(
-            lifecycleOwner.lifecycle,
-            Lifecycle.State.STARTED
-        )
-    }
+): Flow<T> = remember(flow, lifecycleOwner) {
+    flow.flowWithLifecycle(
+        lifecycleOwner.lifecycle,
+        Lifecycle.State.STARTED
+    )
 }
 
 // To understand its use read the following article:
@@ -78,163 +71,27 @@ fun <T> LaunchedEffectAndCollect(
     }
 }
 
-fun Cursor.getTitle(): String? {
-    return getStringOrNull(getColumnIndex(MediaStore.Audio.AudioColumns.TITLE))
-}
+fun List<Book>.intermediateProgress(index: Int) = this.map { it.duration }.subList(0, index).sum()
 
-fun Cursor.getAlbumTitle(): String? {
-    return getStringOrNull(getColumnIndex(MediaStore.Audio.AudioColumns.ALBUM))
-}
-
-fun Cursor.getFileName(): String? {
-    return getStringOrNull(getColumnIndex(MediaStore.Audio.AudioColumns.DISPLAY_NAME))
-}
-
-fun Cursor.getId(): String? {
-    return getStringOrNull(getColumnIndex(MediaStore.Audio.AudioColumns._ID))
-}
-
-fun Cursor.getDuration(): Long? {
-    return getLongOrNull(getColumnIndex(MediaStore.Audio.Media.DURATION))
-}
-
-@androidx.annotation.OptIn(UnstableApi::class)
-fun MediaController.playBook(
-    id: String,
-    progress: Long,
-    isPlaying: MutableStateFlow<Boolean>
-) {
-    prepareBook(
-        id = id,
-        progress = progress,
-        isPlaying = isPlaying
-    )
-
-    if (playbackState == Player.STATE_READY) {
-        isPlaying.value = true
-        play()
-    } else {
-        addListener(object : Player.Listener {
-            override fun onPlaybackStateChanged(state: Int) {
-                if (state == Player.STATE_READY) {
-                    seekTo(progress)
-                    isPlaying.value = true
-                    play()
-                    removeListener(this)
-                }
-            }
-        })
-    }
-}
-
-@androidx.annotation.OptIn(UnstableApi::class)
-fun MediaController.playMultipleBooks(
-    currentPosition: Int,
-    idList: List<String>,
-    progress: Long,
-    isPlaying: MutableStateFlow<Boolean>
-) {
-    prepareMultipleBooks(
-        currentPosition = currentPosition,
-        idList = idList,
-        progress = progress,
-        isPlaying = isPlaying
-    )
-
-    if (playbackState == Player.STATE_READY) {
-        isPlaying.value = true
-        play()
-    } else {
-        addListener(object : Player.Listener {
-            override fun onPlaybackStateChanged(state: Int) {
-                if (state == Player.STATE_READY) {
-                    seekTo(currentPosition, progress)
-                    isPlaying.value = true
-                    play()
-                    removeListener(this)
-                }
-            }
-        })
-    }
-}
-
-@androidx.annotation.OptIn(UnstableApi::class)
-fun MediaController.prepareBook(
-    id: String,
-    progress: Long,
-    isPlaying: MutableStateFlow<Boolean>? = null,
-) {
-    isPlaying?.value = false
-    pause()
-    clearMediaItems()
-    val uri =
-        Uri.parse(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + File.separatorChar + id)
-    val mediaItem = MediaItem.Builder()
-        .setMediaId(id)
-        .setUri(uri)
-        .build()
-    addMediaItem(mediaItem)
-    prepare()
-
-    if (playbackState == Player.STATE_READY) {
-        seekTo(progress)
-    } else {
-        addListener(object : Player.Listener {
-            override fun onPlaybackStateChanged(state: Int) {
-                if (state == Player.STATE_READY) {
-                    seekTo(progress)
-                    removeListener(this)
-                }
-            }
-        })
-    }
-}
-fun Context.fileExists(id: String): Boolean {
-    return try {
-        val uri =
-            Uri.parse(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + File.separatorChar + id)
-        this.contentResolver.query(uri, null, null, null, null)?.use {
-            it.count > 0
-        } ?: false
-    } catch (e: Exception) {
-        false
-    }
-}
-
-fun MediaController.prepareMultipleBooks(
-    currentPosition: Int,
-    idList: List<String>,
-    progress: Long,
-    isPlaying: MutableStateFlow<Boolean>,
-) {
-    isPlaying.value = false
-    pause()
-    clearMediaItems()
-
-    val items = idList.map { id ->
-        val uri =
-            Uri.parse(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString() + File.separatorChar + id)
-        val mediaItem = MediaItem.Builder()
-            .setMediaId(id)
-            .setUri(uri)
-            .build()
-        mediaItem
-    }
-    addMediaItems(items)
-    seekTo(currentPosition, progress)
-    prepare()
-}
-
-fun Context.audioCursor(block: (Cursor) -> Unit) {
-    contentResolver.query(
-        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null,
-        MediaStore.Audio.Media.DEFAULT_SORT_ORDER
-    )
-        ?.use { cursor ->
-            while (cursor.moveToNext()) {
-                block.invoke(cursor)
-            }
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun Modifier.debounceClick(
+    debounceTimeMs: Long = 300L,
+    onLongClick: (() -> Unit)? = null,
+    onClick: () -> Unit
+): Modifier {
+    var lastClickTime by remember { mutableLongStateOf(0L) }
+    val debouncedClick = {
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastClickTime >= debounceTimeMs) {
+            lastClickTime = currentTime
+            onClick()
         }
-}
+    }
 
-fun List<Book>.intermediateProgress(index: Int) = this.map { it.duration }.subList(0,index).sum()
+    return if (onLongClick == null) {
+        this.clickable(onClick = debouncedClick)
+    } else {
+        this.combinedClickable(onClick = debouncedClick, onLongClick = onLongClick)
+    }
+}

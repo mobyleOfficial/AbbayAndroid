@@ -1,0 +1,21 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>LongParameterList:BookFileEntity.kt$BookFileEntity$( @PrimaryKey val id: String, val name: String, val fileName: String, val thumbnail: String?, val progress: Long, val duration: Long, val speed: Float, val hasError: Boolean, val type: BookTypeEntity )</ID>
+    <ID>NewLineAtEndOfFile:BookFileEntity.kt$com.mobyle.abbay.data.model.BookFileEntity.kt</ID>
+    <ID>NewLineAtEndOfFile:BookTypeEntity.kt$com.mobyle.abbay.data.model.BookTypeEntity.kt</ID>
+    <ID>NewLineAtEndOfFile:BooksLocalDataSource.kt$com.mobyle.abbay.data.datasource.local.books.BooksLocalDataSource.kt</ID>
+    <ID>NewLineAtEndOfFile:BooksLocalDataSourceImpl.kt$com.mobyle.abbay.data.datasource.local.books.BooksLocalDataSourceImpl.kt</ID>
+    <ID>NewLineAtEndOfFile:BooksRepositoryImpl.kt$com.mobyle.abbay.data.repository.BooksRepositoryImpl.kt</ID>
+    <ID>NewLineAtEndOfFile:DataModule.kt$com.mobyle.abbay.data.di.DataModule.kt</ID>
+    <ID>NewLineAtEndOfFile:DomainToEntityMappers.kt$com.mobyle.abbay.data.mappers.DomainToEntityMappers.kt</ID>
+    <ID>NewLineAtEndOfFile:EntityToDomainMappers.kt$com.mobyle.abbay.data.mappers.EntityToDomainMappers.kt</ID>
+    <ID>NewLineAtEndOfFile:KeyValueStore.kt$com.mobyle.abbay.data.datasource.local.keystore.KeyValueStore.kt</ID>
+    <ID>NewLineAtEndOfFile:KeyValueStoreKeys.kt$com.mobyle.abbay.data.datasource.local.keystore.KeyValueStoreKeys.kt</ID>
+    <ID>NewLineAtEndOfFile:MultipleBooksEntity.kt$com.mobyle.abbay.data.model.MultipleBooksEntity.kt</ID>
+    <ID>NewLineAtEndOfFile:SettingsRepositoryImpl.kt$com.mobyle.abbay.data.repository.SettingsRepositoryImpl.kt</ID>
+    <ID>TooManyFunctions:BooksDao.kt$BooksDao</ID>
+    <ID>TooManyFunctions:BooksLocalDataSource.kt$BooksLocalDataSource</ID>
+  </CurrentIssues>
+</SmellBaseline>

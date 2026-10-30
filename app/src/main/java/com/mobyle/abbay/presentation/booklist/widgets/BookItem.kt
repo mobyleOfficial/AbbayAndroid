@@ -1,7 +1,6 @@
 package com.mobyle.abbay.presentation.booklist.widgets
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,6 +23,7 @@ import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.theme.AbbayTextStyles
 import com.mobyle.abbay.presentation.common.widgets.BookThumbnail
 import com.mobyle.abbay.presentation.common.widgets.SVGIcon
+import com.mobyle.abbay.presentation.utils.debounceClick
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
 import com.model.MultipleBooks
@@ -35,6 +35,7 @@ fun BookItem(
     progress: String,
     intermediaryProgress: Long,
     currentMediaIndex: Int,
+    onLongClick: (() -> Unit)? = null,
     onClick: () -> Unit
 ) {
     val bookColor = if (book.hasError) {
@@ -48,7 +49,7 @@ fun BookItem(
             .padding(top = 8.dp)
             .fillMaxWidth()
             .background(bookColor)
-            .clickable {
+            .debounceClick(onLongClick = onLongClick) {
                 onClick.invoke()
             },
         verticalArrangement = Arrangement.SpaceEvenly,
@@ -115,7 +116,9 @@ fun BookItem(
                         )
                         val currentProgress = if (isSelected) {
                             progress
-                        } else intermediaryProgress.plus(book.progress).toHHMMSS()
+                        } else {
+                            intermediaryProgress.plus(book.progress).toHHMMSS()
+                        }
 
                         Text(
                             "$currentProgress/${book.duration.toHHMMSS()}",

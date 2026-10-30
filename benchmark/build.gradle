@@ -1,0 +1,53 @@
+plugins {
+    id 'com.android.test'
+    id 'org.jetbrains.kotlin.android'
+}
+
+/**
+ * Macrobenchmarks and the Baseline Profile generator. They run against
+ * the app's `release` build (minified, profileable, debug-signed when the publishing keystore is absent):
+ *   ./gradlew :benchmark:connectedBenchmarkAndroidTest
+ */
+android {
+    namespace 'com.mobyle.abbay.benchmark'
+    compileSdk 35
+
+    defaultConfig {
+        minSdk 29
+        targetSdk 35
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+
+    buildTypes {
+        // Targets the app's release build; the test APK itself must be debuggable.
+        benchmark {
+            debuggable = true
+            signingConfig = signingConfigs.debug
+            matchingFallbacks = ['release']
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+
+    kotlinOptions {
+        jvmTarget = '21'
+    }
+
+    targetProjectPath = ':app'
+    experimentalProperties['android.experimental.self-instrumenting'] = true
+}
+
+androidComponents {
+    beforeVariants(selector().all()) { variantBuilder ->
+        variantBuilder.enable = variantBuilder.buildType == 'benchmark'
+    }
+}
+
+dependencies {
+    implementation libs.androidx.test.junit
+    implementation libs.androidx.benchmark.macro.junit4
+    implementation libs.androidx.test.uiautomator
+}

@@ -1,54 +1,146 @@
 package com.mobyle.abbay.presentation.booklist
 
-import android.Manifest
-import android.os.Build
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.mobyle.abbay.infra.common.BaseViewModel
-import com.mobyle.abbay.presentation.utils.permissions.CheckPermissionsProvider
+import com.library.LibraryLayout
+import com.library.LibrarySortOrder
+import com.library.LibraryTab
+import com.listening.ShakeSensitivity
 import com.model.Book
 import com.model.BookFile
-import com.model.BookType
+import com.model.BookState
+import com.model.Bookmark
+import com.model.LibraryRoot
 import com.model.MultipleBooks
-import com.usecase.DeleteBook
-import com.usecase.GetBooksFolderPath
-import com.usecase.GetCurrentSelectedBook
-import com.usecase.HasShownReloadGuide
-import com.usecase.IsOpenPlayerInStartup
-import com.usecase.ObserveBooksList
-import com.usecase.SaveBookFolderPath
-import com.usecase.SaveCurrentSelectedBook
-import com.usecase.SetReloadGuideAsShown
-import com.usecase.UpsertBookList
+import com.model.ScanStatus
+import com.player.PlaybackStatus
+import com.player.PlayerController
+import com.player.PlayerError
+import com.player.PlayerState
+import com.player.SleepTimerMode
+import com.settings.AppSettings
+import com.usecase.AddBookmark
+import com.usecase.AddLibraryRoot
+import com.usecase.AddSingleFileBook
+import com.usecase.AddToQueue
+import com.usecase.CompleteLegacyFolderMigration
+import com.usecase.GetAppSettings
+import com.usecase.GetLastBook
+import com.usecase.GetOpusEncoder
+import com.usecase.HideBook
+import com.usecase.ImportLegacyProgress
+import com.usecase.ObserveAppSettings
+import com.usecase.ObserveBooks
+import com.usecase.ObserveLibraryRoots
+import com.usecase.ObserveScanStatus
+import com.usecase.OpenExternalFile
+import com.usecase.PrepareLegacyFolderMigration
+import com.usecase.RefreshLibrary
+import com.usecase.RefreshLibraryOnStart
+import com.usecase.RequestFullScan
+import com.usecase.SaveListeningState
+import com.usecase.SetBookState
+import com.usecase.SortAndFilterBooks
+import com.usecase.UpdateAppSettings
+import com.usecase.UpdateBookmarkNote
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class BooksListViewModel @Inject constructor(
-    private val upsertBookList: UpsertBookList,
-    private val deleteBook: DeleteBook,
-    private val saveCurrentSelectedBookUC: SaveCurrentSelectedBook,
-    private val setReloadGuideAsShown: SetReloadGuideAsShown,
-    val hasShownReloadGuide: HasShownReloadGuide,
-    val getBooksFolderPath: GetBooksFolderPath,
-    val saveBookFolderPath: SaveBookFolderPath,
-    val getCurrentSelectedBook: GetCurrentSelectedBook,
-    val isOpenPlayerInStartupUC: IsOpenPlayerInStartup,
-    observeBooksList: ObserveBooksList,
-    checkPermissionsProvider: CheckPermissionsProvider,
-) :
-    BaseViewModel() {
+    private val playerController: PlayerController,
+    private val saveListeningState: SaveListeningState,
+    private val updateAppSettings: UpdateAppSettings,
+    private val addLibraryRoot: AddLibraryRoot,
+    private val addSingleFileBook: AddSingleFileBook,
+    private val refreshLibrary: RefreshLibrary,
+    private val refreshLibraryOnStart: RefreshLibraryOnStart,
+    private val requestFullScan: RequestFullScan,
+    private val hideBook: HideBook,
+    private val setBookState: SetBookState,
+    private val sortAndFilterBooks: SortAndFilterBooks,
+    private val prepareLegacyFolderMigration: PrepareLegacyFolderMigration,
+    private val completeLegacyFolderMigration: CompleteLegacyFolderMigration,
+    private val importLegacyProgress: ImportLegacyProgress,
+    private val getAppSettings: GetAppSettings,
+    private val addBookmark: AddBookmark,
+    private val updateBookmarkNote: UpdateBookmarkNote,
+    private val getLastBook: GetLastBook,
+    private val openExternalFile: OpenExternalFile,
+    observeBooks: ObserveBooks,
+    observeLibraryRoots: ObserveLibraryRoots,
+    observeScanStatus: ObserveScanStatus,
+    observeAppSettings: ObserveAppSettings,
+    private val addToQueue: AddToQueue,
+    private val getOpusEncoder: GetOpusEncoder,
+) : ViewModel() {
     private val _uiState = MutableStateFlow<BooksListUiState>(BooksListUiState.Loading)
     val uiState: StateFlow<BooksListUiState> get() = _uiState
-    var booksList = mutableListOf<Book>()
+
+    /** Every visible book of the library, with the live progress of the selected book. */
+    var booksList = listOf<Book>()
         private set
 
-    val isPlaying = MutableStateFlow(false)
+    val playerState: StateFlow<PlayerState> get() = playerController.state
+
+    val isPlaying: StateFlow<Boolean> = playerController.state
+        .map { it.isPlaying }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /** True between a play request that reloads the book and the moment the player is ready. */
+    private val _isAwaitingPlayback = MutableStateFlow(false)
+    val isAwaitingPlayback: StateFlow<Boolean> get() = _isAwaitingPlayback
+
+    /** Shortcuts, the Quick Settings tile and files opened from other apps open the full player. */
+    // Channels keep an event sent before the screen collects (a launch intent arrives before the first frame).
+    private val _expandPlayerEvents = Channel<Unit>(Channel.CONFLATED)
+    val expandPlayerEvents: Flow<Unit> = _expandPlayerEvents.receiveAsFlow()
+
+    /** A file from another app is playing: the screen offers "Add folder to library"; false when it could not be read. */
+    private val _externalFileEvents = Channel<Boolean>(Channel.CONFLATED)
+    val externalFileEvents: Flow<Boolean> = _externalFileEvents.receiveAsFlow()
+
+    private val _collapsePlayerEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val collapsePlayerEvents: SharedFlow<Unit> get() = _collapsePlayerEvents.asSharedFlow()
+
+    /** File names of tracks that could not be played and were skipped. */
+    private val _skippedTrackMessages = MutableSharedFlow<String>(extraBufferCapacity = 4)
+    val skippedTrackMessages: SharedFlow<String> get() = _skippedTrackMessages.asSharedFlow()
+
+    /** A bookmark was added from the player; the screen offers to add a note. */
+    /** Books to play from another screen (search, folder view, queue); the library screen opens them. */
+    private val _playRequests = Channel<Book>(Channel.CONFLATED)
+    val playRequests: Flow<Book> = _playRequests.receiveAsFlow()
+
+    /** True for "Play next", false for "Add to queue": shown as a confirmation. */
+    private val _queueAdded = MutableSharedFlow<Boolean>(extraBufferCapacity = 1)
+    val queueAdded: SharedFlow<Boolean> = _queueAdded.asSharedFlow()
+
+    /** Noise reduction was too slow for the device and is now off. */
+    private val _noiseReductionTurnedOff = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val noiseReductionTurnedOff: SharedFlow<Unit> = _noiseReductionTurnedOff.asSharedFlow()
+
+    private val _bookmarkAdded = MutableSharedFlow<Bookmark>(extraBufferCapacity = 1)
+    val bookmarkAdded: SharedFlow<Bookmark> get() = _bookmarkAdded.asSharedFlow()
 
     private val _selectedBook = MutableStateFlow<Book?>(null)
     val selectedBook: StateFlow<Book?> get() = _selectedBook
@@ -56,17 +148,36 @@ class BooksListViewModel @Inject constructor(
     private val _currentProgress = MutableStateFlow(0L)
     val currentProgress: StateFlow<Long> get() = _currentProgress
 
-    var hasBookSelected = _selectedBook.map { it != null }
+    val hasBookSelected = _selectedBook.map { it != null }
 
-    var shouldOpenPlayerInStartup = false
+    private val _shouldOpenPlayerInStartup = MutableStateFlow(false)
+    val shouldOpenPlayerInStartup: StateFlow<Boolean> get() = _shouldOpenPlayerInStartup
 
-    var isScreenLocked = MutableStateFlow(false)
+    val isScreenLocked = MutableStateFlow(false)
 
-    private val _hasSelectedFolder = MutableStateFlow(getBooksFolderPath() != null)
-    val hasSelectedFolder: StateFlow<Boolean> get() = _hasSelectedFolder
+    private val settings: StateFlow<AppSettings> = observeAppSettings()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
 
-    private val _isRefreshing = MutableStateFlow(false)
-    val isRefreshing: StateFlow<Boolean> get() = _isRefreshing
+    /** Skip amounts and default speed used by the player screen. */
+    val appSettings: StateFlow<AppSettings> get() = settings
+
+    private val roots: StateFlow<List<LibraryRoot>> = observeLibraryRoots()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    private val scanStatus: StateFlow<ScanStatus> = observeScanStatus()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, ScanStatus())
+
+    val hasSelectedFolder: StateFlow<Boolean> = roots.map { it.isNotEmpty() }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    val isRefreshing: StateFlow<Boolean> = scanStatus.map { it.isScanning }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /** Tab chosen in this session; null until the user picks one (then the setting or "auto" applies). */
+    private val selectedTab = MutableStateFlow<LibraryTab?>(null)
+
+    private val _libraryState = MutableStateFlow(LibraryUiState())
+    val libraryState: StateFlow<LibraryUiState> get() = _libraryState
 
     private val _showReloadGuide = MutableStateFlow(false)
     val showReloadGuide: StateFlow<Boolean> get() = _showReloadGuide
@@ -74,260 +185,330 @@ class BooksListViewModel @Inject constructor(
     private val _showBookEndedDialog = MutableStateFlow(false)
     val showBookEndedDialog: StateFlow<Boolean> get() = _showBookEndedDialog
 
-    private val hasPermissions =
-        MutableStateFlow(checkPermissionsProvider.areAllPermissionsGranted(getPermissionsList()))
+    /** Books that failed to play in this session; the scanner marks missing files persistently. */
+    private val failedBookIds = MutableStateFlow(emptySet<String>())
+    private val legacyFolderToReselect = MutableStateFlow<String?>(null)
+
+    /** Id of the last played book, restored once both settings and books are loaded. */
+    private var lastBookIdToRestore: String? = null
+    private var hasLoadedSettings = false
+
+    /** Library books with the live state of this session; no initial value, so nothing is shown before Room answers. */
+    private val liveBooks = combine(observeBooks(), failedBookIds, _selectedBook) { books, failedIds, selected ->
+        books.map { book -> book.withLiveState(selected, failedIds) }
+    }.shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
 
     init {
-        combine(
-            observeBooksList(), hasPermissions
-        ) { domainBookList, hasPermissions ->
-            val currentIds = booksList.map { it.id }.toSet()
-            val newBooks = domainBookList.map { book ->
-                if (currentIds.contains(book.id)) {
-                    booksList.firstOrNull { it.id == book.id }?.let {
-                        it
-                    } ?: run {
-                        book
-                    }
-                } else {
-                    book
-                }
-            }.distinctBy { it.id }
-
-            val state = if (hasPermissions) {
-                booksList.clear()
-                booksList.addAll(newBooks.sortedBy { it.name })
-
-                if (!booksList.map { it.id }.contains(selectedBook.value?.id)) {
-                    _selectedBook.value = null
-                }
-
-                if (newBooks.isNotEmpty()) {
-                    BooksListUiState.BookListSuccess(booksList.toList())
-                } else {
-                    BooksListUiState.NoBookSelected
-                }
-            } else {
-                BooksListUiState.NoPermissionsGranted
+        liveBooks.onEach { books ->
+            booksList = books
+            val selected = _selectedBook.value
+            if (selected != null && !selected.isExternal && books.none { it.id == selected.id }) {
+                _selectedBook.value = null
             }
-
-            _uiState.tryEmit(state)
+            restoreLastBook()
         }.launchIn(viewModelScope)
-    }
 
-    fun setUserHasPermissions() {
-        hasPermissions.value = true
-    }
+        combine(
+            liveBooks,
+            settings,
+            selectedTab,
+            combine(roots, scanStatus, legacyFolderToReselect) { roots, scan, legacyFolder -> Triple(roots, scan, legacyFolder) },
+        ) { books, settings, tab, (roots, scan, legacyFolder) ->
+            val effectiveTab = tab ?: settings.libraryTab ?: sortAndFilterBooks.defaultTab(books)
+            _libraryState.value = LibraryUiState(
+                tab = effectiveTab,
+                sortOrder = settings.librarySortOrder,
+                sortAscending = settings.librarySortAscending,
+                layout = settings.libraryLayout,
+                scanStatus = scan,
+                inaccessibleRoots = roots.filterNot { it.isAccessible },
+            )
+            when {
+                legacyFolder != null -> BooksListUiState.LegacyFolderMigration(legacyFolder)
+                books.isNotEmpty() -> BooksListUiState.BookListSuccess(
+                    sortAndFilterBooks(books, effectiveTab, settings.librarySortOrder, settings.librarySortAscending),
+                )
 
-    fun getPermissionsList() = if (Build.VERSION.SDK_INT >= 33) {
-        PERMISSIONS_LIST
-    } else {
-        API_32_OR_LESS_PERMISSIONS_LIST
-    }
+                scan.isScanning -> BooksListUiState.Loading
+                else -> BooksListUiState.NoBookSelected
+            }
+        }.onEach { _uiState.value = it }.launchIn(viewModelScope)
 
-    fun updateBookList(booksList: List<Book>) = launch {
-        upsertBookList(booksList)
-    }
+        // The legacy import runs in the scan worker and may set the last book after startup.
+        settings.onEach { appSettings ->
+            if (hasLoadedSettings && _selectedBook.value == null && appSettings.lastBookId != null) {
+                lastBookIdToRestore = appSettings.lastBookId
+                restoreLastBook()
+            }
+        }.launchIn(viewModelScope)
 
-    fun updateSelectedBook(book: Book, currentPosition: Int?) {
-        selectBook(book, currentPosition)
-    }
+        playerController.state.onEach { playerState ->
+            if (playerState.status == PlaybackStatus.READY || playerState.status == PlaybackStatus.ENDED) {
+                _isAwaitingPlayback.value = false
+            }
+        }.launchIn(viewModelScope)
 
-    fun addAllBookTypes(filesList: List<Book>) = launch {
-        upsertBookList(filesList)
-        _hasSelectedFolder.value = true
-    }
+        // The service can start another book by itself (the queue, Android Auto): the player follows it.
+        playerController.state.map { it.bookId }.distinctUntilChanged().onEach { playingId ->
+            val selected = _selectedBook.value
+            if (playingId == null || playingId == selected?.id) return@onEach
+            val book = booksList.firstOrNull { it.id == playingId } ?: return@onEach
+            _showBookEndedDialog.value = false
+            selectBook(book, book.getBookPosition())
+        }.launchIn(viewModelScope)
 
-    fun addBooksFromNewFolder(filesList: List<Book>) {
-        val newBooks = filesList.distinctBy { it.id }
-        val individualBooks = booksList.filter { it.type == BookType.FILE }
+        playerController.state.map { it.upNext != null }.distinctUntilChanged().onEach { hasUpNext ->
+            if (hasUpNext) _showBookEndedDialog.value = false
+        }.launchIn(viewModelScope)
 
-        updateBookList(newBooks + individualBooks)
-        _hasSelectedFolder.value = true
-        _isRefreshing.value = false
-    }
+        // The end of the book: unless the queue goes on with another book, the player closes.
+        playerController.state.map { it.status == PlaybackStatus.ENDED }.distinctUntilChanged().onEach { hasEnded ->
+            if (!hasEnded) return@onEach
+            // The queue's countdown reaches the app through the session a moment after the end.
+            delay(QUEUE_DECISION_MS)
+            val state = playerController.state.value
+            if (state.status == PlaybackStatus.ENDED && state.upNext == null) closeFinishedBook()
+        }.launchIn(viewModelScope)
 
-    fun setCurrentProgress(
-        id: String,
-        progress: Long,
-        currentPosition: Int?
-    ) {
-        _currentProgress.tryEmit(progress)
-        val index = booksList.indexOfFirst { it.id == id }
-
-        if (index != -1) {
-            val mappedBook = when (val book = booksList[index]) {
-                is MultipleBooks -> {
-                    book.copy(progress = progress)
-                }
-
-                is BookFile -> {
-                    book.copy(progress = progress)
-                }
-
-                else -> {
-                    book
+        playerController.errors.onEach { error ->
+            _isAwaitingPlayback.value = false
+            when (error) {
+                is PlayerError.TrackSkipped -> _skippedTrackMessages.tryEmit(error.fileName)
+                PlayerError.NoiseReductionTooSlow -> _noiseReductionTurnedOff.tryEmit(Unit)
+                PlayerError.BookUnplayable, PlayerError.StorageUnavailable -> {
+                    selectedBook.value?.let { book ->
+                        playerController.stop()
+                        markBookAsError(book)
+                    }
+                    updateIsScreenLocked(false)
+                    _collapsePlayerEvents.tryEmit(Unit)
+                    // A missing file or a revoked folder shows up as a missing book or the reconnect banner.
+                    if (error == PlayerError.StorageUnavailable) viewModelScope.launch { refreshLibrary() }
                 }
             }
+        }.launchIn(viewModelScope)
 
-            booksList[index] = mappedBook
-            _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
-            selectBook(mappedBook, currentPosition)
-
-            when (mappedBook) {
-                is MultipleBooks -> {
-                    if (mappedBook.currentBookPosition == (mappedBook.bookFileList.size - 1) &&
-                        progress >= mappedBook.bookFileList.last().duration
-                    ) {
-                        _showBookEndedDialog.value = true
-                    }
-                }
-
-                is BookFile -> {
-                    if (progress >= mappedBook.duration) {
-                        _showBookEndedDialog.value = true
-                    }
-                }
-
-                else -> {
-
-                }
-            }
+        viewModelScope.launch {
+            val initialSettings = getAppSettings()
+            lastBookIdToRestore = initialSettings.lastBookId
+            hasLoadedSettings = true
+            restoreLastBook()
+            _shouldOpenPlayerInStartup.value = initialSettings.openPlayerOnStartup
+            legacyFolderToReselect.value = prepareLegacyFolderMigration()
+            refreshLibraryOnStart()
+            importLegacyProgress()
         }
     }
 
-    fun updateBookList() = launch {
-        upsertBookList(booksList)
+    /**
+     * Where a tapped book starts: a finished book starts over — its position goes back to the start and its
+     * state to New until it plays again, as with "Mark as new".
+     */
+    fun startingPoint(book: Book): Book {
+        if (book.state != BookState.FINISHED) return book
+        viewModelScope.launch { setBookState(book.id, BookState.NEW) }
+        return book.fromStart()
+    }
+
+    /** The finished book leaves the player: the notice is shown and nothing is selected or restored at the next start. */
+    private fun closeFinishedBook() {
+        _showBookEndedDialog.value = true
+        updateIsScreenLocked(false)
+        playerController.stop()
+        selectBook(null, null)
+        _collapsePlayerEvents.tryEmit(Unit)
+    }
+
+    /** Starts [book] from its saved track and position. */
+    fun openBook(book: Book) {
+        playerController.openBook(book, playWhenReady = true)
+    }
+
+    /**
+     * Play/pause button: pauses; resumes when [book] is loaded and ready, so the service sees a plain resume and applies
+     * smart rewind; otherwise reloads the book at [progress] and plays it.
+     */
+    fun onPlayButtonClicked(book: Book, progress: Long) {
+        val playerState = playerController.state.value
+        when {
+            playerState.isPlaying -> playerController.pause()
+            playerState.isReadyWith(book) -> playerController.play()
+            else -> reloadAndPlay(book, progress)
+        }
+    }
+
+    /** Tap on the cover: the same as the play button. */
+    fun onCoverClicked(book: Book, progress: Long) = onPlayButtonClicked(book, progress)
+
+    private fun PlayerState.isReadyWith(book: Book): Boolean = status == PlaybackStatus.READY && bookId == book.id
+
+    private fun reloadAndPlay(book: Book, progress: Long) {
+        val bookAtProgress = when (book) {
+            is BookFile -> book.copy(progress = progress)
+            else -> book
+        }
+
+        _isAwaitingPlayback.value = true
+        playerController.openBook(bookAtProgress, playWhenReady = true)
+    }
+
+    fun seekTo(positionMs: Long) = playerController.seekTo(positionMs)
+
+    fun seekToTrack(trackIndex: Int) = playerController.seekTo(trackIndex, 0L)
+
+    /** Book-time seeks; the shown position follows at once and is saved. */
+    fun seekToBookPosition(bookPositionMs: Long) = afterSeek { playerController.seekToBookPosition(bookPositionMs) }
+
+    fun seekBy(deltaMs: Long) = afterSeek { playerController.seekBy(deltaMs) }
+
+    fun nextChapter() = afterSeek { playerController.nextChapter() }
+
+    fun previousChapter() = afterSeek { playerController.previousChapter() }
+
+    private fun afterSeek(seek: () -> Unit) {
+        seek()
+        syncPositionFromPlayer()
+        persistProgress()
+    }
+
+    /** Copies the player's current track and position into the selected book. */
+    fun syncPositionFromPlayer() {
+        val book = selectedBook.value ?: return
+        val trackIndex = if (book is MultipleBooks) playerController.currentTrackIndex() else null
+        setCurrentProgress(id = book.id, progress = playerController.currentPositionMs(), currentPosition = trackIndex)
+    }
+
+    /** "Set as default for new books" in the speed sheet. */
+    fun setDefaultSpeed(speed: Float) = viewModelScope.launch { updateAppSettings { it.copy(defaultSpeed = speed) } }
+
+    fun changeSpeed(speed: Float) = playerController.setSpeed(speed)
+
+    fun stopPlayer() = playerController.stop()
+
+    /** Called every second while playing: copies the player's track and position into the selected book. */
+    fun refreshCurrentProgress() {
+        if (playerController.state.value.isPlaying) syncPositionFromPlayer()
+    }
+
+    fun setCurrentProgress(id: String, progress: Long, currentPosition: Int?) {
+        _currentProgress.tryEmit(progress)
+        val book = bookWithId(id) ?: return
+        val updatedBook = book.withProgress(progress)
+
+        selectBook(updatedBook, currentPosition)
+    }
+
+    /** Saves the selected book's track, position and speed (every few seconds while playing, and on seeks). */
+    fun persistProgress() {
+        val book = _selectedBook.value ?: return
+        viewModelScope.launch {
+            saveListeningState(book.id, book.getBookPosition() ?: 0, book.progress, book.speed)
+        }
     }
 
     fun selectBook(book: Book?, position: Int?) {
-        saveCurrentSelectedBookUC(book?.id, position)
-        _selectedBook.tryEmit(book)
+        _selectedBook.value = when (book) {
+            is MultipleBooks -> position?.let { book.copy(currentBookPosition = it) } ?: book
+            else -> book
+        }
+        // A file opened from another app is not a library book, so it never becomes "the last book".
+        if (book?.isExternal != true && book?.id != settings.value.lastBookId) {
+            viewModelScope.launch { updateAppSettings { it.copy(lastBookId = book?.id) } }
+        }
     }
 
     fun updateBookPosition(id: String, position: Int) {
-        val index = booksList.indexOfFirst { it.id == id }
+        val book = booksList.firstOrNull { it.id == id } as? MultipleBooks ?: return
+        selectBook(book.copy(currentBookPosition = position), position)
+    }
 
-        if (index != -1) {
-            val book = booksList[index]
-
-            if (book is MultipleBooks) {
-                booksList[index] = book.copy(currentBookPosition = position)
-
-                _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
-                selectBook(book.copy(currentBookPosition = position), position)
-            }
+    fun updateBookSpeed(id: String, speed: Float, currentPosition: Int?) {
+        val book = bookWithId(id) ?: return
+        val updatedBook = when (book) {
+            is BookFile -> book.copy(speed = speed)
+            is MultipleBooks -> book.copy(speed = speed)
+            else -> return
         }
+        selectBook(updatedBook, currentPosition)
+        persistProgress()
     }
 
-    fun updateBookSpeed(
-        id: String,
-        speed: Float,
-        currentPosition: Int?
-    ) {
-        booksList.firstOrNull { it.id == id }?.let {
-            val newBook = when (it) {
-                is BookFile -> {
-                    it.copy(speed = speed)
-                }
-
-                is MultipleBooks -> {
-                    it.copy(speed = speed)
-                }
-
-                else -> {
-                    null
-                }
-            }
-
-            newBook?.let { book ->
-                booksList[booksList.indexOf(it)] = book
-                selectBook(book, currentPosition)
-            }
-        }
-    }
-
-    fun showLoading() {
-        _uiState.value = BooksListUiState.Loading
-    }
-
-    fun shouldOpenPlayerInStartup() {
-        shouldOpenPlayerInStartup = isOpenPlayerInStartupUC()
-    }
-
+    /** Swipe-to-delete removes the book from the library (hides it); files are never deleted. */
     fun removeBook(book: Book) {
-        viewModelScope.launch {
-            val index = booksList.indexOfFirst { it.id == book.id }
-            booksList.removeAt(index)
-            deleteBook.invoke(book)
+        if (selectedBook.value?.id == book.id) selectBook(null, null)
+        viewModelScope.launch { hideBook(book.id) }
+    }
 
-            if (selectedBook.value?.id == book.id) {
-                _selectedBook.value = null
-                saveCurrentSelectedBookUC(null, null)
-            }
+    fun markBookAsError(book: Book) {
+        failedBookIds.value = failedBookIds.value + book.id
+    }
+
+    /** "Mark as new" moves the book back to its start, also when it is the one in the player. */
+    fun markBook(book: Book, state: BookState) {
+        if (state == BookState.NEW && book.id == selectedBook.value?.id) {
+            if (playerController.state.value.trackCount > 0) playerController.seekToBookPosition(0L)
+            setCurrentProgress(id = book.id, progress = 0L, currentPosition = if (book is MultipleBooks) 0 else null)
         }
+        viewModelScope.launch { setBookState(book.id, state) }
     }
 
-    fun markBookAsError(book: Book) = launch {
-        val index = booksList.indexOfFirst { it.id == book.id }
-        if (index != -1) {
-            val updatedBook = when (book) {
-                is BookFile -> book.copy(hasError = true)
-                is MultipleBooks -> book.copy(hasError = true)
-                else -> book
-            }
-
-            if (updatedBook.id == selectedBook.value?.id) {
-                val selectedBook = _selectedBook.value
-
-                _selectedBook.value = when (selectedBook) {
-                    is MultipleBooks -> selectedBook.copy(hasError = true)
-                    is BookFile -> selectedBook.copy(hasError = true)
-                    else -> selectedBook
-                }
-            }
-
-            booksList[index] = updatedBook
-
-            updateBookList(booksList)
-            _uiState.tryEmit(BooksListUiState.BookListSuccess(booksList.toList()))
-        }
+    /** Bookmark at the player's position. */
+    fun addBookmarkAtCurrentPosition() {
+        val book = selectedBook.value ?: return
+        val position = if (playerController.state.value.trackCount > 0) playerController.bookPositionMs() else book.bookPositionMs
+        viewModelScope.launch { addBookmark(book.id, position)?.let(_bookmarkAdded::tryEmit) }
     }
 
-    fun checkForNewBooks(newBooksList: List<Book>) {
-        val currentIds = booksList.map { it.id }.toSet()
-        val newBooks = newBooksList.map { book ->
-            if (currentIds.contains(book.id)) {
-                booksList.firstOrNull { it.id == book.id }?.let {
-                    it
-                } ?: run {
-                    book
-                }
-            } else {
-                book
-            }
-        }.distinctBy { it.id }
+    fun saveBookmarkNote(bookmarkId: Long, note: String) = viewModelScope.launch { updateBookmarkNote(bookmarkId, note) }
 
-        val individualBooks = booksList.filter { it.type == BookType.FILE }
-
-        updateBookList(newBooks + individualBooks)
-        _hasSelectedFolder.value = true
-        _isRefreshing.value = false
+    fun requestPlay(bookId: String) {
+        bookWithId(bookId)?.let { _playRequests.trySend(it) }
     }
 
-    fun setRefreshingLoading() {
-        _isRefreshing.value = true
+    /** "Play next" puts the book first in the queue, "Add to queue" last. */
+    fun queue(book: Book, playNext: Boolean) = viewModelScope.launch {
+        addToQueue(book.id, playNext)
+        _queueAdded.tryEmit(playNext)
     }
 
-    fun showReloadGuide() {
-        if (!hasShownReloadGuide()) {
-            _showReloadGuide.value = true
-        }
+    fun cancelUpNext() = playerController.cancelUpNext()
+
+    /** Non-null when the converter can be offered: the device has an Opus encoder. */
+    fun converterEntry(): String? = getOpusEncoder()
+
+    fun startSleepTimer(mode: SleepTimerMode) = playerController.startSleepTimer(mode)
+
+    fun cancelSleepTimer() = playerController.cancelSleepTimer()
+
+    fun setShakeSensitivity(sensitivity: ShakeSensitivity) = viewModelScope.launch {
+        updateAppSettings { it.copy(shakeSensitivity = sensitivity) }
+    }
+
+    fun addFolder(treeUri: String) = viewModelScope.launch { addLibraryRoot(treeUri) }
+
+    fun addFile(documentUri: String) = viewModelScope.launch { addSingleFileBook(documentUri) }
+
+    /** A root whose permission was lost was picked again from the reconnect banner. */
+    fun reconnectFolder(treeUri: String) = viewModelScope.launch {
+        addLibraryRoot(treeUri)
+        refreshLibrary()
+    }
+
+    /** One-time folder migration screen: [treeUri] is the folder picked again, or null when skipped. */
+    fun completeLegacyMigration(treeUri: String?) = viewModelScope.launch {
+        treeUri?.let { addLibraryRoot(it) }
+        completeLegacyFolderMigration()
+        legacyFolderToReselect.value = null
+    }
+
+    /** Refresh button: the first time it explains what it does, afterwards it rescans the library. */
+    fun onRefreshClicked() {
+        if (settings.value.reloadGuideShown) requestFullScan() else _showReloadGuide.value = true
     }
 
     fun dismissReloadGuide() {
-        setReloadGuideAsShown()
         _showReloadGuide.value = false
+        viewModelScope.launch { updateAppSettings { it.copy(reloadGuideShown = true) } }
     }
 
     fun dismissBookEndedDialog() {
@@ -338,19 +519,135 @@ class BooksListViewModel @Inject constructor(
         isScreenLocked.value = isDisabled
     }
 
+    fun selectTab(tab: LibraryTab) {
+        selectedTab.value = tab
+    }
+
+    /** Picking the current sort order again flips the direction. */
+    fun selectSortOrder(sortOrder: LibrarySortOrder) = viewModelScope.launch {
+        updateAppSettings { current ->
+            if (current.librarySortOrder == sortOrder) {
+                current.copy(librarySortAscending = !current.librarySortAscending)
+            } else {
+                current.copy(librarySortOrder = sortOrder, librarySortAscending = sortOrder.ascendingByDefault())
+            }
+        }
+    }
+
+    fun selectLayout(layout: LibraryLayout) = viewModelScope.launch {
+        updateAppSettings { it.copy(libraryLayout = layout) }
+    }
+
+    /** A library book, or the external file being played. */
+    private fun bookWithId(id: String): Book? = booksList.firstOrNull { it.id == id } ?: _selectedBook.value?.takeIf { it.id == id }
+
+    /**
+     * "Resume last book" (launcher shortcut): opens the player and plays the
+     * selected or last book; with [startSleepTimer] also starts the timer at its default length.
+     */
+    fun resumeLastBook(startSleepTimer: Boolean = false) = viewModelScope.launch {
+        playerController.state.first { it.isConnected }
+        val book = _selectedBook.value?.takeUnless { it.isExternal } ?: getLastBook() ?: return@launch
+        if (_selectedBook.value?.id != book.id) selectBook(book, book.getBookPosition())
+        _expandPlayerEvents.trySend(Unit)
+        val state = playerController.state.value
+        when {
+            state.isPlaying -> Unit
+            state.status == PlaybackStatus.READY && state.bookId == book.id -> playerController.play()
+            else -> reloadAndPlay(book, book.progress)
+        }
+        if (startSleepTimer) playerController.startSleepTimer(SleepTimerMode.Duration(settings.value.sleepDefaultMinutes))
+    }
+
+    /** Long press on the Quick Settings tile: the player of the current or last book, without starting it. */
+    fun openPlayer() = viewModelScope.launch {
+        playerController.state.first { it.isConnected }
+        val book = _selectedBook.value ?: getLastBook() ?: return@launch
+        if (_selectedBook.value?.id != book.id) selectBook(book, book.getBookPosition())
+        _expandPlayerEvents.trySend(Unit)
+    }
+
+    /** A file opened from another app plays as a temporary book. */
+    fun playExternalFile(documentUri: String) = viewModelScope.launch {
+        playerController.state.first { it.isConnected }
+        val book = openExternalFile(documentUri)
+        if (book == null) {
+            _externalFileEvents.trySend(false)
+            return@launch
+        }
+        _selectedBook.value = book
+        _expandPlayerEvents.trySend(Unit)
+        reloadAndPlay(book, 0L)
+        _externalFileEvents.trySend(true)
+    }
+
+    private fun restoreLastBook() {
+        if (!hasLoadedSettings || booksList.isEmpty() || _selectedBook.value != null) return
+        val lastBookId = lastBookIdToRestore ?: return
+        lastBookIdToRestore = null
+        // A finished book is not brought back into the player.
+        booksList.firstOrNull { it.id == lastBookId && !it.hasError && it.state != BookState.FINISHED }
+            ?.let { book -> _selectedBook.value = book }
+    }
+
+    /** The selected book keeps its in-memory progress until it is saved; failed books show the error state. */
+    private fun Book.withLiveState(selected: Book?, failedIds: Set<String>): Book {
+        val base = if (selected != null && selected.id == id) selected.copyStructureFrom(this) else this
+        return if (base.id in failedIds) base.withError() else base
+    }
+
+    private fun Book.copyStructureFrom(stored: Book): Book = when {
+        this is MultipleBooks && stored is MultipleBooks -> stored.copy(
+            progress = progress,
+            speed = speed,
+            currentBookPosition = currentBookPosition.coerceIn(0, stored.bookFileList.lastIndex),
+        )
+
+        this is BookFile && stored is BookFile -> stored.copy(progress = progress, speed = speed)
+        else -> stored
+    }
+
+    private fun Book.withProgress(progress: Long): Book = when (this) {
+        is MultipleBooks -> copy(progress = progress)
+        is BookFile -> copy(progress = progress)
+        else -> this
+    }
+
+    private fun Book.fromStart(): Book = when (this) {
+        is MultipleBooks -> copy(progress = 0L, currentBookPosition = 0, state = BookState.NEW)
+        is BookFile -> copy(progress = 0L, state = BookState.NEW)
+        else -> this
+    }
+
+    private fun Book.withError(): Book = when (this) {
+        is MultipleBooks -> copy(hasError = true)
+        is BookFile -> copy(hasError = true)
+        else -> this
+    }
+
+    private fun LibrarySortOrder.ascendingByDefault(): Boolean =
+        this == LibrarySortOrder.TITLE || this == LibrarySortOrder.AUTHOR
+
     sealed class BooksListUiState {
-        data class BookListSuccess(val audiobookList: List<Book>) :
-            BooksListUiState()
+        data class BookListSuccess(val audiobookList: List<Book>) : BooksListUiState()
 
         data object NoBookSelected : BooksListUiState()
-        data object GenericError : BooksListUiState()
+
         data object Loading : BooksListUiState()
 
-        data object NoPermissionsGranted : BooksListUiState()
+        /** One-time screen asking to pick the previous version's folder again. */
+        data class LegacyFolderMigration(val legacyFolderUri: String) : BooksListUiState()
     }
 
-    private companion object {
-        val API_32_OR_LESS_PERMISSIONS_LIST = listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
-        val PERMISSIONS_LIST = listOf(Manifest.permission.READ_MEDIA_AUDIO)
-    }
+    data class LibraryUiState(
+        val tab: LibraryTab = LibraryTab.ALL,
+        val sortOrder: LibrarySortOrder = LibrarySortOrder.RECENTLY_PLAYED,
+        val sortAscending: Boolean = false,
+        val layout: LibraryLayout = LibraryLayout.LIST,
+        val scanStatus: ScanStatus = ScanStatus(),
+        val inaccessibleRoots: List<LibraryRoot> = emptyList(),
+    )
 }
+
+/** How long the app waits after the end of a book for the queue's countdown before closing the player. */
+private const val QUEUE_DECISION_MS = 1_500L

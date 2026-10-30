@@ -1,10 +1,100 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
+import groovy.io.FileType
+
 plugins {
-    id 'com.android.library' version '8.2.1' apply false
-    id("com.android.application") version "8.2.1" apply false
-    id("org.jetbrains.kotlin.android") version "1.9.0" apply false
-    id 'com.google.dagger.hilt.android' version '2.48' apply false
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.8.20' apply false
+    id 'com.android.library' version '8.11.2' apply false
+    id("com.android.application") version '8.11.2' apply false
+    id("org.jetbrains.kotlin.android") version "2.0.21" apply false
+    id("org.jetbrains.kotlin.jvm") version "2.0.21" apply false
+    id("org.jetbrains.kotlin.plugin.compose") version "2.0.21" apply false
+    id 'com.google.devtools.ksp' version '2.0.21-1.0.28' apply false
+    id 'com.google.dagger.hilt.android' version '2.52' apply false
+    id 'androidx.room' version '2.6.1' apply false
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.0.21' apply false
     id 'com.google.gms.google-services' version '4.4.3' apply false
     id 'com.google.firebase.crashlytics' version '3.0.6' apply false
+    id 'io.gitlab.arturbosch.detekt' version '1.23.7' apply false
+    id 'org.jlleitschuh.gradle.ktlint' version '12.1.2' apply false
+    id 'com.github.jk1.dependency-license-report' version '2.9' apply false
+}
+
+subprojects {
+    apply plugin: 'io.gitlab.arturbosch.detekt'
+    apply plugin: 'org.jlleitschuh.gradle.ktlint'
+
+    detekt {
+        buildUponDefaultConfig = true
+        config.setFrom(rootProject.file('config/detekt/detekt.yml'))
+        baseline = rootProject.file("config/detekt/baseline-${project.name}.xml")
+    }
+
+    ktlint {
+        version = '1.4.1'
+        baseline = rootProject.file("config/ktlint/baseline-${project.name}.xml")
+        filter {
+            exclude { element -> element.file.path.contains('/build/') }
+        }
+    }
+}
+
+/**
+ * Presentation code may import only the domain layer.
+ * Existing violations are listed in the baseline file and must be removed by Phase 0B; new ones fail the build.
+ */
+tasks.register('checkModuleBoundaries') {
+    group = 'verification'
+    description = 'Fails when presentation code imports the media engine, Room, or non-domain modules.'
+    def scannedDirectories = [
+        file('app/src/main/java/com/mobyle/abbay/presentation'),
+        file('app/src/main/java/com/mobyle/abbay/infra/navigation'),
+    ]
+    // The media engine lives in these presentation folders (the playback service, Cast, home screen widgets): they
+    // may import Media3; the screens may not import them.
+    def mediaEngineDirectories = [
+        file('app/src/main/java/com/mobyle/abbay/presentation/playback'),
+        file('app/src/main/java/com/mobyle/abbay/presentation/cast'),
+        file('app/src/main/java/com/mobyle/abbay/presentation/widget'),
+    ]
+    def baselineFile = file('config/module-boundaries/baseline.txt')
+    def forbiddenPrefixes = [
+        'androidx.media3',
+        'androidx.room',
+        'com.mobyle.abbay.data',
+        'com.mobyle.abbay.presentation.playback',
+        'com.mobyle.abbay.infra.dsp',
+        'com.mobyle.abbay.presentation.cast',
+        'com.mobyle.abbay.presentation.widget',
+    ]
+    inputs.files(scannedDirectories.findAll { it.exists() })
+    inputs.files(baselineFile.exists() ? [baselineFile] : [])
+    doLast {
+        def allowedViolations = baselineFile.exists()
+            ? baselineFile.readLines().collect { it.trim() }.findAll { it && !it.startsWith('#') }.toSet()
+            : [] as Set
+        def violations = [] as Set
+        scannedDirectories.findAll { it.exists() }.each { directory ->
+            directory.eachFileRecurse(FileType.FILES) { sourceFile ->
+                if (!sourceFile.name.endsWith('.kt')) return
+                if (mediaEngineDirectories.any { sourceFile.toPath().startsWith(it.toPath()) }) return
+                def relativePath = rootProject.projectDir.toPath().relativize(sourceFile.toPath()).toString()
+                sourceFile.readLines().each { line ->
+                    def importMatcher = line =~ /^import\s+([\w.]+)/
+                    if (!importMatcher.find()) return
+                    def importedName = importMatcher.group(1)
+                    if (forbiddenPrefixes.any { importedName == it || importedName.startsWith(it + '.') }) {
+                        violations << "${relativePath}: ${importedName}"
+                    }
+                }
+            }
+        }
+        def newViolations = (violations - allowedViolations).sort()
+        def fixedViolations = (allowedViolations - violations).sort()
+        if (fixedViolations) {
+            logger.lifecycle("Module boundaries: ${fixedViolations.size()} baseline entries no longer occur; remove them from ${baselineFile.name}.")
+        }
+        if (newViolations) {
+            throw new GradleException("Presentation code must import only :domain. New violations:\n  " + newViolations.join('\n  '))
+        }
+        logger.lifecycle("Module boundaries OK (${violations.size()} baselined violations remaining).")
+    }
 }

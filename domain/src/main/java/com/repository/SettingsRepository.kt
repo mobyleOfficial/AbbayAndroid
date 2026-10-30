@@ -1,17 +1,10 @@
 package com.repository
 
+import com.settings.AppSettings
 import kotlinx.coroutines.flow.Flow
 
 interface SettingsRepository {
-    fun isPlayWhenAppIsClosedEnabled(): Boolean
+    fun observeSettings(): Flow<AppSettings>
 
-    fun isOpenPlayerInStartup(): Boolean
-
-    fun enablePlayWhenAppIsClosed()
-
-    fun disablePlayWhenAppIsClosed()
-
-    fun enableOpenPlayerInStartup()
-
-    fun disableOpenPlayerInStartup()
+    suspend fun updateSettings(transform: (AppSettings) -> AppSettings)
 }

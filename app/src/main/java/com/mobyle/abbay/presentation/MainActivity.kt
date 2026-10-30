@@ -1,44 +1,83 @@
 package com.mobyle.abbay.presentation
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.service.quicksettings.TileService
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.core.content.IntentCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.media3.session.MediaController
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
-import androidx.startup.AppInitializer
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.mobyle.abbay.R
+import com.mobyle.abbay.infra.common.ChargingScreenKeeper
+import com.mobyle.abbay.infra.language.AppLanguageStore
 import com.mobyle.abbay.infra.navigation.AbbayNavHost
-import com.mobyle.abbay.infra.startup.PlayerInitializer
+import com.mobyle.abbay.presentation.booklist.BooksListViewModel
 import com.mobyle.abbay.presentation.common.theme.MyApplicationTheme
-import com.usecase.IsPlayWhenAppIsClosedEnabled
-import com.usecase.UpdateAppLifeStatus
+import com.model.DataResult
+import com.player.PlayerController
+import com.settings.AppSettings
+import com.usecase.ApplySharedCover
+import com.usecase.ObserveAppSettings
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @ExperimentalMaterialApi
-@ExperimentalPermissionsApi
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @Inject
-    lateinit var isPlayWhenAppIsClosedEnabled: IsPlayWhenAppIsClosedEnabled
+    lateinit var observeAppSettings: ObserveAppSettings
 
     @Inject
-    lateinit var updateAppLifeStatus: UpdateAppLifeStatus
+    lateinit var playerController: PlayerController
 
-    private var player: MediaController? = null
+    @Inject
+    lateinit var applySharedCover: ApplySharedCover
+
+    /** The same instance the navigation host uses (both are scoped to this activity). */
+    private val booksViewModel: BooksListViewModel by viewModels()
+
     private var isPlayerReady = false
+    private var settings = AppSettings()
+    private val chargingScreenKeeper = ChargingScreenKeeper(this)
+
+    /** Android 10–12: the language chosen in Settings (Android 13+ applies it by itself). */
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLanguageStore.wrap(newBase))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
-
+        enableEdgeToEdge()
         // Keep splash screen visible until player is ready
         splashScreen.setKeepOnScreenCondition {
             !isPlayerReady
@@ -46,44 +85,99 @@ class MainActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
-        updateAppLifeStatus(true)
+        lifecycle.addObserver(chargingScreenKeeper)
+        observeAppSettings().onEach {
+            settings = it
+            chargingScreenKeeper.setEnabled(it.keepScreenOnWhileCharging)
+        }.launchIn(lifecycleScope)
+        playerController.connect()
+        handleSharedImage(intent)
+        if (savedInstanceState == null) handleLaunchAction(intent)
 
         setContent {
             val navController = rememberNavController()
-            val playerState = AppInitializer.getInstance(this@MainActivity)
-                .initializeComponent(PlayerInitializer::class.java).collectAsState(null)
+            val playerState = playerController.state.collectAsState()
+            val appSettings = remember { observeAppSettings() }.collectAsState(initial = settings)
 
-            LaunchedEffect(playerState.value) {
-                player = playerState.value
-                isPlayerReady = playerState.value != null
+            LaunchedEffect(playerState.value.isConnected) {
+                isPlayerReady = playerState.value.isConnected
             }
 
-            MyApplicationTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.primary
-                ) {
-                    playerState.value?.let { player ->
-                        AbbayNavHost(
-                            player = player,
-                            navController = navController
+            MyApplicationTheme(themeMode = appSettings.value.themeMode, dynamicColor = appSettings.value.dynamicColor) {
+                // The app draws behind the system bars: Android 15+ ignores window.statusBarColor, and the window
+                // background behind the bars follows the system's dark mode, not the app's theme. The status bar
+                // gets the app bars' color (surface), the navigation bar the app's background; only the content is inset.
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.primary) {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .windowInsetsTopHeight(WindowInsets.statusBars)
+                                .background(MaterialTheme.colorScheme.surface)
                         )
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                // The status bar space is above; app bars must not add it again.
+                                .consumeWindowInsets(WindowInsets.statusBars)
+                                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
+                        ) {
+                            if (playerState.value.isConnected) {
+                                AbbayNavHost(
+                                    viewModel = booksViewModel,
+                                    navController = navController
+                                )
+                            }
+                        }
                     }
                 }
             }
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleSharedImage(intent)
+        handleLaunchAction(intent)
+    }
+
+    /** Launcher shortcuts, the Quick Settings tile and audio files opened from other apps. */
+    private fun handleLaunchAction(intent: Intent?) {
+        when (intent?.action) {
+            ACTION_RESUME_LAST_BOOK -> booksViewModel.resumeLastBook()
+            ACTION_START_SLEEP_TIMER -> booksViewModel.resumeLastBook(startSleepTimer = true)
+            TileService.ACTION_QS_TILE_PREFERENCES -> booksViewModel.openPlayer()
+            Intent.ACTION_VIEW -> intent.data?.takeIf { intent.type?.startsWith("audio/") != false }?.let { uri ->
+                booksViewModel.playExternalFile(uri.toString())
+            }
+        }
+    }
+
+    private fun handleSharedImage(intent: Intent?) {
+        if (intent?.action != Intent.ACTION_SEND || intent.type?.startsWith("image/") != true) return
+        val imageUri = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java) ?: return
+        lifecycleScope.launch {
+            val messageResource = when (applySharedCover(imageUri.toString())) {
+                is DataResult.Success -> R.string.details_cover_updated
+                is DataResult.Failure -> R.string.details_cover_not_updated
+            }
+            Toast.makeText(this@MainActivity, messageResource, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    companion object {
+        const val ACTION_RESUME_LAST_BOOK = "com.mobyle.abbay.action.RESUME_LAST_BOOK"
+        const val ACTION_START_SLEEP_TIMER = "com.mobyle.abbay.action.START_SLEEP_TIMER"
+    }
+
+    /** Leaving the app with "Play when app is closed" off stops playback; rotations do not. */
     override fun onDestroy() {
         super.onDestroy()
 
-        updateAppLifeStatus(false)
-
-        if (!isPlayWhenAppIsClosedEnabled()) {
-            if (player != null) {
-                player?.stop()
-                player?.release()
-            }
+        if (isFinishing && !settings.playWhenAppIsClosed) {
+            playerController.stop()
+            playerController.release()
         }
     }
 }

@@ -1,85 +1,44 @@
 package com.mobyle.abbay.presentation.common.widgets
 
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import com.mobyle.abbay.R
 
+/**
+ * A question or a notice with one action. [isDestructive] (the default, for deletions) paints the icon and the
+ * action in the error color and offers Cancel; a notice (`isDestructive = false`, [showCancel] false) uses the
+ * accent color and only its action.
+ */
 @Composable
 fun AbbayActionDialog(
     title: String,
-    titleContent: (@Composable () -> Unit)? = null,
     body: String,
-    bodyContent: (@Composable () -> Unit)? = null,
     actionButtonTitle: String,
     onDismiss: () -> Unit,
-    onAction: () -> Unit
+    onAction: () -> Unit,
+    icon: ImageVector = Icons.Default.Delete,
+    isDestructive: Boolean = true,
+    showCancel: Boolean = true,
 ) {
-    AlertDialog(
+    val accent = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.tertiary
+    AbbayAlertDialog(
         onDismissRequest = onDismiss,
-        title = {
-            titleContent?.let {
-                it()
-            } ?: run {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-                    Text(
-                        title,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            }
-        },
-        text = {
-            bodyContent?.let {
-                it()
-            } ?: run {
-                Text(
-                    body,
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        MaterialTheme.colorScheme.primary
-                    ),
-                    textAlign = TextAlign.Start,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            }
-        },
+        icon = { Icon(icon, contentDescription = null, tint = accent) },
+        title = { Text(title, style = MaterialTheme.typography.titleLarge) },
+        text = { Text(body, style = MaterialTheme.typography.bodyLarge) },
         confirmButton = {
-            TextButton(
-                onClick = onAction,
-            ) {
-                Text(
-                    actionButtonTitle,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
+            AbbayTextButton(onClick = onAction, colors = abbayTextButtonColors(isDestructive)) { Text(actionButtonTitle) }
         },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss
-            ) {
-                Text(stringResource(R.string.cancel))
-            }
-        }
+        dismissButton = if (showCancel) {
+            { AbbayTextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
+        } else {
+            null
+        },
     )
 }

@@ -1,0 +1,4 @@
+RNNoise, vendored unchanged from https://github.com/xiph/rnnoise tag v0.1.1
+(commit 6cbfd53eb348a8d394e0757b4025c6ded34eb2b6), BSD-3-Clause (see COPYING).
+Only the files needed for the built-in model are copied: rnn_reader.c (model files) and the training
+scripts are left out.
