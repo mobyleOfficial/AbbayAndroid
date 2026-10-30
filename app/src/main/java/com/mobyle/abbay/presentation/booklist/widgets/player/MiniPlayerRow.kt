@@ -36,7 +36,10 @@ fun MiniPlayerRow(
     onPlayButtonClick: () -> Unit,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
+    isScrollingLongText: Boolean = true,
 ) {
+    // A marquee animates for as long as it is composed, even hidden under the expanded player.
+    val marquee = if (isScrollingLongText) Modifier.basicMarquee() else Modifier
     Box(modifier = modifier) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -54,7 +57,7 @@ fun MiniPlayerRow(
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = AbbayColors.content,
                     maxLines = 1,
-                    modifier = Modifier.basicMarquee(),
+                    modifier = marquee,
                 )
                 val subtitle = listOf(chapterTitle(position.chapter), timeLeftLabel(book.duration - position.bookPositionMs, book.speed))
                     .filter { it.isNotBlank() }
@@ -64,7 +67,7 @@ fun MiniPlayerRow(
                     style = MaterialTheme.typography.bodySmall,
                     color = AbbayColors.content.copy(alpha = SUBTITLE_ALPHA),
                     maxLines = 1,
-                    modifier = Modifier.basicMarquee(),
+                    modifier = marquee,
                 )
             }
             if (isScreenLocked) {

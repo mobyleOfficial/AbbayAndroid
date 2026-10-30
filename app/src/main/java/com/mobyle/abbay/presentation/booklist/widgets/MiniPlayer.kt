@@ -42,6 +42,7 @@ import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerTopBar
 import com.mobyle.abbay.presentation.booklist.widgets.player.PlayingState
 import com.mobyle.abbay.presentation.booklist.widgets.player.ScreenLockedAlert
 import com.mobyle.abbay.presentation.booklist.widgets.player.SleepSheetSettings
+import com.mobyle.abbay.presentation.booklist.widgets.player.chaptersToggleOf
 import com.mobyle.abbay.presentation.booklist.widgets.player.timeLeftLabel
 import com.mobyle.abbay.presentation.common.theme.coverTintBackground
 import com.mobyle.abbay.presentation.common.theme.rememberCoverTint
@@ -84,15 +85,7 @@ fun MiniPlayer(
         progress = fraction,
         modifier = modifier.fillMaxSize().coverTintBackground(rememberCoverTint(book.thumbnail), gradientStrength = fraction),
     ) {
-        MiniPlayerRow(
-            book = book,
-            position = position,
-            playerIcon = playerIcon,
-            isScreenLocked = isScreenLocked,
-            onPlayButtonClick = { actions.onPlayButtonClick(book.progress) },
-            onClick = onExpand,
-            modifier = Modifier.fillMaxWidth().layoutId(LayoutId.MINI_PLAYER.id),
-        )
+        CollapsedRow(book, position, playerIcon, isScreenLocked, actions, onExpand, isCollapsed = fraction == 0f)
 
         PlayerControls(
             book = book,
@@ -135,6 +128,29 @@ fun MiniPlayer(
     }
 
     if (onClose == null && chapterToggle.isOpen) PlayerChaptersSheet(book, position, chapterToggle, actions)
+}
+
+/** The mini player's row, under the expanded player while it is open. */
+@Composable
+private fun CollapsedRow(
+    book: Book,
+    position: PlayerPosition,
+    playerIcon: PlayingState,
+    isScreenLocked: Boolean,
+    actions: PlayerActions,
+    onExpand: () -> Unit,
+    isCollapsed: Boolean,
+) {
+    MiniPlayerRow(
+        book = book,
+        position = position,
+        playerIcon = playerIcon,
+        isScreenLocked = isScreenLocked,
+        onPlayButtonClick = { actions.onPlayButtonClick(book.progress) },
+        onClick = onExpand,
+        isScrollingLongText = isCollapsed,
+        modifier = Modifier.fillMaxWidth().layoutId(LayoutId.MINI_PLAYER.id),
+    )
 }
 
 @Composable
@@ -230,13 +246,6 @@ private fun rememberChaptersToggle(isExpanded: Boolean): ChaptersToggle {
     var isOpen by remember { mutableStateOf(false) }
     LaunchedEffect(isExpanded) { if (!isExpanded) isOpen = false }
     return ChaptersToggle(isOpen = isOpen && isExpanded, onToggle = { isOpen = !isOpen }, onClose = { isOpen = false })
-}
-
-/** Hoisted when given (the chapters can be a pane beside a player pane); in a sheet, open only while the player is expanded. */
-private fun chaptersToggleOf(hoisted: ChaptersToggle?, own: ChaptersToggle, isSheet: Boolean, isExpanded: Boolean): ChaptersToggle = when {
-    hoisted == null -> own
-    isSheet && !isExpanded -> ChaptersToggle(isOpen = false, onToggle = hoisted.onToggle, onClose = hoisted.onClose)
-    else -> hoisted
 }
 
 @OptIn(ExperimentalFoundationApi::class)
