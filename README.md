@@ -81,6 +81,7 @@ Inside `app/src/main/java/com/mobyle/abbay/`:
 - **Playback Speed:** Tap the speed button under the player controls.
 - **Chapters:** Tap the chapter name under the cover to open the chapter list in a bottom sheet.
 - **Library tabs and layout:** Tap the layout button next to the tabs (list, grid, compact list); show, hide and reorder the tabs in Settings → Library tabs.
+- **Refresh the library:** Pull down on the book list to rescan the selected folders. Settings, queue, folders and statistics live in the library overflow menu (⋮).
 - **Screen Lock:** Tap the lock icon to lock; double-tap the locked player to unlock.
 - **Book details:** Player overflow menu → Book details, or long-press a book → Edit details.
 - **Theme, language and display:** Settings → Appearance (theme, cover on the lock screen, keep the screen on while charging, seek-bar times, language).

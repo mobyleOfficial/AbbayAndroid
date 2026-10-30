@@ -44,6 +44,7 @@ import com.mobyle.abbay.presentation.common.widgets.AbbayAlertDialog
 import com.mobyle.abbay.presentation.common.widgets.AbbayDropdownMenu
 import com.mobyle.abbay.presentation.common.widgets.AbbayMenuItem
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
+import com.mobyle.abbay.presentation.common.widgets.abbayTextFieldColors
 import kotlin.math.roundToInt
 
 @Composable
@@ -172,6 +173,7 @@ private fun PresetNameDialog(onSave: (String) -> Unit, onDismiss: () -> Unit) {
                 label = { Text(stringResource(R.string.effects_preset_name)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                colors = abbayTextFieldColors(),
             )
         },
         confirmButton = {

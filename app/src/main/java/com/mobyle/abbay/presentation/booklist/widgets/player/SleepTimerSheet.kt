@@ -32,6 +32,7 @@ import com.listening.SleepTimer
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.widgets.AbbayAlertDialog
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
+import com.mobyle.abbay.presentation.common.widgets.abbayTextFieldColors
 import com.player.SleepTimerMode
 import com.player.SleepTimerState
 
@@ -152,6 +153,7 @@ private fun CustomDurationDialog(initialMinutes: Int, onConfirm: (Int) -> Unit, 
                 isError = minutes == null,
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                colors = abbayTextFieldColors(),
             )
         },
         confirmButton = {

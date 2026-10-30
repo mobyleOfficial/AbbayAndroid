@@ -3,7 +3,6 @@
     <string name="app_name">Abbay</string>
     <string name="book_list_top_bar_title">Tus Audiolibros</string>
     <string name="book_list_top_bar_folder_button_description">Agregar carpeta</string>
-    <string name="book_list_top_bar_file_button_description">Agregar archivo</string>
     <string name="no_book_selected_primary_button_title">Agregar un Archivo</string>
     <string name="no_book_selected_secondary_button_title">Agregar una Carpeta</string>
     <string name="no_book_selected_or">o</string>
@@ -24,7 +23,6 @@
     <string name="delete_all_books_dialog_title">Eliminar Todos los Libros</string>
     <string name="delete_all_books_dialog_body">¿Estás seguro de que quieres eliminar todos los libros? Esta acción no se puede deshacer.</string>
     
-    <string name="refresh_content_description">Actualizar</string>
     <string name="add_content_description">Agregar</string>
     <string name="add_folder">Agregar Carpeta</string>
     <string name="add_file">Agregar Archivo</string>

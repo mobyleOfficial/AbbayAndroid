@@ -435,7 +435,7 @@ class BooksListViewModel @Inject constructor(
 
     fun cancelUpNext() = playerController.cancelUpNext()
 
-    fun converterEntry(): String? = getOpusEncoder()
+    fun converterEntry(): String? = getOpusEncoder().takeIf { IS_CONVERTER_ENABLED }
 
     fun startSleepTimer(mode: SleepTimerMode) = playerController.startSleepTimer(mode)
 
@@ -598,3 +598,4 @@ class BooksListViewModel @Inject constructor(
 }
 
 private const val QUEUE_DECISION_MS = 1_500L
+private const val IS_CONVERTER_ENABLED = false

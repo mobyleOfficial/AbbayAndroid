@@ -18,14 +18,12 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.Switch
 import androidx.compose.material.SwitchDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -47,10 +45,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.booklist.widgets.player.chapterTitle
-import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.mobyle.abbay.presentation.common.widgets.AbbayScreen
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
 import com.mobyle.abbay.presentation.common.widgets.BookThumbnail
+import com.mobyle.abbay.presentation.common.widgets.abbayTextFieldColors
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.BookDetails
 import com.model.BookOverrides
@@ -252,24 +250,12 @@ private fun CoverChooser(
 
 @Composable
 private fun DetailsField(labelResource: Int, value: String, singleLine: Boolean = true, onValueChange: (String) -> Unit) {
-    val accent = MaterialTheme.colorScheme.tertiary
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(stringResource(labelResource)) },
         singleLine = singleLine,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = AbbayColors.content,
-            unfocusedTextColor = AbbayColors.content,
-            focusedContainerColor = AbbayColors.content.copy(alpha = FIELD_FILL_ALPHA),
-            unfocusedContainerColor = AbbayColors.content.copy(alpha = FIELD_FILL_ALPHA),
-            cursorColor = accent,
-            selectionColors = TextSelectionColors(handleColor = accent, backgroundColor = accent.copy(alpha = SELECTION_ALPHA)),
-            focusedBorderColor = accent,
-            unfocusedBorderColor = AbbayColors.content.copy(alpha = UNFOCUSED_BORDER_ALPHA),
-            focusedLabelColor = accent,
-            unfocusedLabelColor = AbbayColors.content.copy(alpha = UNFOCUSED_LABEL_ALPHA),
-        ),
+        colors = abbayTextFieldColors(),
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
     )
 }
@@ -293,7 +279,3 @@ private fun SectionTitle(labelResource: Int) {
 
 private const val COVER_SIZE = 180
 private const val CANDIDATE_SIZE = 96
-private const val FIELD_FILL_ALPHA = 0.05f
-private const val SELECTION_ALPHA = 0.4f
-private const val UNFOCUSED_BORDER_ALPHA = 0.5f
-private const val UNFOCUSED_LABEL_ALPHA = 0.75f

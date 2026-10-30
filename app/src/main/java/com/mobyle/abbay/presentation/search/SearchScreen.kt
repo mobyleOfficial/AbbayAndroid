@@ -13,7 +13,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,6 +31,7 @@ import com.mobyle.abbay.presentation.bookmarks.EmptyMessage
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.mobyle.abbay.presentation.common.widgets.AbbayScreen
 import com.mobyle.abbay.presentation.common.widgets.SimpleBookRow
+import com.mobyle.abbay.presentation.common.widgets.abbayTextFieldColors
 import com.model.Book
 
 @Composable
@@ -61,7 +61,7 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel(), onPlay: (Book) ->
                     }
                 },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                colors = OutlinedTextFieldDefaults.colors(focusedTextColor = AbbayColors.content, unfocusedTextColor = AbbayColors.content),
+                colors = abbayTextFieldColors(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)

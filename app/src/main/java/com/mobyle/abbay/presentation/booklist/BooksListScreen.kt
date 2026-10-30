@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -41,10 +42,14 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.material.rememberBottomSheetState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -461,10 +466,7 @@ fun BooksListScreen(
                                 openFileSelector = {
                                     openFileSelector.launch(fileFilterList)
                                 },
-                                onRefresh = viewModel::onRefreshClicked,
-                                hasSelectedFolder = hasSelectedFolder,
                                 isContentEnabled = booksListState is BookListSuccess || booksListState is NoBookSelected,
-                                isRefreshing = isRefreshing,
                                 more = LibraryMenu(
                                     onSearch = navigateTo.search,
                                     onQueue = navigateTo.queue,
@@ -535,7 +537,11 @@ fun BooksListScreen(
                                         onLayoutSelected = { viewModel.selectLayout(it) },
                                     )
 
-                                    Box(modifier = Modifier.weight(1f)) {
+                                    LibraryPullToRefresh(
+                                        isRefreshing = isRefreshing,
+                                        onRefresh = { if (hasSelectedFolder) viewModel.onRefreshClicked() },
+                                        modifier = Modifier.weight(1f),
+                                    ) {
                                         val progressLabelOf: (Book) -> String = { book ->
                                             progressLabel(book, selectedBook, isPlaying, currentProgress)
                                         }
@@ -839,6 +845,32 @@ private fun CapsuleButton(text: String, container: Color, content: Color, onClic
 
 private const val EMPTY_BODY_ALPHA = 0.75f
 private const val SECONDARY_BUTTON_ALPHA = 0.12f
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LibraryPullToRefresh(
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    val pullToRefreshState = rememberPullToRefreshState()
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
+        state = pullToRefreshState,
+        modifier = modifier,
+        indicator = {
+            PullToRefreshDefaults.Indicator(
+                state = pullToRefreshState,
+                isRefreshing = isRefreshing,
+                modifier = Modifier.align(Alignment.TopCenter),
+                color = MaterialTheme.colorScheme.tertiary,
+            )
+        },
+        content = content,
+    )
+}
 
 @Composable
 private fun FileNotFoundDialog(showErrorDialog: MutableState<Boolean>, onShown: () -> Unit, onDismiss: () -> Unit) {
