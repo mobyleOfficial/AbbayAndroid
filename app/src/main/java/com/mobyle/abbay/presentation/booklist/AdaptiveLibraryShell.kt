@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -43,7 +44,7 @@ fun AdaptiveLibraryShell(dependencies: LibraryPlayerDependencies, content: @Comp
         val paneLayout = AdaptiveLayout.decide(maxWidth.value, maxHeight.value, LocalDensity.current.fontScale)
         val sheetState = rememberBottomSheetScaffoldState()
         val presentation = rememberPlayerPresentation(sheetState.bottomSheetState, paneLayout)
-        val host = LibraryPlayerHost(paneLayout, presentation, sheetState)
+        val host = remember(presentation, sheetState) { LibraryPlayerHost(presentation, sheetState) }
         val viewModel = dependencies.viewModel
         val selectedBook by viewModel.selectedBook.collectAsState()
 

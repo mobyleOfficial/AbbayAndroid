@@ -311,26 +311,7 @@ fun BooksListScreen(
     }
 
     val onBookClick: (Book) -> Unit = { tapped ->
-        val book = if (tapped.hasError) tapped else viewModel.startingPoint(tapped)
-        val startsOver = book !== tapped
-        if ((selectedBook?.id != book.id || startsOver) && !book.hasError) {
-            viewModel.setCurrentProgress(
-                id = book.id,
-                progress = book.progress,
-                currentPosition = book.getBookPosition()
-            )
-            viewModel.selectBook(book, book.getBookPosition())
-            viewModel.openBook(book)
-        }
-
-        if (book.hasError) {
-            showErrorDialog.value = true
-            if (selectedBook?.id == book.id) {
-                viewModel.selectBook(null, null)
-            }
-        } else {
-            asyncScope.launch { presentation.open() }
-        }
+        if (viewModel.startBook(tapped)) asyncScope.launch { presentation.open() } else showErrorDialog.value = true
     }
 
     LaunchedEffect(Unit) { viewModel.playRequests.collect { book -> onBookClick(book) } }

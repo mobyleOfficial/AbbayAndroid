@@ -331,6 +331,25 @@ class BooksListViewModel @Inject constructor(
         playerController.openBook(book, playWhenReady = true)
     }
 
+    /**
+     * A tap on [tapped] anywhere (library, search, queue, LibriVox): selects and plays it, from the start when it was
+     * finished, unless it already holds the player. Returns false when its file is gone; the caller shows why.
+     */
+    fun startBook(tapped: Book): Boolean {
+        val book = if (tapped.hasError) tapped else startingPoint(tapped)
+        val selected = _selectedBook.value
+        if (book.hasError) {
+            if (selected?.id == book.id) selectBook(null, null)
+            return false
+        }
+        if (selected?.id != book.id || book !== tapped) {
+            setCurrentProgress(id = book.id, progress = book.progress, currentPosition = book.getBookPosition())
+            selectBook(book, book.getBookPosition())
+            openBook(book)
+        }
+        return true
+    }
+
     fun onPlayButtonClicked(book: Book, progress: Long) {
         val playerState = playerController.state.value
         when {

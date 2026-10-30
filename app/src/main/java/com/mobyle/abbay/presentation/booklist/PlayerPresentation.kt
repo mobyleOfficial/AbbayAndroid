@@ -6,7 +6,6 @@ import androidx.compose.material.BottomSheetValue
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,7 +30,10 @@ class PlayerPresentation internal constructor(
         private set
     var isShowingChapters by mutableStateOf(isShowingChapters)
         private set
-    internal var layout: PaneLayout by mutableStateOf(PaneLayout.Single)
+
+    /** How the window is split now; set while composing, before the screens read it. */
+    var layout: PaneLayout by mutableStateOf(PaneLayout.Single)
+        internal set
 
     suspend fun open() {
         isOpen = true
@@ -72,7 +74,7 @@ fun rememberPlayerPresentation(sheet: BottomSheetState, layout: PaneLayout): Pla
     val presentation = rememberSaveable(saver = PlayerPresentation.saver(sheet)) {
         PlayerPresentation(sheet, isOpen = false, isShowingChapters = false)
     }
-    SideEffect { presentation.layout = layout }
+    presentation.layout = layout
     LaunchedEffect(presentation, layout.isSplit) {
         if (layout.isSplit) {
             // The pane takes over: the sheet goes back to the mini player, shown only while the pane is closed.
@@ -85,11 +87,16 @@ fun rememberPlayerPresentation(sheet: BottomSheetState, layout: PaneLayout): Pla
     return presentation
 }
 
-/** The split and the player's presentation, decided above the screens so every screen can sit beside the player. */
+/**
+ * The split and the player's presentation, decided above the screens so every screen can sit beside the player.
+ * One instance for the screen's life, so the screens that hold it are not rebuilt when the split changes.
+ */
 @OptIn(ExperimentalMaterialApi::class)
+@Stable
 class LibraryPlayerHost(
-    val paneLayout: PaneLayout,
     val presentation: PlayerPresentation,
     /** The library's bottom sheet: the player in one pane. */
     val sheetState: BottomSheetScaffoldState,
-)
+) {
+    val paneLayout: PaneLayout get() = presentation.layout
+}

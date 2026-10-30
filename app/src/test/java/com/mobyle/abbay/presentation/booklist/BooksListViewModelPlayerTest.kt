@@ -18,6 +18,7 @@ import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -55,6 +56,27 @@ class BooksListViewModelPlayerTest {
 
         assertEquals(listOf("openBook(201, progress=120000, playWhenReady=true)"), player.commands)
         assertEquals(multipleFilesBook, player.openedBook)
+    }
+
+    @Test
+    fun `starting a book selects and plays it, and a second tap leaves the playing book alone`() {
+        val viewModel = factory.booksListViewModel()
+
+        assertTrue(viewModel.startBook(multipleFilesBook))
+        assertTrue(viewModel.startBook(multipleFilesBook))
+
+        assertEquals(multipleFilesBook.id, viewModel.selectedBook.value?.id)
+        assertEquals(listOf("openBook(201, progress=120000, playWhenReady=true)"), player.commands)
+    }
+
+    @Test
+    fun `a book whose file is gone is not started`() {
+        val viewModel = factory.booksListViewModel()
+
+        assertFalse(viewModel.startBook(singleFileBook.copy(hasError = true)))
+
+        assertNull(viewModel.selectedBook.value)
+        assertTrue(player.commands.isEmpty())
     }
 
     @Test
