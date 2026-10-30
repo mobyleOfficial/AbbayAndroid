@@ -1,19 +1,11 @@
 package com.mobyle.abbay.infra.dsp
 
-/** A speech denoiser for mono 48 kHz frames of [frameSize] samples, delayed by one frame (RNNoise). */
 interface FrameDenoiser : AutoCloseable {
     val frameSize: Int
 
     fun process(input: FloatArray, output: FloatArray)
 }
 
-/**
- * Noise reduction around a [FrameDenoiser]: each channel is resampled to 48 kHz
- * when needed, denoised in frames, resampled back, and mixed with the original signal ([wet] 0.5 / 0.75 / 1.0), which
- * is delayed by the same amount. The output has exactly as many frames as the input, [latencyFrames] later: the
- * denoised stream starts with that many zeros, so its delay never depends on how the audio is cut into buffers.
- * Stereo whose channels are identical (common in audiobooks) is denoised once and copied to both channels.
- */
 class NoiseReducer(
     private val sampleRate: Int,
     private val channels: Int,
@@ -23,20 +15,16 @@ class NoiseReducer(
     private val wetRamp = LinearRamp(1f, LinearRamp.framesFor(sampleRate))
     private var channelBuffer = FloatArray(0)
 
-    /** Times a denoised sample was not ready (0 when [latencyFrames] is right); a zero is played instead. */
     var underflowCount = 0L
         private set
 
-    /** Frames by which the output follows the input. */
     val latencyFrames: Int = lanes.first().latencyFrames
 
     fun setWet(wet: Float, immediately: Boolean = false) = if (immediately) wetRamp.snapTo(wet) else wetRamp.moveTo(wet)
 
-    /** Processes [frameCount] interleaved frames of [samples] in place. */
     fun process(samples: FloatArray, frameCount: Int) {
         if (channelBuffer.size < frameCount) channelBuffer = FloatArray(frameCount)
         if (isDualMono && !channelsAreEqual(samples, frameCount)) {
-            // The channels differ from now on: the others start their own lanes, a short dip while they fill.
             isDualMono = false
             lanes.drop(1).forEach(Lane::reset)
         }
@@ -58,7 +46,6 @@ class NoiseReducer(
         }
     }
 
-    /** True while every channel has carried the same samples since the stream started. */
     private var isDualMono = channels > 1
 
     private fun channelsAreEqual(samples: FloatArray, frameCount: Int): Boolean {
@@ -69,7 +56,6 @@ class NoiseReducer(
         return true
     }
 
-    /** A seek: the next audio is a new stream. */
     fun reset() {
         lanes.forEach(Lane::reset)
         isDualMono = channels > 1
@@ -77,7 +63,6 @@ class NoiseReducer(
 
     override fun close() = lanes.forEach { it.denoiser.close() }
 
-    /** One channel: input → (48 kHz) → frames → denoiser → (back) → queue of denoised samples; plus the dry delay. */
     private inner class Lane(val denoiser: FrameDenoiser) {
         private val frameSize = denoiser.frameSize
         private val up = Resampler(sampleRate, DENOISER_RATE, 1, SPEECH_PASSBAND).takeUnless { sampleRate == DENOISER_RATE }
@@ -86,11 +71,9 @@ class NoiseReducer(
         private val denoised = FloatArray(frameSize)
         private var frameFill = 0
 
-        /** Zeros queued before the first denoised sample: covers frame filling and the resamplers' look-ahead. */
         private val prefill = ceilDiv(frameSize * sampleRate, DENOISER_RATE) +
             (up?.halfWidth ?: 0) + ceilDiv((down?.halfWidth ?: 0) * sampleRate, DENOISER_RATE) + if (up == null) 0 else 1
 
-        /** The denoiser's own one-frame delay, in this lane's rate. */
         private val denoiserDelay = Math.round(frameSize.toDouble() * sampleRate / DENOISER_RATE).toInt()
 
         val latencyFrames = prefill + denoiserDelay
@@ -156,12 +139,10 @@ class NoiseReducer(
     companion object {
         const val DENOISER_RATE = 48_000
 
-        /** Passband to 80 % of the lower Nyquist (17.6 kHz at 44.1 kHz): plenty for speech, half the taps of 90 %. */
         const val SPEECH_PASSBAND = 0.8
     }
 }
 
-/** A growable ring buffer of floats; no allocation once it has its working size. */
 internal class FloatQueue(initialCapacity: Int) {
     private var items = FloatArray(initialCapacity.coerceAtLeast(1))
     private var head = 0

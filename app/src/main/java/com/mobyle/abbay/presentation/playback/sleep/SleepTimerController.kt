@@ -15,12 +15,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.LocalTime
 
-/**
- * Runs the sleep timer inside the playback service: counts listening time,
- * fades with `player.volume`, plays the chime, listens for shakes and starts itself on the daily schedule. The
- * decisions are made by [SleepTimer]; this class connects it to the player, the clock and the sensors.
- */
-@Suppress("LongParameterList", "TooManyFunctions") // The timer's collaborators; one function per timer event.
+@Suppress("LongParameterList", "TooManyFunctions")
 class SleepTimerController(
     private val player: Player,
     private val commands: PlaybackCommandHandler,
@@ -30,14 +25,11 @@ class SleepTimerController(
     private val listener: Listener,
     private val clock: () -> Long = SystemClock::elapsedRealtime,
 ) {
-    /** What the service does when the timer acts. */
     interface Listener {
         fun onStateChanged(state: SleepTimerState)
 
-        /** Time is up: pause playback; [fadeMs] is the fade that just ended. */
         fun onTimeUp(fadeMs: Long)
 
-        /** A shake extended the timer. */
         fun onExtended()
     }
 
@@ -50,7 +42,6 @@ class SleepTimerController(
 
     val state: SleepTimerState get() = timer.state
 
-    /** Created lazily by the service, which owns the context. */
     fun attachShakeSensor(sensor: ShakeSensor) {
         shakeSensor = sensor
     }
@@ -72,7 +63,6 @@ class SleepTimerController(
         stopRunning()
     }
 
-    /** Notification button: starts the default duration, or cancels a running timer. */
     fun toggle() = if (timer.isRunning) cancel() else start(SleepTimerMode.Duration(settings().sleepDefaultMinutes))
 
     fun onShake() {
@@ -84,14 +74,12 @@ class SleepTimerController(
         publish(force = true)
     }
 
-    /** The user moved: "End of chapter" now means the chapter of the new position. */
     fun onSeek() {
         if ((timer.state as? SleepTimerState.Running)?.mode == SleepTimerMode.EndOfChapter) {
             chapterEndTargetMs = commands.currentChapterEndMs()
         }
     }
 
-    /** Playback started: the daily schedule may start the timer ("Auto-enable"). */
     fun onPlaybackStarted(now: LocalTime = LocalTime.now()) {
         val current = settings()
         if (!current.autoSleepEnabled || timer.isRunning) return
@@ -137,7 +125,6 @@ class SleepTimerController(
         publish(force = true)
     }
 
-    /** Listening time left to the boundary, at the current speed; null in duration mode or when unknown. */
     private fun boundaryRemainingMs(mode: SleepTimerMode): Long? {
         val speed = player.playbackParameters.speed.coerceAtLeast(MINIMUM_SPEED)
         val mediaRemaining = when (mode) {
@@ -148,7 +135,6 @@ class SleepTimerController(
         return mediaRemaining?.let { (it / speed).toLong() }
     }
 
-    /** Ticks land on the start of the fade and on the end; during the fade they are short so the ramp is smooth. */
     private fun nextDelayMs(): Long {
         val running = timer.state as? SleepTimerState.Running ?: return MAXIMUM_TICK_MS
         if (!player.isPlaying) return MAXIMUM_TICK_MS
@@ -158,7 +144,6 @@ class SleepTimerController(
         return untilNextEdge.coerceIn(MINIMUM_TICK_MS, MAXIMUM_TICK_MS)
     }
 
-    /** Remaining time is shown in seconds, so the state is sent at most once per second unless something changed. */
     private fun publish(force: Boolean) {
         val now = clock()
         val state = timer.state

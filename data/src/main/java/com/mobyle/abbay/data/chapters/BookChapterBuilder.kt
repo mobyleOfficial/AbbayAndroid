@@ -2,10 +2,6 @@ package com.mobyle.abbay.data.chapters
 
 import com.mobyle.abbay.data.scanner.FileKinds
 
-/**
- * Assembles a book's chapter list from the first available source: a CUE sheet,
- * otherwise the chapters embedded in each file, otherwise one chapter per file. Times are book-absolute. Pure logic.
- */
 object BookChapterBuilder {
     const val SOURCE_CUE = "CUE"
     const val SOURCE_EMBEDDED = "EMBEDDED"
@@ -32,7 +28,6 @@ object BookChapterBuilder {
                 listOf(Triple(fallbackTitle(track), track.startInBookMs, SOURCE_FILE))
             } else {
                 valid.mapIndexed { index, chapter ->
-                    // The first chapter of a file starts with the file, so no audio falls outside a chapter.
                     val start = if (index == 0) track.startInBookMs else track.startInBookMs + chapter.startMs
                     Triple(chapter.title, start, source)
                 }

@@ -10,41 +10,29 @@ import java.security.SecureRandom
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-/**
- * The small HTTP server of Cast phase 1: bound to the device's local
- * network address, it serves only the files of the book being cast, at `/<token>/<index>`, where the token is random
- * per session. GET and HEAD with single byte ranges (the receiver seeks with them); everything else is refused.
- * Cast phase 2 adds `/<token>/live/<generation>`: the processed audio as an endless WAV stream from [live].
- * Plain Java sockets: no dependency, tested on the JVM.
- */
-@Suppress("TooManyFunctions") // Request parsing plus the file and live responses of one small server.
+@Suppress("TooManyFunctions")
 class LocalMediaServer(
     private val bindAddress: InetAddress,
     private val opener: FileOpener,
     private val live: LiveSource? = null,
 ) {
-    /** Opens file [index] of the current book: its size, MIME type and a stream positioned at [offset]. */
     fun interface FileOpener {
         fun open(index: Int, offset: Long): OpenedFile?
     }
 
     class OpenedFile(val length: Long, val mimeType: String, val stream: InputStream)
 
-    /** The live stream of Cast phase 2: one generation at a time, ended when a newer one begins. */
     interface LiveSource {
         val mimeType: String
 
-        /** The stream header of [generation] (a WAV header), or null when it is not the current one. */
         fun header(generation: Int): ByteArray?
 
-        /** The audio of [generation]; reading ends when the generation does. */
         fun open(generation: Int): InputStream?
     }
 
     private var socket: ServerSocket? = null
     private var executor: ExecutorService? = null
 
-    /** The path secret of this session. */
     val token: String = buildToken()
 
     val port: Int get() = socket?.localPort ?: -1
@@ -100,7 +88,7 @@ class LocalMediaServer(
         }
     }
 
-    @Suppress("ReturnCount") // One early answer per HTTP outcome: missing file, bad range, HEAD.
+    @Suppress("ReturnCount")
     private fun sendFile(output: OutputStream, index: Int, range: String?, isHead: Boolean) {
         val probe = opener.open(index, 0) ?: return respond(output, STATUS_NOT_FOUND)
         val length = probe.length
@@ -121,7 +109,6 @@ class LocalMediaServer(
         output.flush()
     }
 
-    /** An endless response (no length, `Connection: close`); range requests get the live audio from where it is. */
     private fun sendLive(output: OutputStream, generation: Int, isHead: Boolean) {
         val source = live ?: return respond(output, STATUS_NOT_FOUND)
         val header = source.header(generation) ?: return respond(output, STATUS_NOT_FOUND)
@@ -134,7 +121,6 @@ class LocalMediaServer(
             audio.use { copy(it, output, Long.MAX_VALUE) }
             output.flush()
         } catch (_: SocketException) {
-            // The receiver stopped listening (a new generation, or the session ended).
         }
     }
 
@@ -149,7 +135,6 @@ class LocalMediaServer(
                 remaining -= read
             }
         } catch (_: SocketException) {
-            // The receiver closed the connection (a seek); nothing to do.
         }
     }
 
@@ -159,7 +144,7 @@ class LocalMediaServer(
         output.flush()
     }
 
-    @Suppress("ReturnCount") // End of stream, end of line, or a line too long.
+    @Suppress("ReturnCount")
     private fun readLine(input: InputStream): String? {
         val line = StringBuilder()
         while (line.length < MAXIMUM_LINE) {
@@ -177,7 +162,6 @@ class LocalMediaServer(
     }
 
     companion object {
-        /** `bytes=start-end`, `bytes=start-` or `bytes=-suffix`; null when it cannot be served. */
         fun parseRange(header: String, length: Long): Pair<Long, Long>? {
             val value = header.removePrefix("bytes=").takeIf { header.startsWith("bytes=") && !it.contains(',') } ?: return null
             val (first, last) = value.split('-', limit = 2).let { (it.getOrNull(0).orEmpty()) to (it.getOrNull(1).orEmpty()) }
@@ -190,7 +174,6 @@ class LocalMediaServer(
 
         private const val LIVE = "live"
 
-        /** `<token>/live/<generation>`. */
         private const val LIVE_SEGMENTS = 3
         private const val BACKLOG = 8
         private const val WORKERS = 4

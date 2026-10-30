@@ -12,11 +12,6 @@ import androidx.media3.exoplayer.analytics.PlayerId
 import androidx.media3.exoplayer.audio.AudioSink
 import java.nio.ByteBuffer
 
-/**
- * Sends the player's audio to the device ([local]) or to a Cast receiver ([remote]), as [route] says. The
- * route only changes at a flush — the playback service seeks to the current position right after changing it — so a
- * sink never receives half a stream. Settings go to both sinks; the stream's state is replayed on the one taking over.
- */
 @OptIn(UnstableApi::class)
 class RoutingAudioSink(private val local: AudioSink, private val remote: AudioSink, private val route: AudioRoute) : AudioSink {
     private var active: AudioSink = local

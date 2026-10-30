@@ -11,12 +11,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 
-/**
- * Turns an image picked or shared by the user into a JPEG cover and writes it to `<book>/.abbay/cover.jpg`
- *. Covers are downsampled to at most 1500 px.
- */
 class CoverImageWriter @Inject constructor(@ApplicationContext private val context: Context) {
-    /** Reads and re-encodes the image at [imageUri] as a JPEG. */
     fun readAsJpeg(imageUri: String): DataResult<ByteArray> = guarded {
         val uri = Uri.parse(imageUri)
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
@@ -33,10 +28,6 @@ class CoverImageWriter @Inject constructor(@ApplicationContext private val conte
         }
     }
 
-    /**
-     * Writes [jpeg] as `.abbay/cover.jpg` inside the folder [folderDocumentId] of [treeUri], creating the `.abbay` folder
-     * when needed. Returns the cover's document URI; fails when the folder is read-only.
-     */
     fun writeIntoBookFolder(treeUri: String, folderDocumentId: String, children: List<DocumentEntry>, jpeg: ByteArray): DataResult<String> =
         guarded {
             val tree = Uri.parse(treeUri)
@@ -63,7 +54,6 @@ class CoverImageWriter @Inject constructor(@ApplicationContext private val conte
         }
     }
 
-    /** Data sources map every failure to a [DataResult]. */
     @Suppress("SwallowedException", "TooGenericExceptionCaught")
     private inline fun <T> guarded(block: () -> T): DataResult<T> = try {
         DataResult.Success(block())

@@ -8,7 +8,6 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-/** Loudness, limiter, mono/balance and parameter-change rows. */
 class LoudnessAndLimiterTest {
     private val rate = Signals.RATE
     private val ceiling = Decibels.toGain(PeakLimiter.CEILING_DB)
@@ -87,13 +86,11 @@ class LoudnessAndLimiterTest {
         for (channel in 0..1) {
             assertTrue(Signals.maximumStep(output, 2, channel) <= 2 * Signals.maximumStep(input, 2, channel) * Decibels.toGain(12f))
         }
-        // The jump that matters is the one at the change: around it the step stays within twice the input's.
         val around = output.copyOfRange((half - 2_000) * 2, (half + 2_000) * 2)
         val inputAround = input.copyOfRange((half - 2_000) * 2, (half + 2_000) * 2)
         assertTrue(Signals.maximumStep(around, 2, 0) <= 2 * Signals.maximumStep(inputAround, 2, 0))
     }
 
-    /** THD of a pure tone: harmonics 2…10 against the fundamental, by single-bin DFTs. */
     private fun totalHarmonicDistortion(samples: FloatArray, fundamentalHz: Double): Double {
         fun magnitude(frequency: Double): Double {
             var real = 0.0

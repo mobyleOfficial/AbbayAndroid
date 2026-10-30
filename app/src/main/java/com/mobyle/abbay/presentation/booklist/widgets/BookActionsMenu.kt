@@ -8,7 +8,6 @@ import com.mobyle.abbay.presentation.common.widgets.AbbayMenuItem
 import com.model.Book
 import com.model.BookState
 
-/** Long-press actions of a library item. */
 @Composable
 fun BookActionsMenu(
     book: Book?,
@@ -37,7 +36,6 @@ fun BookActionsMenu(
     }
 }
 
-/** Queue, companion documents and the folder view. */
 class BookMenuExtras(
     val onQueue: (Book, playNext: Boolean) -> Unit = { _, _ -> },
     val onOpenText: (Book) -> Unit = {},

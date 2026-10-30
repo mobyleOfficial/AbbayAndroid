@@ -6,10 +6,6 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-/**
- * [rootId] is null for a single file picked with "Add a file";
- * [relativePath] is then the document URI.
- */
 @Entity(
     tableName = "book",
     foreignKeys = [

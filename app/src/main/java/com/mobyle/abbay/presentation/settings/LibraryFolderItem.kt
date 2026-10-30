@@ -21,7 +21,6 @@ import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.model.LibraryRoot
 
-/** One library root in Settings; the last root is changed with "Change books folder" instead of removed. */
 @Composable
 fun LibraryFolderItem(root: LibraryRoot, canRemove: Boolean, onRemove: () -> Unit) {
     Row(

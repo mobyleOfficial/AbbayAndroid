@@ -34,7 +34,6 @@ import com.mobyle.abbay.presentation.common.widgets.AbbayScreen
 import com.mobyle.abbay.presentation.common.widgets.SimpleBookRow
 import com.model.Book
 
-/** Library search: results update with every letter; tapping one plays it. */
 @Composable
 fun SearchScreen(viewModel: SearchViewModel = hiltViewModel(), onPlay: (Book) -> Unit, close: () -> Unit) {
     val query by viewModel.query.collectAsState()

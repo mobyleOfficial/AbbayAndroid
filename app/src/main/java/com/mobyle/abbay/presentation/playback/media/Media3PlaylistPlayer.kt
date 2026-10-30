@@ -5,13 +5,8 @@ import androidx.media3.common.Player
 import com.mobyle.abbay.presentation.playback.command.PlaylistPlayer
 import com.mobyle.abbay.presentation.playback.command.TrackPosition
 
-/**
- * [PlaylistPlayer] over a Media3 [Player]. Track durations come from the library (item extras) and fall back to the
- * duration the player found once a track was prepared.
- */
 class Media3PlaylistPlayer(
     private val player: Player,
-    /** The library's items in the same order, for players that drop item extras (Cast); null reads the player's. */
     private val libraryItems: List<androidx.media3.common.MediaItem>? = null,
 ) : PlaylistPlayer {
     override val currentPosition: TrackPosition

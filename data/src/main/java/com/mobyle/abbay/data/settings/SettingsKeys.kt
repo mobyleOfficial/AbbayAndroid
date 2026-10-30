@@ -7,7 +7,6 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 
-/** DataStore keys. Names where the spec defines them. */
 internal object SettingsKeys {
     val playWhenAppIsClosed = booleanPreferencesKey("playWhenAppIsClosed")
     val openPlayerOnStartup = booleanPreferencesKey("openPlayerOnStartup")
@@ -68,10 +67,11 @@ internal object SettingsKeys {
     val language = stringPreferencesKey("language")
     val castProcessedAudio = booleanPreferencesKey("castProcessedAudio")
 
-    /** One key per book: subtitle charsets are rare, so they do not get a column. */
+    val libraryTabOrder = stringPreferencesKey("libraryTabOrder")
+    val hiddenLibraryTabs = stringSetPreferencesKey("hiddenLibraryTabs")
+
     fun subtitleCharset(bookId: Long) = stringPreferencesKey("subtitleCharset.$bookId")
 
-    // Values carried over from the previous app version, consumed by the legacy migration.
     val legacyFolderUri = stringPreferencesKey("legacyFolderUri")
     val legacyFolderMigrated = booleanPreferencesKey("legacyFolderMigrated")
     val legacySelectedMediaId = stringPreferencesKey("legacySelectedMediaId")

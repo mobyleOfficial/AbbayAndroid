@@ -11,10 +11,6 @@ import kotlin.math.PI
 import kotlin.math.min
 import kotlin.math.sin
 
-/**
- * Short tones of the sleep timer, synthesized here so no sound asset is
- * needed: a falling two-note chime when the fade starts and a rising pair of beeps when a shake extends the timer.
- */
 class TonePlayer(private val scope: CoroutineScope) {
     fun playWarningChime(volume: Float) = play(listOf(Note(CHIME_HIGH_HZ, CHIME_NOTE_MS), Note(CHIME_LOW_HZ, CHIME_NOTE_MS)), volume)
 
@@ -53,7 +49,6 @@ class TonePlayer(private val scope: CoroutineScope) {
         .setBufferSizeInBytes(sampleCount * BYTES_PER_SAMPLE)
         .build()
 
-    /** Sine notes with short linear attack and release, so they do not click. */
     private fun synthesize(notes: List<Note>): ShortArray {
         val output = ArrayList<Short>()
         notes.forEach { note ->

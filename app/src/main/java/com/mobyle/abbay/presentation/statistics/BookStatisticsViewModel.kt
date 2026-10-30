@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
-/** Statistics of one book: sessions, average speed and the estimated finish. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class BookStatisticsViewModel @Inject constructor(
@@ -32,7 +31,6 @@ class BookStatisticsViewModel @Inject constructor(
     val book: StateFlow<Book?> = observeBooks().map { books -> books.firstOrNull { it.id == bookId } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    /** The remaining time counts in book time; a finished book has none left. */
     val statistics: StateFlow<BookStatistics?> = book.filterNotNull()
         .map { if (it.state == BookState.FINISHED) 0L else (it.duration - it.bookPositionMs).coerceAtLeast(0L) }
         .distinctUntilChanged()

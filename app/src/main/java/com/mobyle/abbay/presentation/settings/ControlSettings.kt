@@ -9,7 +9,6 @@ import com.settings.HeadsetLongPressAction
 import com.settings.HeadsetSkipAction
 import com.settings.ShortInterruptionBehavior
 
-/** Settings → Controls. */
 @Composable
 internal fun ControlSettings(settings: AppSettings, change: ((AppSettings) -> AppSettings) -> Unit) {
     Column {

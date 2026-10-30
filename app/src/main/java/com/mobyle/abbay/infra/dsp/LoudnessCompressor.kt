@@ -3,13 +3,7 @@ package com.mobyle.abbay.infra.dsp
 import kotlin.math.exp
 import kotlin.math.max
 
-/**
- * Feed-forward compressor of the loudness boost: RMS detector over 30 ms, attack
- * 15 ms, release 250 ms, 6 dB soft knee, channels linked, then make-up gain. A level change moves the make-up gain
- * over 20 ms; the gain computer follows with its own attack and release. Interleaved float samples, in place.
- */
 class LoudnessCompressor(private val channelCount: Int, private val sampleRate: Int) {
-    /** One row of the boost table; [OFF] leaves the signal unchanged. */
     data class Settings(val thresholdDb: Float, val ratio: Float, val makeUpDb: Float) {
         companion object {
             val OFF = Settings(0f, 1f, 0f)
@@ -19,7 +13,6 @@ class LoudnessCompressor(private val channelCount: Int, private val sampleRate: 
     private var settings = Settings.OFF
     private val detectorCoefficient = coefficient(DETECTOR_MS)
 
-    /** Attack and release per control step of [CONTROL_FRAMES] frames. */
     private val attackControl = Math.pow(coefficient(ATTACK_MS), CONTROL_FRAMES.toDouble())
     private val releaseControl = Math.pow(coefficient(RELEASE_MS), CONTROL_FRAMES.toDouble())
     private var meanSquare = 0.0
@@ -42,10 +35,6 @@ class LoudnessCompressor(private val channelCount: Int, private val sampleRate: 
         controlStep = 0f
     }
 
-    /**
-     * The detector runs every frame; the gain computer (a logarithm and a power) every [CONTROL_FRAMES] frames, and the
-     * linear gain is interpolated between control points, which keeps the cost low without steps in the gain.
-     */
     fun process(samples: FloatArray, frameCount: Int) {
         for (frame in 0 until frameCount) {
             val base = frame * channelCount
@@ -67,7 +56,6 @@ class LoudnessCompressor(private val channelCount: Int, private val sampleRate: 
     private var controlGain = 1f
     private var controlStep = 0f
 
-    /** Advances the gain computer by [CONTROL_FRAMES] frames and sets the ramp to the new gain. */
     private fun updateControl() {
         framesUntilControl = CONTROL_FRAMES - 1
         val levelDb = if (meanSquare <= SILENCE_POWER) SILENCE_DB else 10.0 * kotlin.math.log10(meanSquare)
@@ -78,7 +66,6 @@ class LoudnessCompressor(private val channelCount: Int, private val sampleRate: 
         controlStep = (target - controlGain) / CONTROL_FRAMES
     }
 
-    /** Soft-knee gain computer: how many dB to take away at [levelDb]. */
     private fun reductionDb(levelDb: Double): Double {
         val threshold = settings.thresholdDb.toDouble()
         val slope = 1.0 - 1.0 / settings.ratio
@@ -101,10 +88,8 @@ class LoudnessCompressor(private val channelCount: Int, private val sampleRate: 
         const val SILENCE_POWER = 1e-12
         const val SILENCE_DB = -120.0
 
-        /** Below this reduction the gain is 1 to float precision, so the compressor can be skipped without a step. */
         const val OFF_REDUCTION_DB = 1e-4
 
-        /** 16 frames: 0.33 ms at 48 kHz, far below the 15 ms attack. */
         const val CONTROL_FRAMES = 16
     }
 }

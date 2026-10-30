@@ -18,7 +18,6 @@ import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.widgets.AbbayAlertDialog
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
 
-/** Shown when the locked player is touched; a double tap unlocks it (existing AbbayAndroid behavior). */
 @Composable
 fun ScreenLockedAlert(onDismissRequest: () -> Unit) {
     AbbayAlertDialog(
@@ -57,7 +56,6 @@ fun ScreenLockedAlert(onDismissRequest: () -> Unit) {
         },
         confirmButton = {},
         dismissButton = {
-            // A TextButton keeps the 48 dp touch target.
             AbbayTextButton(onClick = onDismissRequest) {
                 Text(stringResource(R.string.dismiss), color = MaterialTheme.colorScheme.error)
             }

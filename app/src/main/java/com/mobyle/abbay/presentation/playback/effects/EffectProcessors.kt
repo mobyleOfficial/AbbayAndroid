@@ -9,7 +9,6 @@ import com.mobyle.abbay.infra.dsp.GraphicEqualizer
 import com.mobyle.abbay.infra.dsp.LoudnessCompressor
 import com.mobyle.abbay.infra.dsp.PeakLimiter
 
-/** 10-band equalizer. */
 @OptIn(UnstableApi::class)
 class EqualizerProcessor(private val state: EffectsState) : FloatPcmProcessor() {
     private var equalizer: GraphicEqualizer? = null
@@ -42,7 +41,6 @@ class EqualizerProcessor(private val state: EffectsState) : FloatPcmProcessor() 
     }
 }
 
-/** Mono and balance. */
 @OptIn(UnstableApi::class)
 class ChannelProcessor(private val state: EffectsState) : FloatPcmProcessor() {
     private var mixer: ChannelMixer? = null
@@ -72,12 +70,6 @@ class ChannelProcessor(private val state: EffectsState) : FloatPcmProcessor() {
     }
 }
 
-/**
- * Loudness boost and the limiter. The limiter runs whenever a gain above 0 dB can
- * be applied (boost on, or any equalizer band raised). Its 3 ms look-ahead delays the audio, so switching it on or off
- * crossfades over 10 ms between the direct and the delayed signal instead of jumping; with every effect off
- * the processor is a plain copy.
- */
 @OptIn(UnstableApi::class)
 class LoudnessProcessor(private val state: EffectsState) : FloatPcmProcessor() {
     private var compressor: LoudnessCompressor? = null
@@ -86,7 +78,6 @@ class LoudnessProcessor(private val state: EffectsState) : FloatPcmProcessor() {
     private var direct = FloatArray(0)
     private var isLimiting = false
 
-    /** Frames left in the current crossfade; positive while fading in, negative while fading out. */
     private var fadeFramesLeft = 0
     private var fadeFrames = 0
 
@@ -123,7 +114,6 @@ class LoudnessProcessor(private val state: EffectsState) : FloatPcmProcessor() {
         if (fadeFramesLeft != 0) crossfade(samples, frameCount)
     }
 
-    /** Per frame, mixes the limited and the direct signal: weight 1 is limited, 0 is direct. */
     private fun crossfade(samples: FloatArray, frameCount: Int) {
         for (frame in 0 until frameCount) {
             val limitedWeight = when {

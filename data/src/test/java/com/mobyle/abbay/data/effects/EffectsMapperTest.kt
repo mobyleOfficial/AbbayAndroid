@@ -29,7 +29,6 @@ class EffectsMapperTest {
     fun flatIsStoredAsNullAndOddJsonIsTolerated() {
         assertNull(EffectsMapper.jsonOf(AudioEffects.FLAT))
         assertEquals(AudioEffects.FLAT, EffectsMapper.gainsOf(null))
-        // The sidecar example has spaces; short arrays are padded with 0.
         assertEquals(listOf(0, 0, -2, 0, 0, 0, 3, 3, 0, 0), EffectsMapper.gainsOf("[0, 0, -2, 0, 0, 0, 3, 3]"))
         assertEquals(
             SilenceTrimLevel.OFF,

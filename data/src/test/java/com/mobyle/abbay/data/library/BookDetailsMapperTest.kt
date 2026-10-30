@@ -17,7 +17,6 @@ class BookDetailsMapperTest {
         sidecarId = "s",
     )
 
-    // Natural order is a, b, c; the track-number tags say c, a, b.
     private val tracks = listOf(
         track(0, "a.mp3", trackNumber = 2),
         track(1, "b.mp3", trackNumber = 3),

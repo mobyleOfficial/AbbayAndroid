@@ -7,7 +7,6 @@ import org.junit.Test
 class SmartRewindTest {
     @Test
     fun standardMatchesTheSpecExamples() {
-        // 5 s → 3.6 s; 1 min → 9.8 s; 10 min → 18.4 s; 1 h → 25.6 s; 8 h → 30 s.
         assertNear(3_600L, rewind(5))
         assertNear(9_800L, rewind(60))
         assertNear(18_400L, rewind(600))

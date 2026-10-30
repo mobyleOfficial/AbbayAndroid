@@ -1,9 +1,5 @@
 package com.mobyle.abbay.data.chapters
 
-/**
- * CUE sheets (`FILE` / `TRACK` / `TITLE` / `INDEX 01`, times `mm:ss:ff` with 75 frames per second).
- * Returns chapters grouped by the audio file name each `FILE` names.
- */
 object CueSheetParser {
     private const val FRAMES_PER_SECOND = 75
     private val timePattern = Regex("""(\d+):(\d{1,2}):(\d{1,2})""")

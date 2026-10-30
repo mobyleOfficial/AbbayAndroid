@@ -20,7 +20,11 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.widgets.AbbayDropdownMenu
 import com.mobyle.abbay.presentation.common.widgets.AbbayMenuItem
@@ -29,7 +33,6 @@ import com.settings.AppSettings
 import com.settings.ProgressLabels
 import com.settings.ThemeMode
 
-/** Appearance. */
 @Composable
 fun AppearanceSettings(viewModel: SettingsViewModel) {
     val themeMode by viewModel.themeMode.collectAsState()
@@ -56,14 +59,11 @@ fun AppearanceSettings(viewModel: SettingsViewModel) {
             onSelect = { chosen ->
                 if (chosen != language) {
                     viewModel.changeLanguage(chosen)
-                    // Android 13+ recreates the activity itself; before, the app applies the language.
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) isRecreationPending = true
                 }
             },
         )
         if (isRecreationPending) {
-            // After the menu's popup has left the composition: recreating while its window closes left the activity
-            // without a focused window (ANR on the Android 12 emulator).
             LaunchedEffect(Unit) {
                 withFrameNanos { }
                 activity?.recreate()
@@ -72,7 +72,6 @@ fun AppearanceSettings(viewModel: SettingsViewModel) {
     }
 }
 
-/** "Send crash reports and usage statistics" and what is sent. */
 @Composable
 fun PrivacySettings(viewModel: SettingsViewModel) {
     val shareDiagnostics by viewModel.shareDiagnostics.collectAsState()
@@ -141,10 +140,11 @@ private fun ThemeSetting(themeMode: ThemeMode, onChange: (ThemeMode) -> Unit) {
 }
 
 @Composable
-internal fun SettingSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+internal fun SettingSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, enabled: Boolean = true) {
     Switch(
         checked = checked,
         onCheckedChange = onCheckedChange,
+        enabled = enabled,
         colors = SwitchDefaults.colors(
             checkedThumbColor = MaterialTheme.colorScheme.tertiary,
             checkedTrackColor = MaterialTheme.colorScheme.tertiary,
@@ -155,10 +155,12 @@ internal fun SettingSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit)
 @Composable
 internal fun SectionHeader(labelResource: Int) {
     Text(
-        text = stringResource(labelResource),
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp),
+        text = stringResource(labelResource).uppercase(),
+        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECTION_HEADER_ALPHA),
+        modifier = Modifier
+            .padding(start = 16.dp, top = 24.dp, bottom = 6.dp)
+            .semantics { heading() },
     )
 }
 
@@ -175,3 +177,5 @@ private fun ThemeMode.labelResource(): Int = when (this) {
     ThemeMode.DARK -> R.string.theme_dark
     ThemeMode.BLACK -> R.string.theme_black
 }
+
+private const val SECTION_HEADER_ALPHA = 0.7f

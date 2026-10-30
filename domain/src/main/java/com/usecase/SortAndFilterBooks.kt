@@ -7,7 +7,6 @@ import com.model.Book
 import com.model.BookState
 import javax.inject.Inject
 
-/** Applies the library tab and sort order. Pure function. */
 class SortAndFilterBooks @Inject constructor() {
     private val naturalOrder = NaturalOrderComparator()
 
@@ -31,9 +30,10 @@ class SortAndFilterBooks @Inject constructor() {
         return visibleBooks.sortedWith(if (ascending) comparator else comparator.reversed())
     }
 
-    /** The tab chosen automatically: In progress when it is non-empty, otherwise All. */
-    fun defaultTab(books: List<Book>): LibraryTab =
-        if (books.any { it.state == BookState.IN_PROGRESS }) LibraryTab.IN_PROGRESS else LibraryTab.ALL
+    fun defaultTab(books: List<Book>, visibleTabs: List<LibraryTab> = LibraryTab.entries): LibraryTab {
+        val preferred = if (books.any { it.state == BookState.IN_PROGRESS }) LibraryTab.IN_PROGRESS else LibraryTab.ALL
+        return listOf(preferred, LibraryTab.ALL).firstOrNull { it in visibleTabs } ?: visibleTabs.first()
+    }
 
     private fun progressFraction(book: Book): Double =
         if (book.duration <= 0L) 0.0 else book.bookPositionMs.toDouble() / book.duration

@@ -1,6 +1,5 @@
 package com.model
 
-/** A saved place in a book. [chapterTitle] is blank for untitled chapters. */
 data class Bookmark(
     val id: Long,
     val bookId: String,

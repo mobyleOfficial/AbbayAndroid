@@ -32,7 +32,6 @@ import com.player.PlaybackOptions
 import com.player.RepeatMode
 import kotlin.math.roundToInt
 
-/** Repeat sheet: Off / Chapter / File / Book / A–B with the two loop points. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun RepeatSheet(panel: PlaybackOptionsPanel, onDismiss: () -> Unit) {
@@ -64,7 +63,6 @@ fun RepeatSheet(panel: PlaybackOptionsPanel, onDismiss: () -> Unit) {
     }
 }
 
-/** Skip intro/outro sheet: seconds cut from the start and end of every file. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SkipSheet(panel: PlaybackOptionsPanel, onDismiss: () -> Unit) {

@@ -96,13 +96,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * Playback service: one ExoPlayer, one [MediaLibrarySession], the player
- * commands, position saving, auto-stop after a long pause, error handling
- * and the listening features ([ListeningFeatures]). The Android Auto browse tree is added
- * with SYS-03.
- */
-@Suppress("TooManyFunctions") // Service lifecycle plus position saving, errors and session plumbing.
+@Suppress("TooManyFunctions")
 @OptIn(UnstableApi::class)
 @AndroidEntryPoint
 class PlaybackService : MediaLibraryService() {
@@ -117,16 +111,13 @@ class PlaybackService : MediaLibraryService() {
     private lateinit var motionGestures: MotionGestures
     private lateinit var localSessionPlayer: AudiobookPlayer
 
-    /** While casting, the remote player; the commands and position saves follow it. */
     private var remotePlayer: Player? = null
 
-    /** Where the local player's sound goes: the device, or a Cast receiver. */
     private val audioRoute = AudioRoute()
     private val activePlaylist by lazy { SwitchablePlaylistPlayer(Media3PlaylistPlayer(exoPlayer)) }
     private lateinit var queueContinuation: QueueContinuation
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    /** Position saves must finish even when the service is being destroyed, so they do not use [serviceScope]. */
     private val persistenceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var settings = AppSettings()
     private var periodicSaveJob: Job? = null
@@ -175,7 +166,6 @@ class PlaybackService : MediaLibraryService() {
     @Inject
     lateinit var updateAudioEffects: UpdateAudioEffects
 
-    /** Cast (`:cast`); absent in builds without it. */
     @Inject
     lateinit var remotePlayback: java.util.Optional<RemotePlaybackBridge>
 
@@ -252,7 +242,6 @@ class PlaybackService : MediaLibraryService() {
         createSession(sessionPlayer)
     }
 
-    /** Android 13+ applies a new per-app or system language here: the buttons' names follow it. */
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         mediaSession?.setCustomLayout(notificationButtons())
@@ -273,10 +262,6 @@ class PlaybackService : MediaLibraryService() {
         }.launchIn(serviceScope)
     }
 
-    /**
-     * Back · Play/Pause · Forward in the notification (or previous/next chapter, Settings → Playback), plus Bookmark
-     * and Sleep timer in the expanded view.
-     */
     private fun notificationButtons(): ImmutableList<CommandButton> = ImmutableList.copyOf(
         sideButtons() + expandedButtons(),
     )
@@ -325,7 +310,6 @@ class PlaybackService : MediaLibraryService() {
 
     private fun skipForwardIcon(seconds: Int): Int = SKIP_FORWARD_ICONS[seconds] ?: CommandButton.ICON_SKIP_FORWARD
 
-    /** Opens the app's launcher activity when the notification is tapped. */
     private fun sessionActivityIntent(): PendingIntent? {
         val launchIntent = packageManager.getLaunchIntentForPackage(packageName) ?: return null
         launchIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -338,10 +322,6 @@ class PlaybackService : MediaLibraryService() {
         )
     }
 
-    /**
-     * Widget buttons: bookmark and sleep timer arrive as actions; a skip key with
-     * no book loaded becomes Play, which resumes the last book, since there is nothing to skip in.
-     */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             PlaybackIntents.ACTION_ADD_BOOKMARK -> listeningFeatures.handleCommand(PlaybackCommands.ADD_BOOKMARK, Bundle.EMPTY)
@@ -355,10 +335,6 @@ class PlaybackService : MediaLibraryService() {
         return super.onStartCommand(intent, flags, startId)
     }
 
-    /**
-     * The user dismissed the app from the recent tasks. "Play when app is closed" off: pause, save the
-     * position and stop the service; on: keep playing, and stop only when nothing is playing.
-     */
     override fun onTaskRemoved(rootIntent: Intent?) {
         if (!settings.playWhenAppIsClosed) {
             exoPlayer.pause()
@@ -387,14 +363,9 @@ class PlaybackService : MediaLibraryService() {
         super.onDestroy()
     }
 
-    /**
-     * Saves the current book's track, position and speed; [pausedAt] is set when
-     * playback just paused (smart rewind).
-     */
     private fun savePosition(pausedAt: Long? = null) {
         if (exoPlayer.mediaItemCount == 0) return
         val bookId = BookMediaItems.bookIdOf(exoPlayer.currentMediaItem) ?: return
-        // While casting, the local player stays loaded with the same book, paused; the position is the receiver's.
         val playing = remotePlayer ?: exoPlayer
         val trackIndex = playing.currentMediaItemIndex
         val positionMs = playing.currentPosition
@@ -403,7 +374,6 @@ class PlaybackService : MediaLibraryService() {
         persistenceScope.launch { saveListeningState(bookId, trackIndex, positionMs, speed, pausedAt) }
     }
 
-    /** Every 10 s while playing, so a crash loses at most 10 s. */
     private fun startPeriodicSaves() {
         periodicSaveJob?.cancel()
         periodicSaveJob = serviceScope.launch {
@@ -414,7 +384,6 @@ class PlaybackService : MediaLibraryService() {
         }
     }
 
-    /** Effects, statistics and the queue. */
     private fun createLibraryExtras(effectsState: EffectsState) {
         statistics = ListeningStatistics(exoPlayer, serviceScope, persistenceScope, recordListening)
         effects = EffectsCoordinator(
@@ -439,7 +408,6 @@ class PlaybackService : MediaLibraryService() {
         )
     }
 
-    /** The media session over [sessionPlayer]; Cast may borrow it later. */
     private fun createSession(sessionPlayer: Player) {
         mediaSession = MediaLibrarySession.Builder(this, sessionPlayer, SessionCallback())
             .apply { sessionActivityIntent()?.let(::setSessionActivity) }
@@ -448,7 +416,6 @@ class PlaybackService : MediaLibraryService() {
         remotePlayback.ifPresent { it.attach(RemoteHost()) }
     }
 
-    /** Face down / flip; resuming goes through the session player, so smart rewind applies. */
     private fun createMotionGestures(sessionPlayer: Player) = MotionGestures(
         context = this,
         player = exoPlayer,
@@ -457,7 +424,6 @@ class PlaybackService : MediaLibraryService() {
         actions = MotionGestures.Actions(pause = exoPlayer::pause, resume = sessionPlayer::play, rewind = commands::seekBy),
     ).also(exoPlayer::addListener)
 
-    /** Underruns with noise reduction on: turn it off for this book and tell the app once. */
     private fun turnOffNoiseReduction() {
         val bookId = BookMediaItems.bookIdOf(exoPlayer.currentMediaItem) ?: return
         PlaybackLog.add("Noise reduction turned off after audio underruns")
@@ -468,7 +434,6 @@ class PlaybackService : MediaLibraryService() {
         broadcastProblem(PROBLEM_NOISE_REDUCTION_TOO_SLOW, "")
     }
 
-    /** Lends the session to Cast: the receiver plays the files; effects are not applied. */
     private inner class RemoteHost : RemotePlaybackHost {
         override fun snapshot(): LocalPlaybackSnapshot? {
             if (exoPlayer.mediaItemCount == 0) return null
@@ -508,8 +473,6 @@ class PlaybackService : MediaLibraryService() {
             if (exoPlayer.mediaItemCount == 0) return false
             PlaybackLog.add("Casting started (with audio effects)")
             audioRoute.stream = stream
-            // The phone keeps decoding while the screen is off; Wi-Fi must stay awake. No audio focus: the phone's
-            // own sounds and calls should not pause the receiver.
             exoPlayer.setWakeMode(C.WAKE_MODE_NETWORK)
             exoPlayer.setAudioAttributes(exoPlayer.audioAttributes, false)
             exoPlayer.addListener(restartStreamOnSpeedChange)
@@ -530,24 +493,18 @@ class PlaybackService : MediaLibraryService() {
         }
     }
 
-    /** While casting with effects a new speed or pitch restarts the stream, so the receiver drops the old audio. */
     private val restartStreamOnSpeedChange = object : Player.Listener {
         override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
             if (audioRoute.stream != null) restartAtCurrentPosition()
         }
     }
 
-    /**
-     * A seek to where playback is: the audio sink flushes, which is where the route changes. One millisecond
-     * ahead, because ExoPlayer ignores a seek to exactly the current millisecond (no flush would happen).
-     */
     private fun restartAtCurrentPosition() {
         if (exoPlayer.mediaItemCount == 0) return
         val target = StreamRestart.positionAfter(exoPlayer.currentPosition, exoPlayer.duration)
         listeningFeatures.history.withoutMoves { exoPlayer.seekTo(exoPlayer.currentMediaItemIndex, target) }
     }
 
-    /** The book after the countdown of [QueueContinuation]: loaded at its saved position and played. */
     private fun startQueuedBook(book: Book) {
         val (items, trackIndex) = BookMediaItems.of(book)
         if (items.isEmpty()) return
@@ -556,7 +513,6 @@ class PlaybackService : MediaLibraryService() {
         exoPlayer.play()
     }
 
-    /** The sleep timer and the queue countdown travel to controllers as session extras. */
     private fun publishSessionExtras() {
         val extras = SleepTimerBundle.of(listeningFeatures.sleepTimerState)
         UpNextBundle.putInto(extras, queueContinuation.upNext)
@@ -628,7 +584,6 @@ class PlaybackService : MediaLibraryService() {
                 pauseTimeout.onPlaying()
             } else {
                 periodicSaveJob?.cancel()
-                // A pause is saved once, with its time, by ListeningFeatures; this covers stalls and interruptions.
                 if (exoPlayer.playWhenReady) savePosition()
                 if (exoPlayer.playbackState != Player.STATE_IDLE && exoPlayer.mediaItemCount > 0) pauseTimeout.onPaused()
             }
@@ -645,7 +600,6 @@ class PlaybackService : MediaLibraryService() {
             )
             if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED) {
                 failedTrackIndices.clear()
-                // Another book was opened during the countdown: the queued one waits.
                 queueContinuation.cancel()
             }
         }
@@ -674,11 +628,9 @@ class PlaybackService : MediaLibraryService() {
                 .build()
         }
 
-        /** Bluetooth and headset NEXT/PREVIOUS keys skip in book time. */
         override fun onMediaButtonEvent(session: MediaSession, controllerInfo: MediaSession.ControllerInfo, intent: Intent): Boolean {
             val keyEvent = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_KEY_EVENT, KeyEvent::class.java)
                 ?: return false
-            // Without a book loaded, Media3 resumes the last one (onPlaybackResumption).
             if (exoPlayer.mediaItemCount == 0) return false
             return mediaButtons.handle(keyEvent)
         }
@@ -707,10 +659,6 @@ class PlaybackService : MediaLibraryService() {
             return Futures.immediateFuture(SessionResult(resultCode))
         }
 
-        /**
-         * Play with nothing loaded (a Bluetooth key with the app closed, a widget, the Quick Settings tile, Android Auto):
-         * load the last book at its saved position.
-         */
         override fun onPlaybackResumption(
             mediaSession: MediaSession,
             controller: MediaSession.ControllerInfo,
@@ -767,10 +715,6 @@ class PlaybackService : MediaLibraryService() {
             LibraryResult.ofItemList(ImmutableList.copyOf(autoLibrary.search(query, browser.packageName).page(page, pageSize)), params)
         }
 
-        /**
-         * A car (or any browser) asks to play an item by media id or by a spoken query: it becomes the book's playlist at
-         * the right position. The app's own controller sends full playlists, which pass through unchanged.
-         */
         override fun onSetMediaItems(
             mediaSession: MediaSession,
             controller: MediaSession.ControllerInfo,
@@ -814,7 +758,6 @@ class PlaybackService : MediaLibraryService() {
         private const val PERIODIC_SAVE_INTERVAL_MS = 10_000L
         private const val MILLISECONDS_PER_SECOND = 1_000L
 
-        /** Media3 has numbered skip icons for these amounts (seconds); other amounts use the plain icon. */
         private val SKIP_BACK_ICONS = mapOf(
             5 to CommandButton.ICON_SKIP_BACK_5,
             10 to CommandButton.ICON_SKIP_BACK_10,

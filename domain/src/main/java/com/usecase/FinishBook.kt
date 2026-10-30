@@ -6,7 +6,6 @@ import com.repository.LibraryRepository
 import com.repository.ListeningRepository
 import javax.inject.Inject
 
-/** The end of the last track was reached: the book becomes Finished. */
 class FinishBook @Inject constructor(
     private val libraryRepository: LibraryRepository,
     private val listeningRepository: ListeningRepository,

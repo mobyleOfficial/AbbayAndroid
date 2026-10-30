@@ -1,6 +1,5 @@
 package com.model
 
-/** A book made of several audio files; [currentBookPosition] is the index of the current track. */
 data class MultipleBooks(
     override val id: String,
     override val name: String,

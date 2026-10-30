@@ -7,10 +7,6 @@ import com.repository.SettingsRepository
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
-/**
- * An image shared to Abbay after "Search the web" becomes the cover of the book that asked for it
- *.
- */
 class ApplySharedCover @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val libraryRepository: LibraryRepository,

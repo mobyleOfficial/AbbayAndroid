@@ -7,10 +7,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/**
- * When a book finishes, the next queued book opens and starts after a 3 s countdown that can be canceled
- *. A canceled book goes back to the front of the queue.
- */
 class QueueContinuation(
     private val scope: CoroutineScope,
     private val isEnabled: () -> Boolean,
@@ -40,7 +36,6 @@ class QueueContinuation(
         }
     }
 
-    /** The user canceled, or opened another book while the countdown ran. */
     fun cancel() {
         val book = pending ?: return
         pending = null

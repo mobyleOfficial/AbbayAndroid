@@ -1,68 +1,56 @@
 package com.mobyle.abbay.presentation.booklist.widgets
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Error
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.mobyle.abbay.R
-import com.mobyle.abbay.presentation.common.theme.AbbayTextStyles
 import com.mobyle.abbay.presentation.common.widgets.BookThumbnail
+import com.mobyle.abbay.presentation.common.widgets.ProgressCapsule
 import com.mobyle.abbay.presentation.utils.debounceClick
 import com.model.Book
 
-/** Cover-first grid cell. */
 @Composable
-fun BookGridItem(book: Book, progressLabel: String, progressFraction: Float, onLongClick: () -> Unit, onClick: () -> Unit) {
+fun BookGridItem(book: Book, progressLabel: String, isPlaying: Boolean, onLongClick: () -> Unit, onClick: () -> Unit) {
+    val titleHeight = with(LocalDensity.current) { (TITLE_LINE_HEIGHT_SP * TITLE_LINES * fontScale).dp }
     Column(
         modifier = Modifier
-            .padding(8.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (book.hasError) Color(0xff1f1113) else MaterialTheme.colorScheme.primary)
+            .padding(6.dp)
+            .clip(RoundedCornerShape(CELL_RADIUS))
+            .background(if (book.hasError) ErrorRowColor else Color.Transparent)
             .debounceClick(onLongClick = onLongClick, onClick = onClick)
+            .padding(4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         BookThumbnail(
             book.thumbnail,
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(1f)
+                .aspectRatio(1f),
+            cornerRadius = COVER_RADIUS,
+            shadow = true,
         )
-        LinearProgressIndicator(
-            progress = { progressFraction },
-            color = MaterialTheme.colorScheme.tertiary,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp)
-        )
-        Text(
-            book.name,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            style = AbbayTextStyles.subtitleText,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(top = 4.dp)
-        )
-        Text(progressLabel, style = AbbayTextStyles.progressText, maxLines = 1)
-        if (book.hasError) {
-            Icon(
-                imageVector = Icons.Default.Error,
-                contentDescription = stringResource(R.string.error_playing_file),
-                tint = MaterialTheme.colorScheme.error
-            )
-        }
+        BookTitle(book, isPlaying, maxLines = TITLE_LINES, modifier = Modifier.padding(top = 4.dp).heightIn(min = titleHeight))
+        Text(bookStatusLine(book), style = statusStyle(), color = secondaryContent(), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(progressLabel, style = timeStyle(), color = secondaryContent(), maxLines = 1)
+        val fraction = bookStartedFraction(book)
+        ProgressCapsule(fraction = fraction ?: 0f, modifier = Modifier.alpha(if (fraction == null) 0f else 1f))
     }
 }
+
+private val CELL_RADIUS = 12.dp
+private val COVER_RADIUS = 10.dp
+private const val TITLE_LINES = 2
+private const val TITLE_LINE_HEIGHT_SP = 20

@@ -11,10 +11,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-/**
- * Keeps the home screen widgets current: on every change of book, chapter, play
- * state or sleep timer, and every 30 s while playing for the progress bar — not every second.
- */
 class WidgetFeed(
     private val player: Player,
     private val commands: PlaybackCommandHandler,

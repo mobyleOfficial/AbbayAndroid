@@ -9,10 +9,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Generates the Baseline Profile for startup, the library and the player screen. Needs a rooted device or
- * Android 13+. Copy the resulting `*-baseline-prof.txt` to `app/src/main/baseline-prof.txt` (see README).
- */
 @RunWith(AndroidJUnit4::class)
 class BaselineProfileGenerator {
     @get:Rule

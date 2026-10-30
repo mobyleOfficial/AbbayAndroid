@@ -1,23 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <!-- Playback service. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- Firebase Analytics adds these; Abbay has no ads and needs none of them. -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
     <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID" tools:node="remove" />
     <uses-permission android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION" tools:node="remove" />
     <uses-permission android:name="android.permission.ACCESS_ADSERVICES_TOPICS" tools:node="remove" />
     <uses-permission android:name="com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE" tools:node="remove" />
 
-    <!-- MissingIntentFilterForMediaSearch: Android Auto searches through the media session (PlaybackService.onSearch);
-         Assistant "play … on Abbay" voice commands (MEDIA_PLAY_FROM_SEARCH) are not supported. The check only
-         started running when the playback service moved from its library module into the app. -->
     <application
         tools:ignore="MissingIntentFilterForMediaSearch"
         android:name=".infra.common.AbbayApplication"
@@ -31,7 +26,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Abbay"
         tools:targetApi="31">
-        <!-- no advertising ID and no ad personalization signals. -->
         <meta-data
             android:name="google_analytics_adid_collection_enabled"
             android:value="false" />
@@ -47,7 +41,6 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- Audio files opened from file managers play as a temporary book. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -56,14 +49,12 @@
                 <data android:scheme="content" />
                 <data android:mimeType="audio/*" />
             </intent-filter>
-            <!-- Long press on the Quick Settings tile opens the player. -->
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
             </intent-filter>
             <meta-data
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
-            <!-- An image shared back after "Search the web" becomes a book cover. -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
 
@@ -73,7 +64,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Play/pause of the last book from Quick Settings. -->
         <service
             android:name=".presentation.tile.PlaybackTileService"
             android:exported="true"
@@ -88,7 +78,6 @@
                 android:value="false" />
         </service>
 
-        <!-- WorkManager is initialized on demand with the Hilt worker factory (AbbayApplication). -->
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
@@ -109,17 +98,14 @@
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </service>
-        <!-- Book covers for the car host; read access is granted per URI. -->
         <provider
             android:name=".presentation.playback.auto.CoverProvider"
             android:authorities="${applicationId}.covers"
             android:exported="false"
             android:grantUriPermissions="true" />
-        <!-- Android Auto. -->
         <meta-data
             android:name="com.google.android.gms.car.application"
             android:resource="@xml/automotive_app_desc" />
-        <!-- Media buttons with the app closed start the service, which resumes the last book. -->
         <receiver
             android:name="androidx.media3.session.MediaButtonReceiver"
             android:exported="true">
@@ -127,7 +113,6 @@
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
-        <!-- Cast: the default media receiver. -->
         <meta-data
             android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
             android:value="com.mobyle.abbay.presentation.cast.AbbayCastOptions" />

@@ -16,7 +16,6 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Caches (covers, thumbnails) are not part of a backup; they are rebuilt by a scan. */
 @Singleton
 class BackupRepositoryImpl @Inject constructor(
     private val dao: LibraryDao,
@@ -53,11 +52,9 @@ class BackupRepositoryImpl @Inject constructor(
         DataResult.Success(BackupSummary(books = matched, unmatchedBooks = entries.size - matched))
     }
 
-    /** By sidecar id first, then by relative path. */
     private suspend fun matchingBook(entry: BackupCodec.Entry): BookEntity? =
         dao.getBookBySidecarId(entry.book.id) ?: dao.getBooksByRelativePath(entry.relativePath).firstOrNull()
 
-    /** Events already present (same type and time) are not added twice. */
     private suspend fun mergeHistory(bookId: Long, history: List<BackupCodec.HistoryItem>) {
         val present = listeningDao.getHistory(bookId).map { it.type to it.at }.toSet()
         history.filterNot { (it.type to it.at) in present }.forEach { item ->

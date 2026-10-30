@@ -5,7 +5,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
 
-/** Colors of text and icons drawn on the app's backgrounds; replaces the fixed white of the dark-only design. */
 object AbbayColors {
     val content: Color
         @Composable @ReadOnlyComposable

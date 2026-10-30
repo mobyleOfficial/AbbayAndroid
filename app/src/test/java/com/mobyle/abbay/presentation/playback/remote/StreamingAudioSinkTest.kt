@@ -46,7 +46,7 @@ class StreamingAudioSinkTest {
     @Test
     fun aFullStreamPacesTheDecoder() {
         sink.configure(pcmFormat(), 0, null)
-        val buffer = ByteBuffer.wrap(tone(frames = 30_000)) // 120 KB, the stream holds 64 KB
+        val buffer = ByteBuffer.wrap(tone(frames = 30_000))
 
         assertFalse(sink.handleBuffer(buffer, START_US, 1))
         assertTrue(buffer.hasRemaining())
@@ -72,11 +72,9 @@ class StreamingAudioSinkTest {
         sink.configure(pcmFormat(), 0, null)
         repeat(4) { sink.handleBuffer(ByteBuffer.wrap(tone(frames = SAMPLE_RATE / 10)), START_US + it * 100_000L, 1) }
 
-        // 400 ms of book at 2× is about 200 ms of output (Sonic keeps a little in its buffer).
         val outputMs = stream.bufferedBytes / (CHANNELS * 2) * 1_000 / SAMPLE_RATE
         assertTrue("output $outputMs ms", outputMs in 150..210)
         stream.updateReceiver(stream.generation, positionMs = 50, isPlaying = false)
-        // 50 ms heard at 2× is 100 ms of book; the checkpoint grid and Sonic's latency allow a little slack.
         val positionUs = sink.getCurrentPositionUs(false)
         assertTrue("position $positionUs", positionUs - START_US in 80_000L..130_000L)
     }

@@ -16,10 +16,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.concurrent.TimeUnit
 
-/**
- * The Android Auto browse tree, read through a [MediaBrowser] like the car host does.
- * Runs against the library of the device; the structure is checked, and the content where the device has books.
- */
 @RunWith(AndroidJUnit4::class)
 class AutoBrowseTreeTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()

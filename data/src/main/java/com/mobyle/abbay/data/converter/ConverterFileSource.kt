@@ -13,18 +13,15 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.OutputStream
 import javax.inject.Inject
 
-/** The SAF operations of the converter. Every call may throw; the runner maps it. */
-@Suppress("TooManyFunctions") // One function per SAF operation of the converter.
+@Suppress("TooManyFunctions")
 class ConverterFileSource @Inject constructor(
     @ApplicationContext private val context: Context,
     private val tree: DocumentTreeSource,
 ) {
     private val resolver get() = context.contentResolver
 
-    /** A file of the book folder or of one of its sub-folders (discs). */
     class Located(val entry: DocumentEntry, val parentDocumentId: String, val subFolderName: String?)
 
-    /** Finds the document behind [trackUri] in [bookFolderId] or one level below. */
     fun locate(treeUri: String, bookFolderId: String, trackUri: String): Located? {
         val top = children(treeUri, bookFolderId)
         top.firstOrNull { uriOf(treeUri, it.documentId) == trackUri }?.let { return Located(it, bookFolderId, null) }
@@ -37,7 +34,6 @@ class ConverterFileSource @Inject constructor(
     fun children(treeUri: String, folderId: String): List<DocumentEntry> =
         (tree.listChildren(treeUri, folderId) as? DataResult.Success)?.value.orEmpty()
 
-    /** A new, empty `<name>`; an old one (an interrupted run) is deleted first. No MIME extension is added. */
     fun createFresh(treeUri: String, parentId: String, name: String): Uri {
         children(treeUri, parentId).firstOrNull { it.name == name }?.let { delete(treeUri, it.documentId) }
         return DocumentsContract.createDocument(resolver, Uri.parse(uriOf(treeUri, parentId)), BINARY_MIME_TYPE, name)
@@ -46,7 +42,6 @@ class ConverterFileSource @Inject constructor(
 
     fun openOutput(uri: Uri): OutputStream = resolver.openOutputStream(uri, "w") ?: error("Cannot write")
 
-    /** Duration (µs) and MIME type of the audio track of [uri], read back with MediaExtractor. */
     fun probe(uri: Uri): Pair<String?, Long> {
         val extractor = MediaExtractor()
         try {
@@ -67,10 +62,6 @@ class ConverterFileSource @Inject constructor(
         DocumentsContract.deleteDocument(resolver, Uri.parse(uriOf(treeUri, documentId)))
     }
 
-    /**
-     * Moves [file] into `.abbay/originals` of the book folder (in a sub-folder of the same name for disc folders).
-     * Providers that cannot move get a copy and a delete.
-     */
     fun moveToOriginals(treeUri: String, bookFolderId: String, file: Located) {
         val abbay = folder(treeUri, bookFolderId, FileKinds.SIDECAR_FOLDER)
         val originals = folder(treeUri, abbay, ORIGINALS_FOLDER)

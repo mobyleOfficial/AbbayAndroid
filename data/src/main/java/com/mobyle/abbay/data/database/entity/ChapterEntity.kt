@@ -6,7 +6,6 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-/** Chapters of a book's tracks, from the embedded or CUE chapters or one per file. */
 @Entity(
     tableName = "chapter",
     foreignKeys = [

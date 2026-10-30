@@ -5,25 +5,16 @@ import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.Until
 
-/**
- * The user journeys the benchmarks and the Baseline Profile share. They use gestures, not texts, so they work in any
- * language and with any library; the device needs a library with at least one book (the last one opens in the player).
- */
 internal object AbbayJourneys {
     const val PACKAGE_NAME = "com.mobyle.abbay"
     private const val WAIT_MS = 5_000L
     private const val SETTLE_MS = 800L
 
-    /** Waits until the library (or the empty state) is drawn. */
     fun MacrobenchmarkScope.waitForLibrary() {
         device.wait(Until.hasObject(By.pkg(PACKAGE_NAME).depth(0)), WAIT_MS)
         device.waitForIdle()
     }
 
-    /**
-     * Flings the library down and up again. The scroll benchmark needs a library longer than the screen (the Moto's
-     * 504-book test library); with a short one there is nothing to scroll and only the stretch overscroll draws.
-     */
     fun MacrobenchmarkScope.scrollLibrary() {
         val list = device.findObject(By.scrollable(true))
         if (list == null) {
@@ -41,7 +32,6 @@ internal object AbbayJourneys {
         device.waitForIdle()
     }
 
-    /** Swipes the mini player up into the full player, waits, and closes it with Back. */
     fun MacrobenchmarkScope.openAndCloseThePlayer() {
         val centerX = device.displayWidth / 2
         val bottom = device.displayHeight - device.displayHeight / BOTTOM_SHEET_DIVISOR

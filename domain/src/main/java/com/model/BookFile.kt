@@ -1,8 +1,5 @@
 package com.model
 
-/**
- * A one-file book, or one track of a [MultipleBooks]. [uri] is the content URI of the audio file.
- */
 data class BookFile(
     override val id: String,
     override val name: String,

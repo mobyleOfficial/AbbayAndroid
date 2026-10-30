@@ -7,7 +7,6 @@
     <string name="no_book_selected_secondary_button_title">Add a Folder</string>
     <string name="no_book_selected_or">or</string>
     
-    <!-- Dialog strings -->
     <string name="cancel">Cancel</string>
     <string name="ok">OK</string>
     <string name="delete">Delete</string>
@@ -17,7 +16,6 @@
     <string name="book_ended_dialog_title">Book Finished</string>
     <string name="book_ended_dialog_body">The audiobook has finished playing.</string>
     
-    <!-- Settings strings -->
     <string name="settings">Settings</string>
     <string name="play_when_app_closed">Play when app is closed</string>
     <string name="open_player_in_startup">Open player on startup</string>
@@ -28,7 +26,6 @@
     <string name="change_folder_dialog_title">Change Books Folder</string>
     <string name="change_folder_dialog_body">Are you sure you want to change the books folder? This will replace all current books with the ones from the new folder.</string>
     
-    <!-- Book list strings -->
     <string name="refresh_content_description">Refresh</string>
     <string name="add_content_description">Add</string>
     <string name="add_folder">Add Folder</string>
@@ -42,7 +39,6 @@
     <string name="file_not_found_body">The audio file for this book could not be found.</string>
     <string name="file_might_be_moved">The file may have been moved or deleted.</string>
     
-    <!-- Player strings -->
     <string name="unknown_file">Unknown File</string>
     <string name="show_chapters">Show Chapters</string>
     <string name="hide_chapters">Hide Chapters</string>
@@ -51,30 +47,23 @@
     <string name="screen_locked_message">Double click anywhere on the screen to unlock</string>
     <string name="screen_locked_subtitle">This prevents accidental touches while listening</string>
     
-    <!-- Book item strings -->
     <string name="error_playing_file">Error Playing File</string>
     <string name="book_icon">Book Icon</string>
     <string name="clock_icon">Clock Icon</string>
     
-    <!-- Speed options -->
     <string name="speed_half">0.5x</string>
     <string name="speed_normal">1.0x</string>
     <string name="speed_one_twenty_five">1.25x</string>
     <string name="speed_one_fifty">1.5x</string>
     <string name="speed_double">2.0x</string>
     
-    <!-- Content descriptions -->
     <string name="empty_content_description"></string>
     
-    <!-- Additional strings found in code -->
     <string name="delete_content_description_short">Delete</string>
     <string name="change_speed_content_description">Change speed</string>
     
-    <!-- Version strings -->
     <string name="app_version">Version %1$s</string>
 
-
-    <!-- Library -->
     <string name="library_tab_in_progress">In progress</string>
     <string name="library_tab_new">New</string>
     <string name="library_tab_finished">Finished</string>
@@ -109,7 +98,6 @@
     <string name="settings_remove_library_folder">Remove %1$s</string>
     <string name="playback_track_skipped">Couldn’t play %1$s — skipped</string>
 
-    <!-- Player -->
     <string name="player_chapter_of">Chapter %1$d of %2$d</string>
     <string name="player_chapter_untitled">Chapter %1$d</string>
     <string name="player_chapters">Chapters</string>
@@ -138,14 +126,12 @@
     <string name="speed_decrease">Decrease speed</string>
     <string name="speed_increase">Increase speed</string>
 
-    <!-- Book details -->
     <string name="details_title">Book details</string>
     <string name="details_cover">Book cover, tap to change</string>
     <string name="details_title_field">Title</string>
     <string name="details_author">Author</string>
     <string name="details_narrator">Narrator</string>
     <string name="details_description">Description</string>
-    <string name="details_save">Save</string>
     <string name="details_duration">Duration</string>
     <string name="details_files">Files</string>
     <string name="details_location">Folder</string>
@@ -162,7 +148,6 @@
     <string name="details_cover_updated">Cover updated</string>
     <string name="details_cover_not_updated">Could not use this image as a cover</string>
 
-    <!-- Appearance and privacy -->
     <string name="settings_appearance">Appearance</string>
     <string name="settings_theme">Theme</string>
     <string name="theme_system">System</string>
@@ -486,10 +471,12 @@
     <string name="settings_show_cast_button">Show the Cast button in the player</string>
     <string name="effects_not_on_cast">While casting, the receiver plays the original files: speed applies, other effects do not.</string>
 
-    <!-- Settings tree completed -->
     <string name="settings_library">Library</string>
     <string name="settings_default_tab">Tab when the app opens</string>
     <string name="settings_tab_automatic">Automatic</string>
+    <string name="settings_library_tabs">Library tabs</string>
+    <string name="settings_tab_move_up">Move %1$s up</string>
+    <string name="settings_tab_move_down">Move %1$s down</string>
     <string name="settings_library_layout">Library layout</string>
     <string name="settings_rescan_on_start">Rescan when the app opens</string>
     <string name="rescan_off">Off</string>
@@ -518,7 +505,6 @@
         <item quantity="other">%1$d days</item>
     </plurals>
 
-    <!-- Language and About -->
     <string name="settings_language">Language</string>
     <string name="language_system">System default</string>
     <string name="settings_licenses">Open-source licenses</string>
@@ -528,22 +514,17 @@
     <string name="licenses_assets">Assets</string>
     <string name="licenses_libraries">Libraries</string>
     <string name="licenses_open_license">Open the license of %1$s</string>
-    <!-- Language names are written in their own language; the source code address is not translated. -->
     <string name="language_english" translatable="false">English</string>
     <string name="language_portuguese" translatable="false">Português (Brasil)</string>
     <string name="language_spanish" translatable="false">Español</string>
     <string name="source_code_url" translatable="false">https://github.com/mobyleOfficial/AbbayAndroid</string>
 
-    <!-- Accessibility pass -->
     <string name="close">Close</string>
 
-    <!-- Seek bar accessibility -->
     <string name="player_seek_state">%1$s of %2$s</string>
 
-    <!-- Cast with audio effects -->
     <string name="settings_cast_processed_audio">Apply audio effects when casting</string>
 
-    <!-- Empty states of the library tabs -->
     <string name="library_empty_in_progress_title">No books in progress</string>
     <string name="library_empty_in_progress_body">Start listening to a book and it shows up here, right where you stopped.</string>
     <string name="library_empty_new_title">No new books</string>
@@ -557,7 +538,6 @@
     <string name="library_scanning_title">Looking for books…</string>
     <string name="library_scanning_body">Books show up here as they are found.</string>
 
-    <!-- Playback service, notification and Android Auto -->
     <string name="playback_skip_back">Back %1$d seconds</string>
     <string name="playback_previous_chapter">Previous chapter</string>
     <string name="playback_next_chapter">Next chapter</string>
@@ -577,7 +557,6 @@
     <string name="auto_chapter_number">Chapter %1$d</string>
     <string name="playback_speed_cycle">Speed %1$s</string>
 
-    <!-- Home screen widgets -->
     <string name="widget_mini_description">Play and pause the last book</string>
     <string name="widget_standard_description">Book, chapter and playback buttons</string>
     <string name="widget_large_description">Player with chapter progress, sleep timer and bookmark</string>
@@ -589,4 +568,12 @@
     <string name="widget_add_bookmark">Add bookmark</string>
     <string name="widget_sleep_timer_on">Start sleep timer</string>
     <string name="widget_sleep_timer_off">Turn off sleep timer</string>
+
+    <string name="book_status_new">New</string>
+    <string name="book_status_finished">Finished ✓</string>
+    <string name="book_status_chapter">Ch %1$d/%2$d</string>
+    <string name="book_now_playing">Now playing</string>
+    <string name="player_close_chapters">Close chapters</string>
+    <string name="player_chapter_current">Current chapter</string>
+    <string name="player_chapter_finished">Finished</string>
 </resources>

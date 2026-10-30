@@ -16,7 +16,6 @@ import com.mobyle.abbay.presentation.common.widgets.AbbayAlertDialog
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
 import com.model.Bookmark
 
-/** Note of a bookmark, up to [Bookmark.MAX_NOTE_LENGTH] characters. */
 @Composable
 fun BookmarkNoteDialog(initialNote: String, onSave: (String) -> Unit, onDismiss: () -> Unit) {
     var note by rememberSaveable { mutableStateOf(initialNote) }

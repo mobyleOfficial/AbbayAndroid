@@ -19,13 +19,8 @@ import com.mobyle.abbay.presentation.playback.remote.AudioRoute
 import com.mobyle.abbay.presentation.playback.remote.RoutingAudioSink
 import com.mobyle.abbay.presentation.playback.remote.StreamingAudioSink
 
-/**
- * The service's player: exact VBR seeking, speech attributes, noisy handling, wake
- * lock, and the project's audio effects chain.
- */
 @OptIn(UnstableApi::class)
 object AudiobookExoPlayer {
-    /** [route] chooses where the processed audio goes: the device, or a Cast receiver. */
     fun build(context: Context, effects: EffectsState, route: AudioRoute = AudioRoute()): ExoPlayer {
         val extractorsFactory = DefaultExtractorsFactory()
             .setConstantBitrateSeekingEnabled(true)
@@ -35,8 +30,6 @@ object AudiobookExoPlayer {
             .setContentType(C.AUDIO_CONTENT_TYPE_SPEECH)
             .build()
 
-        // Speed goes to the AudioTrack (the platform's Sonic time-stretch), so it also applies to audio already
-        // buffered: ~10 ms instead of the ~750 ms buffer delay of in-app processing.
         val renderersFactory = EffectsRenderersFactory(context, effects, route).setEnableAudioTrackPlaybackParams(true)
 
         return ExoPlayer.Builder(context, renderersFactory)
@@ -48,7 +41,6 @@ object AudiobookExoPlayer {
     }
 }
 
-/** Builds the audio sink with the effects chain. */
 @OptIn(UnstableApi::class)
 private class EffectsRenderersFactory(
     context: Context,
@@ -61,7 +53,6 @@ private class EffectsRenderersFactory(
             .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
             .setAudioProcessorChain(AudiobookAudioChain(effects))
             .build()
-        // Cast phase 2: the same effects, with their own processor instances, ahead of a live stream to the receiver.
         val streaming = StreamingAudioSink(AudiobookAudioChain(effects).audioProcessors.toList(), route)
         return TrackTimeAudioSink(RoutingAudioSink(sink, streaming, route), effects)
     }

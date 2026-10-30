@@ -5,21 +5,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.IconButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.ScaffoldState
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.rememberScaffoldState
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
@@ -34,13 +33,14 @@ fun AbbayScreen(
 ) {
     Scaffold(scaffoldState = scaffoldState, topBar = {
         TopAppBar(
-            backgroundColor = MaterialTheme.colorScheme.surface,
+            backgroundColor = MaterialTheme.colorScheme.primary,
+            elevation = 0.dp,
             title = {
                 Text(
                     title,
                     style = TextStyle(
                         color = AbbayColors.content,
-                        fontSize = 32.sp,
+                        fontSize = 28.sp,
                         fontWeight = FontWeight.Bold
                     )
                 )
@@ -48,13 +48,11 @@ fun AbbayScreen(
             actions = {
                 actions()
                 if (onClose != null) {
-                    IconButton(onClick = { onClose() }) {
-                        Icon(
-                            Icons.Default.Close,
-                            contentDescription = stringResource(R.string.close),
-                            tint = AbbayColors.content
-                        )
-                    }
+                    CircleIconButton(
+                        icon = Icons.Rounded.Close,
+                        contentDescription = stringResource(R.string.close),
+                        onClick = onClose,
+                    )
                 }
             },
         )

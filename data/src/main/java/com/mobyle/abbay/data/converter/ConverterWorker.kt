@@ -20,11 +20,6 @@ import com.repository.LibraryRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
-/**
- * The converter's WorkManager job, in the foreground with a progress notification. The
- * scope and options travel in the input data; the job ends early when the battery is below the minimum (it is retried
- * later) and can be cancelled from the converter screen.
- */
 @HiltWorker
 class ConverterWorker @AssistedInject constructor(
     @Assisted context: Context,
@@ -44,12 +39,10 @@ class ConverterWorker @AssistedInject constructor(
         createChannel()
         setForeground(foregroundInfo(ConversionProgress(isRunning = true)))
         val end = runner.run(scope, options, isStopped = { isStopped }) { progress -> updateNotification(progress) }
-        // New .opus files replace the MP3s: rescan so the library points at them (same book rows and positions).
         libraryRepository.fullScan()
         return if (end == ConversionEnd.BATTERY_LOW) Result.retry() else Result.success()
     }
 
-    /** Called from the transcoding thread: the asynchronous form, at most once a second. */
     private fun updateNotification(progress: ConversionProgress) {
         val now = System.currentTimeMillis()
         if (now - lastNotificationAt < NOTIFICATION_INTERVAL_MS && progress.isRunning) return

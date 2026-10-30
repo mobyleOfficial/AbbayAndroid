@@ -7,7 +7,6 @@ import com.model.Chapter
 import java.text.NumberFormat
 import java.util.concurrent.TimeUnit
 
-/** "1.4×" / "1,4×" in the user's locale. */
 fun formatSpeed(speed: Float): String {
     val format = NumberFormat.getNumberInstance().apply {
         minimumFractionDigits = 1
@@ -16,7 +15,6 @@ fun formatSpeed(speed: Float): String {
     return format.format(speed) + "×"
 }
 
-/** Chapter title, or "Chapter n" when the file has none. */
 @Composable
 fun chapterTitle(chapter: Chapter?): String = when {
     chapter == null -> ""
@@ -24,7 +22,6 @@ fun chapterTitle(chapter: Chapter?): String = when {
     else -> stringResource(R.string.player_chapter_untitled, chapter.index + 1)
 }
 
-/** "x h yy min left" at the current speed. */
 @Composable
 fun timeLeftLabel(remainingBookMs: Long, speed: Float): String {
     val wallClockMs = (remainingBookMs / speed.coerceAtLeast(MINIMUM_SPEED)).toLong().coerceAtLeast(0L)

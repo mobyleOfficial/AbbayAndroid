@@ -14,26 +14,19 @@ import kotlinx.serialization.json.longOrNull
 import java.time.Instant
 import java.time.format.DateTimeParseException
 
-/**
- * Reads and writes the sidecar JSON. Writing starts from the object read before, so
- * fields this version does not know — at the top level, in nested objects, in bookmarks and in characters — are kept (forward
- * compatibility). Pure Kotlin, tested on the JVM.
- */
-@Suppress("TooManyFunctions") // One reader and one writer per JSON section.
+@Suppress("TooManyFunctions")
 object SidecarCodec {
     const val FORMAT = "abbay-book"
     const val VERSION = 1
 
     private val json = Json { prettyPrint = true }
 
-    /** The parsed book and the raw object (kept for the next write); null when [text] is not an Abbay sidecar. */
     fun read(text: String): Read? {
         val root = runCatching { Json.parseToJsonElement(text) }.getOrNull() as? JsonObject ?: return null
         if (root.string("format") != FORMAT) return null
         return decode(root)?.let { Read(it, root) }
     }
 
-    /** One book object as found in the sidecar or in a backup. */
     fun decode(root: JsonObject): SidecarBook? {
         val id = root.string("id")?.takeIf(String::isNotBlank) ?: return null
         return SidecarBook(
@@ -65,7 +58,6 @@ object SidecarCodec {
 
     fun write(book: SidecarBook, previous: JsonObject?): String = json.encodeToString(JsonObject.serializer(), encode(book, previous))
 
-    /** [book] as a JSON object, on top of the fields of [previous]. */
     fun encode(book: SidecarBook, previous: JsonObject?): JsonObject {
         val fields = LinkedHashMap(previous.orEmpty())
         fields["format"] = JsonPrimitive(FORMAT)
@@ -149,7 +141,6 @@ object SidecarCodec {
         )
     }
 
-    /** Each bookmark keeps the unknown fields of the previous entry with the same position and creation time. */
     private fun encodeBookmarks(bookmarks: List<SidecarBook.Bookmark>, previous: JsonArray?): JsonArray {
         val previousByKey = previous.orEmpty().mapNotNull { it as? JsonObject }
             .associateBy { it.long("bookPositionMs") to it.instant("createdAt") }
@@ -171,7 +162,6 @@ object SidecarCodec {
         return SidecarBook.Character(name, character.string("description").orEmpty(), character.long("firstPositionMs"))
     }
 
-    /** Each character keeps the unknown fields of the previous entry with the same name. */
     private fun encodeCharacters(characters: List<SidecarBook.Character>, previous: JsonArray?): JsonArray {
         val previousByName = previous.orEmpty().mapNotNull { it as? JsonObject }.associateBy { it.string("name") }
         return JsonArray(

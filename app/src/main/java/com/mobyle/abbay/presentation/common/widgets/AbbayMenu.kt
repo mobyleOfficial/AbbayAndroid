@@ -17,11 +17,6 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
 
-/**
- * The app's pop-up menu (sort, layout, item actions, overflow menus, setting choices): the theme's surface with the
- * content color, like the rest of the UI. Material's defaults do not fit the Abbay roles — `primary` is the app's
- * background color here — so every menu goes through this and [AbbayMenuItem].
- */
 @Composable
 fun AbbayDropdownMenu(
     expanded: Boolean,
@@ -36,10 +31,6 @@ fun AbbayDropdownMenu(
     content = content,
 )
 
-/**
- * A menu entry. The current choice ([selected]) takes the accent color, a bolder weight and a check mark (or
- * [trailingIcon]), so it is never told apart by color alone.
- */
 @Composable
 fun AbbayMenuItem(
     text: String,

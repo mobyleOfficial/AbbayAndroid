@@ -31,10 +31,8 @@ import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
 import com.player.UpNext
 
-/** The countdown to the next queued book, above the library and the player. */
 @Composable
 fun UpNextBanner(upNext: UpNext?, onCancel: () -> Unit, modifier: Modifier = Modifier) {
-    // Keeps the last value while the banner slides out.
     var shown by remember { mutableStateOf(upNext) }
     if (upNext != null) shown = upNext
 

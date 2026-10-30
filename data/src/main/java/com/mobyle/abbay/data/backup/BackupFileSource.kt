@@ -7,7 +7,6 @@ import com.model.DataResult
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-/** Reads and writes the backup document the user picked (`ACTION_CREATE_DOCUMENT` / `ACTION_OPEN_DOCUMENT`). */
 class BackupFileSource @Inject constructor(@ApplicationContext private val context: Context) {
     fun write(documentUri: String, text: String): DataResult<Unit> = guarded {
         context.contentResolver.openOutputStream(Uri.parse(documentUri), "wt")?.use { it.write(text.toByteArray(Charsets.UTF_8)) }
@@ -19,7 +18,6 @@ class BackupFileSource @Inject constructor(@ApplicationContext private val conte
             ?: error("Cannot read the backup")
     }
 
-    /** Data sources map every failure to a [DataResult]. */
     @Suppress("SwallowedException", "TooGenericExceptionCaught")
     private inline fun <T> guarded(block: () -> T): DataResult<T> = try {
         DataResult.Success(block())

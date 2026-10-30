@@ -6,7 +6,6 @@ import com.effects.NoiseReductionLevel
 import com.effects.SilenceTrimLevel
 import com.mobyle.abbay.data.database.entity.ListeningStateEntity
 
-/** Effect columns of `listening_state` ↔ [AudioEffects]. The equalizer is a JSON array of 10 integers, null when flat. */
 internal object EffectsMapper {
     fun toEffects(state: ListeningStateEntity): AudioEffects = AudioEffects(
         silenceTrim = SilenceTrimLevel.entries.firstOrNull { it.name == state.silenceTrimLevel } ?: SilenceTrimLevel.OFF,

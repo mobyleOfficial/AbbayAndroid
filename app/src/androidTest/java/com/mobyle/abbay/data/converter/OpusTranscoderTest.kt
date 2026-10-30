@@ -14,7 +14,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
 
-/** MP3 → Ogg Opus on the device: a playable stream of the same length, with the tags and the cover. */
 @RunWith(AndroidJUnit4::class)
 class OpusTranscoderTest {
     private val testContext = InstrumentationRegistry.getInstrumentation().context
@@ -49,7 +48,6 @@ class OpusTranscoderTest {
         assertEquals(1, format.getInteger(MediaFormat.KEY_CHANNEL_COUNT))
         val durationDifferenceMs = kotlin.math.abs(format.getLong(MediaFormat.KEY_DURATION) - result.decodedDurationUs) / 1_000
         assertTrue("durations differ by $durationDifferenceMs ms", durationDifferenceMs <= 500)
-        // The fixture is 60 s of audio (its container claims far more: no Xing header).
         assertEquals(60.0, result.decodedDurationUs / 1e6, 0.5)
         assertTrue(lastProgress > 0f)
         assertTrue("smaller than the source", target.length() < source.length())

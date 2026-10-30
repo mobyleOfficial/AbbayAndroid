@@ -25,8 +25,8 @@ android {
         applicationId "com.mobyle.abbay"
         minSdk 29
         targetSdk 35
-        versionCode 3
-        versionName "1.0"
+        versionCode 4
+        versionName "1.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -44,18 +44,14 @@ android {
     }
 
     buildTypes {
-        // R8 and resource shrinking: without them the release APK was 72–77 MB against the 15 MB budget.
         release {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // The publishing keystore when it is on this machine; otherwise the debug key, so the release build can
-            // be installed and measured (the :benchmark module). Google Play refuses debug-signed uploads.
             signingConfig signingConfigs.release.storeFile.exists() ? signingConfigs.release : signingConfigs.debug
         }
     }
 
-    // Noise reduction: RNNoise and its JNI bridge (src/main/cpp).
     ndkVersion '28.2.13676358'
     externalNativeBuild {
         cmake {
@@ -64,7 +60,6 @@ android {
         }
     }
 
-    // Instrumented tests read the same audio fixtures as the unit tests.
     sourceSets {
         androidTest.assets.srcDirs += files("$projectDir/src/test/resources")
     }
@@ -97,59 +92,45 @@ android {
 }
 
 dependencies {
-    // Project modules (presentation imports only :domain; the others are referenced from DI wiring)
     implementation project(':domain')
     implementation project(':data')
 
-    // AndroidX Core
     implementation libs.androidx.documentfile
     implementation libs.androidx.core.ktx
     implementation libs.bundles.lifecycle
     implementation libs.androidx.activity.compose
     implementation libs.androidx.startup
 
-    // Compose BOM and UI
     implementation platform(libs.androidx.compose.bom)
     implementation libs.bundles.compose
     implementation libs.androidx.constraintlayout.compose
 
-    // Navigation
     implementation libs.androidx.navigation.compose
 
-    // Media3: the player, the media session, Cast
     implementation libs.bundles.media3
     implementation libs.androidx.media3.common
     implementation libs.androidx.media3.cast
-    // The Cast route button and its dialogs
     implementation libs.androidx.mediarouter
     implementation libs.androidx.appcompat
 
-    // Home screen widgets
     implementation libs.androidx.glance.appwidget
 
-    // Hilt
     implementation libs.bundles.hilt.implementation
     ksp libs.bundles.hilt.compilers
 
-    // Work Manager
     implementation libs.androidx.work.runtime.ktx
 
     implementation libs.androidx.splashscreen
-    // Installs the Baseline Profile (src/main/baseline-prof.txt) on devices without Play's cloud profiles.
     implementation libs.androidx.profileinstaller
 
-    // Image Loading
     implementation libs.bundles.coil
     implementation libs.glide.compose
 
-    // Material Design
     implementation libs.material
 
-    // Serialization
     implementation libs.kotlinx.serialization.json.legacy
     implementation libs.kotlinx.serialization.json
 
-    // Testing
     testImplementation libs.junit
     testImplementation platform(libs.androidx.compose.bom)
     testImplementation libs.bundles.testing.robolectric
@@ -160,12 +141,10 @@ dependencies {
     androidTestImplementation libs.bundles.testing.compose
     debugImplementation libs.bundles.testing.compose.debug
 
-    // Firebase
     implementation libs.firebase.crashlytics
     implementation libs.firebase.analytics
 }
 
-// License check: only MIT-compatible licenses may ship in the release build.
 licenseReport {
     configurations = ['releaseRuntimeClasspath']
     excludeOwnGroup = true
@@ -177,11 +156,6 @@ licenseReport {
     )]
 }
 
-/**
- * About → Open-source licenses: `licenses.json` in each variant's assets, made from the
- * license report (only the libraries of that variant's runtime classpath) and the asset and bundled-source tables of
- * CREDITS.md.
- */
 abstract class LicenseNoticesTask extends DefaultTask {
     @InputFile
     abstract RegularFileProperty getLicenseReport()
@@ -214,7 +188,6 @@ abstract class LicenseNoticesTask extends DefaultTask {
         output.text = groovy.json.JsonOutput.toJson(notices)
     }
 
-    /** Rows of the markdown table under `## [heading]`: first column = name, second = source, third = license. */
     private List<Map<String, String>> creditsTable(String heading) {
         def lines = credits.get().asFile.readLines()
         def start = lines.findIndexOf { it.trim() == "## ${heading}" }
@@ -231,7 +204,6 @@ androidComponents {
     onVariants(selector().all()) { variant ->
         def runtimeClasspath = configurations.named("${variant.name}RuntimeClasspath")
         def notices = tasks.register("generate${variant.name.capitalize()}LicenseNotices", LicenseNoticesTask) {
-            // checkLicensePreparation adds the JSON renderer that writes the report read below.
             dependsOn 'checkLicensePreparation', 'generateLicenseReport'
             licenseReport.set(layout.buildDirectory.file('reports/dependency-license/project-licenses-for-check-license-task.json'))
             credits.set(rootProject.layout.projectDirectory.file('CREDITS.md'))
@@ -247,7 +219,6 @@ androidComponents {
     }
 }
 
-// Compose UI tests need the debug-only ui-test-manifest activity; they run in testDebugUnitTest.
 tasks.withType(Test).configureEach {
     if (name.endsWith('ReleaseUnitTest')) {
         exclude '**/abbay/ui/**'

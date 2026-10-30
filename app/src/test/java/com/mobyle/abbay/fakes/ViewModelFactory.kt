@@ -35,7 +35,6 @@ import com.usecase.SortAndFilterBooks
 import com.usecase.UpdateAppSettings
 import com.usecase.UpdateBookmarkNote
 
-/** Builds the ViewModels with real use cases over fake repositories and a fake player. */
 class ViewModelFactory(
     val libraryRepository: FakeLibraryRepository = FakeLibraryRepository(),
     val settingsRepository: FakeSettingsRepository = FakeSettingsRepository(),

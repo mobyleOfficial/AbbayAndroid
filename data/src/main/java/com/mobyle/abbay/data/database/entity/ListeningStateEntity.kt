@@ -6,7 +6,6 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-/** Audio-effect columns are used from Phase 6. */
 @Entity(
     tableName = "listening_state",
     foreignKeys = [

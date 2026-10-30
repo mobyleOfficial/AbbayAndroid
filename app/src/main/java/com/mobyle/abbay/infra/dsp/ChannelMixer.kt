@@ -2,11 +2,6 @@ package com.mobyle.abbay.infra.dsp
 
 import kotlin.math.min
 
-/**
- * Mono and balance. Mono: every channel is the mean of the input channels.
- * Balance −1…+1: left gain `min(1, 1 − balance)`, right gain `min(1, 1 + balance)`. Changes ramp over 20 ms.
- * Interleaved float samples, processed in place.
- */
 class ChannelMixer(private val channelCount: Int, sampleRate: Int) {
     private val rampFrames = LinearRamp.framesFor(sampleRate)
     private val monoAmount = LinearRamp(0f, rampFrames)
@@ -29,7 +24,6 @@ class ChannelMixer(private val channelCount: Int, sampleRate: Int) {
         }
     }
 
-    /** True when the output equals the input. */
     val isIdentity: Boolean
         get() = !monoAmount.isRamping &&
             !leftGain.isRamping &&

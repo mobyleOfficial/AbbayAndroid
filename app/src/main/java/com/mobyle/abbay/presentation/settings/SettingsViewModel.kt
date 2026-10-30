@@ -54,10 +54,8 @@ class SettingsViewModel @Inject constructor(
     private val _backupResults = MutableSharedFlow<BackupResult>(extraBufferCapacity = 1)
     private val _language = MutableStateFlow(getAppLanguage())
 
-    /** Settings → Appearance → Language. */
     val language: StateFlow<AppLanguage> get() = _language
 
-    /** Outcome of the last export or import, shown once by the screen. */
     val backupResults: SharedFlow<BackupResult> get() = _backupResults.asSharedFlow()
 
     val shouldPlayWhenAppIsClosed: StateFlow<Boolean> = settings.mapState { it.playWhenAppIsClosed }
@@ -66,7 +64,6 @@ class SettingsViewModel @Inject constructor(
     val dynamicColor: StateFlow<Boolean> = settings.mapState { it.dynamicColor }
     val shareDiagnostics: StateFlow<Boolean> = settings.mapState { it.shareDiagnostics }
 
-    /** Playback and sleep timer settings. */
     val listeningSettings: StateFlow<AppSettings> get() = settings
     val showShowDeleteConfirmation: StateFlow<Boolean> get() = _showShowDeleteConfirmation
     val showChangeFolderConfirmation: StateFlow<Boolean> get() = _showChangeFolderConfirmation
@@ -93,7 +90,6 @@ class SettingsViewModel @Inject constructor(
 
     fun changeShareDiagnostics(isEnabled: Boolean) = viewModelScope.launch { updateAppSettings { it.copy(shareDiagnostics = isEnabled) } }
 
-    /** Every playback and sleep timer setting is a field of [AppSettings]; the screen passes the change. */
     fun changeListeningSettings(transform: (AppSettings) -> AppSettings) {
         viewModelScope.launch { updateAppSettings(transform) }
     }
@@ -106,7 +102,6 @@ class SettingsViewModel @Inject constructor(
         _backupResults.tryEmit(BackupResult.of(isExport = false, result = importBackup(documentUri)))
     }
 
-    /** "Change folder" replaces the library root. */
     fun changeFolder(treeUri: String) = viewModelScope.launch { replaceLibraryRoots(treeUri) }
 
     fun addFolder(treeUri: String) = viewModelScope.launch { addLibraryRoot(treeUri) }
@@ -115,7 +110,6 @@ class SettingsViewModel @Inject constructor(
 
     fun clearBooks() = viewModelScope.launch { clearLibrary() }
 
-    /** "Clear statistics"; turning them off keeps the data. */
     fun clearListeningStatistics() = viewModelScope.launch { clearStatistics() }
 
     fun dismissDeleteConfirmation() {
@@ -138,7 +132,6 @@ class SettingsViewModel @Inject constructor(
         map(transform).stateIn(viewModelScope, SharingStarted.Eagerly, transform(value))
 }
 
-/** What the screen says after a backup export or import. */
 sealed interface BackupResult {
     data class Exported(val books: Int) : BackupResult
 

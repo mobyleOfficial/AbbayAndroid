@@ -46,7 +46,6 @@ import com.mobyle.abbay.presentation.common.widgets.AbbayMenuItem
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
 import kotlin.math.roundToInt
 
-/** Equalizer of the audio sheet: presets, 10 vertical sliders, save and apply to all. */
 @Composable
 internal fun EqualizerSection(effects: AudioEffects, panel: AudioEffectsPanel) {
     var gains by remember(effects.equalizerGains) { mutableStateOf(effects.equalizerGains) }
@@ -99,7 +98,6 @@ private fun PresetMenu(gains: List<Int>, presets: List<EqualizerPreset>, onSelec
                 AbbayMenuItem(
                     text = name,
                     selected = preset == current,
-                    // A user preset's delete button takes the trailing place of the check mark.
                     leadingIcon = if (preset == current && !preset.isBuiltIn) Icons.Default.Check else null,
                     trailingIcon = if (preset.isBuiltIn) {
                         null
@@ -152,7 +150,6 @@ private fun BandSlider(label: String, gainDb: Int, onChange: (Int) -> Unit, onCh
     }
 }
 
-/** A horizontal slider turned upright: the layout swaps width and height, then the drawing is rotated. */
 private fun Modifier.vertical(): Modifier = graphicsLayer { rotationZ = UPRIGHT_DEGREES }.layout { measurable, constraints ->
     val placeable = measurable.measure(
         Constraints(minWidth = constraints.minHeight, maxWidth = constraints.maxHeight, minHeight = 0, maxHeight = constraints.maxWidth),

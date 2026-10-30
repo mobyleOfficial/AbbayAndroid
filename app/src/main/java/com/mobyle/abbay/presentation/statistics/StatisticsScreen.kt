@@ -40,7 +40,6 @@ import java.util.Locale
 
 private enum class Period { WEEK, MONTH, YEAR }
 
-/** Global statistics; a top book opens its own statistics. */
 @Composable
 fun StatisticsScreen(viewModel: StatisticsViewModel = hiltViewModel(), onOpenBook: (String) -> Unit, close: () -> Unit) {
     val statistics by viewModel.statistics.collectAsState()
@@ -156,7 +155,6 @@ fun Note(text: String) {
     )
 }
 
-/** Medium date in the user's locale, for the estimated finish. */
 fun mediumDate(date: java.time.LocalDate): String = date.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
 
 private const val SECONDARY_ALPHA = 0.75f

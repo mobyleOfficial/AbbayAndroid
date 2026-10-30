@@ -98,7 +98,6 @@ class LibraryScannerTest {
         val tree = InMemoryDocumentTree("A/1.mp3", "B/C/1.mp3", "B/D/1.mp3")
         scanAll(tree)
 
-        // root, A, B, C, D
         assertEquals(5, tree.listCalls)
     }
 

@@ -13,7 +13,6 @@ import androidx.compose.ui.res.stringResource
 import com.mobyle.abbay.R
 import java.time.LocalDate
 
-/** "Save progress in book folders" and Backup settings. */
 @Composable
 fun BackupSettings(viewModel: SettingsViewModel) {
     val settings by viewModel.listeningSettings.collectAsState()
@@ -46,9 +45,9 @@ fun BackupSettings(viewModel: SettingsViewModel) {
 
     Column {
         SettingItem(text = stringResource(R.string.settings_save_progress_in_folders)) {
-            SettingSwitch(settings.saveProgressInFolders) { enabled ->
+            SettingSwitch(settings.saveProgressInFolders, onCheckedChange = { enabled ->
                 viewModel.changeListeningSettings { it.copy(saveProgressInFolders = enabled) }
-            }
+            })
         }
         SectionHeader(R.string.settings_backup)
         SettingItem(text = stringResource(R.string.settings_export_backup), onClick = { exporter.launch(backupFileName()) })

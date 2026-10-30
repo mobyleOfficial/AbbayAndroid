@@ -5,7 +5,6 @@ import androidx.glance.appwidget.updateAll
 import com.player.NowPlaying
 import com.player.NowPlayingPublisher
 
-/** Stores what is playing and redraws the three widgets. */
 class WidgetNowPlayingPublisher(private val context: Context) : NowPlayingPublisher {
     private val store = NowPlayingStore(context)
 

@@ -6,10 +6,6 @@ import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.random.Random
 
-/**
- * Synthetic accelerometer traces at the rate of `SENSOR_DELAY_UI` (about 60 ms per sample), phone lying on its back
- * (gravity on z). Each trace counts the shakes a detector reports.
- */
 class ShakeDetectorTest {
     @Test
     fun phoneLyingStillNeverShakes() {

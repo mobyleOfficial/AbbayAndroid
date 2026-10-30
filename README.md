@@ -5,17 +5,23 @@ Abbay is an Android audiobook player app built with Jetpack Compose and ExoPlaye
 ## Features
 
 - 📚 Browse and play audiobooks from folders or single files (MP3, M4A/M4B, Opus, FLAC, …)
+- 🗂️ Library tabs (In progress, New, Finished — shown, hidden and ordered in Settings) with list, grid and compact layouts
 - 📖 Chapters from CUE sheets, M4B/MP4, ID3 and Matroska/Ogg tags, or one per file; chapter list, swipe the cover to change chapter
 - ⏩ Small and large skips (15 s / 30 s / 5 min by default); hold a skip button to repeat it; double-tap the cover to skip
 - 🎚️ Speed 0.5–3.5× per book, with presets and a default for new books
+- 🎛️ Audio effects: noise reduction, silence trimming, volume boost and an equalizer
+- 🌙 Sleep timer, bookmarks with notes, repeat, and intro/outro skipping from the player
+- 📺 Cast to Chromecast devices and home-screen widgets
 - ✏️ Book details: edit title, author, narrator and description, choose a cover (folder image, embedded, gallery or web), sort files by track number
-- 🌓 Themes: System, Light, Dark, Black, and wallpaper colors on Android 12+
+- 🌓 Themes: System, Light, Dark, Black, and wallpaper colors on Android 12+; the open player and the status bar take the cover's color
 - 🔒 Lock the player screen to prevent accidental touches
 - 🛡️ Crash reports and usage statistics can be turned off in Settings; no ads, no accounts
 
 ## Screenshots
 
-<!-- Add screenshots here if available -->
+| Library | Grid | Player | Audio effects |
+|---|---|---|---|
+| <img src="docs/screenshots/library.png" width="200" alt="Library list with the In progress tab and the mini player"/> | <img src="docs/screenshots/grid.png" width="200" alt="Library in grid layout"/> | <img src="docs/screenshots/player.png" width="200" alt="Player tinted with the cover's color"/> | <img src="docs/screenshots/effects.png" width="200" alt="Audio effects sheet over the player"/> |
 
 ## Getting Started
 
@@ -67,12 +73,14 @@ Inside `app/src/main/java/com/mobyle/abbay/`:
 - `app/src/main/java/com/mobyle/abbay/presentation/bookdetails/` – Book details and metadata editing
 - `app/src/release/` – Release-only manifest (profileable from the shell, for the benchmarks)
 - `app/src/main/res/raw/motion_scene.json5` – MotionLayout scene for player transitions
+- `docs/screenshots/` – Screenshots used in this README
 - `config/` – detekt, ktlint, license-check and module-boundary configuration
 
 ## Customization
 
-- **Playback Speed:** Tap the speed button in the player's top bar.
-- **Chapters:** Tap the chapter name under the cover to open the chapter list.
+- **Playback Speed:** Tap the speed button under the player controls.
+- **Chapters:** Tap the chapter name under the cover to open the chapter list in a bottom sheet.
+- **Library tabs and layout:** Tap the layout button next to the tabs (list, grid, compact list); show, hide and reorder the tabs in Settings → Library tabs.
 - **Screen Lock:** Tap the lock icon to lock; double-tap the locked player to unlock.
 - **Book details:** Player overflow menu → Book details, or long-press a book → Edit details.
 - **Theme, language and display:** Settings → Appearance (theme, cover on the lock screen, keep the screen on while charging, seek-bar times, language).

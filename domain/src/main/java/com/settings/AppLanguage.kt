@@ -1,6 +1,5 @@
 package com.settings
 
-/** The app's language; [tag] is the BCP 47 tag, empty for the system language. */
 enum class AppLanguage(val tag: String) {
     SYSTEM(""),
     ENGLISH("en"),

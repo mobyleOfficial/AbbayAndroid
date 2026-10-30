@@ -3,11 +3,6 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
-/**
- * Macrobenchmarks and the Baseline Profile generator. They run against
- * the app's `release` build (minified, profileable, debug-signed when the publishing keystore is absent):
- *   ./gradlew :benchmark:connectedBenchmarkAndroidTest
- */
 android {
     namespace 'com.mobyle.abbay.benchmark'
     compileSdk 35
@@ -19,7 +14,6 @@ android {
     }
 
     buildTypes {
-        // Targets the app's release build; the test APK itself must be debuggable.
         benchmark {
             debuggable = true
             signingConfig = signingConfigs.debug

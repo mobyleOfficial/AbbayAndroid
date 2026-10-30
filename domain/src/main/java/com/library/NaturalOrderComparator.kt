@@ -3,10 +3,6 @@ package com.library
 import java.text.Collator
 import java.util.Locale
 
-/**
- * Natural sort: names are split into digit and non-digit runs; digit runs compare
- * by numeric value, other runs with a PRIMARY-strength collator, treating `_`, `-` and `.` as spaces.
- */
 class NaturalOrderComparator(locale: Locale = Locale.getDefault()) : Comparator<String> {
     private val collator: Collator = Collator.getInstance(locale).apply { strength = Collator.PRIMARY }
 

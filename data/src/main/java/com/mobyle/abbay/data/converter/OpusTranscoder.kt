@@ -15,26 +15,16 @@ import java.nio.ByteOrder
 import javax.inject.Inject
 import kotlin.random.Random
 
-/**
- * One file to Ogg Opus: `MediaExtractor` → platform decoder → mono downmix when asked →
- * the app's resampler to 48 kHz → the platform Opus encoder (API 29+) → [OggOpusWriter]. Synchronous; run it on a
- * worker thread. Throws on decoder or encoder failures; the caller maps them.
- */
 class OpusTranscoder @Inject constructor(
     @ApplicationContext private val context: Context,
     private val resamplers: AudioResamplerFactory,
 ) {
-    /**
-     * [decodedDurationUs] is the real length of the source as decoded; the container's own duration can be far off for
-     * MP3s without a Xing header, so verification compares against this.
-     */
     class Result(val decodedDurationUs: Long, val inputSamples48k: Long)
 
-    /** The platform Opus encoder's name, or null when the device has none (the converter is then hidden). */
     fun encoderName(): String? = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos
         .firstOrNull { it.isEncoder && MediaFormat.MIMETYPE_AUDIO_OPUS in it.supportedTypes }?.name
 
-    @Suppress("LongParameterList") // The converter's options plus progress and cancellation.
+    @Suppress("LongParameterList")
     fun transcode(
         sourceUri: String,
         output: OutputStream,
@@ -62,7 +52,7 @@ class OpusTranscoder @Inject constructor(
         }
     }
 
-    @Suppress("LongParameterList", "TooManyFunctions") // The state of one transcoding run.
+    @Suppress("LongParameterList", "TooManyFunctions")
     private class Pipeline(
         private val extractor: MediaExtractor,
         sourceFormat: MediaFormat,
@@ -84,7 +74,6 @@ class OpusTranscoder @Inject constructor(
         private var resampler = resamplers.create(decodedRate, OPUS_RATE, outputChannels, CONVERTER_PASSBAND)
         private val sourceRate = decodedRate
 
-        /** 16-bit 48 kHz samples waiting for an encoder input buffer: [pendingStart] until [pendingEnd]. */
         private var pending = ShortArray(OPUS_RATE * outputChannels * 2)
         private var pendingStart = 0
         private var pendingEnd = 0
@@ -110,10 +99,8 @@ class OpusTranscoder @Inject constructor(
 
         fun run(): Result {
             try {
-                // Non-blocking polls; the codecs are only waited for when no step could make progress.
                 while (!isEncoderDone) {
                     if (isCancelled()) throw InterruptedException("Conversion cancelled")
-                    // The decoder waits while about a second of audio is queued for the encoder.
                     val isEncoderBehind = pendingCount > OPUS_RATE * outputChannels
                     var progressed = !isExtractorDone && !isEncoderBehind && feedDecoder()
                     progressed = (!isDecoderDone && !isEncoderBehind && drainDecoder()) || progressed
@@ -177,7 +164,6 @@ class OpusTranscoder @Inject constructor(
             resampler = resamplers.create(decodedRate, OPUS_RATE, outputChannels, CONVERTER_PASSBAND)
         }
 
-        /** Decoded PCM → float in the output channel layout → 48 kHz. */
         private fun accept(buffer: ByteBuffer, offset: Int, size: Int) {
             buffer.position(offset)
             buffer.limit(offset + size)
@@ -207,7 +193,6 @@ class OpusTranscoder @Inject constructor(
 
         private fun append(samples48k: FloatArray) {
             if (pendingEnd + samples48k.size > pending.size) {
-                // Compact once per refill instead of shifting on every encoder buffer.
                 pending.copyInto(pending, 0, pendingStart, pendingEnd)
                 pendingEnd -= pendingStart
                 pendingStart = 0
@@ -257,7 +242,6 @@ class OpusTranscoder @Inject constructor(
             return true
         }
 
-        /** The encoder's configuration carries an `OpusHead` (with the pre-skip) among Android's own markers. */
         private fun startStream(codecConfig: ByteArray): OggOpusWriter {
             writer?.let { return it }
             val headAt = indexOf(codecConfig, OPUS_HEAD)
@@ -281,7 +265,6 @@ class OpusTranscoder @Inject constructor(
         const val OPUS_RATE = 48_000
         const val IDLE_WAIT_US = 2_000L
 
-        /** Opus at speech bitrates keeps at most ~12–20 kHz; 80 % of the source Nyquist halves the resampler's work. */
         const val CONVERTER_PASSBAND = 0.8
         const val BITS_PER_KILOBIT = 1_000
         const val MICROSECONDS_PER_SECOND = 1_000_000L

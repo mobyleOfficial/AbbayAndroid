@@ -1,11 +1,7 @@
 package com.mobyle.abbay.presentation.playback.command
 
-/**
- * Book-time arithmetic over the track durations of the loaded book. Pure logic, unit-tested on the JVM.
- */
-@Suppress("TooManyFunctions") // One function per book-time operation.
+@Suppress("TooManyFunctions")
 class BookNavigator(private val trackDurationsMs: List<Long>, private val chapterStartsMs: List<Long> = emptyList()) {
-    /** False when a duration is unknown; book-time seeks then stay inside the current track. */
     private val areDurationsKnown = trackDurationsMs.isNotEmpty() && trackDurationsMs.all { it > 0L }
 
     val bookDurationMs: Long = trackDurationsMs.sumOf { it.coerceAtLeast(0L) }
@@ -13,7 +9,6 @@ class BookNavigator(private val trackDurationsMs: List<Long>, private val chapte
     fun bookPositionOf(position: TrackPosition): Long =
         trackDurationsMs.take(position.trackIndex).sumOf { it.coerceAtLeast(0L) } + position.positionMs
 
-    /** The track position at [bookPositionMs], clamped to the book; the very end is the end of the last track. */
     fun positionAt(bookPositionMs: Long): TrackPosition {
         if (trackDurationsMs.isEmpty()) return TrackPosition(0, 0L)
         var remaining = bookPositionMs.coerceIn(0L, bookDurationMs)
@@ -34,28 +29,23 @@ class BookNavigator(private val trackDurationsMs: List<Long>, private val chapte
             current.copy(positionMs = (current.positionMs + deltaMs).coerceAtLeast(0L))
         }
 
-    /** The start of the next track, or null at the last track. */
     fun nextTrack(current: TrackPosition): TrackPosition? =
         if (current.trackIndex < trackDurationsMs.lastIndex) TrackPosition(current.trackIndex + 1, 0L) else null
 
-    /** More than 3 s into a track restarts it; otherwise goes to the previous track (or the start of the first). */
     fun previousTrack(current: TrackPosition): TrackPosition = when {
         current.positionMs > RESTART_THRESHOLD_MS -> TrackPosition(current.trackIndex, 0L)
         current.trackIndex > 0 -> TrackPosition(current.trackIndex - 1, 0L)
         else -> TrackPosition(0, 0L)
     }
 
-    /** Index of the chapter at [bookPositionMs]; tracks are the chapters when the book has no chapter list. */
     fun chapterIndexAt(bookPositionMs: Long): Int = chapterStarts().indexOfLast { it <= bookPositionMs }.coerceAtLeast(0)
 
-    /** The start of the next chapter, or null in the last chapter. */
     fun nextChapter(current: TrackPosition): TrackPosition? {
         val starts = chapterStarts()
         val next = starts.getOrNull(chapterIndexAt(bookPositionOf(current)) + 1) ?: return null
         return positionAt(next)
     }
 
-    /** More than 3 s into a chapter restarts it; otherwise goes to the previous chapter. */
     fun previousChapter(current: TrackPosition): TrackPosition {
         val starts = chapterStarts()
         val position = bookPositionOf(current)
@@ -64,13 +54,10 @@ class BookNavigator(private val trackDurationsMs: List<Long>, private val chapte
         return positionAt(target)
     }
 
-    /** Start of chapter [index] in book time (tracks are the chapters when the book has no chapter list). */
     fun chapterStartAt(index: Int): Long = chapterStarts().getOrElse(index) { 0L }
 
-    /** Where the chapter at [bookPositionMs] ends: the next chapter's start, or the end of the book. */
     fun chapterEndAt(bookPositionMs: Long): Long = chapterStarts().getOrNull(chapterIndexAt(bookPositionMs) + 1) ?: bookDurationMs
 
-    /** True when [bookPositionMs] is the start of a chapter (within [toleranceMs]). */
     fun isChapterStart(bookPositionMs: Long, toleranceMs: Long = CHAPTER_START_TOLERANCE_MS): Boolean =
         chapterStarts().any { kotlin.math.abs(it - bookPositionMs) <= toleranceMs }
 

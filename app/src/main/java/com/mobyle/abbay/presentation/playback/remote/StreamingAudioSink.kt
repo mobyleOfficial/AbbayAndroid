@@ -16,13 +16,6 @@ import androidx.media3.exoplayer.audio.AudioSink
 import com.google.common.collect.ImmutableList
 import java.nio.ByteBuffer
 
-/**
- * The audio sink of Cast phase 2: runs the decoded PCM through the same effects as local playback (its own
- * processor instances over the shared settings), then speed and pitch (Sonic, which the AudioTrack does locally), and
- * writes 16-bit PCM into the [ProcessedAudioStream] of [route]. The media position is where the **receiver** is:
- * each queued buffer leaves a checkpoint (output frame → presentation time), and the receiver's played frames are
- * mapped back through them.
- */
 @OptIn(UnstableApi::class)
 class StreamingAudioSink(effectProcessors: List<AudioProcessor>, private val route: AudioRoute) : AudioSink {
     private val sonic = SonicAudioProcessor()
@@ -121,8 +114,6 @@ class StreamingAudioSink(effectProcessors: List<AudioProcessor>, private val rou
     }
 
     override fun setPlaybackParameters(playbackParameters: PlaybackParameters) {
-        // Applied at the next flush: the playback service seeks to the current position when the speed changes
-        // while casting, so the receiver does not play seconds of the old speed from its buffer.
         this.playbackParameters = playbackParameters
     }
 
@@ -148,7 +139,6 @@ class StreamingAudioSink(effectProcessors: List<AudioProcessor>, private val rou
 
     override fun disableTunneling() = Unit
 
-    /** The receiver has its own volume (the Cast route). */
     override fun setVolume(volume: Float) = Unit
 
     override fun pause() {
@@ -156,7 +146,6 @@ class StreamingAudioSink(effectProcessors: List<AudioProcessor>, private val rou
         stream?.pause()
     }
 
-    /** A seek or a new start: the receiver drops its buffer and loads a new generation. */
     override fun flush() {
         applyPlaybackParameters()
         pipeline.flush()
@@ -183,7 +172,6 @@ class StreamingAudioSink(effectProcessors: List<AudioProcessor>, private val rou
         sonic.setPitch(playbackParameters.pitch)
     }
 
-    /** Writes what the pipeline has produced; true when nothing is left waiting. */
     private fun writePendingOutput(target: ProcessedAudioStream): Boolean {
         val frameBytes = (outputFormat?.channelCount ?: return true) * ProcessedAudioStream.BYTES_PER_SAMPLE
         while (true) {
@@ -204,15 +192,12 @@ class StreamingAudioSink(effectProcessors: List<AudioProcessor>, private val rou
     }
 }
 
-/** Where the service's audio goes: the device ([stream] null) or a Cast receiver through [stream]. */
 class AudioRoute {
     @Volatile
     var stream: ProcessedAudioStream? = null
 }
 
-/** Where to seek to make the player flush its audio sink without an audible jump. */
 object StreamRestart {
-    /** One millisecond after [positionMs] (one before it at the very end): ExoPlayer skips a seek to the same millisecond. */
     fun positionAfter(positionMs: Long, durationMs: Long): Long =
         if (durationMs > 0 && positionMs + 1 >= durationMs) (positionMs - 1).coerceAtLeast(0L) else positionMs + 1
 }

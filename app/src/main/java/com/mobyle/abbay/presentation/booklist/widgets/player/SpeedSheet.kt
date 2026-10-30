@@ -28,7 +28,6 @@ import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
 import kotlin.math.roundToInt
 
-/** Slider 0.5–3.5 in 0.05 steps, preset chips, ±0.05 buttons, "Set as default for new books". */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun SpeedSheet(speed: Float, onSpeedChange: (Float) -> Unit, onSetDefault: (Float) -> Unit, onDismiss: () -> Unit) {
@@ -71,17 +70,14 @@ fun SpeedSheet(speed: Float, onSpeedChange: (Float) -> Unit, onSetDefault: (Floa
     }
 }
 
-/** Speed range and steps. */
 object SpeedSteps {
     const val MINIMUM = 0.5f
     const val MAXIMUM = 3.5f
     const val STEP = 0.05f
     val PRESETS = listOf(0.8f, 1.0f, 1.2f, 1.5f, 1.75f, 2.0f, 2.5f)
 
-    /** Values between the ends of the slider: (3.5 − 0.5) / 0.05 − 1. */
     val SLIDER_STEPS = ((MAXIMUM - MINIMUM) / STEP).roundToInt() - 1
 
-    /** Rounds to the nearest 0.05 inside the range, avoiding float drift such as 1.2000001. */
     fun snap(value: Float): Float = ((value.coerceIn(MINIMUM, MAXIMUM) / STEP).roundToInt() * STEP * HUNDRED).roundToInt() / HUNDRED
 
     private const val HUNDRED = 100f

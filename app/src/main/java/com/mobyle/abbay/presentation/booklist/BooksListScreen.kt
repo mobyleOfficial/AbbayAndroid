@@ -7,30 +7,34 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.BottomSheetScaffold
 import androidx.compose.material.BottomSheetScaffoldState
 import androidx.compose.material.BottomSheetValue
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarResult
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.LibraryBooks
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Error
@@ -54,9 +58,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -90,6 +101,9 @@ import com.mobyle.abbay.presentation.booklist.widgets.player.SleepSheetSettings
 import com.mobyle.abbay.presentation.bookmarks.BookmarkNoteDialog
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.mobyle.abbay.presentation.common.theme.AbbayTextStyles
+import com.mobyle.abbay.presentation.common.theme.OverrideStatusBarColor
+import com.mobyle.abbay.presentation.common.theme.SpanishGrayColor
+import com.mobyle.abbay.presentation.common.theme.rememberCoverTint
 import com.mobyle.abbay.presentation.common.widgets.AbbayActionDialog
 import com.mobyle.abbay.presentation.common.widgets.AbbayAlertDialog
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
@@ -100,16 +114,15 @@ import com.mobyle.abbay.presentation.effects.AudioEffectsViewModel
 import com.mobyle.abbay.presentation.options.PlaybackOptionsPanel
 import com.mobyle.abbay.presentation.options.PlaybackOptionsViewModel
 import com.mobyle.abbay.presentation.utils.LaunchedEffectAndCollect
+import com.mobyle.abbay.presentation.utils.currentFraction
 import com.mobyle.abbay.presentation.utils.intermediateProgress
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
-import com.model.BookFile
 import com.model.BookState
 import com.model.Bookmark
 import com.model.MultipleBooks
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import com.mobyle.abbay.presentation.booklist.widgets.player.progressFraction as playerProgressFraction
 
 private const val UPDATE_PROGRESS_REFRESH_RATE = 3
 
@@ -128,7 +141,6 @@ fun BooksListScreen(
     val asyncScope = rememberCoroutineScope()
     val fileFilterList = arrayOf("audio/*")
 
-    // States
     val bottomSheetState = rememberBottomSheetScaffoldState()
     val booksListState by viewModel.uiState.collectAsState()
     val libraryState by viewModel.libraryState.collectAsState()
@@ -145,15 +157,13 @@ fun BooksListScreen(
     val isScreenLocked by viewModel.isScreenLocked.collectAsState()
     val shouldOpenPlayerInStartup by viewModel.shouldOpenPlayerInStartup.collectAsState()
     val hasOpenedPlayerOnStartup = remember { mutableStateOf(false) }
-    // Tablets and unfolded foldables show the library and the player side by side.
     val isWide = LocalConfiguration.current.screenWidthDp >= LIST_DETAIL_MIN_WIDTH_DP
     val playerPaneState = rememberBottomSheetScaffoldState(bottomSheetState = rememberBottomSheetState(BottomSheetValue.Expanded))
+    PlayerStatusBarColor(selectedBook?.thumbnail, bottomSheetState, isShown = !isWide && selectedBook != null)
 
-    // Expand only once the sheet has its peek height, i.e. once a book is selected.
     val canOpenPlayerOnStartup = hasBookSelected && selectedBook?.hasError == false
     LaunchedEffect(shouldOpenPlayerInStartup, canOpenPlayerOnStartup) {
         if (shouldOpenPlayerInStartup && canOpenPlayerOnStartup && !hasOpenedPlayerOnStartup.value) {
-            // The sheet recomputes its anchors after the peek height changes; expanding earlier leaves it hidden.
             repeat(2) { withFrameNanos { } }
             bottomSheetState.bottomSheetState.expand()
             hasOpenedPlayerOnStartup.value = true
@@ -166,7 +176,6 @@ fun BooksListScreen(
         }
     }
 
-    // Launchers
     val openFileSelector = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenMultipleDocuments()
     ) { filesList ->
@@ -191,7 +200,6 @@ fun BooksListScreen(
         uri?.let { viewModel.completeLegacyMigration(it.toString()) }
     }
 
-    // SideEffects
     BackHandler {
         if (!isScreenLocked) {
             asyncScope.launch {
@@ -285,7 +293,6 @@ fun BooksListScreen(
         )
     }
 
-    // "Mark as new" resets the position, so it asks first.
     var bookToMarkNew by remember { mutableStateOf<Book?>(null) }
     val markBook: (Book, BookState) -> Unit = { book, state ->
         if (state == BookState.NEW) bookToMarkNew = book else viewModel.markBook(book, state)
@@ -315,7 +322,6 @@ fun BooksListScreen(
     }
 
     val onBookClick: (Book) -> Unit = { tapped ->
-        // A finished book starts over.
         val book = if (tapped.hasError) tapped else viewModel.startingPoint(tapped)
         val startsOver = book !== tapped
         if ((selectedBook?.id != book.id || startsOver) && !book.hasError) {
@@ -480,7 +486,6 @@ fun BooksListScreen(
                                 }
                             }
 
-                            // Shown in every state: Refresh on an empty library opens it too.
                             val showReloadGuide by viewModel.showReloadGuide.collectAsState()
                             if (showReloadGuide) {
                                 AbbayActionDialog(
@@ -520,6 +525,7 @@ fun BooksListScreen(
 
                                     LibraryControls(
                                         tab = libraryState.tab,
+                                        tabs = libraryState.tabs,
                                         sortOrder = libraryState.sortOrder,
                                         sortAscending = libraryState.sortAscending,
                                         layout = libraryState.layout,
@@ -533,10 +539,12 @@ fun BooksListScreen(
                                         val progressLabelOf: (Book) -> String = { book ->
                                             progressLabel(book, selectedBook, isPlaying, currentProgress)
                                         }
+                                        val isPlayingBook: (Book) -> Boolean = { book -> isPlaying && book.id == selectedBook?.id }
 
                                         if (state.audiobookList.isEmpty()) {
                                             LibraryTabEmptyState(
                                                 tab = libraryState.tab,
+                                                visibleTabs = libraryState.tabs,
                                                 isScanning = libraryState.scanStatus.isScanning,
                                                 onShowTab = viewModel::selectTab,
                                             )
@@ -554,11 +562,10 @@ fun BooksListScreen(
                                                                 showDeleteDialog.value = true
                                                             }
                                                         ) {
-                                                            BookListRow(
+                                                            BookItem(
                                                                 book = book,
-                                                                selectedBook = selectedBook,
-                                                                currentTrackIndex = playerState.currentTrackIndex,
                                                                 progressLabel = progressLabelOf(book),
+                                                                isPlaying = isPlayingBook(book),
                                                                 onLongClick = { bookWithActions.value = book },
                                                                 onClick = { onBookClick(book) }
                                                             )
@@ -567,14 +574,15 @@ fun BooksListScreen(
                                                 }
 
                                                 LibraryLayout.GRID -> LazyVerticalGrid(
-                                                    columns = GridCells.Adaptive(minSize = 140.dp),
+                                                    columns = GridCells.Adaptive(minSize = GRID_CELL_MIN_WIDTH),
+                                                    contentPadding = PaddingValues(horizontal = 10.dp),
                                                     modifier = Modifier.fillMaxSize()
                                                 ) {
                                                     items(items = state.audiobookList, key = { book -> book.id }) { book ->
                                                         BookGridItem(
                                                             book = book,
                                                             progressLabel = progressLabelOf(book),
-                                                            progressFraction = progressFraction(book),
+                                                            isPlaying = isPlayingBook(book),
                                                             onLongClick = { bookWithActions.value = book },
                                                             onClick = { onBookClick(book) }
                                                         )
@@ -586,6 +594,7 @@ fun BooksListScreen(
                                                         BookCompactItem(
                                                             book = book,
                                                             progressLabel = progressLabelOf(book),
+                                                            isPlaying = isPlayingBook(book),
                                                             onLongClick = { bookWithActions.value = book },
                                                             onClick = { onBookClick(book) }
                                                         )
@@ -703,6 +712,21 @@ fun BooksListScreen(
 private const val LIST_DETAIL_MIN_WIDTH_DP = 840
 private val PLAYER_PANE_WIDTH = 420.dp
 
+private val GRID_CELL_MIN_WIDTH = 110.dp
+
+@Composable
+private fun PlayerStatusBarColor(thumbnail: String?, playerSheetState: BottomSheetScaffoldState, isShown: Boolean) {
+    val appBarColor = MaterialTheme.colorScheme.primary
+    val playerTint = rememberCoverTint(thumbnail)
+    OverrideStatusBarColor(
+        if (isShown) {
+            { lerp(appBarColor, playerTint, playerSheetState.currentFraction.coerceIn(0f, 1f)) }
+        } else {
+            null
+        },
+    )
+}
+
 @Composable
 private fun SwipeToRemoveBook(onSwipe: () -> Unit, content: @Composable () -> Unit) {
     val dismissState = rememberSwipeToDismissBoxState(
@@ -743,50 +767,12 @@ private fun SwipeToRemoveBook(onSwipe: () -> Unit, content: @Composable () -> Un
     )
 }
 
-@Composable
-private fun BookListRow(
-    book: Book,
-    selectedBook: Book?,
-    currentTrackIndex: Int,
-    progressLabel: String,
-    onLongClick: () -> Unit,
-    onClick: () -> Unit,
-) {
-    when (book) {
-        is MultipleBooks -> BookItem(
-            book = book,
-            currentMediaIndex = book.currentBookPosition + 1,
-            isSelected = book.id == (selectedBook as? BookFile)?.id,
-            intermediaryProgress = book.bookFileList.intermediateProgress(book.currentBookPosition),
-            progress = progressLabel,
-            onLongClick = onLongClick,
-            onClick = onClick
-        )
-
-        is BookFile -> BookItem(
-            book = book,
-            currentMediaIndex = currentTrackIndex + 1,
-            isSelected = book.id == (selectedBook as? BookFile)?.id,
-            intermediaryProgress = 0L,
-            progress = progressLabel,
-            onLongClick = onLongClick,
-            onClick = onClick
-        )
-    }
-}
-
-/** Elapsed time of [book]: live for the selected book while playing, saved otherwise. */
 private fun progressLabel(book: Book, selectedBook: Book?, isPlaying: Boolean, currentProgress: Long): String {
     val intermediaryProgress = (book as? MultipleBooks)?.bookFileList?.intermediateProgress(book.currentBookPosition) ?: 0L
     val isLive = isPlaying && book.id == selectedBook?.id
     return intermediaryProgress.plus(if (isLive) currentProgress else book.progress).toHHMMSS()
 }
 
-/** Finished books are full; a book within 30 s of its end counts as 100 %. */
-private fun progressFraction(book: Book): Float =
-    if (book.state == BookState.FINISHED) 1f else playerProgressFraction(book.bookPositionMs, book.duration)
-
-/** The picker opens at [treeUri] when the provider supports it (EXTRA_INITIAL_URI). */
 private fun documentUriOfTree(treeUri: String): Uri? = runCatching {
     val tree = Uri.parse(treeUri)
     DocumentsContract.buildDocumentUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
@@ -797,42 +783,62 @@ private fun EmptyLibrary(onAddFile: () -> Unit, onAddFolder: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.primary),
+            .background(MaterialTheme.colorScheme.primary)
+            .padding(horizontal = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
     ) {
-        Button(
-            onClick = onAddFile,
-            colors = ButtonDefaults.buttonColors(
-                backgroundColor = MaterialTheme.colorScheme.secondary,
-            )
-        ) {
-            Text(
-                stringResource(R.string.no_book_selected_primary_button_title),
-                style = AbbayTextStyles.buttonTextLarge
-                    .copy(color = MaterialTheme.colorScheme.primary)
-            )
-        }
-
-        Text(
-            stringResource(R.string.no_book_selected_or),
-            style = AbbayTextStyles.subtitleText
+        Icon(
+            Icons.AutoMirrored.Outlined.LibraryBooks,
+            contentDescription = null,
+            tint = SpanishGrayColor,
+            modifier = Modifier.size(64.dp),
         )
-
-        Button(
+        Text(
+            stringResource(R.string.library_empty_all_title),
+            style = MaterialTheme.typography.titleLarge,
+            color = AbbayColors.content,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.semantics { heading() },
+        )
+        Text(
+            stringResource(R.string.library_empty_all_body),
+            style = MaterialTheme.typography.bodyMedium,
+            color = AbbayColors.content.copy(alpha = EMPTY_BODY_ALPHA),
+            textAlign = TextAlign.Center,
+        )
+        CapsuleButton(
+            text = stringResource(R.string.no_book_selected_primary_button_title),
+            container = MaterialTheme.colorScheme.tertiary,
+            content = MaterialTheme.colorScheme.onTertiary,
+            onClick = onAddFile,
+            modifier = Modifier.padding(top = 12.dp),
+        )
+        CapsuleButton(
+            text = stringResource(R.string.no_book_selected_secondary_button_title),
+            container = AbbayColors.content.copy(alpha = SECONDARY_BUTTON_ALPHA),
+            content = AbbayColors.content,
             onClick = onAddFolder,
-            colors = ButtonDefaults.buttonColors(
-                backgroundColor = MaterialTheme.colorScheme.secondary,
-            )
-        ) {
-            Text(
-                text = stringResource(R.string.no_book_selected_secondary_button_title),
-                style = AbbayTextStyles.buttonTextLarge
-                    .copy(color = MaterialTheme.colorScheme.primary)
-            )
-        }
+        )
     }
 }
+
+@Composable
+private fun CapsuleButton(text: String, container: Color, content: Color, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Text(
+        text,
+        style = AbbayTextStyles.buttonTextLarge.copy(color = content, fontWeight = FontWeight.SemiBold),
+        modifier = modifier
+            .heightIn(min = 48.dp)
+            .clip(CircleShape)
+            .background(container)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 28.dp, vertical = 14.dp),
+    )
+}
+
+private const val EMPTY_BODY_ALPHA = 0.75f
+private const val SECONDARY_BUTTON_ALPHA = 0.12f
 
 @Composable
 private fun FileNotFoundDialog(showErrorDialog: MutableState<Boolean>, onShown: () -> Unit, onDismiss: () -> Unit) {

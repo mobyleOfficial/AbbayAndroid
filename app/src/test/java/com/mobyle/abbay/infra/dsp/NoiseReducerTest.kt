@@ -6,7 +6,6 @@ import org.junit.Test
 import kotlin.random.Random
 
 class NoiseReducerTest {
-    /** Stands in for RNNoise: passes audio through, one frame late, like the real one. */
     private class DelayingDenoiser(private val gain: Float = 1f) : FrameDenoiser {
         override val frameSize = 480
         private val previous = FloatArray(frameSize)
@@ -25,7 +24,6 @@ class NoiseReducerTest {
         assertEquals(960, reducer.latencyFrames)
         val input = Signals.sine(440.0, 1.0, 0.5f, channels = 2)
         val output = runInChunks(reducer, input, channels = 2, seed = 1)
-        // Wet and dry are the same signal here, so a correct alignment gives the input back, delayed.
         for (frame in 2_000 until 40_000) {
             assertEquals(input[(frame - 960) * 2].toDouble(), output[frame * 2].toDouble(), 1e-5)
         }
@@ -51,7 +49,6 @@ class NoiseReducerTest {
 
     @Test
     fun strengthMixesTheDenoisedSignalWithTheOriginal() {
-        // A denoiser that silences everything shows the dry share directly.
         val reducer = NoiseReducer(48_000, 1, { DelayingDenoiser(gain = 0f) }).apply { setWet(0.75f, immediately = true) }
         val input = FloatArray(48_000) { 0.4f }
         val output = runInChunks(reducer, input, channels = 1, seed = 3)

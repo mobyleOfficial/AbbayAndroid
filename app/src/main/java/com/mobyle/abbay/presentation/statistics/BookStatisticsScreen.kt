@@ -21,7 +21,6 @@ import com.mobyle.abbay.presentation.common.widgets.AbbayScreen
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
 import java.util.Locale
 
-/** One book's statistics, with a way to the global screen. */
 @Composable
 fun BookStatisticsScreen(viewModel: BookStatisticsViewModel = hiltViewModel(), onOpenAll: (() -> Unit)?, close: () -> Unit) {
     val book by viewModel.book.collectAsState()

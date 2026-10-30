@@ -23,7 +23,6 @@ class SearchBooksTest {
 
     @Test
     fun titleMatchesComeBeforeAuthorAndNarratorMatches() {
-        // "Cort" starts a word of title 1 and of the narrator of 2.
         assertEquals(listOf("1", "2"), search(books, "cort").map { it.id })
     }
 

@@ -11,10 +11,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.random.Random
 
-/**
- * Processing time of noise reduction relative to real time (budget ≤ 8 % of a core at 1×). Logs the shares of
- * RNNoise and of the resamplers.
- */
 @RunWith(AndroidJUnit4::class)
 class NoiseReductionCostTest {
     private val seconds = 20

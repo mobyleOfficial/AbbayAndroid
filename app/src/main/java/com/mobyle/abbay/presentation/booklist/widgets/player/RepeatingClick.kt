@@ -14,10 +14,6 @@ import androidx.compose.ui.semantics.semantics
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/**
- * A tap runs [onClick] once; holding runs it when the press becomes a long press and then every 500 ms
- *.
- */
 fun Modifier.repeatingClick(label: String, onClick: () -> Unit): Modifier = composed {
     val currentOnClick = rememberUpdatedState(onClick)
     val scope = rememberCoroutineScope()
@@ -42,7 +38,6 @@ fun Modifier.repeatingClick(label: String, onClick: () -> Unit): Modifier = comp
                 tryAwaitRelease()
                 repeater.cancel()
             },
-            // A long press is handled by the repeater; declaring it keeps the release from also counting as a tap.
             onLongPress = {},
             onTap = { currentOnClick.value() },
         )

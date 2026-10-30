@@ -7,23 +7,12 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-/**
- * Cast phase 2: the book's audio after the effects chain, as a live
- * 16-bit PCM WAV stream. The playback thread writes into it (`StreamingAudioSink`), the Cast server reads it for the
- * receiver, and the Cast bridge reports where the receiver is.
- *
- * Every flush (a seek, a speed change, the start) begins a new **generation**: the receiver drops what it buffered and
- * reloads `live/<generation>`. Writing never blocks: when the buffer is full the writer is told so and tries again later,
- * which paces decoding to the receiver's reading.
- */
 class ProcessedAudioStream(private val capacityBytes: Int = DEFAULT_CAPACITY_BYTES) {
-    /** What the stream asks of the Cast side; called on the playback thread. */
     interface Listener {
         fun onPlay()
 
         fun onPause()
 
-        /** Generation [generation] begins: load it on the receiver. */
         fun onNewGeneration(generation: Int)
     }
 
@@ -52,7 +41,6 @@ class ProcessedAudioStream(private val capacityBytes: Int = DEFAULT_CAPACITY_BYT
     @Volatile
     private var receiver = ReceiverPosition(generation = -1, positionMs = 0L, isPlaying = false, atNanos = 0L)
 
-    /** Starts generation `n + 1` with [sampleRateHz] / [channelCount] 16-bit PCM; returns its number. */
     fun beginGeneration(sampleRateHz: Int, channelCount: Int): Int {
         val next = lock.withLock {
             generation += 1
@@ -67,7 +55,6 @@ class ProcessedAudioStream(private val capacityBytes: Int = DEFAULT_CAPACITY_BYT
         return next
     }
 
-    /** Copies as much of [data] as fits (whole frames only); returns the number of bytes taken. */
     fun write(data: ByteBuffer): Int = lock.withLock {
         val frameBytes = (channelCount * BYTES_PER_SAMPLE).coerceAtLeast(1)
         val free = capacityBytes - (writePosition - readPosition).toInt()
@@ -78,10 +65,8 @@ class ProcessedAudioStream(private val capacityBytes: Int = DEFAULT_CAPACITY_BYT
         count
     }
 
-    /** Bytes written to the current generation and not yet read by the receiver. */
     val bufferedBytes: Int get() = lock.withLock { (writePosition - readPosition).toInt() }
 
-    /** The WAV header of [generation], or null when it is not the current one. */
     fun header(generation: Int): ByteArray? = if (generation != this.generation ||
         sampleRateHz == 0
     ) {
@@ -90,22 +75,16 @@ class ProcessedAudioStream(private val capacityBytes: Int = DEFAULT_CAPACITY_BYT
         wavHeader(sampleRateHz, channelCount)
     }
 
-    /**
-     * The PCM of [generation] for the receiver, from where the previous reader stopped. It ends when a newer
-     * generation begins or the stream closes.
-     */
     fun open(generation: Int): InputStream? = if (generation != this.generation) null else Reader(generation)
 
     fun play() = listener?.onPlay()
 
     fun pause() = listener?.onPause()
 
-    /** The receiver's position in [generation] (its playback time since the stream began), from the Cast bridge. */
     fun updateReceiver(generation: Int, positionMs: Long, isPlaying: Boolean, atNanos: Long = System.nanoTime()) {
         receiver = ReceiverPosition(generation, positionMs, isPlaying, atNanos)
     }
 
-    /** Frames of the current generation the receiver has played, or null until it reports on it. */
     fun playedFrames(nowNanos: Long = System.nanoTime()): Long? {
         val current = receiver
         if (current.generation != generation || sampleRateHz == 0) return null
@@ -140,7 +119,6 @@ class ProcessedAudioStream(private val capacityBytes: Int = DEFAULT_CAPACITY_BYT
     private class ReceiverPosition(val generation: Int, val positionMs: Long, val isPlaying: Boolean, val atNanos: Long)
 
     companion object {
-        /** About 2.7 s of 48 kHz stereo: the receiver buffers ahead itself. */
         const val DEFAULT_CAPACITY_BYTES = 512 * 1024
         const val BYTES_PER_SAMPLE = 2
         const val MIME_TYPE = "audio/wav"
@@ -152,7 +130,6 @@ class ProcessedAudioStream(private val capacityBytes: Int = DEFAULT_CAPACITY_BYT
         private const val FORMAT_PCM: Short = 1
         private const val BITS_PER_SAMPLE: Short = 16
 
-        /** Unknown length: the RIFF and data sizes are the largest values, as live WAV streams do. */
         private const val UNKNOWN_SIZE = -1
 
         fun wavHeader(sampleRateHz: Int, channelCount: Int): ByteArray =

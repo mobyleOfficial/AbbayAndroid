@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
-@Suppress("TooManyFunctions") // Settings plus the per-book subtitle charset and the legacy values.
+@Suppress("TooManyFunctions")
 class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Preferences>) {
     fun observeSettings(): Flow<AppSettings> = dataStore.data.map(::toAppSettings)
 
@@ -73,7 +73,6 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
         }
     }
 
-    /** The charset chosen for a book's subtitle files, or null. */
     suspend fun subtitleCharset(bookId: Long): String? = dataStore.data.first()[SettingsKeys.subtitleCharset(bookId)]
 
     suspend fun setSubtitleCharset(bookId: Long, charset: String?) {
@@ -156,7 +155,6 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
         ).withDisplaySettings(preferences)
     }
 
-    /** The settings added with the Phase 10 settings tree. */
     private fun writeDisplaySettings(preferences: MutablePreferences, updated: AppSettings) {
         preferences[SettingsKeys.rescanOnStart] = updated.rescanOnStart.name
         preferences[SettingsKeys.skipButtonsInNotification] = updated.skipButtonsInNotification.name
@@ -167,6 +165,8 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
         preferences[SettingsKeys.hiddenQuickActions] = updated.hiddenQuickActions.mapTo(mutableSetOf()) { it.name }
         preferences[SettingsKeys.language] = updated.language.name
         preferences[SettingsKeys.castProcessedAudio] = updated.castProcessedAudio
+        preferences[SettingsKeys.libraryTabOrder] = updated.libraryTabOrder.joinToString(TAB_SEPARATOR) { it.name }
+        preferences[SettingsKeys.hiddenLibraryTabs] = updated.hiddenLibraryTabs.mapTo(mutableSetOf()) { it.name }
     }
 
     private fun AppSettings.withDisplaySettings(preferences: Preferences): AppSettings = copy(
@@ -180,6 +180,11 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
             .mapNotNullTo(mutableSetOf()) { name -> QuickAction.entries.firstOrNull { it.name == name } },
         language = enumOrDefault(preferences[SettingsKeys.language], language),
         castProcessedAudio = preferences.valueOr(SettingsKeys.castProcessedAudio, castProcessedAudio),
+        libraryTabOrder = preferences[SettingsKeys.libraryTabOrder]?.split(TAB_SEPARATOR)
+            ?.mapNotNull { name -> LibraryTab.entries.firstOrNull { it.name == name } }
+            ?: libraryTabOrder,
+        hiddenLibraryTabs = preferences[SettingsKeys.hiddenLibraryTabs].orEmpty()
+            .mapNotNullTo(mutableSetOf()) { name -> LibraryTab.entries.firstOrNull { it.name == name } },
     )
 
     private inline fun <reified T : Enum<T>> enumOrDefault(name: String?, default: T): T =
@@ -187,3 +192,5 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
 
     private fun <T> Preferences.valueOr(key: Preferences.Key<T>, default: T): T = this[key] ?: default
 }
+
+private const val TAB_SEPARATOR = ","

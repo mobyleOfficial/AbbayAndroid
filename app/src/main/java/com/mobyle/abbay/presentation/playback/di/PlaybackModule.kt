@@ -17,7 +17,6 @@ abstract class PlaybackModule {
     @Binds
     abstract fun bindPlayerController(implementation: PlayerControllerImpl): PlayerController
 
-    /** Bound by `:cast` when it is part of the build. */
     @BindsOptionalOf
     abstract fun optionalRemotePlayback(): RemotePlaybackBridge
 

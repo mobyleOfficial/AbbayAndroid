@@ -35,10 +35,6 @@ import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.mobyle.abbay.presentation.common.widgets.AbbayScreen
 import com.subtitles.SubtitleLine
 
-/**
- * Subtitles or lyrics of the playing track: the current line stands out,
- * the others are dimmed; tapping a line seeks to it. The list follows playback except for 5 s after the user scrolls.
- */
 @Composable
 fun TextPaneScreen(viewModel: TextPaneViewModel = hiltViewModel(), close: () -> Unit) {
     val state by viewModel.state.collectAsState()
@@ -93,7 +89,6 @@ private fun Lines(lines: List<SubtitleLine>, currentIndex: Int, onSeek: (Long) -
     }
 }
 
-/** Keeps the current line in view unless the user scrolled in the last 5 s. */
 @Composable
 private fun FollowPlayback(listState: LazyListState, currentIndex: Int, isFollowing: () -> Boolean) {
     LaunchedEffect(currentIndex) {

@@ -15,14 +15,12 @@ import com.settings.NotificationSkipButtons
 import com.settings.QuickAction
 import com.settings.RescanOnStart
 
-/** Settings → Library preferences: default tab, layout, rescan on start, missing books. */
 @Composable
 internal fun LibraryPreferenceSettings(settings: AppSettings, change: ((AppSettings) -> AppSettings) -> Unit) {
     Column {
         ChoiceSetting(
             label = stringResource(R.string.settings_default_tab),
-            // null = the automatic tab (In progress when something is in progress, else New).
-            options = listOf<LibraryTab?>(null) + LibraryTab.entries,
+            options = listOf<LibraryTab?>(null) + settings.visibleLibraryTabs,
             selected = settings.libraryTab,
             optionLabel = { tab -> stringResource(tab?.labelResource() ?: R.string.settings_tab_automatic) },
             onSelect = { tab -> change { it.copy(libraryTab = tab) } },
@@ -48,10 +46,10 @@ internal fun LibraryPreferenceSettings(settings: AppSettings, change: ((AppSetti
             optionLabel = { days -> pluralStringResource(R.plurals.settings_days, days, days) },
             onSelect = { days -> change { it.copy(missingBookRetentionDays = days) } },
         )
+        LibraryTabSettings(settings, change)
     }
 }
 
-/** Settings → Playback: default speed, skip sizes, auto-stop and the notification's side buttons. */
 @Composable
 internal fun SkipAndSpeedSettings(settings: AppSettings, change: ((AppSettings) -> AppSettings) -> Unit) {
     Column {
@@ -78,7 +76,6 @@ internal fun SkipAndSpeedSettings(settings: AppSettings, change: ((AppSettings) 
             label = stringResource(R.string.settings_auto_stop),
             options = AUTO_STOP_MINUTES,
             selected = settings.autoStopAfterPauseMinutes,
-            // 0 = never stop (PauseTimeout).
             optionLabel = { minutes ->
                 if (minutes == 0) stringResource(R.string.settings_never) else stringResource(R.string.sleep_minutes, minutes)
             },
@@ -94,7 +91,6 @@ internal fun SkipAndSpeedSettings(settings: AppSettings, change: ((AppSettings) 
     }
 }
 
-/** Settings → Controls: which quick actions the player shows. */
 @Composable
 internal fun QuickActionSettings(settings: AppSettings, change: ((AppSettings) -> AppSettings) -> Unit) {
     Column {
