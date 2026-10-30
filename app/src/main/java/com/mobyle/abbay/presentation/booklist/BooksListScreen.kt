@@ -60,6 +60,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -100,7 +101,9 @@ import com.mobyle.abbay.presentation.booklist.widgets.player.SleepSheetSettings
 import com.mobyle.abbay.presentation.bookmarks.BookmarkNoteDialog
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.mobyle.abbay.presentation.common.theme.AbbayTextStyles
+import com.mobyle.abbay.presentation.common.theme.OverrideStatusBarColor
 import com.mobyle.abbay.presentation.common.theme.SpanishGrayColor
+import com.mobyle.abbay.presentation.common.theme.rememberCoverTint
 import com.mobyle.abbay.presentation.common.widgets.AbbayActionDialog
 import com.mobyle.abbay.presentation.common.widgets.AbbayAlertDialog
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
@@ -111,6 +114,7 @@ import com.mobyle.abbay.presentation.effects.AudioEffectsViewModel
 import com.mobyle.abbay.presentation.options.PlaybackOptionsPanel
 import com.mobyle.abbay.presentation.options.PlaybackOptionsViewModel
 import com.mobyle.abbay.presentation.utils.LaunchedEffectAndCollect
+import com.mobyle.abbay.presentation.utils.currentFraction
 import com.mobyle.abbay.presentation.utils.intermediateProgress
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
@@ -157,6 +161,7 @@ fun BooksListScreen(
     // Tablets and unfolded foldables show the library and the player side by side.
     val isWide = LocalConfiguration.current.screenWidthDp >= LIST_DETAIL_MIN_WIDTH_DP
     val playerPaneState = rememberBottomSheetScaffoldState(bottomSheetState = rememberBottomSheetState(BottomSheetValue.Expanded))
+    PlayerStatusBarColor(selectedBook?.thumbnail, bottomSheetState, isShown = !isWide && selectedBook != null)
 
     // Expand only once the sheet has its peek height, i.e. once a book is selected.
     val canOpenPlayerOnStartup = hasBookSelected && selectedBook?.hasError == false
@@ -718,6 +723,20 @@ private val PLAYER_PANE_WIDTH = 420.dp
 
 /** About three covers across a phone, as AbbayiOS's library grid. */
 private val GRID_CELL_MIN_WIDTH = 110.dp
+
+/** The open player reaches the status bar: it takes the player's flat top, the cover's tint, as the player opens. */
+@Composable
+private fun PlayerStatusBarColor(thumbnail: String?, playerSheetState: BottomSheetScaffoldState, isShown: Boolean) {
+    val appBarColor = MaterialTheme.colorScheme.primary
+    val playerTint = rememberCoverTint(thumbnail)
+    OverrideStatusBarColor(
+        if (isShown) {
+            { lerp(appBarColor, playerTint, playerSheetState.currentFraction.coerceIn(0f, 1f)) }
+        } else {
+            null
+        },
+    )
+}
 
 @Composable
 private fun SwipeToRemoveBook(onSwipe: () -> Unit, content: @Composable () -> Unit) {

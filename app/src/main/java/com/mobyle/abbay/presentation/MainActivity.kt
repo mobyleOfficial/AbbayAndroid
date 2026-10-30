@@ -10,7 +10,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -26,6 +25,7 @@ import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
@@ -39,7 +39,10 @@ import com.mobyle.abbay.infra.common.ChargingScreenKeeper
 import com.mobyle.abbay.infra.language.AppLanguageStore
 import com.mobyle.abbay.infra.navigation.AbbayNavHost
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel
+import com.mobyle.abbay.presentation.common.theme.LocalStatusBarColor
 import com.mobyle.abbay.presentation.common.theme.MyApplicationTheme
+import com.mobyle.abbay.presentation.common.theme.StatusBarColor
+import com.mobyle.abbay.presentation.common.theme.statusBarBackground
 import com.model.DataResult
 import com.player.PlayerController
 import com.settings.AppSettings
@@ -106,28 +109,36 @@ class MainActivity : ComponentActivity() {
             MyApplicationTheme(themeMode = appSettings.value.themeMode, dynamicColor = appSettings.value.dynamicColor) {
                 // The app draws behind the system bars: Android 15+ ignores window.statusBarColor, and the window
                 // background behind the bars follows the system's dark mode, not the app's theme. The status bar
-                // gets the app bars' color (surface), the navigation bar the app's background; only the content is inset.
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.primary) {
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .windowInsetsTopHeight(WindowInsets.statusBars)
-                                .background(MaterialTheme.colorScheme.surface)
-                        )
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
-                                // The status bar space is above; app bars must not add it again.
-                                .consumeWindowInsets(WindowInsets.statusBars)
-                                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
-                        ) {
-                            if (playerState.value.isConnected) {
-                                AbbayNavHost(
-                                    viewModel = booksViewModel,
-                                    navController = navController
-                                )
+                // follows the app bars (or the open player), the navigation bar the app's background; only the
+                // content is inset.
+                val statusBarColor = remember { StatusBarColor() }
+                CompositionLocalProvider(LocalStatusBarColor provides statusBarColor) {
+                    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.primary) {
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .windowInsetsTopHeight(WindowInsets.statusBars)
+                                    .statusBarBackground(statusBarColor)
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
+                                    // The status bar space is above; app bars must not add it again.
+                                    .consumeWindowInsets(WindowInsets.statusBars)
+                                    .windowInsetsPadding(
+                                        WindowInsets.systemBars.only(
+                                            WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
+                                        )
+                                    )
+                            ) {
+                                if (playerState.value.isConnected) {
+                                    AbbayNavHost(
+                                        viewModel = booksViewModel,
+                                        navController = navController
+                                    )
+                                }
                             }
                         }
                     }
