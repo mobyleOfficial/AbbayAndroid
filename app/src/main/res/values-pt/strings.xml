@@ -111,6 +111,8 @@
     <string name="player_play">Tocar</string>
     <string name="player_pause">Pausar</string>
     <string name="player_collapse">Recolher player</string>
+    <string name="player_close">Fechar player</string>
+    <string name="player_expand">Abrir player</string>
     <string name="player_lock">Travar tela</string>
     <string name="player_unlock">Destravar tela</string>
     <string name="player_more">Mais opções</string>

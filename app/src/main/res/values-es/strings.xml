@@ -111,6 +111,8 @@
     <string name="player_play">Reproducir</string>
     <string name="player_pause">Pausa</string>
     <string name="player_collapse">Contraer reproductor</string>
+    <string name="player_close">Cerrar reproductor</string>
+    <string name="player_expand">Abrir reproductor</string>
     <string name="player_lock">Bloquear pantalla</string>
     <string name="player_unlock">Desbloquear pantalla</string>
     <string name="player_more">Más opciones</string>

@@ -67,13 +67,16 @@ fun MiniPlayer(
     effects: AudioEffectsPanel = AudioEffectsPanel(),
     options: PlaybackOptionsPanel = PlaybackOptionsPanel(),
     display: PlayerDisplay = PlayerDisplay(),
+    chapters: ChaptersToggle? = null,
+    onClose: (() -> Unit)? = null,
+    onExpand: () -> Unit = {},
 ) {
     val fraction = scaffoldState.currentFraction.coerceIn(0f, 1f)
     val isExpanded = fraction == 1f
     val position = PlayerPosition.of(book)
     val playerIcon = playingStateOf(playerState, isAwaitingPlayback)
     val tint = rememberCoverTint(book.thumbnail)
-    val chapters = rememberChaptersToggle(isExpanded)
+    val chapterToggle = chaptersToggleOf(chapters, rememberChaptersToggle(isExpanded), isSheet = onClose == null, isExpanded)
     PlayerEffects(book, playerState, actions)
 
     MotionLayout(
@@ -87,6 +90,7 @@ fun MiniPlayer(
             playerIcon = playerIcon,
             isScreenLocked = isScreenLocked,
             onPlayButtonClick = { actions.onPlayButtonClick(book.progress) },
+            onClick = onExpand,
             modifier = Modifier.fillMaxWidth().layoutId(LayoutId.MINI_PLAYER.id),
         )
 
@@ -97,7 +101,7 @@ fun MiniPlayer(
             skips = skips,
             actions = actions,
             modifier = Modifier.fillMaxWidth().layoutId(LayoutId.CONTENT.id).padding(controlsPadding),
-            chapters = chapters,
+            chapters = chapterToggle,
             sleepTimer = playerState.sleepTimer,
             sleepSettings = sleepSettings,
             effects = effects,
@@ -118,6 +122,7 @@ fun MiniPlayer(
             isScreenLocked = isScreenLocked,
             actions = actions,
             scaffoldState = scaffoldState,
+            onClose = onClose,
             modifier = Modifier.fillMaxWidth().layoutId(LayoutId.TOP_CONTENT.id),
         )
 
@@ -128,7 +133,7 @@ fun MiniPlayer(
         )
     }
 
-    if (chapters.isOpen) PlayerChaptersSheet(book, position, chapters, actions)
+    if (onClose == null && chapterToggle.isOpen) PlayerChaptersSheet(book, position, chapterToggle, actions)
 }
 
 @Composable
@@ -147,11 +152,18 @@ private fun PlayerChaptersSheet(book: Book, position: PlayerPosition, chapters: 
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-private fun ExpandedTopBar(isScreenLocked: Boolean, actions: PlayerActions, scaffoldState: BottomSheetScaffoldState, modifier: Modifier) {
+private fun ExpandedTopBar(
+    isScreenLocked: Boolean,
+    actions: PlayerActions,
+    scaffoldState: BottomSheetScaffoldState,
+    onClose: (() -> Unit)?,
+    modifier: Modifier,
+) {
     val scope = rememberCoroutineScope()
+    val collapse: () -> Unit = { scope.launch { scaffoldState.bottomSheetState.collapse() } }
     PlayerTopBar(
         isScreenLocked = isScreenLocked,
-        onCollapse = { scope.launch { scaffoldState.bottomSheetState.collapse() } },
+        onCollapse = onClose ?: collapse,
         onLockToggle = actions.onLockScreen,
         onOpenDetails = actions.onOpenDetails,
         onMarkFinished = actions.onMarkFinished,
@@ -161,6 +173,7 @@ private fun ExpandedTopBar(isScreenLocked: Boolean, actions: PlayerActions, scaf
         onOpenHistory = actions.onOpenHistory,
         extraMenu = PlayerMenuExtras(actions.onOpenCharacters, actions.onOpenStatistics, actions.onOpenBookText, actions.onOpenText),
         routeButton = actions.routeButton,
+        isPane = onClose != null,
     )
 }
 
@@ -213,6 +226,13 @@ private fun rememberChaptersToggle(isExpanded: Boolean): ChaptersToggle {
     var isOpen by remember { mutableStateOf(false) }
     LaunchedEffect(isExpanded) { if (!isExpanded) isOpen = false }
     return ChaptersToggle(isOpen = isOpen && isExpanded, onToggle = { isOpen = !isOpen }, onClose = { isOpen = false })
+}
+
+/** Hoisted when given (the chapters can be a pane beside a player pane); in a sheet, open only while the player is expanded. */
+private fun chaptersToggleOf(hoisted: ChaptersToggle?, own: ChaptersToggle, isSheet: Boolean, isExpanded: Boolean): ChaptersToggle = when {
+    hoisted == null -> own
+    isSheet && !isExpanded -> ChaptersToggle(isOpen = false, onToggle = hoisted.onToggle, onClose = hoisted.onClose)
+    else -> hoisted
 }
 
 @OptIn(ExperimentalFoundationApi::class)

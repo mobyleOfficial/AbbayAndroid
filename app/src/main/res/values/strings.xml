@@ -110,6 +110,8 @@
     <string name="player_play">Play</string>
     <string name="player_pause">Pause</string>
     <string name="player_collapse">Collapse player</string>
+    <string name="player_close">Close player</string>
+    <string name="player_expand">Open player</string>
     <string name="player_lock">Lock screen</string>
     <string name="player_unlock">Unlock screen</string>
     <string name="player_more">More options</string>
