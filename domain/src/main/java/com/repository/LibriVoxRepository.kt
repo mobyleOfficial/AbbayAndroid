@@ -26,5 +26,7 @@ interface LibriVoxRepository {
 
     suspend fun removeDownload(bookId: String)
 
+    suspend fun repairMissingFiles(bookId: String): Boolean
+
     fun networkStatus(): NetworkStatus
 }

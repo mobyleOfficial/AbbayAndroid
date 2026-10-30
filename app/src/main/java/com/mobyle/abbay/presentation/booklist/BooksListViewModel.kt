@@ -39,6 +39,7 @@ import com.usecase.OpenExternalFile
 import com.usecase.PrepareLegacyFolderMigration
 import com.usecase.RefreshLibrary
 import com.usecase.RefreshLibraryOnStart
+import com.usecase.RepairLibriVoxBook
 import com.usecase.RequestFullScan
 import com.usecase.SaveListeningState
 import com.usecase.SetBookState
@@ -88,13 +89,14 @@ class BooksListViewModel @Inject constructor(
     private val updateBookmarkNote: UpdateBookmarkNote,
     private val getLastBook: GetLastBook,
     private val openExternalFile: OpenExternalFile,
-    observeBooks: ObserveBooks,
+    private val observeBooks: ObserveBooks,
     observeLibraryRoots: ObserveLibraryRoots,
     observeScanStatus: ObserveScanStatus,
     observeAppSettings: ObserveAppSettings,
     private val addToQueue: AddToQueue,
     private val getOpusEncoder: GetOpusEncoder,
     observeLibriVoxDownloads: ObserveLibriVoxDownloads,
+    private val repairLibriVoxBook: RepairLibriVoxBook,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<BooksListUiState>(BooksListUiState.Loading)
     val uiState: StateFlow<BooksListUiState> get() = _uiState
@@ -270,15 +272,8 @@ class BooksListViewModel @Inject constructor(
                 is PlayerError.TrackSkipped -> _skippedTrackMessages.tryEmit(error.fileName)
                 PlayerError.NoiseReductionTooSlow -> _noiseReductionTurnedOff.tryEmit(Unit)
                 PlayerError.NetworkUnavailable -> _networkUnavailable.tryEmit(Unit)
-                PlayerError.BookUnplayable, PlayerError.StorageUnavailable -> {
-                    selectedBook.value?.let { book ->
-                        playerController.stop()
-                        markBookAsError(book)
-                    }
-                    updateIsScreenLocked(false)
-                    _collapsePlayerEvents.tryEmit(Unit)
-                    if (error == PlayerError.StorageUnavailable) viewModelScope.launch { refreshLibrary() }
-                }
+                PlayerError.BookUnplayable -> failPlayback(error)
+                PlayerError.StorageUnavailable -> viewModelScope.launch { streamMissingFilesOrFail() }
             }
         }.launchIn(viewModelScope)
 
@@ -306,6 +301,29 @@ class BooksListViewModel @Inject constructor(
         playerController.stop()
         selectBook(null, null)
         _collapsePlayerEvents.tryEmit(Unit)
+    }
+
+    private suspend fun streamMissingFilesOrFail() {
+        val book = selectedBook.value
+        val positionMs = if (playerController.state.value.trackCount > 0) playerController.bookPositionMs() else book?.bookPositionMs
+        val repaired = book != null && repairLibriVoxBook(book.id)
+        val streamable = if (repaired) observeBooks().first().firstOrNull { it.id == book?.id } else null
+        if (streamable == null || positionMs == null) {
+            failPlayback(PlayerError.StorageUnavailable)
+            return
+        }
+        playerController.openBook(streamable, playWhenReady = true)
+        playerController.seekToBookPosition(positionMs)
+    }
+
+    private fun failPlayback(error: PlayerError) {
+        selectedBook.value?.let { book ->
+            playerController.stop()
+            markBookAsError(book)
+        }
+        updateIsScreenLocked(false)
+        _collapsePlayerEvents.tryEmit(Unit)
+        if (error == PlayerError.StorageUnavailable) viewModelScope.launch { refreshLibrary() }
     }
 
     fun openBook(book: Book) {

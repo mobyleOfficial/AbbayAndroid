@@ -26,11 +26,12 @@ class LibriVoxFiles @Inject constructor(@ApplicationContext context: Context, pr
         root.deleteRecursively()
     }
 
-    suspend fun restoreMissingFiles() {
-        dao.getLibriVoxBooks()
-            .flatMap { book -> dao.getTracks(book.id) }
-            .filter { track -> isLocal(track.documentUri) && !existsLocally(track.documentUri) }
-            .forEach { track -> track.remoteUrl?.let { dao.updateTrackUri(track.id, it) } }
+    suspend fun restoreMissingFiles(bookId: Long): Boolean {
+        val missing = dao.getTracks(bookId).filter { track ->
+            track.remoteUrl != null && isLocal(track.documentUri) && !existsLocally(track.documentUri)
+        }
+        missing.forEach { track -> track.remoteUrl?.let { dao.updateTrackUri(track.id, it) } }
+        return missing.isNotEmpty()
     }
 
     private fun existsLocally(documentUri: String) = Uri.parse(documentUri).path?.let { File(it).exists() } == true

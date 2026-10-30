@@ -25,6 +25,7 @@ class FakeLibriVoxRepository(
     val paused = mutableListOf<String>()
     val removed = mutableListOf<String>()
     var popularCalls = 0
+    var repairs = mutableSetOf<String>()
 
     override suspend fun popular(): DataResult<List<LibriVoxBook>> = popularResult.also { popularCalls++ }
 
@@ -50,6 +51,8 @@ class FakeLibriVoxRepository(
     override suspend fun pauseDownload(bookId: String) {
         paused += bookId
     }
+
+    override suspend fun repairMissingFiles(bookId: String): Boolean = bookId in repairs
 
     override suspend fun removeDownload(bookId: String) {
         removed += bookId

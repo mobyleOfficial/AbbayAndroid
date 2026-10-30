@@ -3,6 +3,7 @@ package com.mobyle.abbay.data.librivox
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import androidx.work.ExistingWorkPolicy
 import com.mobyle.abbay.data.database.dao.BookWithDetails
 import com.mobyle.abbay.data.database.dao.LibraryDao
 import com.mobyle.abbay.data.database.entity.BookEntity
@@ -92,7 +93,7 @@ class LibriVoxRepositoryImpl @Inject constructor(
             librivoxDownload = LibriVoxDownloadMode.ACTIVE.name,
         )
         val bookId = dao.insertBookWithTracks(entity, tracksOf(book))
-        scheduler.enqueue(bookId, allowsCellular, replace = false)
+        scheduler.enqueue(bookId, allowsCellular, ExistingWorkPolicy.KEEP)
         DataResult.Success(bookId.toString())
     }
 
@@ -102,6 +103,10 @@ class LibriVoxRepositoryImpl @Inject constructor(
 
     override suspend fun pauseDownload(bookId: String) {
         bookId.toLongOrNull()?.let { control.pause(it) }
+    }
+
+    override suspend fun repairMissingFiles(bookId: String): Boolean = withContext(Dispatchers.IO) {
+        bookId.toLongOrNull()?.let { control.repair(it) } == true
     }
 
     override suspend fun removeDownload(bookId: String) {

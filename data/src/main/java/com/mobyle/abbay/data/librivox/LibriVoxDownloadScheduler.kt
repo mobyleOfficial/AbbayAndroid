@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class LibriVoxDownloadScheduler @Inject constructor(@ApplicationContext private val context: Context) {
-    fun enqueue(bookId: Long, allowsCellular: Boolean, replace: Boolean) {
+    fun enqueue(bookId: Long, allowsCellular: Boolean, policy: ExistingWorkPolicy) {
         val network = if (allowsCellular) NetworkType.CONNECTED else NetworkType.UNMETERED
         val request = OneTimeWorkRequestBuilder<LibriVoxDownloadWorker>()
             .setConstraints(Constraints.Builder().setRequiredNetworkType(network).build())
@@ -23,7 +23,7 @@ class LibriVoxDownloadScheduler @Inject constructor(@ApplicationContext private 
             .build()
         WorkManager.getInstance(context).enqueueUniqueWork(
             uniqueName(bookId),
-            if (replace) ExistingWorkPolicy.REPLACE else ExistingWorkPolicy.KEEP,
+            policy,
             request,
         )
     }

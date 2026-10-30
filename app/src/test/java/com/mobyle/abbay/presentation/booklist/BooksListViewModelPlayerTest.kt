@@ -156,6 +156,23 @@ class BooksListViewModelPlayerTest {
     }
 
     @Test
+    fun `a LibriVox chapter whose file is gone streams from the same position instead of failing`() = runTest(testDispatcher) {
+        val viewModel = factory.booksListViewModel()
+        viewModel.selectBook(multipleFilesBook, null)
+        factory.libriVoxRepository.repairs += multipleFilesBook.id
+        player.mutableState.value = player.mutableState.value.copy(trackCount = 2)
+        player.positionMs = 754_000L
+        player.commands.clear()
+        factory.libraryRepository.calls.clear()
+
+        player.mutableErrors.emit(PlayerError.StorageUnavailable)
+
+        assertEquals(listOf("openBook(201, progress=120000, playWhenReady=true)", "seekToBookPosition(754000)"), player.commands)
+        assertFalse(viewModel.uiState.value.toString().contains("hasError=true"))
+        assertEquals(emptyList<String>(), factory.libraryRepository.calls)
+    }
+
+    @Test
     fun `a playback error stops the player, unlocks the screen and asks the UI to collapse`() = runTest(testDispatcher) {
         val viewModel = factory.booksListViewModel()
         viewModel.selectBook(singleFileBook, null)

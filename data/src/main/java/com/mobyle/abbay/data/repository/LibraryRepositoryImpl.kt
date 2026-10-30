@@ -13,6 +13,7 @@ import com.mobyle.abbay.data.library.BookLocation
 import com.mobyle.abbay.data.library.BookMetadataEnricher
 import com.mobyle.abbay.data.library.BookProjection
 import com.mobyle.abbay.data.library.ScannedBookWriter
+import com.mobyle.abbay.data.librivox.LibriVoxDownloadControl
 import com.mobyle.abbay.data.librivox.LibriVoxDownloadScheduler
 import com.mobyle.abbay.data.librivox.LibriVoxDownloadTracker
 import com.mobyle.abbay.data.librivox.LibriVoxFiles
@@ -85,6 +86,7 @@ class LibraryRepositoryImpl @Inject constructor(
     private val libriVoxFiles: LibriVoxFiles,
     private val libriVoxDownloads: LibriVoxDownloadScheduler,
     private val libriVoxTracker: LibriVoxDownloadTracker,
+    private val libriVoxControl: LibriVoxDownloadControl,
 ) : LibraryRepository {
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
     private val scanMutex = Mutex()
@@ -364,7 +366,7 @@ class LibraryRepositoryImpl @Inject constructor(
             try {
                 dao.getRoots().filter { it.isAccessible }.forEach { root -> scanRoot(root, force) }
                 checkSingleFileBooks()
-                libriVoxFiles.restoreMissingFiles()
+                libriVoxControl.repairAll()
                 deleteBooksMissingForTooLong()
             } finally {
                 val processedBooks = scanStatus.value.processedBooks

@@ -27,6 +27,7 @@ import com.usecase.PrepareLegacyFolderMigration
 import com.usecase.RefreshLibrary
 import com.usecase.RefreshLibraryOnStart
 import com.usecase.RemoveLibraryRoot
+import com.usecase.RepairLibriVoxBook
 import com.usecase.ReplaceLibraryRoots
 import com.usecase.RequestFullScan
 import com.usecase.SaveListeningState
@@ -76,6 +77,7 @@ class ViewModelFactory(
         addToQueue = AddToQueue(queueRepository),
         getOpusEncoder = GetOpusEncoder(converterRepository),
         observeLibriVoxDownloads = ObserveLibriVoxDownloads(libriVoxRepository),
+        repairLibriVoxBook = RepairLibriVoxBook(libriVoxRepository),
     )
 
     fun settingsViewModel() = SettingsViewModel(
