@@ -12,7 +12,8 @@ import kotlin.math.roundToInt
 /**
  * How the library screen is split: one pane, or browsing beside a player pane. Decided from the room the
  * app is given and the font scale, never from the device model, so a phone, both displays of a foldable,
- * a tablet and a resized window follow the same rules.
+ * a tablet and a resized window follow the same rules. Only a landscape window splits: in portrait a tablet
+ * opens the player over the screen, like a phone.
  */
 sealed interface PaneLayout {
     /** One pane: the player covers browsing, and the chapters open in a sheet over the player. */
@@ -45,6 +46,7 @@ object AdaptiveLayout {
 
     /** [widthDp] and [heightDp] are the space the screen's content is given (inside the system bars). */
     fun decide(widthDp: Float, heightDp: Float, fontScale: Float): PaneLayout {
+        if (heightDp >= widthDp) return PaneLayout.Single
         val scale = textScale(fontScale)
         val minPlayer = MIN_PLAYER_WIDTH_DP * scale
         val minBrowsing = MIN_BROWSING_WIDTH_DP * scale

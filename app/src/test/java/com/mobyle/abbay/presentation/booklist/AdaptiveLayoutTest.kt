@@ -27,14 +27,19 @@ class AdaptiveLayoutTest {
     }
 
     @Test
-    fun `a portrait tablet splits`() {
-        assertEquals(PaneLayout.Split(360.dp), AdaptiveLayout.decide(widthDp = 800f, heightDp = 1200f, fontScale = 1f))
+    fun `a portrait tablet is one pane, like a phone`() {
+        assertEquals(PaneLayout.Single, AdaptiveLayout.decide(widthDp = 800f, heightDp = 1200f, fontScale = 1f))
+    }
+
+    @Test
+    fun `an unfolded foldable held in portrait is one pane`() {
+        assertEquals(PaneLayout.Single, AdaptiveLayout.decide(widthDp = 673f, heightDp = 841f, fontScale = 1f))
     }
 
     @Test
     fun `just under both minimums is one pane`() {
-        assertEquals(PaneLayout.Single, AdaptiveLayout.decide(widthDp = 719f, heightDp = 900f, fontScale = 1f))
-        assertEquals(PaneLayout.Split(360.dp), AdaptiveLayout.decide(widthDp = 720f, heightDp = 900f, fontScale = 1f))
+        assertEquals(PaneLayout.Single, AdaptiveLayout.decide(widthDp = 719f, heightDp = 600f, fontScale = 1f))
+        assertEquals(PaneLayout.Split(360.dp), AdaptiveLayout.decide(widthDp = 720f, heightDp = 600f, fontScale = 1f))
     }
 
     @Test
