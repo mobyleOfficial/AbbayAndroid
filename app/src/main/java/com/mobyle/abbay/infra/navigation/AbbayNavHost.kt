@@ -15,12 +15,18 @@ import androidx.navigation.navArgument
 import com.library.FolderLocation
 import com.mobyle.abbay.presentation.about.LicensesScreen
 import com.mobyle.abbay.presentation.bookdetails.BookDetailsScreen
+import com.mobyle.abbay.presentation.booklist.AdaptiveLibraryShell
 import com.mobyle.abbay.presentation.booklist.BooksListScreen
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel
+import com.mobyle.abbay.presentation.booklist.LibraryPlayerDependencies
+import com.mobyle.abbay.presentation.booklist.LibraryPlayerHost
+import com.mobyle.abbay.presentation.booklist.PlayerNavigation
 import com.mobyle.abbay.presentation.bookmarks.BookmarksScreen
 import com.mobyle.abbay.presentation.characters.CharactersScreen
 import com.mobyle.abbay.presentation.converter.ConverterScreen
 import com.mobyle.abbay.presentation.diagnostics.DiagnosticsScreen
+import com.mobyle.abbay.presentation.documents.CompanionDocumentsViewModel
+import com.mobyle.abbay.presentation.effects.AudioEffectsViewModel
 import com.mobyle.abbay.presentation.folders.FolderScreen
 import com.mobyle.abbay.presentation.folders.FolderViewModel
 import com.mobyle.abbay.presentation.history.HistoryScreen
@@ -28,6 +34,7 @@ import com.mobyle.abbay.presentation.librivox.LibriVoxBookScreen
 import com.mobyle.abbay.presentation.librivox.LibriVoxBookViewModel
 import com.mobyle.abbay.presentation.librivox.LibriVoxSearchScreen
 import com.mobyle.abbay.presentation.librivox.LibriVoxSearchViewModel
+import com.mobyle.abbay.presentation.options.PlaybackOptionsViewModel
 import com.mobyle.abbay.presentation.queue.QueueScreen
 import com.mobyle.abbay.presentation.search.SearchScreen
 import com.mobyle.abbay.presentation.settings.SettingsScreen
@@ -41,6 +48,49 @@ fun AbbayNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController,
     startDestination: String = NavigationItem.BookList.route,
+    effectsViewModel: AudioEffectsViewModel = hiltViewModel(),
+    optionsViewModel: PlaybackOptionsViewModel = hiltViewModel(),
+    documentsViewModel: CompanionDocumentsViewModel = hiltViewModel(),
+) {
+    val destinations = LibraryDestinations(
+        queue = { navController.navigate(NavigationItem.Queue.route) },
+        search = { navController.navigate(NavigationItem.Search.route) },
+        librivox = { navController.navigate(NavigationItem.LibriVox.routeFor()) },
+        folders = { location -> navController.navigate(NavigationItem.Folders.routeFor(location)) },
+        statistics = { navController.navigate(NavigationItem.Statistics.route) },
+        bookStatistics = { bookId -> navController.navigate(NavigationItem.BookStatistics.routeFor(bookId)) },
+        characters = { bookId -> navController.navigate(NavigationItem.Characters.routeFor(bookId)) },
+        text = { bookId -> navController.navigate(NavigationItem.Text.routeFor(bookId)) },
+    )
+    val navigateToSettings = { navController.navigate(NavigationItem.Settings.route) }
+    val navigateToBookDetails = { bookId: String -> navController.navigate(NavigationItem.BookDetails.routeFor(bookId)) }
+    // Above the screens, so the player pane (on a tablet or an unfolded foldable) stays beside any of them.
+    val player = LibraryPlayerDependencies(
+        viewModel = viewModel,
+        effectsViewModel = effectsViewModel,
+        optionsViewModel = optionsViewModel,
+        documentsViewModel = documentsViewModel,
+        navigation = PlayerNavigation(
+            settings = navigateToSettings,
+            bookDetails = navigateToBookDetails,
+            bookmarks = { bookId -> navController.navigate(NavigationItem.Bookmarks.routeFor(bookId)) },
+            history = { bookId -> navController.navigate(NavigationItem.History.routeFor(bookId)) },
+            destinations = destinations,
+        ),
+    )
+    AdaptiveLibraryShell(player) { host ->
+        AbbayScreens(viewModel, host, player, navController, startDestination, modifier)
+    }
+}
+
+@Composable
+private fun AbbayScreens(
+    viewModel: BooksListViewModel,
+    host: LibraryPlayerHost,
+    player: LibraryPlayerDependencies,
+    navController: NavHostController,
+    startDestination: String,
+    modifier: Modifier,
 ) {
     NavHost(
         modifier = modifier,
@@ -52,20 +102,11 @@ fun AbbayNavHost(
         ) {
             BooksListScreen(
                 viewModel = viewModel,
-                navigateToSettings = { navController.navigate(NavigationItem.Settings.route) },
-                navigateToBookDetails = { bookId -> navController.navigate(NavigationItem.BookDetails.routeFor(bookId)) },
-                navigateToBookmarks = { bookId -> navController.navigate(NavigationItem.Bookmarks.routeFor(bookId)) },
-                navigateToHistory = { bookId -> navController.navigate(NavigationItem.History.routeFor(bookId)) },
-                navigateTo = LibraryDestinations(
-                    queue = { navController.navigate(NavigationItem.Queue.route) },
-                    search = { navController.navigate(NavigationItem.Search.route) },
-                    librivox = { navController.navigate(NavigationItem.LibriVox.routeFor()) },
-                    folders = { location -> navController.navigate(NavigationItem.Folders.routeFor(location)) },
-                    statistics = { navController.navigate(NavigationItem.Statistics.route) },
-                    bookStatistics = { bookId -> navController.navigate(NavigationItem.BookStatistics.routeFor(bookId)) },
-                    characters = { bookId -> navController.navigate(NavigationItem.Characters.routeFor(bookId)) },
-                    text = { bookId -> navController.navigate(NavigationItem.Text.routeFor(bookId)) },
-                ),
+                host = host,
+                player = player,
+                navigateToSettings = player.navigation.settings,
+                navigateToBookDetails = player.navigation.bookDetails,
+                navigateTo = player.navigation.destinations,
             )
         }
 

@@ -1,5 +1,6 @@
 package com.mobyle.abbay.presentation.booklist
 
+import androidx.compose.material.BottomSheetScaffoldState
 import androidx.compose.material.BottomSheetState
 import androidx.compose.material.BottomSheetValue
 import androidx.compose.material.ExperimentalMaterialApi
@@ -83,3 +84,12 @@ fun rememberPlayerPresentation(sheet: BottomSheetState, layout: PaneLayout): Pla
     }
     return presentation
 }
+
+/** The split and the player's presentation, decided above the screens so every screen can sit beside the player. */
+@OptIn(ExperimentalMaterialApi::class)
+class LibraryPlayerHost(
+    val paneLayout: PaneLayout,
+    val presentation: PlayerPresentation,
+    /** The library's bottom sheet: the player in one pane. */
+    val sheetState: BottomSheetScaffoldState,
+)
