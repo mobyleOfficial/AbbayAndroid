@@ -17,7 +17,6 @@ class OggOpusWriterTest {
         val output = ByteArrayOutputStream()
         val writer = OggOpusWriter(output, channels = 1, inputSampleRate = 44_100, preSkip = 312, serialNumber = 7)
         writer.writeHeaders(OpusTags(listOf("TITLE" to "Capítulo 1", "ARTIST" to "")))
-        // 120 packets of 20 ms CELT (config 31, code 0): 2.4 s.
         repeat(120) { writer.writeAudio(byteArrayOf((31 shl 3).toByte(), 1, 2, 3)) }
         writer.finish(totalInputSamples48k = 114_000)
 
@@ -31,7 +30,6 @@ class OggOpusWriterTest {
         assertTrue(String(pages[1].body, Charsets.UTF_8).contains("TITLE=Capítulo 1"))
         assertTrue("empty tags are left out", !String(pages[1].body, Charsets.UTF_8).contains("ARTIST="))
         val audio = pages.drop(2)
-        // One second (50 packets) per page: 50, 100, then the trimmed end.
         assertEquals(listOf(48_000L, 96_000L, 312L + 114_000L), audio.map { it.granule })
         assertEquals(0x04, audio.last().flags)
         assertEquals((0 until pages.size).toList(), pages.map { it.sequence })
@@ -71,7 +69,6 @@ class OggOpusWriterTest {
         assertEquals(3 * 480, OpusPackets.samplesOf(byteArrayOf(((12 shl 3) or 3).toByte(), 3)))
     }
 
-    /** Splits a stream into pages, checking every capture pattern and checksum. */
     private fun parse(bytes: ByteArray): List<Page> {
         val pages = mutableListOf<Page>()
         var offset = 0

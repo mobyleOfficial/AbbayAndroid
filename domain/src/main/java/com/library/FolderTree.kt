@@ -3,22 +3,17 @@ package com.library
 import com.model.Book
 import com.model.LibraryRoot
 
-/** One level of the folder view: sub-folders that hold books, and the books right here. */
 data class FolderLevel(val folders: List<FolderEntry>, val books: List<Book>)
 
-/** A folder of the tree; [rootId] null with a blank [path] is the group of books added as single files. */
 data class FolderEntry(val name: String, val rootId: Long?, val path: String, val bookCount: Int)
 
-/** Where the folder view is: a root (or the single files) and a path inside it; [rootId] null and no path is the top. */
 data class FolderLocation(val rootId: Long? = null, val path: String = "", val isSingleFiles: Boolean = false) {
     val isTop: Boolean get() = rootId == null && !isSingleFiles
 
-    /** The breadcrumb's segments below the root. */
     val segments: List<String> get() = path.split('/').filter(String::isNotEmpty)
 
     fun child(name: String) = copy(path = if (path.isEmpty()) name else "$path/$name")
 
-    /** The location [depth] segments below the root (0 is the root itself). */
     fun upTo(depth: Int) = copy(path = segments.take(depth).joinToString("/"))
 
     companion object {
@@ -26,10 +21,6 @@ data class FolderLocation(val rootId: Long? = null, val path: String = "", val i
     }
 }
 
-/**
- * Builds the folder view from the books' locations. The top level lists the roots and, when there are any, the books
- * added as single files. A book folder is shown as a book in its parent folder, not as a folder. Pure logic.
- */
 object FolderTree {
     private val naturalOrder = NaturalOrderComparator()
 
@@ -62,7 +53,6 @@ object FolderTree {
         )
     }
 
-    /** The location whose level lists [book]. */
     fun locationOf(book: Book): FolderLocation =
         if (book.rootId == null) FolderLocation(isSingleFiles = true) else FolderLocation(book.rootId, parentOf(book.relativePath))
 
@@ -73,6 +63,5 @@ object FolderTree {
 
     private fun parentOf(relativePath: String): String = relativePath.trim('/').substringBeforeLast('/', "")
 
-    /** Name of the single-files entry; the UI shows a localized label for it. */
     const val SINGLE_FILES = ""
 }

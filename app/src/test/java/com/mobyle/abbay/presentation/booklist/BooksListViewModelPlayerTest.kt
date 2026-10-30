@@ -24,7 +24,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** The book list ViewModel sends every playback action through PlayerController. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [30], application = Application::class)
@@ -90,7 +89,6 @@ class BooksListViewModelPlayerTest {
         viewModel.onPlayButtonClicked(singleFileBook, progress = 42_000L)
         viewModel.onCoverClicked(singleFileBook, progress = 42_000L)
 
-        // A seek here would make the service treat the resume as a move and skip smart rewind.
         assertEquals(listOf("play", "play"), player.commands)
     }
 

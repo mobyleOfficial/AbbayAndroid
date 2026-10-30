@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
-@Suppress("TooManyFunctions") // Settings plus the per-book subtitle charset and the legacy values.
+@Suppress("TooManyFunctions")
 class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Preferences>) {
     fun observeSettings(): Flow<AppSettings> = dataStore.data.map(::toAppSettings)
 
@@ -73,7 +73,6 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
         }
     }
 
-    /** The charset chosen for a book's subtitle files, or null. */
     suspend fun subtitleCharset(bookId: Long): String? = dataStore.data.first()[SettingsKeys.subtitleCharset(bookId)]
 
     suspend fun setSubtitleCharset(bookId: Long, charset: String?) {
@@ -156,7 +155,6 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
         ).withDisplaySettings(preferences)
     }
 
-    /** The settings added with the Phase 10 settings tree. */
     private fun writeDisplaySettings(preferences: MutablePreferences, updated: AppSettings) {
         preferences[SettingsKeys.rescanOnStart] = updated.rescanOnStart.name
         preferences[SettingsKeys.skipButtonsInNotification] = updated.skipButtonsInNotification.name

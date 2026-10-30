@@ -43,10 +43,6 @@ class ConverterRepositoryImpl @Inject constructor(
         )
     }
 
-    /**
-     * "Battery not low … or charging; storage not low"; the user's minimum level is checked per file. Not
-     * expedited: WorkManager allows only network and storage constraints on expedited work.
-     */
     override fun start(scope: ConversionScope, options: ConverterOptions) {
         val request = OneTimeWorkRequestBuilder<ConverterWorker>()
             .setInputData(ConverterWorker.inputOf(scope, options))

@@ -13,10 +13,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
-/**
- * Records listening time per book and local day while audio actually plays.
- * What was measured is written every minute, on pause, when another book starts and when the service stops.
- */
 class ListeningStatistics(
     private val player: Player,
     private val scope: CoroutineScope,
@@ -28,7 +24,6 @@ class ListeningStatistics(
     private val accumulator = ListeningAccumulator()
     private var flushJob: Job? = null
 
-    /** Silence the trimmer removed from [bookId], reported by the effects with every position save. */
     fun addSilence(bookId: String, savedMs: Long) = accumulator.addSilence(bookId, savedMs)
 
     override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -52,7 +47,6 @@ class ListeningStatistics(
         if (player.isPlaying) startMeasuring()
     }
 
-    /** Writes what was measured so far; called by the service before it stops. */
     fun flush() {
         val day = accumulator.take(clock(), today()) ?: return
         persistenceScope.launch { recordListening(day) }

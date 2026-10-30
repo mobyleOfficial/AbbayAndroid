@@ -25,22 +25,13 @@ import androidx.media3.extractor.wav.WavExtractor
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 
-/**
- * Reads a file with ExoPlayer's own extractors, which is what decides whether a file is playable (`02` §2). Used
- * when the platform `MediaMetadataRetriever` returns nothing: some vendor builds (seen on a Samsung tablet, Android
- * 14) give no duration and no audio flag for valid M4B files whose `moov` box is at the end. Only the container
- * headers are read: the extractor seeks over the audio data and stops once the tracks and the seek map are known.
- * Pure logic over a [FileChannel], unit-tested on the JVM.
- */
 @OptIn(UnstableApi::class)
 object ExtractorAudioProbe {
     data class Result(val durationMs: Long, val hasAudio: Boolean, val tags: Map<String, String>)
 
-    /** Bytes read before giving up on a file whose headers never complete (a damaged file). */
     private const val MAX_BYTES_READ = 32L * 1024 * 1024
     private const val MICROSECONDS_PER_MILLISECOND = 1_000L
 
-    /** Null when no extractor recognizes the file. */
     fun probe(channel: FileChannel): Result? {
         val length = channel.size()
         audioExtractors().forEach { extractor ->
@@ -53,7 +44,6 @@ object ExtractorAudioProbe {
         return null
     }
 
-    /** The containers of the accepted extensions (`02` §2); MP4 first, the audiobook format. */
     private fun audioExtractors(): List<Extractor> = listOf(
         Mp4Extractor(),
         Mp3Extractor(),
@@ -65,7 +55,7 @@ object ExtractorAudioProbe {
         AmrExtractor(),
     )
 
-    @Suppress("SwallowedException", "TooGenericExceptionCaught") // A failing sniff only means "not this format".
+    @Suppress("SwallowedException", "TooGenericExceptionCaught")
     private fun sniff(extractor: Extractor, channel: FileChannel, length: Long): Boolean = try {
         extractor.sniff(inputAt(channel, 0, length, ByteCounter()))
     } catch (exception: Exception) {

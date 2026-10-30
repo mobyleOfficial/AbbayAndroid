@@ -6,7 +6,6 @@ import com.repository.QueueRepository
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
-/** Removes and returns the next queued book that is still in the library and playable. */
 class TakeNextFromQueue @Inject constructor(
     private val queueRepository: QueueRepository,
     private val libraryRepository: LibraryRepository

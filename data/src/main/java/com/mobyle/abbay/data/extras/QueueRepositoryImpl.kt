@@ -12,7 +12,6 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** The queue is rewritten as a whole on every change; it holds a handful of books. */
 @Singleton
 class QueueRepositoryImpl @Inject constructor(private val dao: ExtrasDao) : QueueRepository {
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO

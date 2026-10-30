@@ -35,7 +35,6 @@ import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
 import com.player.SleepTimerMode
 import com.player.SleepTimerState
 
-/** Sleep sheet: duration chips, end of chapter, end of track, custom, shake sensitivity. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun SleepTimerSheet(
@@ -121,7 +120,6 @@ private fun RunningTimer(state: SleepTimerState.Running, onCancel: () -> Unit) {
             text = runningDescription(state),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.tertiary,
-            // Announced when it changes mode or starts fading, not every second.
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
         )
         if (state.isFading) Text(stringResource(R.string.sleep_fading), style = MaterialTheme.typography.bodyMedium)
@@ -163,7 +161,6 @@ private fun CustomDurationDialog(initialMinutes: Int, onConfirm: (Int) -> Unit, 
     )
 }
 
-/** Sleep settings the sheet shows. */
 data class SleepSheetSettings(
     val defaultMinutes: Int = 15,
     val isShakeEnabled: Boolean = true,
@@ -176,7 +173,6 @@ fun ShakeSensitivity.labelResource(): Int = when (this) {
     ShakeSensitivity.HIGH -> R.string.shake_high
 }
 
-/** "4:05" or "1:02:03". */
 fun formatCountdown(milliseconds: Long): String {
     val totalSeconds = (milliseconds.coerceAtLeast(0L) + MILLISECONDS_PER_SECOND - 1) / MILLISECONDS_PER_SECOND
     val hours = totalSeconds / SECONDS_PER_HOUR

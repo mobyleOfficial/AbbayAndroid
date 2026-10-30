@@ -15,10 +15,6 @@ import com.mobyle.abbay.data.storage.TrackMetadataDataSource
 import com.model.DataResult
 import javax.inject.Inject
 
-/**
- * Reads tags, durations, description and cover of a scanned book and stores them.
- * Only tracks without stored tags are read; the first playable track is always read for the book-level tags.
- */
 class BookMetadataEnricher @Inject constructor(
     private val dao: LibraryDao,
     private val metadataSource: TrackMetadataDataSource,
@@ -54,7 +50,6 @@ class BookMetadataEnricher @Inject constructor(
         )
     }
 
-    /** Reads tags of tracks that have none yet, and always of the first playable track (book-level tags). */
     private fun readTracks(storedTracks: List<TrackEntity>): Pair<List<TrackEntity>, TrackMetadata?> {
         var firstTrackTags: TrackMetadata? = null
         val tracks = storedTracks.map { track ->
@@ -79,7 +74,6 @@ class BookMetadataEnricher @Inject constructor(
         return tracks to firstTrackTags
     }
 
-    /** CUE sheet → embedded chapters → one chapter per file. */
     private fun chaptersOf(
         bookId: Long,
         scannedBook: ScannedBook,
@@ -113,13 +107,11 @@ class BookMetadataEnricher @Inject constructor(
         }
     }
 
-    /** Headerless VBR MP3 files get their duration from a full read. */
     private fun exactMp3Duration(track: TrackEntity): Long? {
         if (!track.fileName.endsWith(MP3_EXTENSION, ignoreCase = true)) return null
         return (metadataSource.readExactMp3Duration(track.documentUri) as? DataResult.Success)?.value
     }
 
-    /** Start of each track from the beginning of the book; unplayable files take no time. */
     private fun positioned(tracks: List<TrackEntity>): List<TrackEntity> {
         var nextStart = 0L
         return tracks.map { track ->

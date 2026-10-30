@@ -44,10 +44,6 @@ import com.player.NowPlaying
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/**
- * The three widgets. They draw the last published [NowPlaying] (stored on
- * disk), so they keep working while the app is not running; buttons send media keys to the playback service.
- */
 class MiniPlayerWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val nowPlaying = NowPlayingStore(context).read()
@@ -139,7 +135,6 @@ private fun StandardRow(playing: NowPlaying, cover: Bitmap?) {
     }
 }
 
-/** Background, padding, and the empty state that opens the app when nothing was played yet. */
 @Composable
 private fun WidgetFrame(nowPlaying: NowPlaying?, content: @Composable (NowPlaying) -> Unit) {
     val context = LocalContext.current
@@ -170,7 +165,6 @@ private fun PlayPauseButton(playing: NowPlaying) {
     )
 }
 
-/** 48 dp touch target with the icon centered. */
 @Composable
 private fun IconButton(icon: Int, description: String, action: Action, tint: Color = Color.White) {
     Box(
@@ -196,11 +190,9 @@ private fun Cover(cover: Bitmap?, size: androidx.compose.ui.unit.Dp) {
     )
 }
 
-/** Foreground-service start: allowed from a widget click, and it works with the app closed. */
 private fun mediaKey(context: Context, keyCode: Int): Action =
     actionStartService(WidgetCommands.mediaKey(context, keyCode), isForegroundService = true)
 
-/** The cover, downsampled to at most [COVER_PX] pixels so the widget's bitmap stays small. */
 private suspend fun loadCover(context: Context, coverUri: String?): Bitmap? = withContext(Dispatchers.IO) {
     coverUri ?: return@withContext null
     runCatching {

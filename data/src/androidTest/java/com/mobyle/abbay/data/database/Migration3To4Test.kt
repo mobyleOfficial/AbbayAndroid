@@ -8,7 +8,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Bookmark and history tables are added; books and listening state are untouched. */
 @RunWith(AndroidJUnit4::class)
 class Migration3To4Test {
     @get:Rule
@@ -39,7 +38,7 @@ class Migration3To4Test {
                 cursor.moveToFirst()
                 assertEquals(700L, cursor.getLong(0))
             }
-            execSQL("PRAGMA foreign_keys = ON") // Room turns it on for app connections; the test helper does not.
+            execSQL("PRAGMA foreign_keys = ON")
             execSQL("DELETE FROM book WHERE id = 1")
             query("SELECT (SELECT COUNT(*) FROM bookmark) + (SELECT COUNT(*) FROM history_event)").use { cursor ->
                 cursor.moveToFirst()

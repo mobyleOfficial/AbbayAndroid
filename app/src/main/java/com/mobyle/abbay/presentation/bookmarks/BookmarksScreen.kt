@@ -51,10 +51,6 @@ import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Bookmark
 import kotlinx.coroutines.launch
 
-/**
- * Bookmarks of a book: sorted by position, tap jumps there, swipe deletes
- * with undo, the pencil edits the note, and the top bar shares them as plain text.
- */
 @Composable
 fun BookmarksScreen(viewModel: BookmarksViewModel = hiltViewModel(), onJump: (Long) -> Unit, close: () -> Unit) {
     val bookmarks by viewModel.bookmarks.collectAsState()
@@ -148,7 +144,6 @@ private fun BookmarkRow(bookmark: Bookmark, onJump: () -> Unit, onEdit: () -> Un
             .background(MaterialTheme.colorScheme.primary)
             .heightIn(min = 56.dp)
             .clickable(onClickLabel = stringResource(R.string.bookmark_go_to, position), onClick = onJump)
-            // Swiping is not available to every user: deleting is also an accessibility action.
             .semantics {
                 customActions = listOf(
                     CustomAccessibilityAction(deleteLabel) {
@@ -193,7 +188,6 @@ fun EmptyMessage(text: String) {
     }
 }
 
-/** Plain-text export through the share sheet. */
 private fun shareBookmarks(context: Context, bookTitle: String, bookmarks: List<Bookmark>) {
     val title = context.getString(R.string.bookmarks_share_title, bookTitle)
     val text = BookmarkExport.toText(title, bookmarks)

@@ -27,7 +27,6 @@ class StatisticsAggregatorTest {
         assertEquals(20 * minute, stats.last7Days[3].wallTimeMs)
         assertEquals(30, stats.last30Days.size)
         assertEquals(60 * minute, stats.last30Days.sumOf { it.wallTimeMs })
-        // 12 monthly bars; the 400-day-old day is outside the last 365 days.
         assertEquals(12, stats.last12Months.size)
         assertEquals(120 * minute, stats.last12Months.sumOf { it.wallTimeMs })
         assertEquals(LocalDate.of(2026, 10, 1), stats.last12Months.last().start)
@@ -64,7 +63,6 @@ class StatisticsAggregatorTest {
         val stats = StatisticsAggregator.book(days, remainingBookTimeMs = 140 * minute, today = today)
         assertEquals(3, stats.sessions)
         assertEquals(240f / 180f, stats.averageSpeed, 0.001f)
-        // The last 14 days heard 140 min: 10 min a day, so 140 min take 14 days.
         assertEquals(today.plusDays(14), stats.estimatedFinish)
         assertNull(StatisticsAggregator.book(days, remainingBookTimeMs = 0, today = today).estimatedFinish)
         assertEquals(1f, StatisticsAggregator.book(emptyList(), 10, today).averageSpeed)

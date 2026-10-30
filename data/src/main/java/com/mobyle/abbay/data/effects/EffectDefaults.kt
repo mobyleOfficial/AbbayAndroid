@@ -8,7 +8,6 @@ import com.mobyle.abbay.data.settings.SettingsDataSource
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
-/** The effects a book starts with: the Audio defaults of the settings. */
 class EffectDefaults @Inject constructor(private val settings: SettingsDataSource, private val dao: AudioEffectsDao) {
     suspend fun effects(): AudioEffects {
         val current = settings.observeSettings().first()
@@ -20,7 +19,6 @@ class EffectDefaults @Inject constructor(private val settings: SettingsDataSourc
         )
     }
 
-    /** A new `listening_state` row for [bookId] with the default effects. */
     suspend fun newListeningState(bookId: Long): ListeningStateEntity =
         EffectsMapper.withEffects(ListeningStateEntity(bookId = bookId), effects())
 

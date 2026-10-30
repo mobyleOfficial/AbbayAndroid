@@ -73,7 +73,6 @@ fun AbbayNavHost(
             ) { navController.popBackStack() }
         }
 
-        // Bookmarks and history are opened from the player, so their book is the loaded one.
         modal(NavigationItem.Bookmarks.route) {
             BookmarksScreen(
                 onJump = { bookPositionMs ->
@@ -98,7 +97,6 @@ fun AbbayNavHost(
     }
 }
 
-/** Settings and About → Diagnostics, Open-source licenses. */
 private fun NavGraphBuilder.settingsScreens(viewModel: BooksListViewModel, navController: NavHostController) {
     modal(NavigationItem.Settings.route) {
         SettingsScreen(
@@ -133,9 +131,7 @@ private fun NavGraphBuilder.settingsScreens(viewModel: BooksListViewModel, navCo
     }
 }
 
-/** Queue, search, folder view, statistics and characters. */
 private fun NavGraphBuilder.libraryExtras(viewModel: BooksListViewModel, navController: NavHostController) {
-    // Books chosen in these screens play from the library screen, which owns the player.
     val playFromLibrary: (String) -> Unit = { bookId ->
         viewModel.requestPlay(bookId)
         navController.popBackStack(NavigationItem.BookList.route, inclusive = false)
@@ -180,7 +176,6 @@ private fun NavGraphBuilder.libraryExtras(viewModel: BooksListViewModel, navCont
         TextPaneScreen(close = { navController.popBackStack() })
     }
 
-    // Opened from the player, so the book is the loaded one and its position is the player's.
     modal(NavigationItem.Characters.route) {
         CharactersScreen(
             currentPositionMs = { viewModel.selectedBook.value?.bookPositionMs },
@@ -193,7 +188,6 @@ private fun NavGraphBuilder.libraryExtras(viewModel: BooksListViewModel, navCont
     }
 }
 
-/** Screens reached from the library and the player. */
 class LibraryDestinations(
     val queue: () -> Unit = {},
     val search: () -> Unit = {},

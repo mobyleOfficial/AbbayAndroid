@@ -23,11 +23,7 @@ import com.usecase.RecordHistoryEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-/**
- * The listening features that live in the playback service: smart rewind,
- * the sleep timer, bookmarks from the notification, history and the automatic Finished state.
- */
-@Suppress("LongParameterList", "TooManyFunctions") // The service's collaborators; one function per player event.
+@Suppress("LongParameterList", "TooManyFunctions")
 class ListeningFeatures(
     context: Context,
     private val player: Player,
@@ -37,7 +33,6 @@ class ListeningFeatures(
     private val settings: () -> AppSettings,
     private val useCases: UseCases,
     private val callbacks: Callbacks,
-    /** True while Android Auto is connected: without "Sleep timer in car" the schedule does not start the timer there. */
     private val isInCar: () -> Boolean = { false },
 ) : Player.Listener {
     class UseCases(val recordHistoryEvent: RecordHistoryEvent, val addBookmark: AddBookmark, val finishBook: FinishBook)
@@ -45,7 +40,6 @@ class ListeningFeatures(
     interface Callbacks {
         fun onSleepTimerChanged(state: SleepTimerState)
 
-        /** Playback paused at wall-clock [pausedAt]: save the position with it. */
         fun onPaused(pausedAt: Long)
 
         fun onBookmarkAdded()
@@ -66,7 +60,6 @@ class ListeningFeatures(
 
     val sleepTimerState: SleepTimerState get() = sleepTimer.state
 
-    /** Called by the session player just before playback starts (smart rewind). */
     fun beforeResume() {
         val bookId = currentBookId() ?: return
         val position = commands.bookPositionMs()
@@ -76,7 +69,6 @@ class ListeningFeatures(
         history.withoutMoves { commands.seekToBookPosition(target) }
     }
 
-    /** Custom session commands of this feature set; false when [action] is not one of them. */
     fun handleCommand(action: String, args: Bundle): Boolean {
         when (action) {
             PlaybackCommands.ADD_BOOKMARK -> addBookmark()
@@ -110,7 +102,6 @@ class ListeningFeatures(
         callbacks.onPaused(System.currentTimeMillis())
     }
 
-    /** A transient focus loss pauses without changing playWhenReady; its resume uses the same rewind. */
     override fun onPlaybackSuppressionReasonChanged(playbackSuppressionReason: Int) {
         val bookId = currentBookId() ?: return
         if (playbackSuppressionReason == Player.PLAYBACK_SUPPRESSION_REASON_TRANSIENT_AUDIO_FOCUS_LOSS) {
@@ -130,7 +121,6 @@ class ListeningFeatures(
         if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED) rewinder.onPlaylistChanged()
     }
 
-    /** The end of the last track: the book is Finished and a sleep timer has nothing left to stop. */
     override fun onPlaybackStateChanged(playbackState: Int) {
         if (playbackState != Player.STATE_ENDED) return
         sleepTimer.cancel()

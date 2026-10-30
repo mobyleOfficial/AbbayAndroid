@@ -25,10 +25,6 @@ import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.CharacterNote
 
-/**
- * Adds or edits a character. "First appears here" stores the player's position; a new character has it checked, so
- * adding one while listening is a name and one tap.
- */
 @Composable
 fun CharacterDialog(character: CharacterNote, currentPositionMs: Long?, onSave: (CharacterNote) -> Unit, onDismiss: () -> Unit) {
     val isNew = character.id == 0L

@@ -16,7 +16,6 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Repeat and skip options in `listening_state`; the sidecar carries them too. */
 @Singleton
 class PlaybackOptionsRepositoryImpl @Inject constructor(
     private val dao: AudioEffectsDao,

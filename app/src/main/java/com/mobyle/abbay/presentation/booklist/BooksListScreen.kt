@@ -141,7 +141,6 @@ fun BooksListScreen(
     val asyncScope = rememberCoroutineScope()
     val fileFilterList = arrayOf("audio/*")
 
-    // States
     val bottomSheetState = rememberBottomSheetScaffoldState()
     val booksListState by viewModel.uiState.collectAsState()
     val libraryState by viewModel.libraryState.collectAsState()
@@ -158,16 +157,13 @@ fun BooksListScreen(
     val isScreenLocked by viewModel.isScreenLocked.collectAsState()
     val shouldOpenPlayerInStartup by viewModel.shouldOpenPlayerInStartup.collectAsState()
     val hasOpenedPlayerOnStartup = remember { mutableStateOf(false) }
-    // Tablets and unfolded foldables show the library and the player side by side.
     val isWide = LocalConfiguration.current.screenWidthDp >= LIST_DETAIL_MIN_WIDTH_DP
     val playerPaneState = rememberBottomSheetScaffoldState(bottomSheetState = rememberBottomSheetState(BottomSheetValue.Expanded))
     PlayerStatusBarColor(selectedBook?.thumbnail, bottomSheetState, isShown = !isWide && selectedBook != null)
 
-    // Expand only once the sheet has its peek height, i.e. once a book is selected.
     val canOpenPlayerOnStartup = hasBookSelected && selectedBook?.hasError == false
     LaunchedEffect(shouldOpenPlayerInStartup, canOpenPlayerOnStartup) {
         if (shouldOpenPlayerInStartup && canOpenPlayerOnStartup && !hasOpenedPlayerOnStartup.value) {
-            // The sheet recomputes its anchors after the peek height changes; expanding earlier leaves it hidden.
             repeat(2) { withFrameNanos { } }
             bottomSheetState.bottomSheetState.expand()
             hasOpenedPlayerOnStartup.value = true
@@ -180,7 +176,6 @@ fun BooksListScreen(
         }
     }
 
-    // Launchers
     val openFileSelector = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenMultipleDocuments()
     ) { filesList ->
@@ -205,7 +200,6 @@ fun BooksListScreen(
         uri?.let { viewModel.completeLegacyMigration(it.toString()) }
     }
 
-    // SideEffects
     BackHandler {
         if (!isScreenLocked) {
             asyncScope.launch {
@@ -299,7 +293,6 @@ fun BooksListScreen(
         )
     }
 
-    // "Mark as new" resets the position, so it asks first.
     var bookToMarkNew by remember { mutableStateOf<Book?>(null) }
     val markBook: (Book, BookState) -> Unit = { book, state ->
         if (state == BookState.NEW) bookToMarkNew = book else viewModel.markBook(book, state)
@@ -329,7 +322,6 @@ fun BooksListScreen(
     }
 
     val onBookClick: (Book) -> Unit = { tapped ->
-        // A finished book starts over.
         val book = if (tapped.hasError) tapped else viewModel.startingPoint(tapped)
         val startsOver = book !== tapped
         if ((selectedBook?.id != book.id || startsOver) && !book.hasError) {
@@ -494,7 +486,6 @@ fun BooksListScreen(
                                 }
                             }
 
-                            // Shown in every state: Refresh on an empty library opens it too.
                             val showReloadGuide by viewModel.showReloadGuide.collectAsState()
                             if (showReloadGuide) {
                                 AbbayActionDialog(
@@ -776,14 +767,12 @@ private fun SwipeToRemoveBook(onSwipe: () -> Unit, content: @Composable () -> Un
     )
 }
 
-/** Elapsed time of [book]: live for the selected book while playing, saved otherwise. */
 private fun progressLabel(book: Book, selectedBook: Book?, isPlaying: Boolean, currentProgress: Long): String {
     val intermediaryProgress = (book as? MultipleBooks)?.bookFileList?.intermediateProgress(book.currentBookPosition) ?: 0L
     val isLive = isPlaying && book.id == selectedBook?.id
     return intermediaryProgress.plus(if (isLive) currentProgress else book.progress).toHHMMSS()
 }
 
-/** The picker opens at [treeUri] when the provider supports it (EXTRA_INITIAL_URI). */
 private fun documentUriOfTree(treeUri: String): Uri? = runCatching {
     val tree = Uri.parse(treeUri)
     DocumentsContract.buildDocumentUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))

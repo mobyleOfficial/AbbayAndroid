@@ -8,7 +8,6 @@
     <string name="no_book_selected_secondary_button_title">Adicionar uma Pasta</string>
     <string name="no_book_selected_or">ou</string>
     
-    <!-- Dialog strings -->
     <string name="cancel">Cancelar</string>
     <string name="ok">OK</string>
     <string name="delete">Excluir</string>
@@ -17,7 +16,6 @@
     <string name="book_ended_dialog_title">Livro Finalizado</string>
     <string name="book_ended_dialog_body">O audiobook terminou de tocar.</string>
     
-    <!-- Settings strings -->
     <string name="settings">Configurações</string>
     <string name="play_when_app_closed">Tocar quando o app estiver fechado</string>
     <string name="open_player_in_startup">Manter livro aberto ao abrir o app</string>
@@ -26,7 +24,6 @@
     <string name="delete_all_books_dialog_title">Excluir Todos os Livros</string>
     <string name="delete_all_books_dialog_body">Tem certeza de que deseja excluir todos os livros? Esta ação não pode ser desfeita.</string>
     
-    <!-- Book list strings -->
     <string name="refresh_content_description">Atualizar</string>
     <string name="add_content_description">Adicionar</string>
     <string name="add_folder">Adicionar Pasta</string>
@@ -40,7 +37,6 @@
     <string name="file_not_found_body">O arquivo deste livro não pôde ser encontrado.</string>
     <string name="file_might_be_moved">O arquivo pode ter sido movido ou excluído.</string>
     
-    <!-- Player strings -->
     <string name="unknown_file">Arquivo Desconhecido</string>
     <string name="show_chapters">Mostrar Capítulos</string>
     <string name="hide_chapters">Ocultar Capítulos</string>
@@ -49,22 +45,18 @@
     <string name="screen_locked_message">Toque duas vezes em qualquer lugar da tela para desbloquear</string>
     <string name="screen_locked_subtitle">Isso evita toques acidentais durante a narração</string>
     
-    <!-- Book item strings -->
     <string name="error_playing_file">Erro ao Reproduzir Arquivo</string>
     <string name="book_icon">Ícone do Livro</string>
     <string name="clock_icon">Ícone do Relógio</string>
     
-    <!-- Speed options -->
     <string name="speed_half">0.5x</string>
     <string name="speed_normal">1.0x</string>
     <string name="speed_one_twenty_five">1.25x</string>
     <string name="speed_one_fifty">1.5x</string>
     <string name="speed_double">2.0x</string>
     
-    <!-- Content descriptions -->
     <string name="empty_content_description"></string>
     
-    <!-- Additional strings found in code -->
     <string name="delete_content_description_short">Excluir</string>
     <string name="change_speed_content_description">Alterar velocidade</string>
 
@@ -73,7 +65,6 @@
     <string name="change_folder_dialog_body">Tem certeza de que deseja alterar a pasta de livros? Todos os livros atuais serão substituídos pelos da nova pasta.</string>
     <string name="app_version">Versão %1$s</string>
 
-    <!-- Library -->
     <string name="library_tab_in_progress">Em andamento</string>
     <string name="library_tab_new">Novos</string>
     <string name="library_tab_finished">Concluídos</string>
@@ -108,7 +99,6 @@
     <string name="settings_remove_library_folder">Remover %1$s</string>
     <string name="playback_track_skipped">Não foi possível tocar %1$s — pulado</string>
 
-    <!-- Player -->
     <string name="player_chapter_of">Capítulo %1$d de %2$d</string>
     <string name="player_chapter_untitled">Capítulo %1$d</string>
     <string name="player_chapters">Capítulos</string>
@@ -137,7 +127,6 @@
     <string name="speed_decrease">Diminuir velocidade</string>
     <string name="speed_increase">Aumentar velocidade</string>
 
-    <!-- Book details -->
     <string name="details_title">Detalhes do livro</string>
     <string name="details_cover">Capa do livro, toque para trocar</string>
     <string name="details_title_field">Título</string>
@@ -160,7 +149,6 @@
     <string name="details_cover_updated">Capa atualizada</string>
     <string name="details_cover_not_updated">Não foi possível usar esta imagem como capa</string>
 
-    <!-- Appearance and privacy -->
     <string name="settings_appearance">Aparência</string>
     <string name="settings_theme">Tema</string>
     <string name="theme_system">Sistema</string>
@@ -484,7 +472,6 @@
     <string name="settings_show_cast_button">Mostrar o botão de Cast no player</string>
     <string name="effects_not_on_cast">Durante a transmissão, o receptor toca os arquivos originais: a velocidade vale, os outros efeitos não.</string>
 
-    <!-- Settings tree completed -->
     <string name="settings_library">Biblioteca</string>
     <string name="settings_default_tab">Aba ao abrir o app</string>
     <string name="settings_tab_automatic">Automática</string>
@@ -519,7 +506,6 @@
         <item quantity="other">%1$d dias</item>
     </plurals>
 
-    <!-- Language and About -->
     <string name="settings_language">Idioma</string>
     <string name="language_system">Padrão do sistema</string>
     <string name="settings_licenses">Licenças de código aberto</string>
@@ -530,16 +516,12 @@
     <string name="licenses_libraries">Bibliotecas</string>
     <string name="licenses_open_license">Abrir a licença de %1$s</string>
 
-    <!-- Accessibility pass -->
     <string name="close">Fechar</string>
 
-    <!-- Seek bar accessibility -->
     <string name="player_seek_state">%1$s de %2$s</string>
 
-    <!-- Cast with audio effects -->
     <string name="settings_cast_processed_audio">Aplicar efeitos de áudio ao transmitir</string>
 
-    <!-- Empty states of the library tabs -->
     <string name="library_empty_in_progress_title">Nenhum livro em andamento</string>
     <string name="library_empty_in_progress_body">Comece a ouvir um livro e ele aparece aqui, no ponto onde você parou.</string>
     <string name="library_empty_new_title">Nenhum livro novo</string>
@@ -553,7 +535,6 @@
     <string name="library_scanning_title">Procurando livros…</string>
     <string name="library_scanning_body">Os livros aparecem aqui conforme são encontrados.</string>
 
-    <!-- Playback service, notification and Android Auto -->
     <string name="playback_skip_back">Voltar %1$d segundos</string>
     <string name="playback_previous_chapter">Capítulo anterior</string>
     <string name="playback_next_chapter">Próximo capítulo</string>
@@ -573,7 +554,6 @@
     <string name="auto_chapter_number">Capítulo %1$d</string>
     <string name="playback_speed_cycle">Velocidade %1$s</string>
 
-    <!-- Home screen widgets -->
     <string name="widget_mini_description">Tocar e pausar o último livro</string>
     <string name="widget_standard_description">Livro, capítulo e botões de reprodução</string>
     <string name="widget_large_description">Player com progresso do capítulo, timer de sono e marcador</string>

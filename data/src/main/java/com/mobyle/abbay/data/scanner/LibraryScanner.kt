@@ -6,19 +6,10 @@ import com.mobyle.abbay.data.storage.DocumentTreeSource
 import com.model.DataResult
 import javax.inject.Inject
 
-/**
- * Finds books in a SAF tree:
- * - an audio file directly in the root is a one-file book;
- * - a folder with audio files of its own is a book (its sub-folders are scanned as separate books);
- * - a folder without audio whose sub-folders are all disc folders (`CD1`, `Disc 2`…) is one book;
- * - any other folder without audio is a collection and is scanned recursively.
- * Tracks are in natural order. Pure logic over [DocumentTreeSource], so it runs on the JVM in tests.
- */
 class LibraryScanner @Inject constructor(private val tree: DocumentTreeSource) {
     private val naturalOrder = NaturalOrderComparator()
     private val byName: Comparator<DocumentEntry> = compareBy(naturalOrder) { FileKinds.baseName(it.name) }
 
-    /** Lists the root once and returns its loose files and its folders. */
     fun listRoot(treeUri: String): DataResult<List<DocumentEntry>> =
         tree.listChildren(treeUri, tree.rootDocumentId(treeUri)).mapEntries { entries -> entries.filterNot(FileKinds::isIgnored) }
 
@@ -38,10 +29,6 @@ class LibraryScanner @Inject constructor(private val tree: DocumentTreeSource) {
             )
         }
 
-    /**
-     * Every book at or below [folder]. [knownChildren] avoids listing the folder again when the caller already did.
-     * Folders that cannot be listed are skipped.
-     */
     fun scanFolder(
         treeUri: String,
         folder: DocumentEntry,
@@ -75,7 +62,6 @@ class LibraryScanner @Inject constructor(private val tree: DocumentTreeSource) {
         }
     }
 
-    /** True when [children] make their folder a book (audio of its own, or only disc folders). */
     fun isBookFolder(children: List<DocumentEntry>): Boolean {
         val visibleChildren = children.filterNot(FileKinds::isIgnored)
         val subfolders = visibleChildren.filter { it.isDirectory }
@@ -122,6 +108,5 @@ class LibraryScanner @Inject constructor(private val tree: DocumentTreeSource) {
         is DataResult.Failure -> this
     }
 
-    /** A folder with its path from the root and the name of the folder above it. */
     private data class FolderAt(val entry: DocumentEntry, val relativePath: String, val parentFolderName: String?)
 }

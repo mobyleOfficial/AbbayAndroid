@@ -142,7 +142,6 @@ fun SettingsScreen(
                     )
                 }
 
-                // Hidden when the device has no Opus encoder (About → Diagnostics says why).
                 openConverter?.let { open -> item { SettingItem(text = stringResource(R.string.converter_title), onClick = open) } }
             }
 
@@ -191,11 +190,9 @@ private fun openSourceCode(context: Context, url: String) {
     try {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     } catch (_: ActivityNotFoundException) {
-        // No browser installed: nothing to open.
     }
 }
 
-/** About: diagnostics, licenses, source code, privacy statement, version. */
 @Composable
 private fun AboutSettings(viewModel: SettingsViewModel, openDiagnostics: () -> Unit, openLicenses: () -> Unit) {
     val context = LocalContext.current

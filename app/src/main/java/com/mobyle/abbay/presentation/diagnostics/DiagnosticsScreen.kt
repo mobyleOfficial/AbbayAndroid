@@ -43,7 +43,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-/** Device, decoders, audio output and the playback log, shareable as text. */
 @Composable
 fun DiagnosticsScreen(viewModel: DiagnosticsViewModel = hiltViewModel(), close: () -> Unit) {
     val report by viewModel.report.collectAsState()
@@ -134,7 +133,6 @@ private fun Heading(text: String, horizontalPadding: androidx.compose.ui.unit.Dp
     )
 }
 
-/** 24-hour time with seconds: log lines are seconds apart. */
 private fun time(atMs: Long): String = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(atMs))
 
 private fun share(context: Context, report: DiagnosticsReport, includeFileNames: Boolean) {

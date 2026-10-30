@@ -26,7 +26,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** Book details and metadata editing. */
 @HiltViewModel
 class BookDetailsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
@@ -68,7 +67,6 @@ class BookDetailsViewModel @Inject constructor(
 
     fun chooseCover(imageUri: String) = viewModelScope.launch { setUserCover(bookId, imageUri) }
 
-    /** The image shared back from the browser goes to this book. */
     fun prepareWebCoverSearch() = viewModelScope.launch { updateAppSettings { it.copy(pendingCoverBookId = bookId) } }
 
     private fun BookDetails.toOverrides() = BookOverrides(title, author.orEmpty(), narrator.orEmpty(), description.orEmpty())

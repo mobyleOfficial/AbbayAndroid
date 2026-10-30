@@ -39,7 +39,6 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
-/** Playback and Sleep timer sections of Settings. */
 @Composable
 fun ListeningSettings(viewModel: SettingsViewModel) {
     val settings by viewModel.listeningSettings.collectAsState()
@@ -66,7 +65,6 @@ fun ListeningSettings(viewModel: SettingsViewModel) {
     }
 }
 
-/** Recording on/off and "Clear statistics" with a confirmation. */
 @Composable
 private fun StatisticsSettings(isEnabled: Boolean, change: ((AppSettings) -> AppSettings) -> Unit, onClear: () -> Unit) {
     var isConfirming by remember { mutableStateOf(false) }
@@ -90,7 +88,6 @@ private fun StatisticsSettings(isEnabled: Boolean, change: ((AppSettings) -> App
     }
 }
 
-/** Effects of books never played yet (Audio); built-in equalizer presets only. */
 @Composable
 private fun AudioDefaultSettings(settings: AppSettings, change: ((AppSettings) -> AppSettings) -> Unit) {
     Column {

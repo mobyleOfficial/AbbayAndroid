@@ -47,7 +47,6 @@ import com.mobyle.abbay.presentation.common.widgets.AbbayDropdownMenu
 import com.mobyle.abbay.presentation.common.widgets.AbbayMenuItem
 import com.model.ScanStatus
 
-/** Tabs, sort menu, layout menu and scan progress of the library. */
 @Composable
 fun LibraryControls(
     tab: LibraryTab,
@@ -137,7 +136,6 @@ private fun SortMenu(sortOrder: LibrarySortOrder, sortAscending: Boolean, onSort
                 AbbayMenuItem(
                     text = stringResource(order.labelResource()),
                     selected = isCurrent,
-                    // The current order shows its direction instead of a check mark.
                     trailingIcon = if (isCurrent) {
                         { tint ->
                             Icon(

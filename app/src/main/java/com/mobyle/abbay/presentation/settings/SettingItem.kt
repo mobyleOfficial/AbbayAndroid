@@ -41,7 +41,6 @@ fun SettingItem(
                 text,
                 style = MaterialTheme.typography.bodyLarge,
                 color = AbbayColors.content,
-                // The label takes the room left by the control, so a long label wraps instead of pushing it off screen.
                 modifier = Modifier.weight(1f).padding(horizontal = 16.dp, vertical = 8.dp)
             )
             content?.invoke()

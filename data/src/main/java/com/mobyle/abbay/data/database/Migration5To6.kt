@@ -3,8 +3,7 @@ package com.mobyle.abbay.data.database
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-/** Statistics, queue and characters. */
-@Suppress("MagicNumber") // Schema versions.
+@Suppress("MagicNumber")
 object Migration5To6 : Migration(5, 6) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL(

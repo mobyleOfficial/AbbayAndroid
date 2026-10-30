@@ -19,7 +19,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** The "Text" pane: the loaded track's subtitles and the line playing now. */
 @HiltViewModel
 class TextPaneViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
@@ -53,7 +52,6 @@ class TextPaneViewModel @Inject constructor(
         }
     }
 
-    /** Seeks to a line; lines are in the time of the current track. */
     fun seekTo(startMs: Long) {
         playerController.seekTo(startMs)
         viewModelScope.launch { refresh() }
@@ -68,7 +66,6 @@ class TextPaneViewModel @Inject constructor(
     private suspend fun refresh() {
         val playerState = playerController.state.value
         if (playerState.bookId != bookId) {
-            // The book is selected but not loaded yet (a restored session): load it, paused, at its saved position.
             if (playerState.isConnected && !hasRequestedLoad) {
                 hasRequestedLoad = true
                 observeBooks().first().firstOrNull { it.id == bookId }?.let { playerController.openBook(it, playWhenReady = false) }
@@ -90,7 +87,6 @@ class TextPaneViewModel @Inject constructor(
         const val BOOK_ID_ARGUMENT = "bookId"
         private const val POLL_INTERVAL_MS = 250L
 
-        /** Offered when a file is neither UTF-8 nor UTF-16 with a byte-order mark. */
         val CHARSETS = listOf("windows-1252", "ISO-8859-15", "windows-1250", "windows-1251", "KOI8-R", "ISO-8859-7") +
             listOf("Shift_JIS", "GBK", "Big5", "EUC-KR")
     }

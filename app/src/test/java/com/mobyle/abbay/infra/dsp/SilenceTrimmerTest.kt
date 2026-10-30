@@ -3,7 +3,6 @@ package com.mobyle.abbay.infra.dsp
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** Silence trim rows. */
 class SilenceTrimmerTest {
     private val rate = Signals.RATE
 
@@ -17,7 +16,6 @@ class SilenceTrimmerTest {
         val silences = silentRuns(output)
         assertEquals(3, silences.size)
         silences.forEach { frames -> assertEquals(0.200, frames.toDouble() / rate, 0.010) }
-        // Every burst sample is still there: the output is the input minus exactly the dropped silence.
         assertEquals(input.size - trimmer.savedFrames, output.size.toLong())
         assertEquals(3 * (2.0 - 0.2), trimmer.savedFrames.toDouble() / rate, 0.001)
         assertEquals(nonSilentSamples(input), nonSilentSamples(output))
@@ -41,7 +39,6 @@ class SilenceTrimmerTest {
 
     @Test
     fun onlyTheSilenceOutsideTheProtectedSecondIsShortened() {
-        // A 3 s silence ending at a chapter start: its last second is protected, the first 2 s are a pause.
         val input = Signals.bursts(burstSeconds = 1.0, silenceSeconds = 3.0, count = 2, level = 0.3f)
         val boundary = (4.0 * rate).toLong()
         val trimmer = SilenceTrimmer(1, rate, SilenceTrimmer.MODERATE) { start, end -> end > boundary - rate && start < boundary + rate }
@@ -59,7 +56,6 @@ class SilenceTrimmerTest {
         assertEquals(input.size, runInChunks(trimmer, input).size)
     }
 
-    /** Odd chunk sizes, as a decoder delivers them. */
     private fun runInChunks(trimmer: SilenceTrimmer, input: FloatArray): FloatArray {
         val output = ArrayList<Float>()
         var position = 0
@@ -78,7 +74,6 @@ class SilenceTrimmerTest {
         return output.toFloatArray()
     }
 
-    /** Lengths (frames) of the runs of exact zeros between bursts. */
     private fun silentRuns(samples: FloatArray): List<Int> {
         val runs = mutableListOf<Int>()
         var run = 0
@@ -98,7 +93,6 @@ class SilenceTrimmerTest {
     private fun nonSilentSamples(samples: FloatArray): List<Float> = samples.filter { it != 0f }
 
     private companion object {
-        /** Noise crosses zero now and then; runs of a few zero samples are not silences. */
         const val MINIMUM_RUN = 100
     }
 }

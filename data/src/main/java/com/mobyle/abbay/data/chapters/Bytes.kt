@@ -1,6 +1,5 @@
 package com.mobyle.abbay.data.chapters
 
-/** Big- and little-endian helpers shared by the parsers. */
 internal object Bytes {
     fun u8(data: ByteArray, offset: Int): Int = data[offset].toInt() and 0xFF
 

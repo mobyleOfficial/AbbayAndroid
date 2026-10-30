@@ -45,10 +45,6 @@ import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.HistoryEvent
 import com.model.HistoryEventType
 
-/**
- * History of a book, newest first; tapping an entry offers "Go to this
- * position" — the place before a move, which is what a pocket press or falling asleep takes away.
- */
 @Composable
 fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel(), onJump: (Long) -> Unit, close: () -> Unit) {
     val events by viewModel.events.collectAsState()

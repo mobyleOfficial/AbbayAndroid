@@ -84,7 +84,6 @@ fun PlayerTopBar(
     }
 }
 
-/** Overflow entries of Phases 8–9: characters, statistics, the book's text files and subtitles. */
 class PlayerMenuExtras(
     val onOpenCharacters: () -> Unit = {},
     val onOpenStatistics: () -> Unit = {},

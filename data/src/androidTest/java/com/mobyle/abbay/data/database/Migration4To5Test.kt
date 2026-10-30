@@ -8,7 +8,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Equalizer presets table and the saved-silence column; existing effect settings are untouched. */
 @RunWith(AndroidJUnit4::class)
 class Migration4To5Test {
     @get:Rule

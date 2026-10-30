@@ -11,11 +11,6 @@ import android.util.Base64
 import java.io.File
 import java.io.FileNotFoundException
 
-/**
- * Serves book covers to the car host. Covers are SAF documents or app files the
- * host cannot open, so they are exposed as `content://<package>.covers/<encoded uri>`. The provider is not exported:
- * the session grants read access to each URI it hands to a browser.
- */
 class CoverProvider : ContentProvider() {
     override fun onCreate(): Boolean = true
 
@@ -49,7 +44,6 @@ class CoverProvider : ContentProvider() {
 
         fun authority(context: Context): String = "${context.packageName}.covers"
 
-        /** The provider URI for [coverUri], readable by [packageName] once granted. */
         fun uriFor(context: Context, coverUri: String, packageName: String): Uri {
             val uri = Uri.Builder().scheme("content").authority(authority(context))
                 .appendPath(Base64.encodeToString(coverUri.toByteArray(), FLAGS))

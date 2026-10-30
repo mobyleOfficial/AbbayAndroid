@@ -33,7 +33,6 @@ import com.settings.AppSettings
 import com.settings.ProgressLabels
 import com.settings.ThemeMode
 
-/** Appearance. */
 @Composable
 fun AppearanceSettings(viewModel: SettingsViewModel) {
     val themeMode by viewModel.themeMode.collectAsState()
@@ -60,14 +59,11 @@ fun AppearanceSettings(viewModel: SettingsViewModel) {
             onSelect = { chosen ->
                 if (chosen != language) {
                     viewModel.changeLanguage(chosen)
-                    // Android 13+ recreates the activity itself; before, the app applies the language.
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) isRecreationPending = true
                 }
             },
         )
         if (isRecreationPending) {
-            // After the menu's popup has left the composition: recreating while its window closes left the activity
-            // without a focused window (ANR on the Android 12 emulator).
             LaunchedEffect(Unit) {
                 withFrameNanos { }
                 activity?.recreate()
@@ -76,7 +72,6 @@ fun AppearanceSettings(viewModel: SettingsViewModel) {
     }
 }
 
-/** "Send crash reports and usage statistics" and what is sent. */
 @Composable
 fun PrivacySettings(viewModel: SettingsViewModel) {
     val shareDiagnostics by viewModel.shareDiagnostics.collectAsState()

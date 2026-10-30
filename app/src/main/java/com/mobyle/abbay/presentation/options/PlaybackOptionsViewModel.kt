@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** Repeat, A–B loop and skip intro/outro of the book in the player. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class PlaybackOptionsViewModel @Inject constructor(
@@ -41,10 +40,6 @@ class PlaybackOptionsViewModel @Inject constructor(
         viewModelScope.launch { updatePlaybackOptions(id, options) }
     }
 
-    /**
-     * Sets loop point A (or B) at the player's position and turns the A–B loop on. Playback is at B when B is set, so it
-     * goes back to A at once; from then on the service loops whenever playback reaches B.
-     */
     fun setLoopPoint(isStart: Boolean) {
         val position = playerController.bookPositionMs()
         val current = options.value

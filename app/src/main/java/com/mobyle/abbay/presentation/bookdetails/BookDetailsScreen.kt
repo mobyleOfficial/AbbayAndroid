@@ -56,7 +56,6 @@ import com.model.BookDetails
 import com.model.BookOverrides
 import com.model.CoverCandidate
 
-/** Book details: metadata overrides, cover, track order, chapters and unplayable files. */
 @Composable
 fun BookDetailsScreen(viewModel: BookDetailsViewModel = hiltViewModel(), onConvert: ((bookId: String) -> Unit)? = null, close: () -> Unit) {
     val details by viewModel.details.collectAsState()
@@ -103,7 +102,6 @@ fun BookDetailsContent(
             }
         }
         draft?.let { editedOverrides -> item { MetadataEditor(editedOverrides, onEdit) } }
-        // Only books with MP3 files and a converter-capable device.
         onConvert?.let { convert -> item { AbbayTextButton(onClick = convert) { Text(stringResource(R.string.details_convert)) } } }
         fileSections(details, onSortByTrackNumber)
     }
@@ -151,7 +149,6 @@ private fun MetadataEditor(draft: BookOverrides, onEdit: (BookOverrides) -> Unit
     }
 }
 
-/** Duration, files, track order, unplayable files and chapters. */
 private fun LazyListScope.fileSections(details: BookDetails, onSortByTrackNumber: (Boolean) -> Unit) {
     item { InfoRow(R.string.details_duration, details.durationMs.toHHMMSS()) }
     item { InfoRow(R.string.details_files, details.fileCount.toString()) }
@@ -200,7 +197,6 @@ private fun SortByTrackNumberRow(isEnabled: Boolean, onChange: (Boolean) -> Unit
     }
 }
 
-/** Folder images, the embedded picture, the photo picker, or a browser search shared back. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CoverChooser(

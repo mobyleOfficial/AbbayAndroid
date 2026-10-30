@@ -24,10 +24,6 @@ import androidx.compose.ui.unit.dp
 import com.mobyle.abbay.presentation.common.widgets.BookThumbnail
 import com.mobyle.abbay.presentation.common.widgets.coverCornerRadius
 
-/**
- * Book cover with the player gestures: tap plays or pauses, double-tap on the left or right
- * half skips back or forward, a horizontal swipe goes to the previous or next chapter (only when [gesturesEnabled]).
- */
 @Composable
 fun PlayerCover(
     thumbnail: String?,
@@ -40,8 +36,6 @@ fun PlayerCover(
     onSwipeToNext: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // The cover grows from the mini player to the full player, but Coil sizes a request once, from the first layout:
-    // it is asked for the largest size the cover can take (the screen's shorter side), not the mini player's.
     val configuration = LocalConfiguration.current
     val coverSizePx = with(LocalDensity.current) { minOf(configuration.screenWidthDp, configuration.screenHeightDp).dp.roundToPx() }
     BoxWithConstraints(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

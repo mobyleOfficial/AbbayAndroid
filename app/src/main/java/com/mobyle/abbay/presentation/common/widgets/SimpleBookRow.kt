@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.dp
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.model.Book
 
-/** A book as one row of the queue, search and folder screens: cover, title and author, plus [trailing] controls. */
 @Composable
 fun SimpleBookRow(
     book: Book,

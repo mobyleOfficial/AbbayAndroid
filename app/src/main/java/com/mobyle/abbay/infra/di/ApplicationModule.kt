@@ -25,12 +25,10 @@ abstract class ApplicationModule {
     @Binds
     internal abstract fun bindLanguageRepository(store: AppLanguageStore): LanguageRepository
 
-    /** The converter in `data` resamples through the app's DSP code. */
     @Binds
     internal abstract fun bindResamplerFactory(factory: ResamplerFactory): AudioResamplerFactory
 
     companion object {
-        /** The home screen widgets of `:widget` receive what plays. */
         @Provides
         @Singleton
         fun provideNowPlayingPublisher(@ApplicationContext context: Context): NowPlayingPublisher = WidgetNowPlayingPublisher(context)

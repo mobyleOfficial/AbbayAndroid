@@ -52,11 +52,6 @@ import com.player.PlaybackStatus
 import com.player.PlayerState
 import kotlinx.coroutines.launch
 
-/**
- * The YouTube-style player of AbbayAndroid: a mini player docked under the book list that expands to the full
- * player through the existing MotionLayout scene. The player functions live in the
- * expanded state.
- */
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMotionApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun MiniPlayer(
@@ -169,7 +164,6 @@ private fun ExpandedTopBar(isScreenLocked: Boolean, actions: PlayerActions, scaf
     )
 }
 
-/** The existing MotionLayout scene of the YouTube-style player. */
 @OptIn(ExperimentalMotionApi::class)
 @Composable
 private fun rememberPlayerMotionScene(): MotionScene {
@@ -178,7 +172,6 @@ private fun rememberPlayerMotionScene(): MotionScene {
     return MotionScene(content = content)
 }
 
-/** Applies the book's speed when it opens and resyncs the position when the player moves to another file. */
 @Composable
 private fun PlayerEffects(book: Book, playerState: PlayerState, actions: PlayerActions) {
     LaunchedEffect(book.id) { actions.onApplyBookSpeed(book.speed) }
@@ -221,7 +214,6 @@ private fun rememberChaptersToggle(isExpanded: Boolean): ChaptersToggle {
     return ChaptersToggle(isOpen = isOpen && isExpanded, onToggle = { isOpen = !isOpen }, onClose = { isOpen = false })
 }
 
-/** Locked player: a tap explains the lock, a double tap unlocks (existing AbbayAndroid behavior). */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun LockOverlay(isScreenLocked: Boolean, onUnlock: () -> Unit, modifier: Modifier = Modifier) {

@@ -66,14 +66,12 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var applySharedCover: ApplySharedCover
 
-    /** The same instance the navigation host uses (both are scoped to this activity). */
     private val booksViewModel: BooksListViewModel by viewModels()
 
     private var isPlayerReady = false
     private var settings = AppSettings()
     private val chargingScreenKeeper = ChargingScreenKeeper(this)
 
-    /** Android 10–12: the language chosen in Settings (Android 13+ applies it by itself). */
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(AppLanguageStore.wrap(newBase))
     }
@@ -81,7 +79,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         enableEdgeToEdge()
-        // Keep splash screen visible until player is ready
         splashScreen.setKeepOnScreenCondition {
             !isPlayerReady
         }
@@ -148,7 +145,6 @@ class MainActivity : ComponentActivity() {
         handleLaunchAction(intent)
     }
 
-    /** Launcher shortcuts, the Quick Settings tile and audio files opened from other apps. */
     private fun handleLaunchAction(intent: Intent?) {
         when (intent?.action) {
             ACTION_RESUME_LAST_BOOK -> booksViewModel.resumeLastBook()
@@ -177,7 +173,6 @@ class MainActivity : ComponentActivity() {
         const val ACTION_START_SLEEP_TIMER = "com.mobyle.abbay.action.START_SLEEP_TIMER"
     }
 
-    /** Leaving the app with "Play when app is closed" off stops playback; rotations do not. */
     override fun onDestroy() {
         super.onDestroy()
 

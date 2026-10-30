@@ -10,7 +10,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** A version 1 database keeps every book's progress, track and speed for the legacy import. */
 @RunWith(AndroidJUnit4::class)
 class Migration1To2Test {
     @get:Rule

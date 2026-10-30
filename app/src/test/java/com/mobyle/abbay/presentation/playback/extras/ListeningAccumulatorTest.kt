@@ -32,7 +32,6 @@ class ListeningAccumulatorTest {
         accumulator.play("a", nowMs = 50_000, speed = 1f)
 
         assertEquals(15_000L, accumulator.take(nowMs = 55_000, date = today)!!.wallTimeMs)
-        // Still playing: the next take measures from the previous one.
         assertEquals(5_000L, accumulator.take(nowMs = 60_000, date = today)!!.wallTimeMs)
         accumulator.pause(nowMs = 60_000)
         assertNull(accumulator.take(nowMs = 90_000, date = today))

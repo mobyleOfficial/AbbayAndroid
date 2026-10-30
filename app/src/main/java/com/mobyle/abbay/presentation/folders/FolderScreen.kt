@@ -43,7 +43,6 @@ import com.mobyle.abbay.presentation.common.widgets.SimpleBookRow
 import com.model.Book
 import com.model.LibraryRoot
 
-/** Roots, collections and book folders as a tree with a breadcrumb. Back goes one level up. */
 @Composable
 fun FolderScreen(viewModel: FolderViewModel = hiltViewModel(), onPlay: (Book) -> Unit, close: () -> Unit) {
     val location by viewModel.location.collectAsState()

@@ -53,11 +53,6 @@ import com.model.Book
 import com.player.SleepTimerState
 import com.settings.ProgressLabels
 
-/**
- * Lower part of the expanded player, in AbbayiOS's layout: the left-aligned title block, the chapter scrubber with
- * elapsed time, chapter name and remaining time, a slim book progress line with time left at the current speed, the
- * transport (play/pause dominant), the speed and chapters pills, and the quick actions.
- */
 @Composable
 fun PlayerControls(
     book: Book,
@@ -123,7 +118,6 @@ private fun ChapterSeekBar(position: PlayerPosition, labels: ProgressLabels, ski
     val elapsedMs = (fraction * position.chapterDurationMs).toLong()
     val seekLabel = stringResource(R.string.player_chapter_seek)
     val seekState = stringResource(R.string.player_seek_state, elapsedMs.toHHMMSS(), position.chapterDurationMs.toHHMMSS())
-    // TalkBack users skip with actions instead of dragging.
     val skipActions = listOf(
         CustomAccessibilityAction(stringResource(R.string.player_skip_back_seconds, skips.smallBackSeconds)) {
             actions.onSeekBy(-skips.smallBackSeconds * MILLIS_PER_SECOND)
@@ -217,7 +211,6 @@ private fun BookProgress(book: Book, position: PlayerPosition, silenceSavedMs: L
         )
         Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(timeLeftLabel(book.duration - position.bookPositionMs, book.speed), style = labelStyle, color = labelColor)
-            // In the same row, so the player's height does not change (the MotionLayout scene sizes the controls once).
             if (silenceSavedMs >= MILLIS_PER_MINUTE) {
                 Text(
                     stringResource(R.string.effects_saved_short, (silenceSavedMs / MILLIS_PER_MINUTE).toInt()),

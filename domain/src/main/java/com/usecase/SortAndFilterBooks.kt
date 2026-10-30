@@ -7,7 +7,6 @@ import com.model.Book
 import com.model.BookState
 import javax.inject.Inject
 
-/** Applies the library tab and sort order. Pure function. */
 class SortAndFilterBooks @Inject constructor() {
     private val naturalOrder = NaturalOrderComparator()
 

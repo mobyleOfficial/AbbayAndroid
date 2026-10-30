@@ -24,11 +24,6 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.sqrt
 
-/**
- * Cast phase 2 end to end without a receiver: the service's real player, effects chain and routing sink write
- * the processed audio into a [ProcessedAudioStream]; this test plays the receiver's part — it reads the stream at real
- * time and reports its position — and checks the audio, the effects, the speed and the media position.
- */
 @RunWith(AndroidJUnit4::class)
 class ProcessedCastStreamTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -52,14 +47,12 @@ class ProcessedCastStreamTest {
         onMain {
             player = AudiobookExoPlayer.build(context, effects, route)
             player.setMediaItem(MediaItem.fromUri(Uri.fromFile(file)))
-            // The fixture is short: repeat it so playback runs through the whole test.
             player.repeatMode = Player.REPEAT_MODE_ONE
             player.prepare()
             player.play()
         }
-        waitMs(1_000) // plays on the device first, as before a Cast session
+        waitMs(1_000)
 
-        // The session starts: the sound goes to the stream from a seek to where playback is (as the service does).
         val flatStartMs = onMain { player.currentPosition }
         val flat = startGeneration()
         val flatAudio = receive(flat, durationMs = 2_000)
@@ -73,14 +66,11 @@ class ProcessedCastStreamTest {
             positionMs - flatStartMs in heardMs - 400L..heardMs + 1_500L,
         )
 
-        // Effects are applied to what the receiver gets: the same passage with every band +12 dB is louder (the
-        // equalizer's automatic preamp keeps it from doubling).
         val sameRms = rms(receive(startGeneration(atMs = PASSAGE_MS), durationMs = 1_500))
         effects.current = AudioEffects(equalizerGains = List(AudioEffects.BAND_COUNT) { AudioEffects.MAXIMUM_BAND_DB })
         val boostedRms = rms(receive(startGeneration(atMs = PASSAGE_MS), durationMs = 1_500))
         assertTrue("equalizer applied: $sameRms → $boostedRms", boostedRms > sameRms * 1.3)
 
-        // Speed: 1 s heard at 2× moves the book about 2 s.
         effects.current = AudioEffects()
         onMain { player.playbackParameters = PlaybackParameters(2f) }
         val fast = startGeneration()
@@ -90,14 +80,12 @@ class ProcessedCastStreamTest {
         val fastHeardMs = fastAudio.size / bytesPerMs()
         assertTrue("2× speed: $fastHeardMs ms heard moved $advancedMs ms", advancedMs in fastHeardMs * 3 / 2..fastHeardMs * 5 / 2 + 1_000)
 
-        // The session ends: back on the device, still playing.
         route.stream = null
         onMain { player.seekTo(player.currentMediaItemIndex, StreamRestart.positionAfter(player.currentPosition, player.duration)) }
         waitMs(500)
         assertEquals(true, onMain { player.isPlaying })
     }
 
-    /** Routes to the stream (or restarts it) with a seek to the current position; returns the new generation. */
     private fun startGeneration(atMs: Long? = null): Int {
         val previous = stream.generation
         route.stream = stream
@@ -108,7 +96,6 @@ class ProcessedCastStreamTest {
         return stream.generation
     }
 
-    /** Reads [durationMs] of [generation] at real time, reporting the position like the Cast bridge. */
     private fun receive(generation: Int, durationMs: Long): ByteArray {
         val input: InputStream = stream.open(generation) ?: return ByteArray(0)
         val received = java.io.ByteArrayOutputStream()

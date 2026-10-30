@@ -14,7 +14,6 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Character changes are book edits: they move the state's `updatedAt` and rewrite the sidecar. */
 @Singleton
 class CharacterRepositoryImpl @Inject constructor(
     private val dao: ExtrasDao,

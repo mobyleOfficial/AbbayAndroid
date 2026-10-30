@@ -3,8 +3,7 @@ package com.mobyle.abbay.data.database
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-/** User equalizer presets and the time saved by silence trimming. */
-@Suppress("MagicNumber") // Schema versions.
+@Suppress("MagicNumber")
 object Migration4To5 : Migration(4, 5) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL(

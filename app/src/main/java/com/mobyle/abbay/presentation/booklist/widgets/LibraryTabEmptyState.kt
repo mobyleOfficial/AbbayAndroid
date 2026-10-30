@@ -31,10 +31,6 @@ import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
 
-/**
- * What a library tab shows when it has no books: why it is empty and, where it helps, a way to
- * the related tab (when it is not hidden). While a scan is running it says books are being looked for instead.
- */
 @Composable
 fun LibraryTabEmptyState(
     tab: LibraryTab,

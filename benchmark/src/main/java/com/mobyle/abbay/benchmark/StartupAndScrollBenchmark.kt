@@ -13,7 +13,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Performance budgets: cold start ≤ 800 ms; library scrolling with ≤ 2 % janky frames. */
 @RunWith(AndroidJUnit4::class)
 class StartupAndScrollBenchmark {
     @get:Rule

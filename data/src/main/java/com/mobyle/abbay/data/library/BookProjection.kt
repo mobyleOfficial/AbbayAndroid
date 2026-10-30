@@ -10,10 +10,6 @@ import com.model.BookType
 import com.model.Chapter
 import com.model.MultipleBooks
 
-/**
- * Maps the library tables to the read model of the preserved UI: one playable track → [BookFile],
- * several → [MultipleBooks]. The track index of the listening state counts playable tracks only.
- */
 internal object BookProjection {
     fun toBook(details: BookWithDetails, isRootAccessible: Boolean, defaultSpeed: Float = 1f): Book? {
         val book = details.book
@@ -77,7 +73,6 @@ internal object BookProjection {
         }
     }
 
-    /** Title of the chapter at [bookPositionMs]; blank when the chapter has none. */
     fun chapterTitleAt(details: BookWithDetails, bookPositionMs: Long): String {
         val chapters = chaptersOf(details, playableTracks(details))
         return (chapters.lastOrNull { it.startMs <= bookPositionMs } ?: chapters.firstOrNull())?.title.orEmpty()
@@ -85,10 +80,6 @@ internal object BookProjection {
 
     private fun stateOf(name: String?): BookState = BookState.entries.firstOrNull { it.name == name } ?: BookState.NEW
 
-    /**
-     * Stored chapters, or one chapter per track when there are none or when the book uses track-number order (stored
-     * chapter times follow the natural order).
-     */
     private fun chaptersOf(details: BookWithDetails, tracks: List<TrackEntity>): List<Chapter> {
         val stored = details.chapters.sortedBy { it.indexInBook }
         if (stored.isNotEmpty() && details.listeningState?.sortByTrackTag != true) {
@@ -115,7 +106,6 @@ internal object BookProjection {
             uri = track.documentUri,
         )
 
-    /** Natural order, or track-number tags when the book asks for it. */
     fun playableTracks(details: BookWithDetails): List<TrackEntity> {
         val playable = details.tracks.filterNot { it.unplayable }.sortedBy { it.indexInBook }
         return if (details.listeningState?.sortByTrackTag == true) {
@@ -126,7 +116,6 @@ internal object BookProjection {
     }
 }
 
-/** User overrides win over scanned tags. */
 internal val BookEntity.displayTitle: String get() = titleOverride ?: title
 internal val BookEntity.displayAuthor: String? get() = authorOverride ?: author
 

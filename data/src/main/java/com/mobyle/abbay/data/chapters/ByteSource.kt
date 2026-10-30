@@ -1,10 +1,8 @@
 package com.mobyle.abbay.data.chapters
 
-/** Positional read access to a file, so parsers jump between boxes without loading whole files. */
 interface ByteSource {
     val size: Long
 
-    /** Up to [length] bytes at [position]; fewer at the end of the file. */
     fun read(position: Long, length: Int): ByteArray
 }
 

@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.util.Base64
 
-/** Tags and cover copied into the Opus file as Vorbis comments (RFC 7845 §5.2). */
 data class OpusTags(
     val comments: List<Pair<String, String>>,
     val cover: Cover? = null,
@@ -12,13 +11,7 @@ data class OpusTags(
     class Cover(val mimeType: String, val data: ByteArray)
 }
 
-/**
- * Writes an Ogg Opus stream (RFC 3533, RFC 7845): `OpusHead` on the first page, `OpusTags` on its own pages, then
- * the audio packets, about one second per page. Granule positions count 48 kHz samples including the pre-skip; the
- * last page's granule trims the encoder's padding. Written by the project instead of `MediaMuxer`, whose Ogg output
- * cannot carry tags or a cover. Pure Kotlin, tested on the JVM.
- */
-@Suppress("MagicNumber", "TooManyFunctions") // Field widths of RFC 3533 / 7845; one writer per header and page part.
+@Suppress("MagicNumber", "TooManyFunctions")
 class OggOpusWriter(
     private val output: OutputStream,
     private val channels: Int,
@@ -39,7 +32,6 @@ class OggOpusWriter(
         writePacketPages(tags(tags, vendor), granule = 0, isFirst = false, isLast = false)
     }
 
-    /** Queues one encoded packet; pages are written as they fill. */
     fun writeAudio(packet: ByteArray) {
         check(hasWrittenHeaders)
         pagePackets += packet
@@ -49,7 +41,6 @@ class OggOpusWriter(
         if (pageSamples >= SAMPLES_PER_PAGE || segmentsOf(pagePackets) > MAXIMUM_SEGMENTS - MAXIMUM_PACKET_SEGMENTS) flushAudioPage(false)
     }
 
-    /** Ends the stream: [totalInputSamples48k] is the source length at 48 kHz, so the decoder drops the padding. */
     fun finish(totalInputSamples48k: Long) {
         val endGranule = minOf(granule, preSkip + totalInputSamples48k)
         granule = endGranule
@@ -64,7 +55,6 @@ class OggOpusWriter(
         pageSamples = 0
     }
 
-    /** A header packet on as many pages as it needs; only the page where it ends carries the granule. */
     private fun writePacketPages(packet: ByteArray, granule: Long, isFirst: Boolean, isLast: Boolean) {
         var offset = 0
         var isContinued = false
@@ -72,7 +62,6 @@ class OggOpusWriter(
             val chunkLength = minOf(packet.size - offset, MAXIMUM_SEGMENTS * SEGMENT_SIZE)
             val chunk = packet.copyOfRange(offset, offset + chunkLength)
             offset += chunkLength
-            // A chunk of exactly 255 × 255 bytes leaves the packet open; the next page continues it.
             val endsHere = offset == packet.size && chunkLength < MAXIMUM_SEGMENTS * SEGMENT_SIZE
             var flags = if (isContinued) FLAG_CONTINUED else 0
             if (isFirst && pageSequence == 0) flags = flags or FLAG_FIRST
@@ -90,7 +79,6 @@ class OggOpusWriter(
                 segments += SEGMENT_SIZE
                 remaining -= SEGMENT_SIZE
             }
-            // A 0–254 lacing value ends the packet; an unfinished last packet ends with a 255.
             if (index < packets.lastIndex || lastPacketComplete) segments += remaining
         }
         val body = ByteArrayOutputStream()
@@ -134,7 +122,6 @@ class OggOpusWriter(
         return packet.toByteArray()
     }
 
-    /** A FLAC picture block: front cover, the image's MIME type, no description, sizes left at 0. */
     private fun pictureBlock(cover: OpusTags.Cover): ByteArray {
         val block = ByteArrayOutputStream()
         writeBigEndian(block, FRONT_COVER, 4)
@@ -170,7 +157,6 @@ class OggOpusWriter(
         private const val SEGMENT_SIZE = 255
         private const val MAXIMUM_SEGMENTS = 255
 
-        /** An Opus packet is at most 1275 bytes per frame and 6 frames: 31 segments covers it. */
         private const val MAXIMUM_PACKET_SEGMENTS = 31
         private const val FLAG_CONTINUED = 0x01
         private const val FLAG_FIRST = 0x02
@@ -183,14 +169,12 @@ class OggOpusWriter(
     }
 }
 
-/** Duration of an Opus packet from its TOC byte (RFC 6716 §3.1), in 48 kHz samples. */
 object OpusPackets {
-    /** Frame sizes in 48 kHz samples: SILK configs 0–11, hybrid 12–15, CELT 16–31. */
     private val silkFrames = intArrayOf(480, 960, 1_920, 2_880)
     private val hybridFrames = intArrayOf(480, 960)
     private val celtFrames = intArrayOf(120, 240, 480, 960)
 
-    @Suppress("MagicNumber") // Bit fields of the TOC byte.
+    @Suppress("MagicNumber")
     fun samplesOf(packet: ByteArray): Int {
         if (packet.isEmpty()) return 0
         val toc = packet[0].toInt() and 0xFF
@@ -209,9 +193,8 @@ object OpusPackets {
     }
 }
 
-/** The Ogg page checksum: CRC-32, polynomial 0x04C11DB7, not reflected, initial value 0 (RFC 3533 §6). */
 object OggCrc {
-    @Suppress("MagicNumber") // The polynomial and bit operations of the checksum.
+    @Suppress("MagicNumber")
     private val table = IntArray(256) { index ->
         var value = index shl 24
         repeat(8) { value = if (value and 0x80000000.toInt() != 0) (value shl 1) xor 0x04C11DB7 else value shl 1 }

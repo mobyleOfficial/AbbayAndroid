@@ -20,12 +20,6 @@ import org.junit.Test
 import java.io.File
 import kotlin.math.abs
 
-/**
- * Seeking in a VBR MP3 without a Xing/VBRI header lands within 0.5 s
- * with `FLAG_ENABLE_INDEX_SEEKING` (the service's configuration), while a constant-bitrate estimate is far off.
- * The fixture is a synthetic 60 s file (silence, tone and noise seconds) encoded without a header (CREDITS.md).
- * Ground truth: reading the file from the start gives every frame's exact time and byte offset.
- */
 @OptIn(UnstableApi::class)
 class VbrSeekingTest {
     private val fixture = File(requireNotNull(javaClass.classLoader?.getResource("vbr_no_xing.mp3")).toURI())
@@ -60,7 +54,6 @@ class VbrSeekingTest {
         }
     }
 
-    /** Reads the whole file with [flags] and returns what the extractor reported. */
     private fun readAll(flags: Int): Capture {
         val capture = Capture()
         val extractor: Extractor = Mp3Extractor(flags)
@@ -78,7 +71,6 @@ class VbrSeekingTest {
         return capture
     }
 
-    /** True time of the frame that starts at or just before [byteOffset], from the sequential read. */
     private fun Capture.trueTimeAt(byteOffset: Long): Long =
         frameTimesByOffset.headMap(byteOffset + 1).let { if (it.isEmpty()) 0L else it[it.lastKey()]!! }
 

@@ -12,17 +12,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** "Open book text": the documents of one book at a time. */
 @HiltViewModel
 class CompanionDocumentsViewModel @Inject constructor(
     private val getCompanionDocuments: GetCompanionDocuments,
     private val rememberOpenedDocument: RememberOpenedDocument,
 ) : ViewModel() {
-    /** The book whose documents are listed, or null when the dialog is closed. */
     private val mutableBookId = MutableStateFlow<String?>(null)
     val bookId: StateFlow<String?> = mutableBookId.asStateFlow()
 
-    /** Null while the folder is being listed. */
     private val mutableDocuments = MutableStateFlow<List<CompanionDocument>?>(null)
     val documents: StateFlow<List<CompanionDocument>?> = mutableDocuments.asStateFlow()
 

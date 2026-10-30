@@ -8,7 +8,6 @@ import com.repository.ConverterRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
-/** A device with an Opus encoder; conversions are only recorded. */
 class FakeConverterRepository : ConverterRepository {
     val started = mutableListOf<Pair<ConversionScope, ConverterOptions>>()
     val progress = MutableStateFlow(ConversionProgress())

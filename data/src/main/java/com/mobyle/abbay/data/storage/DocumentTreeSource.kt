@@ -2,7 +2,6 @@ package com.mobyle.abbay.data.storage
 
 import com.model.DataResult
 
-/** Read access to a persisted SAF tree. One IPC per [listChildren] call. */
 interface DocumentTreeSource {
     fun rootDocumentId(treeUri: String): String
 

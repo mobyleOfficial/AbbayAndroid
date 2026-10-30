@@ -158,7 +158,6 @@ fun BookListTopBar(
     )
 }
 
-/** Search, queue, folder view and statistics. */
 class LibraryMenu(
     val onSearch: () -> Unit = {},
     val onQueue: () -> Unit = {},

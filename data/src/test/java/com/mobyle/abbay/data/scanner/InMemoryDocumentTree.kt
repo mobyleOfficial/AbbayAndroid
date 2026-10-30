@@ -5,7 +5,6 @@ import com.mobyle.abbay.data.storage.DocumentTreeSource
 import com.model.DataError
 import com.model.DataResult
 
-/** A fake SAF tree built from paths such as "Author/Book/01.mp3". Counts listing calls (one IPC each on a device). */
 class InMemoryDocumentTree(vararg filePaths: String) : DocumentTreeSource {
     private val children = mutableMapOf<String, MutableList<DocumentEntry>>(ROOT to mutableListOf())
     var listCalls = 0

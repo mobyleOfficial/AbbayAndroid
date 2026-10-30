@@ -10,7 +10,6 @@ import org.robolectric.annotation.Config
 import java.io.File
 import java.io.RandomAccessFile
 
-/** ExoPlayer's extractors read files the platform reader returns nothing for. Robolectric: Media3's MP4 parser uses `android.util.Pair`. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [30])
 class ExtractorAudioProbeTest {

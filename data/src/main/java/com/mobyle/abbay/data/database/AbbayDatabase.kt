@@ -51,7 +51,6 @@ abstract class AbbayDatabase : RoomDatabase() {
     abstract fun extrasDao(): ExtrasDao
 
     companion object {
-        /** Must stay equal to the name used by previous app versions, which was the `app_name` string. */
         const val DATABASE_NAME = "Abbay"
     }
 }

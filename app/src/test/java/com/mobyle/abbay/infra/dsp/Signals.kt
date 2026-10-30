@@ -6,7 +6,6 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
 
-/** Test signals generated in code. Interleaved float, ±1 full scale. */
 object Signals {
     const val RATE = 48_000
 
@@ -18,7 +17,6 @@ object Signals {
         }
     }
 
-    /** Speech-like bursts: amplitude-modulated noise, separated by exact silences. */
     fun bursts(burstSeconds: Double, silenceSeconds: Double, count: Int, level: Float, rate: Int = RATE, seed: Int = 3): FloatArray {
         val random = Random(seed)
         val burstFrames = (burstSeconds * rate).toInt()
@@ -52,7 +50,6 @@ object Signals {
 
     fun decibels(ratio: Double): Double = 20 * kotlin.math.log10(ratio)
 
-    /** Largest sample-to-sample step of one channel. */
     fun maximumStep(samples: FloatArray, channels: Int = 1, channel: Int = 0): Float {
         var maximum = 0f
         var index = channel + channels
