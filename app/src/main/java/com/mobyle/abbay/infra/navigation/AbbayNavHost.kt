@@ -28,6 +28,7 @@ import com.mobyle.abbay.presentation.booklist.PlayerNavigation
 import com.mobyle.abbay.presentation.booklist.isSplit
 import com.mobyle.abbay.presentation.bookmarks.BookmarksScreen
 import com.mobyle.abbay.presentation.characters.CharactersScreen
+import com.mobyle.abbay.presentation.common.widgets.ReadableWidth
 import com.mobyle.abbay.presentation.converter.ConverterScreen
 import com.mobyle.abbay.presentation.diagnostics.DiagnosticsScreen
 import com.mobyle.abbay.presentation.documents.CompanionDocumentsViewModel
@@ -216,7 +217,7 @@ private fun NavGraphBuilder.settingsScreens(viewModel: BooksListViewModel, navCo
             },
         ),
     ) {
-        ConverterScreen { navController.popBackStack() }
+        ReadableWidth { ConverterScreen { navController.popBackStack() } }
     }
 }
 
@@ -244,7 +245,7 @@ private fun NavGraphBuilder.libraryExtras(viewModel: BooksListViewModel, host: L
             }
         },
     ) {
-        FolderScreen(onPlay = { playFromLibrary(it.id) }, close = { navController.popBackStack() })
+        ReadableWidth { FolderScreen(onPlay = { playFromLibrary(it.id) }, close = { navController.popBackStack() }) }
     }
 
     modal(NavigationItem.Statistics.route) {
@@ -279,7 +280,8 @@ private fun NavGraphBuilder.libraryExtras(viewModel: BooksListViewModel, host: L
 }
 
 private fun NavGraphBuilder.libriVoxScreens(viewModel: BooksListViewModel, host: LibraryPlayerHost, navController: NavHostController) {
-    modal(NavigationItem.LibriVox.route, arguments = optionalStrings(LibriVoxSearchViewModel.QUERY_ARGUMENT)) {
+    // A grid of covers: wider shows more of them.
+    modal(NavigationItem.LibriVox.route, arguments = optionalStrings(LibriVoxSearchViewModel.QUERY_ARGUMENT), isReadableWidth = false) {
         LibriVoxSearchScreen(
             onOpenBook = { book -> navController.navigate(NavigationItem.LibriVoxBookPage.routeFor(book)) },
             close = { navController.popBackStack() },
@@ -311,7 +313,13 @@ class LibraryDestinations(
     val text: (bookId: String) -> Unit = {},
 )
 
-private fun NavGraphBuilder.modal(route: String, arguments: List<NamedNavArgument> = emptyList(), screen: @Composable () -> Unit) {
+/** A screen sliding up over the library; [isReadableWidth] keeps rows at a readable width on a wide window. */
+private fun NavGraphBuilder.modal(
+    route: String,
+    arguments: List<NamedNavArgument> = emptyList(),
+    isReadableWidth: Boolean = true,
+    screen: @Composable () -> Unit,
+) {
     composable(
         route = route,
         arguments = arguments,
@@ -328,7 +336,7 @@ private fun NavGraphBuilder.modal(route: String, arguments: List<NamedNavArgumen
             )
         }
     ) {
-        screen()
+        if (isReadableWidth) ReadableWidth(screen) else screen()
     }
 }
 
