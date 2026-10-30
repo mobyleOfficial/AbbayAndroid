@@ -2,7 +2,9 @@ package com.mobyle.abbay.presentation
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.service.quicksettings.TileService
 import android.widget.Toast
@@ -79,6 +81,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         enableEdgeToEdge()
+        lockPhonesToPortrait()
         splashScreen.setKeepOnScreenCondition {
             !isPlayerReady
         }
@@ -168,7 +171,28 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Phones (and a folded foldable) stay in portrait; a tablet or an unfolded foldable follows how it is held, and
+     * Android 16 ignores a lock on large screens anyway. Decided from the display, not the window, so a small window
+     * on a tablet is not reshaped; a fold recreates the activity and decides again.
+     */
+    private fun lockPhonesToPortrait() {
+        requestedOrientation = if (displaySmallestWidthDp() < LARGE_SCREEN_MIN_WIDTH_DP) {
+            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+    }
+
+    private fun displaySmallestWidthDp(): Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        val bounds = windowManager.maximumWindowMetrics.bounds
+        (minOf(bounds.width(), bounds.height()) / resources.displayMetrics.density).toInt()
+    } else {
+        resources.configuration.smallestScreenWidthDp
+    }
+
     companion object {
+        private const val LARGE_SCREEN_MIN_WIDTH_DP = 600
         const val ACTION_RESUME_LAST_BOOK = "com.mobyle.abbay.action.RESUME_LAST_BOOK"
         const val ACTION_START_SLEEP_TIMER = "com.mobyle.abbay.action.START_SLEEP_TIMER"
     }

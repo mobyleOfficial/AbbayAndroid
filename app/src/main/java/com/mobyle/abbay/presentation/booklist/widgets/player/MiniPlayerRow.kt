@@ -2,6 +2,8 @@ package com.mobyle.abbay.presentation.booklist.widgets.player
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,19 +35,29 @@ fun MiniPlayerRow(
     isScreenLocked: Boolean,
     onPlayButtonClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
+    isScrollingLongText: Boolean = true,
 ) {
+    // A marquee animates for as long as it is composed, even hidden under the expanded player.
+    val marquee = if (isScrollingLongText) Modifier.basicMarquee() else Modifier
     Box(modifier = modifier) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().fillMaxHeight().padding(start = 4.dp, end = 4.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clickable(onClickLabel = stringResource(R.string.player_expand), onClick = onClick),
+                verticalArrangement = Arrangement.Center,
+            ) {
                 Text(
                     book.name,
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = AbbayColors.content,
                     maxLines = 1,
-                    modifier = Modifier.basicMarquee(),
+                    modifier = marquee,
                 )
                 val subtitle = listOf(chapterTitle(position.chapter), timeLeftLabel(book.duration - position.bookPositionMs, book.speed))
                     .filter { it.isNotBlank() }
@@ -55,7 +67,7 @@ fun MiniPlayerRow(
                     style = MaterialTheme.typography.bodySmall,
                     color = AbbayColors.content.copy(alpha = SUBTITLE_ALPHA),
                     maxLines = 1,
-                    modifier = Modifier.basicMarquee(),
+                    modifier = marquee,
                 )
             }
             if (isScreenLocked) {

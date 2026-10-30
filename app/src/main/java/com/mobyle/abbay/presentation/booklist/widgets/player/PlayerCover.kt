@@ -37,10 +37,11 @@ fun PlayerCover(
     onSwipeToNext: () -> Unit,
     modifier: Modifier = Modifier,
     isStreamingOnly: Boolean = false,
+    alignment: Alignment = Alignment.Center,
 ) {
     val configuration = LocalConfiguration.current
     val coverSizePx = with(LocalDensity.current) { minOf(configuration.screenWidthDp, configuration.screenHeightDp).dp.roundToPx() }
-    BoxWithConstraints(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize(), contentAlignment = alignment) {
         val side = minOf(maxWidth, maxHeight)
         val shape = RoundedCornerShape(coverCornerRadius(side))
         Box(modifier = Modifier.size(side)) {

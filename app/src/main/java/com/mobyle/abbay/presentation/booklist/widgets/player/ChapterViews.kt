@@ -14,10 +14,12 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -50,40 +52,68 @@ fun ChaptersSheet(
     onSelect: (Chapter) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val currentIndex = position.chapter?.index ?: 0
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.surface) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                stringResource(R.string.player_chapters),
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = AbbayColors.content,
-                modifier = Modifier.weight(1f).semantics { heading() },
-            )
-            Text(bookTimeLeft, style = MaterialTheme.typography.bodySmall, color = AbbayColors.content.copy(alpha = SECONDARY_ALPHA))
-        }
-        val listState = rememberLazyListState()
-        LaunchedEffect(Unit) { listState.scrollToItem((currentIndex - 1).coerceAtLeast(0)) }
-        LazyColumn(state = listState, modifier = Modifier.fillMaxWidth()) {
-            itemsIndexed(chapters, key = { _, chapter -> chapter.index }) { index, chapter ->
-                ChapterPanelRow(
-                    chapter = chapter,
-                    state = when {
-                        index < currentIndex -> ChapterRowState.FINISHED
-                        index == currentIndex -> ChapterRowState.CURRENT
-                        else -> ChapterRowState.UPCOMING
-                    },
-                    currentProgress = position.chapterElapsedMs.toFloat() / position.chapterDurationMs,
-                    onClick = { onSelect(chapter) },
-                )
-                HorizontalDivider(
-                    thickness = 0.5.dp,
-                    color = AbbayColors.content.copy(alpha = DIVIDER_ALPHA),
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
+        ChaptersHeader(bookTimeLeft, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp))
+        ChaptersList(chapters, position, onSelect)
+    }
+}
+
+/** The chapters as a pane beside the player, in browsing's place: a chapter tap plays it and keeps the pane. */
+@Composable
+fun ChaptersPane(
+    chapters: List<Chapter>,
+    position: PlayerPosition,
+    bookTimeLeft: String,
+    onSelect: (Chapter) -> Unit,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.background(MaterialTheme.colorScheme.surface)) {
+        ChaptersHeader(bookTimeLeft, modifier = Modifier.padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 4.dp)) {
+            IconButton(onClick = onClose) {
+                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.player_close_chapters), tint = AbbayColors.content)
             }
+        }
+        ChaptersList(chapters, position, onSelect, modifier = Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun ChaptersHeader(bookTimeLeft: String, modifier: Modifier = Modifier, trailing: @Composable () -> Unit = {}) {
+    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            stringResource(R.string.player_chapters),
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = AbbayColors.content,
+            modifier = Modifier.weight(1f).semantics { heading() },
+        )
+        Text(bookTimeLeft, style = MaterialTheme.typography.bodySmall, color = AbbayColors.content.copy(alpha = SECONDARY_ALPHA))
+        trailing()
+    }
+}
+
+@Composable
+private fun ChaptersList(chapters: List<Chapter>, position: PlayerPosition, onSelect: (Chapter) -> Unit, modifier: Modifier = Modifier) {
+    val currentIndex = position.chapter?.index ?: 0
+    val listState = rememberLazyListState()
+    LaunchedEffect(Unit) { listState.scrollToItem((currentIndex - 1).coerceAtLeast(0)) }
+    LazyColumn(state = listState, modifier = modifier.fillMaxWidth()) {
+        itemsIndexed(chapters, key = { _, chapter -> chapter.index }) { index, chapter ->
+            ChapterPanelRow(
+                chapter = chapter,
+                state = when {
+                    index < currentIndex -> ChapterRowState.FINISHED
+                    index == currentIndex -> ChapterRowState.CURRENT
+                    else -> ChapterRowState.UPCOMING
+                },
+                currentProgress = position.chapterElapsedMs.toFloat() / position.chapterDurationMs,
+                onClick = { onSelect(chapter) },
+            )
+            HorizontalDivider(
+                thickness = 0.5.dp,
+                color = AbbayColors.content.copy(alpha = DIVIDER_ALPHA),
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
         }
     }
 }

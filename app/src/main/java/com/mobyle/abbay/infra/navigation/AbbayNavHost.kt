@@ -3,6 +3,9 @@ package com.mobyle.abbay.infra.navigation
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NamedNavArgument
@@ -11,16 +14,25 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.library.FolderLocation
 import com.mobyle.abbay.presentation.about.LicensesScreen
 import com.mobyle.abbay.presentation.bookdetails.BookDetailsScreen
+import com.mobyle.abbay.presentation.booklist.AdaptiveLibraryShell
 import com.mobyle.abbay.presentation.booklist.BooksListScreen
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel
+import com.mobyle.abbay.presentation.booklist.LibraryPlayerDependencies
+import com.mobyle.abbay.presentation.booklist.LibraryPlayerHost
+import com.mobyle.abbay.presentation.booklist.PlayerNavigation
+import com.mobyle.abbay.presentation.booklist.isSplit
 import com.mobyle.abbay.presentation.bookmarks.BookmarksScreen
 import com.mobyle.abbay.presentation.characters.CharactersScreen
+import com.mobyle.abbay.presentation.common.widgets.ReadableWidth
 import com.mobyle.abbay.presentation.converter.ConverterScreen
 import com.mobyle.abbay.presentation.diagnostics.DiagnosticsScreen
+import com.mobyle.abbay.presentation.documents.CompanionDocumentsViewModel
+import com.mobyle.abbay.presentation.effects.AudioEffectsViewModel
 import com.mobyle.abbay.presentation.folders.FolderScreen
 import com.mobyle.abbay.presentation.folders.FolderViewModel
 import com.mobyle.abbay.presentation.history.HistoryScreen
@@ -28,6 +40,7 @@ import com.mobyle.abbay.presentation.librivox.LibriVoxBookScreen
 import com.mobyle.abbay.presentation.librivox.LibriVoxBookViewModel
 import com.mobyle.abbay.presentation.librivox.LibriVoxSearchScreen
 import com.mobyle.abbay.presentation.librivox.LibriVoxSearchViewModel
+import com.mobyle.abbay.presentation.options.PlaybackOptionsViewModel
 import com.mobyle.abbay.presentation.queue.QueueScreen
 import com.mobyle.abbay.presentation.search.SearchScreen
 import com.mobyle.abbay.presentation.settings.SettingsScreen
@@ -41,6 +54,84 @@ fun AbbayNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController,
     startDestination: String = NavigationItem.BookList.route,
+    effectsViewModel: AudioEffectsViewModel = hiltViewModel(),
+    optionsViewModel: PlaybackOptionsViewModel = hiltViewModel(),
+    documentsViewModel: CompanionDocumentsViewModel = hiltViewModel(),
+) {
+    val player = remember(viewModel, effectsViewModel, optionsViewModel, documentsViewModel, navController) {
+        playerDependencies(viewModel, effectsViewModel, optionsViewModel, documentsViewModel, navController)
+    }
+    AdaptiveLibraryShell(player) { host ->
+        PlayBesideScreens(viewModel, host, navController)
+        AbbayScreens(viewModel, host, player, navController, startDestination, modifier)
+    }
+}
+
+// Above the screens, so the player pane (on a tablet or an unfolded foldable) stays beside any of them.
+private fun playerDependencies(
+    viewModel: BooksListViewModel,
+    effectsViewModel: AudioEffectsViewModel,
+    optionsViewModel: PlaybackOptionsViewModel,
+    documentsViewModel: CompanionDocumentsViewModel,
+    navController: NavHostController,
+): LibraryPlayerDependencies {
+    val destinations = LibraryDestinations(
+        queue = { navController.navigate(NavigationItem.Queue.route) },
+        search = { navController.navigate(NavigationItem.Search.route) },
+        librivox = { navController.navigate(NavigationItem.LibriVox.routeFor()) },
+        folders = { location -> navController.navigate(NavigationItem.Folders.routeFor(location)) },
+        statistics = { navController.navigate(NavigationItem.Statistics.route) },
+        bookStatistics = { bookId -> navController.navigate(NavigationItem.BookStatistics.routeFor(bookId)) },
+        characters = { bookId -> navController.navigate(NavigationItem.Characters.routeFor(bookId)) },
+        text = { bookId -> navController.navigate(NavigationItem.Text.routeFor(bookId)) },
+    )
+    val navigateToSettings = { navController.navigate(NavigationItem.Settings.route) }
+    val navigateToBookDetails = { bookId: String -> navController.navigate(NavigationItem.BookDetails.routeFor(bookId)) }
+    return LibraryPlayerDependencies(
+        viewModel = viewModel,
+        effectsViewModel = effectsViewModel,
+        optionsViewModel = optionsViewModel,
+        documentsViewModel = documentsViewModel,
+        navigation = PlayerNavigation(
+            settings = navigateToSettings,
+            bookDetails = navigateToBookDetails,
+            bookmarks = { bookId -> navController.navigate(NavigationItem.Bookmarks.routeFor(bookId)) },
+            history = { bookId -> navController.navigate(NavigationItem.History.routeFor(bookId)) },
+            destinations = destinations,
+        ),
+    )
+}
+
+/**
+ * Split, a book played from Search, LibriVox, the queue or a folder opens in the player pane beside that screen,
+ * which stays open (the library handles the requests made while it is shown). A book whose file is gone goes back
+ * to the library, which says why.
+ */
+@Composable
+private fun PlayBesideScreens(viewModel: BooksListViewModel, host: LibraryPlayerHost, navController: NavHostController) {
+    val entry by navController.currentBackStackEntryAsState()
+    val isOnLibrary = entry?.destination?.route == NavigationItem.BookList.route
+    if (!host.paneLayout.isSplit || isOnLibrary) return
+    LaunchedEffect(Unit) {
+        viewModel.playRequests.collect { book ->
+            if (viewModel.startBook(book)) {
+                host.presentation.open()
+            } else {
+                navController.popBackStack(NavigationItem.BookList.route, inclusive = false)
+                viewModel.requestPlay(book.id)
+            }
+        }
+    }
+}
+
+@Composable
+private fun AbbayScreens(
+    viewModel: BooksListViewModel,
+    host: LibraryPlayerHost,
+    player: LibraryPlayerDependencies,
+    navController: NavHostController,
+    startDestination: String,
+    modifier: Modifier,
 ) {
     NavHost(
         modifier = modifier,
@@ -52,26 +143,17 @@ fun AbbayNavHost(
         ) {
             BooksListScreen(
                 viewModel = viewModel,
-                navigateToSettings = { navController.navigate(NavigationItem.Settings.route) },
-                navigateToBookDetails = { bookId -> navController.navigate(NavigationItem.BookDetails.routeFor(bookId)) },
-                navigateToBookmarks = { bookId -> navController.navigate(NavigationItem.Bookmarks.routeFor(bookId)) },
-                navigateToHistory = { bookId -> navController.navigate(NavigationItem.History.routeFor(bookId)) },
-                navigateTo = LibraryDestinations(
-                    queue = { navController.navigate(NavigationItem.Queue.route) },
-                    search = { navController.navigate(NavigationItem.Search.route) },
-                    librivox = { navController.navigate(NavigationItem.LibriVox.routeFor()) },
-                    folders = { location -> navController.navigate(NavigationItem.Folders.routeFor(location)) },
-                    statistics = { navController.navigate(NavigationItem.Statistics.route) },
-                    bookStatistics = { bookId -> navController.navigate(NavigationItem.BookStatistics.routeFor(bookId)) },
-                    characters = { bookId -> navController.navigate(NavigationItem.Characters.routeFor(bookId)) },
-                    text = { bookId -> navController.navigate(NavigationItem.Text.routeFor(bookId)) },
-                ),
+                host = host,
+                player = player,
+                navigateToSettings = player.navigation.settings,
+                navigateToBookDetails = player.navigation.bookDetails,
+                navigateTo = player.navigation.destinations,
             )
         }
 
-        libraryExtras(viewModel, navController)
+        libraryExtras(viewModel, host, navController)
 
-        libriVoxScreens(viewModel, navController)
+        libriVoxScreens(viewModel, host, navController)
 
         modal(NavigationItem.BookDetails.route) {
             BookDetailsScreen(
@@ -135,15 +217,12 @@ private fun NavGraphBuilder.settingsScreens(viewModel: BooksListViewModel, navCo
             },
         ),
     ) {
-        ConverterScreen { navController.popBackStack() }
+        ReadableWidth { ConverterScreen { navController.popBackStack() } }
     }
 }
 
-private fun NavGraphBuilder.libraryExtras(viewModel: BooksListViewModel, navController: NavHostController) {
-    val playFromLibrary: (String) -> Unit = { bookId ->
-        viewModel.requestPlay(bookId)
-        navController.popBackStack(NavigationItem.BookList.route, inclusive = false)
-    }
+private fun NavGraphBuilder.libraryExtras(viewModel: BooksListViewModel, host: LibraryPlayerHost, navController: NavHostController) {
+    val playFromLibrary: (String) -> Unit = { bookId -> play(bookId, viewModel, host, navController) }
 
     modal(NavigationItem.Queue.route) {
         QueueScreen(onPlay = { playFromLibrary(it.id) }, close = { navController.popBackStack() })
@@ -166,7 +245,7 @@ private fun NavGraphBuilder.libraryExtras(viewModel: BooksListViewModel, navCont
             }
         },
     ) {
-        FolderScreen(onPlay = { playFromLibrary(it.id) }, close = { navController.popBackStack() })
+        ReadableWidth { FolderScreen(onPlay = { playFromLibrary(it.id) }, close = { navController.popBackStack() }) }
     }
 
     modal(NavigationItem.Statistics.route) {
@@ -200,8 +279,9 @@ private fun NavGraphBuilder.libraryExtras(viewModel: BooksListViewModel, navCont
     }
 }
 
-private fun NavGraphBuilder.libriVoxScreens(viewModel: BooksListViewModel, navController: NavHostController) {
-    modal(NavigationItem.LibriVox.route, arguments = optionalStrings(LibriVoxSearchViewModel.QUERY_ARGUMENT)) {
+private fun NavGraphBuilder.libriVoxScreens(viewModel: BooksListViewModel, host: LibraryPlayerHost, navController: NavHostController) {
+    // A grid of covers: wider shows more of them.
+    modal(NavigationItem.LibriVox.route, arguments = optionalStrings(LibriVoxSearchViewModel.QUERY_ARGUMENT), isReadableWidth = false) {
         LibriVoxSearchScreen(
             onOpenBook = { book -> navController.navigate(NavigationItem.LibriVoxBookPage.routeFor(book)) },
             close = { navController.popBackStack() },
@@ -209,11 +289,17 @@ private fun NavGraphBuilder.libriVoxScreens(viewModel: BooksListViewModel, navCo
     }
 
     modal(NavigationItem.LibriVoxBookPage.route, arguments = LIBRIVOX_BOOK_ARGUMENTS) {
-        LibriVoxBookScreen(onListen = { bookId ->
-            viewModel.requestPlay(bookId)
-            navController.popBackStack(NavigationItem.BookList.route, inclusive = false)
-        }, close = { navController.popBackStack() })
+        LibriVoxBookScreen(
+            onListen = { bookId -> play(bookId, viewModel, host, navController) },
+            close = { navController.popBackStack() },
+        )
     }
+}
+
+/** In one pane the player is the library's: back to it. Split, the player opens beside this screen. */
+private fun play(bookId: String, viewModel: BooksListViewModel, host: LibraryPlayerHost, navController: NavHostController) {
+    viewModel.requestPlay(bookId)
+    if (!host.paneLayout.isSplit) navController.popBackStack(NavigationItem.BookList.route, inclusive = false)
 }
 
 class LibraryDestinations(
@@ -227,7 +313,13 @@ class LibraryDestinations(
     val text: (bookId: String) -> Unit = {},
 )
 
-private fun NavGraphBuilder.modal(route: String, arguments: List<NamedNavArgument> = emptyList(), screen: @Composable () -> Unit) {
+/** A screen sliding up over the library; [isReadableWidth] keeps rows at a readable width on a wide window. */
+private fun NavGraphBuilder.modal(
+    route: String,
+    arguments: List<NamedNavArgument> = emptyList(),
+    isReadableWidth: Boolean = true,
+    screen: @Composable () -> Unit,
+) {
     composable(
         route = route,
         arguments = arguments,
@@ -244,7 +336,7 @@ private fun NavGraphBuilder.modal(route: String, arguments: List<NamedNavArgumen
             )
         }
     ) {
-        screen()
+        if (isReadableWidth) ReadableWidth(screen) else screen()
     }
 }
 

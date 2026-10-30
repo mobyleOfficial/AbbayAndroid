@@ -17,6 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layoutId
@@ -41,6 +42,7 @@ import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerTopBar
 import com.mobyle.abbay.presentation.booklist.widgets.player.PlayingState
 import com.mobyle.abbay.presentation.booklist.widgets.player.ScreenLockedAlert
 import com.mobyle.abbay.presentation.booklist.widgets.player.SleepSheetSettings
+import com.mobyle.abbay.presentation.booklist.widgets.player.chaptersToggleOf
 import com.mobyle.abbay.presentation.booklist.widgets.player.timeLeftLabel
 import com.mobyle.abbay.presentation.common.theme.coverTintBackground
 import com.mobyle.abbay.presentation.common.theme.rememberCoverTint
@@ -67,28 +69,23 @@ fun MiniPlayer(
     effects: AudioEffectsPanel = AudioEffectsPanel(),
     options: PlaybackOptionsPanel = PlaybackOptionsPanel(),
     display: PlayerDisplay = PlayerDisplay(),
+    chapters: ChaptersToggle? = null,
+    onClose: (() -> Unit)? = null,
+    onExpand: () -> Unit = {},
 ) {
     val fraction = scaffoldState.currentFraction.coerceIn(0f, 1f)
     val isExpanded = fraction == 1f
     val position = PlayerPosition.of(book)
     val playerIcon = playingStateOf(playerState, isAwaitingPlayback)
-    val tint = rememberCoverTint(book.thumbnail)
-    val chapters = rememberChaptersToggle(isExpanded)
+    val chapterToggle = chaptersToggleOf(chapters, rememberChaptersToggle(isExpanded), isSheet = onClose == null, isExpanded)
     PlayerEffects(book, playerState, actions)
 
     MotionLayout(
         motionScene = rememberPlayerMotionScene(),
         progress = fraction,
-        modifier = modifier.fillMaxSize().coverTintBackground(tint, gradientStrength = fraction),
+        modifier = modifier.fillMaxSize().coverTintBackground(rememberCoverTint(book.thumbnail), gradientStrength = fraction),
     ) {
-        MiniPlayerRow(
-            book = book,
-            position = position,
-            playerIcon = playerIcon,
-            isScreenLocked = isScreenLocked,
-            onPlayButtonClick = { actions.onPlayButtonClick(book.progress) },
-            modifier = Modifier.fillMaxWidth().layoutId(LayoutId.MINI_PLAYER.id),
-        )
+        CollapsedRow(book, position, playerIcon, isScreenLocked, actions, onExpand, isCollapsed = fraction == 0f)
 
         PlayerControls(
             book = book,
@@ -97,7 +94,7 @@ fun MiniPlayer(
             skips = skips,
             actions = actions,
             modifier = Modifier.fillMaxWidth().layoutId(LayoutId.CONTENT.id).padding(controlsPadding),
-            chapters = chapters,
+            chapters = chapterToggle,
             sleepTimer = playerState.sleepTimer,
             sleepSettings = sleepSettings,
             effects = effects,
@@ -111,6 +108,7 @@ fun MiniPlayer(
             skips = skips,
             actions = actions,
             gesturesEnabled = isExpanded && !isScreenLocked,
+            isPane = onClose != null,
             modifier = Modifier.padding(8.dp).layoutId(LayoutId.THUMBNAIL.id),
         )
 
@@ -118,6 +116,7 @@ fun MiniPlayer(
             isScreenLocked = isScreenLocked,
             actions = actions,
             scaffoldState = scaffoldState,
+            onClose = onClose,
             modifier = Modifier.fillMaxWidth().layoutId(LayoutId.TOP_CONTENT.id),
         )
 
@@ -128,7 +127,30 @@ fun MiniPlayer(
         )
     }
 
-    if (chapters.isOpen) PlayerChaptersSheet(book, position, chapters, actions)
+    if (onClose == null && chapterToggle.isOpen) PlayerChaptersSheet(book, position, chapterToggle, actions)
+}
+
+/** The mini player's row, under the expanded player while it is open. */
+@Composable
+private fun CollapsedRow(
+    book: Book,
+    position: PlayerPosition,
+    playerIcon: PlayingState,
+    isScreenLocked: Boolean,
+    actions: PlayerActions,
+    onExpand: () -> Unit,
+    isCollapsed: Boolean,
+) {
+    MiniPlayerRow(
+        book = book,
+        position = position,
+        playerIcon = playerIcon,
+        isScreenLocked = isScreenLocked,
+        onPlayButtonClick = { actions.onPlayButtonClick(book.progress) },
+        onClick = onExpand,
+        isScrollingLongText = isCollapsed,
+        modifier = Modifier.fillMaxWidth().layoutId(LayoutId.MINI_PLAYER.id),
+    )
 }
 
 @Composable
@@ -147,11 +169,18 @@ private fun PlayerChaptersSheet(book: Book, position: PlayerPosition, chapters: 
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-private fun ExpandedTopBar(isScreenLocked: Boolean, actions: PlayerActions, scaffoldState: BottomSheetScaffoldState, modifier: Modifier) {
+private fun ExpandedTopBar(
+    isScreenLocked: Boolean,
+    actions: PlayerActions,
+    scaffoldState: BottomSheetScaffoldState,
+    onClose: (() -> Unit)?,
+    modifier: Modifier,
+) {
     val scope = rememberCoroutineScope()
+    val collapse: () -> Unit = { scope.launch { scaffoldState.bottomSheetState.collapse() } }
     PlayerTopBar(
         isScreenLocked = isScreenLocked,
-        onCollapse = { scope.launch { scaffoldState.bottomSheetState.collapse() } },
+        onCollapse = onClose ?: collapse,
         onLockToggle = actions.onLockScreen,
         onOpenDetails = actions.onOpenDetails,
         onMarkFinished = actions.onMarkFinished,
@@ -161,6 +190,7 @@ private fun ExpandedTopBar(isScreenLocked: Boolean, actions: PlayerActions, scaf
         onOpenHistory = actions.onOpenHistory,
         extraMenu = PlayerMenuExtras(actions.onOpenCharacters, actions.onOpenStatistics, actions.onOpenBookText, actions.onOpenText),
         routeButton = actions.routeButton,
+        isPane = onClose != null,
     )
 }
 
@@ -192,6 +222,7 @@ private fun Cover(
     actions: PlayerActions,
     gesturesEnabled: Boolean,
     modifier: Modifier = Modifier,
+    isPane: Boolean = false,
 ) {
     Box(modifier) {
         PlayerCover(
@@ -204,6 +235,8 @@ private fun Cover(
             onDoubleTapRight = { actions.onSeekBy(skips.smallForwardSeconds * MILLIS_PER_SECOND) },
             onSwipeToPrevious = actions.onPreviousChapter,
             onSwipeToNext = actions.onNextChapter,
+            // A pane is narrow and can be tall (a tablet in portrait): the cover stays by its title, the spare height above.
+            alignment = if (isPane) Alignment.BottomCenter else Alignment.Center,
         )
     }
 }

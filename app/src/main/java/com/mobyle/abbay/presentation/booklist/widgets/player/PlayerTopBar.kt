@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.LockOpen
@@ -40,6 +41,7 @@ fun PlayerTopBar(
     onOpenHistory: () -> Unit = {},
     extraMenu: PlayerMenuExtras = PlayerMenuExtras(),
     routeButton: @Composable () -> Unit = {},
+    isPane: Boolean = false,
 ) {
     var isMenuOpen by remember { mutableStateOf(false) }
 
@@ -47,9 +49,10 @@ fun PlayerTopBar(
         modifier = modifier.heightIn(min = 56.dp).padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // A pane leaves sideways instead of collapsing: it reads ✕.
         CircleIconButton(
-            icon = Icons.Rounded.KeyboardArrowDown,
-            contentDescription = stringResource(R.string.player_collapse),
+            icon = if (isPane) Icons.Rounded.Close else Icons.Rounded.KeyboardArrowDown,
+            contentDescription = stringResource(if (isPane) R.string.player_close else R.string.player_collapse),
             onClick = onCollapse,
         )
         Spacer(modifier = Modifier.weight(1f))

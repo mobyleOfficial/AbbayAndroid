@@ -70,3 +70,10 @@ data class PlayerDisplay(
 )
 
 class ChaptersToggle(val isOpen: Boolean = false, val onToggle: () -> Unit = {}, val onClose: () -> Unit = {})
+
+/** Hoisted when given (the chapters can be a pane beside a player pane); in a sheet, open only while the player is expanded. */
+internal fun chaptersToggleOf(hoisted: ChaptersToggle?, own: ChaptersToggle, isSheet: Boolean, isExpanded: Boolean): ChaptersToggle = when {
+    hoisted == null -> own
+    isSheet && !isExpanded -> ChaptersToggle(isOpen = false, onToggle = hoisted.onToggle, onClose = hoisted.onClose)
+    else -> hoisted
+}

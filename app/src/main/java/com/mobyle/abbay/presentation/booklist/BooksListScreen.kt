@@ -14,13 +14,11 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -29,7 +27,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.BottomSheetScaffold
 import androidx.compose.material.BottomSheetScaffoldState
-import androidx.compose.material.BottomSheetValue
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarResult
@@ -41,8 +38,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.Public
-import androidx.compose.material.rememberBottomSheetScaffoldState
-import androidx.compose.material.rememberBottomSheetState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -65,10 +60,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -77,12 +72,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.library.FolderLocation
 import com.library.FolderTree
 import com.library.LibraryLayout
 import com.mobyle.abbay.R
-import com.mobyle.abbay.infra.cast.CastButton
 import com.mobyle.abbay.infra.navigation.LibraryDestinations
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.BookListSuccess
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState.LegacyFolderMigration
@@ -99,13 +92,8 @@ import com.mobyle.abbay.presentation.booklist.widgets.LibraryControls
 import com.mobyle.abbay.presentation.booklist.widgets.LibraryMenu
 import com.mobyle.abbay.presentation.booklist.widgets.LibraryTabEmptyState
 import com.mobyle.abbay.presentation.booklist.widgets.LocalLibriVoxDownloads
-import com.mobyle.abbay.presentation.booklist.widgets.MiniPlayer
 import com.mobyle.abbay.presentation.booklist.widgets.ReconnectBanner
 import com.mobyle.abbay.presentation.booklist.widgets.UpNextBanner
-import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerActions
-import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerDisplay
-import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerSkips
-import com.mobyle.abbay.presentation.booklist.widgets.player.SleepSheetSettings
 import com.mobyle.abbay.presentation.bookmarks.BookmarkNoteDialog
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.mobyle.abbay.presentation.common.theme.AbbayTextStyles
@@ -115,12 +103,6 @@ import com.mobyle.abbay.presentation.common.theme.rememberCoverTint
 import com.mobyle.abbay.presentation.common.widgets.AbbayActionDialog
 import com.mobyle.abbay.presentation.common.widgets.AbbayAlertDialog
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
-import com.mobyle.abbay.presentation.documents.CompanionDocumentsDialog
-import com.mobyle.abbay.presentation.documents.CompanionDocumentsViewModel
-import com.mobyle.abbay.presentation.effects.AudioEffectsPanel
-import com.mobyle.abbay.presentation.effects.AudioEffectsViewModel
-import com.mobyle.abbay.presentation.options.PlaybackOptionsPanel
-import com.mobyle.abbay.presentation.options.PlaybackOptionsViewModel
 import com.mobyle.abbay.presentation.utils.LaunchedEffectAndCollect
 import com.mobyle.abbay.presentation.utils.currentFraction
 import com.mobyle.abbay.presentation.utils.intermediateProgress
@@ -134,22 +116,23 @@ import kotlinx.coroutines.launch
 
 private const val UPDATE_PROGRESS_REFRESH_RATE = 3
 
+/**
+ * The library. In one pane it owns the player as its bottom sheet; split, the player lives in `AdaptiveLibraryShell`
+ * beside whatever screen is open, and this is browsing only.
+ */
 @Composable
 fun BooksListScreen(
     viewModel: BooksListViewModel,
+    host: LibraryPlayerHost,
+    player: LibraryPlayerDependencies,
     navigateToSettings: () -> Unit,
     navigateToBookDetails: (bookId: String) -> Unit,
-    navigateToBookmarks: (bookId: String) -> Unit = {},
-    navigateToHistory: (bookId: String) -> Unit = {},
     navigateTo: LibraryDestinations = LibraryDestinations(),
-    effectsViewModel: AudioEffectsViewModel = hiltViewModel(),
-    optionsViewModel: PlaybackOptionsViewModel = hiltViewModel(),
-    documentsViewModel: CompanionDocumentsViewModel = hiltViewModel(),
 ) {
     val asyncScope = rememberCoroutineScope()
     val fileFilterList = arrayOf("audio/*")
 
-    val bottomSheetState = rememberBottomSheetScaffoldState()
+    val bottomSheetState = host.sheetState
     val booksListState by viewModel.uiState.collectAsState()
     val libraryState by viewModel.libraryState.collectAsState()
     val selectedBook by viewModel.selectedBook.collectAsState()
@@ -166,22 +149,22 @@ fun BooksListScreen(
     val isScreenLocked by viewModel.isScreenLocked.collectAsState()
     val shouldOpenPlayerInStartup by viewModel.shouldOpenPlayerInStartup.collectAsState()
     val hasOpenedPlayerOnStartup = remember { mutableStateOf(false) }
-    val isWide = LocalConfiguration.current.screenWidthDp >= LIST_DETAIL_MIN_WIDTH_DP
-    val playerPaneState = rememberBottomSheetScaffoldState(bottomSheetState = rememberBottomSheetState(BottomSheetValue.Expanded))
-    PlayerStatusBarColor(selectedBook?.thumbnail, bottomSheetState, isShown = !isWide && selectedBook != null)
+    val isSplit = host.paneLayout.isSplit
+    val presentation = host.presentation
+    PlayerStatusBarColor(selectedBook?.thumbnail, bottomSheetState, isShown = !isSplit && selectedBook != null)
 
     val canOpenPlayerOnStartup = hasBookSelected && selectedBook?.hasError == false
     LaunchedEffect(shouldOpenPlayerInStartup, canOpenPlayerOnStartup) {
         if (shouldOpenPlayerInStartup && canOpenPlayerOnStartup && !hasOpenedPlayerOnStartup.value) {
             repeat(2) { withFrameNanos { } }
-            bottomSheetState.bottomSheetState.expand()
+            presentation.open()
             hasOpenedPlayerOnStartup.value = true
         }
     }
 
     LaunchedEffect(hasBookEnded) {
         if (hasBookEnded) {
-            bottomSheetState.bottomSheetState.collapse()
+            presentation.close()
         }
     }
 
@@ -212,10 +195,10 @@ fun BooksListScreen(
     BackHandler {
         if (!isScreenLocked) {
             asyncScope.launch {
-                if (bottomSheetState.bottomSheetState.isCollapsed) {
-                    activity.finishAffinity()
-                } else {
-                    bottomSheetState.bottomSheetState.collapse()
+                when {
+                    isSplit && presentation.isShowingChapters -> presentation.setChapters(open = false)
+                    presentation.isOpen -> presentation.close()
+                    else -> activity.finishAffinity()
                 }
             }
         }
@@ -239,12 +222,12 @@ fun BooksListScreen(
 
     LaunchedEffect(Unit) {
         viewModel.collapsePlayerEvents.collect {
-            bottomSheetState.bottomSheetState.collapse()
+            presentation.close()
         }
     }
 
     LaunchedEffect(Unit) {
-        viewModel.expandPlayerEvents.collect { bottomSheetState.bottomSheetState.expand() }
+        viewModel.expandPlayerEvents.collect { presentation.open() }
     }
 
     val externalFileMessage = stringResource(R.string.external_file_playing)
@@ -278,14 +261,6 @@ fun BooksListScreen(
             bottomSheetState.snackbarHostState.showSnackbar(skippedTrackMessage.format(fileName))
         }
     }
-
-    LaunchedEffect(selectedBook?.id) {
-        effectsViewModel.load(selectedBook?.id)
-        optionsViewModel.load(selectedBook?.id?.takeUnless { selectedBook?.isExternal == true })
-    }
-    val playbackOptions by optionsViewModel.options.collectAsState()
-    val audioEffects by effectsViewModel.effects.collectAsState()
-    val equalizerPresets by effectsViewModel.presets.collectAsState()
 
     var bookmarkToAnnotate by remember { mutableStateOf<Bookmark?>(null) }
     val bookmarkAddedMessage = stringResource(R.string.player_bookmark_added)
@@ -330,35 +305,13 @@ fun BooksListScreen(
         if (selectedBook?.hasError == true) {
             viewModel.stopPlayer()
             showErrorDialog.value = true
-            bottomSheetState.bottomSheetState.collapse()
+            presentation.close()
             viewModel.updateIsScreenLocked(false)
         }
     }
 
     val onBookClick: (Book) -> Unit = { tapped ->
-        val book = if (tapped.hasError) tapped else viewModel.startingPoint(tapped)
-        val startsOver = book !== tapped
-        if ((selectedBook?.id != book.id || startsOver) && !book.hasError) {
-            viewModel.setCurrentProgress(
-                id = book.id,
-                progress = book.progress,
-                currentPosition = book.getBookPosition()
-            )
-            viewModel.selectBook(book, book.getBookPosition())
-            viewModel.openBook(book)
-        }
-
-        if (book.hasError) {
-            showErrorDialog.value = true
-            if (selectedBook?.id == book.id) {
-                viewModel.selectBook(null, null)
-            }
-        } else {
-            asyncScope.launch {
-                bottomSheetState.bottomSheetState.expand()
-                bottomSheetState.bottomSheetState.expand()
-            }
-        }
+        if (viewModel.startBook(tapped)) asyncScope.launch { presentation.open() } else showErrorDialog.value = true
     }
 
     LaunchedEffect(Unit) { viewModel.playRequests.collect { book -> onBookClick(book) } }
@@ -371,244 +324,134 @@ fun BooksListScreen(
         }
     }
 
-    CompanionDocumentsDialog(documentsViewModel)
-
-    val playerPane: @Composable (BottomSheetScaffoldState) -> Unit = { sheetState ->
-        selectedBook?.let {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface),
-            ) {
-                val isAwaitingPlayback by viewModel.isAwaitingPlayback.collectAsState()
-
-                val appSettings by viewModel.appSettings.collectAsState()
-
-                MiniPlayer(
-                    book = it,
-                    playerState = playerState,
-                    isAwaitingPlayback = isAwaitingPlayback,
-                    isScreenLocked = isScreenLocked,
-                    scaffoldState = sheetState,
-                    skips = PlayerSkips(
-                        smallBackSeconds = appSettings.smallBackSeconds,
-                        smallForwardSeconds = appSettings.smallForwardSeconds,
-                        largeBackSeconds = appSettings.largeBackSeconds,
-                        largeForwardSeconds = appSettings.largeForwardSeconds,
-                    ),
-                    actions = PlayerActions(
-                        onPlayButtonClick = { progress -> viewModel.onPlayButtonClicked(it, progress) },
-                        onCoverClick = { progress -> viewModel.onCoverClicked(it, progress) },
-                        onSeekToBookPosition = viewModel::seekToBookPosition,
-                        onSeekBy = viewModel::seekBy,
-                        onNextChapter = viewModel::nextChapter,
-                        onPreviousChapter = viewModel::previousChapter,
-                        onSpeedChange = { speed ->
-                            viewModel.changeSpeed(speed)
-                            viewModel.updateBookSpeed(id = it.id, speed = speed, currentPosition = it.getBookPosition())
-                        },
-                        onApplyBookSpeed = viewModel::changeSpeed,
-                        onSetDefaultSpeed = { speed -> viewModel.setDefaultSpeed(speed) },
-                        onTrackChanged = viewModel::syncPositionFromPlayer,
-                        onLockScreen = viewModel::updateIsScreenLocked,
-                        onOpenDetails = { navigateToBookDetails(it.id) },
-                        onMarkFinished = { viewModel.markBook(it, BookState.FINISHED) },
-                        onOpenSettings = navigateToSettings,
-                        onAddBookmark = viewModel::addBookmarkAtCurrentPosition,
-                        onStartSleepTimer = viewModel::startSleepTimer,
-                        onCancelSleepTimer = viewModel::cancelSleepTimer,
-                        onShakeSensitivityChange = viewModel::setShakeSensitivity,
-                        onOpenBookmarks = { navigateToBookmarks(it.id) },
-                        onOpenHistory = { navigateToHistory(it.id) },
-                        onOpenCharacters = { navigateTo.characters(it.id) },
-                        onOpenStatistics = { navigateTo.bookStatistics(it.id) },
-                        onOpenBookText = { documentsViewModel.show(it.id) },
-                        onOpenText = { navigateTo.text(it.id) },
-                        routeButton = { if (appSettings.showCastButton) CastButton() },
-                    ),
-                    effects = AudioEffectsPanel(
-                        isCasting = playerState.isCasting,
-                        effects = audioEffects,
-                        presets = equalizerPresets,
-                        onChange = effectsViewModel::change,
-                        onApplyEqualizerToAll = { gains -> effectsViewModel.applyEqualizerToAll(gains) },
-                        onSavePreset = { name, gains -> effectsViewModel.savePreset(name, gains) },
-                        onDeletePreset = { presetId -> effectsViewModel.deletePreset(presetId) },
-                    ),
-                    options = PlaybackOptionsPanel(
-                        options = playbackOptions,
-                        onChange = optionsViewModel::change,
-                        onSetLoopPoint = optionsViewModel::setLoopPoint,
-                    ),
-                    sleepSettings = SleepSheetSettings(
-                        defaultMinutes = appSettings.sleepDefaultMinutes,
-                        isShakeEnabled = appSettings.shakeToExtend,
-                        shakeSensitivity = appSettings.shakeSensitivity,
-                    ),
-                    display = PlayerDisplay(appSettings.progressLabels, appSettings.hiddenQuickActions),
-                )
-            }
-        }
-    }
-
     CompositionLocalProvider(LocalLibriVoxDownloads provides libriVoxDownloads) {
         Box(modifier = Modifier.fillMaxSize()) {
             BottomSheetScaffold(
                 scaffoldState = bottomSheetState,
-                sheetContent = { if (!isWide) playerPane(bottomSheetState) },
-                sheetGesturesEnabled = !isScreenLocked && !isWide,
-                sheetPeekHeight = if (hasBookSelected && !isWide) 72.dp else 0.dp,
+                // Split, the player (and its mini player) is the shell's.
+                sheetContent = {
+                    selectedBook?.takeUnless { isSplit }?.let { book ->
+                        LibraryPlayer(book, bottomSheetState, presentation, player, isPane = false)
+                    }
+                },
+                sheetGesturesEnabled = !isScreenLocked && !isSplit,
+                sheetPeekHeight = if (hasBookSelected && !isSplit) MINI_PLAYER_HEIGHT else 0.dp,
             ) {
-                Row(modifier = Modifier.fillMaxSize()) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .background(MaterialTheme.colorScheme.primary),
-                    ) {
-                        Scaffold(
-                            topBar = {
-                                BookListTopBar(
-                                    openFolderSelector = {
-                                        openFolderSelector.launch(null)
-                                    },
-                                    openSettings = navigateToSettings,
-                                    openFileSelector = {
-                                        openFileSelector.launch(fileFilterList)
-                                    },
-                                    isContentEnabled = booksListState is BookListSuccess || booksListState is NoBookSelected,
-                                    more = LibraryMenu(
-                                        onSearch = navigateTo.search,
-                                        onLibriVox = navigateTo.librivox,
-                                        onQueue = navigateTo.queue,
-                                        onFolders = { navigateTo.folders(FolderLocation.TOP) },
-                                        onStatistics = navigateTo.statistics,
-                                    ),
+                Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary)) {
+                    Scaffold(
+                        topBar = {
+                            BookListTopBar(
+                                openFolderSelector = {
+                                    openFolderSelector.launch(null)
+                                },
+                                openSettings = navigateToSettings,
+                                openFileSelector = {
+                                    openFileSelector.launch(fileFilterList)
+                                },
+                                isContentEnabled = booksListState is BookListSuccess || booksListState is NoBookSelected,
+                                more = LibraryMenu(
+                                    onSearch = navigateTo.search,
+                                    onLibriVox = navigateTo.librivox,
+                                    onQueue = navigateTo.queue,
+                                    onFolders = { navigateTo.folders(FolderLocation.TOP) },
+                                    onStatistics = navigateTo.statistics,
+                                ),
+                            )
+                        },
+                        backgroundColor = MaterialTheme.colorScheme.primary
+                    ) { innerPadding ->
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding)
+                        ) {
+                            libraryState.inaccessibleRoots.forEach { root ->
+                                ReconnectBanner(folderName = root.displayName) {
+                                    reconnectFolderSelector.launch(documentUriOfTree(root.treeUri))
+                                }
+                            }
+
+                            val showReloadGuide by viewModel.showReloadGuide.collectAsState()
+                            if (showReloadGuide) {
+                                AbbayActionDialog(
+                                    onDismiss = viewModel::dismissReloadGuide,
+                                    title = stringResource(R.string.reload_books_dialog_title),
+                                    body = stringResource(R.string.reload_books_dialog_body),
+                                    actionButtonTitle = stringResource(R.string.got_it),
+                                    onAction = viewModel::dismissReloadGuide,
+                                    icon = Icons.Default.Refresh,
+                                    isDestructive = false,
+                                    showCancel = false,
                                 )
-                            },
-                            backgroundColor = MaterialTheme.colorScheme.primary
-                        ) { innerPadding ->
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(innerPadding)
-                            ) {
-                                libraryState.inaccessibleRoots.forEach { root ->
-                                    ReconnectBanner(folderName = root.displayName) {
-                                        reconnectFolderSelector.launch(documentUriOfTree(root.treeUri))
-                                    }
+                            }
+
+                            LaunchedEffect(booksListState) {
+                                if (booksListState is NoBookSelected) {
+                                    viewModel.stopPlayer()
+                                    viewModel.selectBook(null, null)
                                 }
+                            }
 
-                                val showReloadGuide by viewModel.showReloadGuide.collectAsState()
-                                if (showReloadGuide) {
-                                    AbbayActionDialog(
-                                        onDismiss = viewModel::dismissReloadGuide,
-                                        title = stringResource(R.string.reload_books_dialog_title),
-                                        body = stringResource(R.string.reload_books_dialog_body),
-                                        actionButtonTitle = stringResource(R.string.got_it),
-                                        onAction = viewModel::dismissReloadGuide,
-                                        icon = Icons.Default.Refresh,
-                                        isDestructive = false,
-                                        showCancel = false,
-                                    )
-                                }
+                            when (val state = booksListState) {
+                                is BookListSuccess -> {
+                                    val bookToDelete = remember { mutableStateOf<Book?>(null) }
+                                    val showDeleteDialog = remember { mutableStateOf(false) }
+                                    val bookWithActions = remember { mutableStateOf<Book?>(null) }
 
-                                LaunchedEffect(booksListState) {
-                                    if (booksListState is NoBookSelected) {
-                                        viewModel.stopPlayer()
-                                        viewModel.selectBook(null, null)
-                                    }
-                                }
-
-                                when (val state = booksListState) {
-                                    is BookListSuccess -> {
-                                        val bookToDelete = remember { mutableStateOf<Book?>(null) }
-                                        val showDeleteDialog = remember { mutableStateOf(false) }
-                                        val bookWithActions = remember { mutableStateOf<Book?>(null) }
-
-                                        LaunchedEffect(selectedBook?.id) {
-                                            selectedBook?.let { book ->
-                                                viewModel.setCurrentProgress(
-                                                    id = book.id,
-                                                    progress = book.progress,
-                                                    currentPosition = book.getBookPosition()
-                                                )
-                                            }
+                                    LaunchedEffect(selectedBook?.id) {
+                                        selectedBook?.let { book ->
+                                            viewModel.setCurrentProgress(
+                                                id = book.id,
+                                                progress = book.progress,
+                                                currentPosition = book.getBookPosition()
+                                            )
                                         }
+                                    }
 
-                                        LibraryControls(
-                                            tab = libraryState.tab,
-                                            tabs = libraryState.tabs,
-                                            sortOrder = libraryState.sortOrder,
-                                            sortAscending = libraryState.sortAscending,
-                                            layout = libraryState.layout,
-                                            scanStatus = libraryState.scanStatus,
-                                            onTabSelected = viewModel::selectTab,
-                                            onSortOrderSelected = { viewModel.selectSortOrder(it) },
-                                            onLayoutSelected = { viewModel.selectLayout(it) },
-                                        )
+                                    LibraryControls(
+                                        tab = libraryState.tab,
+                                        tabs = libraryState.tabs,
+                                        sortOrder = libraryState.sortOrder,
+                                        sortAscending = libraryState.sortAscending,
+                                        layout = libraryState.layout,
+                                        scanStatus = libraryState.scanStatus,
+                                        onTabSelected = viewModel::selectTab,
+                                        onSortOrderSelected = { viewModel.selectSortOrder(it) },
+                                        onLayoutSelected = { viewModel.selectLayout(it) },
+                                    )
 
-                                        LibraryPullToRefresh(
-                                            isRefreshing = isRefreshing,
-                                            onRefresh = { if (hasSelectedFolder) viewModel.onRefreshClicked() },
-                                            modifier = Modifier.weight(1f),
-                                        ) {
-                                            val progressLabelOf: (Book) -> String = { book ->
-                                                progressLabel(book, selectedBook, isPlaying, currentProgress)
-                                            }
-                                            val isPlayingBook: (Book) -> Boolean = { book -> isPlaying && book.id == selectedBook?.id }
+                                    LibraryPullToRefresh(
+                                        isRefreshing = isRefreshing,
+                                        onRefresh = { if (hasSelectedFolder) viewModel.onRefreshClicked() },
+                                        modifier = Modifier.weight(1f),
+                                    ) {
+                                        val progressLabelOf: (Book) -> String = { book ->
+                                            progressLabel(book, selectedBook, isPlaying, currentProgress)
+                                        }
+                                        val isPlayingBook: (Book) -> Boolean = { book -> isPlaying && book.id == selectedBook?.id }
 
-                                            if (state.audiobookList.isEmpty()) {
-                                                LibraryTabEmptyState(
-                                                    tab = libraryState.tab,
-                                                    visibleTabs = libraryState.tabs,
-                                                    isScanning = libraryState.scanStatus.isScanning,
-                                                    onShowTab = viewModel::selectTab,
-                                                )
-                                            } else {
-                                                when (libraryState.layout) {
-                                                    LibraryLayout.LIST -> LazyColumn(
-                                                        modifier = Modifier
-                                                            .fillMaxSize()
-                                                            .background(MaterialTheme.colorScheme.primary)
-                                                    ) {
-                                                        items(items = state.audiobookList, key = { book -> book.id }) { book ->
-                                                            SwipeToRemoveBook(
-                                                                onSwipe = {
-                                                                    bookToDelete.value = book
-                                                                    showDeleteDialog.value = true
-                                                                }
-                                                            ) {
-                                                                BookItem(
-                                                                    book = book,
-                                                                    progressLabel = progressLabelOf(book),
-                                                                    isPlaying = isPlayingBook(book),
-                                                                    onLongClick = { bookWithActions.value = book },
-                                                                    onClick = { onBookClick(book) }
-                                                                )
+                                        if (state.audiobookList.isEmpty()) {
+                                            LibraryTabEmptyState(
+                                                tab = libraryState.tab,
+                                                visibleTabs = libraryState.tabs,
+                                                isScanning = libraryState.scanStatus.isScanning,
+                                                onShowTab = viewModel::selectTab,
+                                            )
+                                        } else {
+                                            when (libraryState.layout) {
+                                                LibraryLayout.LIST -> LazyColumn(
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .background(MaterialTheme.colorScheme.primary)
+                                                ) {
+                                                    items(items = state.audiobookList, key = { book -> book.id }) { book ->
+                                                        SwipeToRemoveBook(
+                                                            onSwipe = {
+                                                                bookToDelete.value = book
+                                                                showDeleteDialog.value = true
                                                             }
-                                                        }
-                                                    }
-
-                                                    LibraryLayout.GRID -> LazyVerticalGrid(
-                                                        columns = GridCells.Adaptive(minSize = GRID_CELL_MIN_WIDTH),
-                                                        contentPadding = PaddingValues(horizontal = 10.dp),
-                                                        modifier = Modifier.fillMaxSize()
-                                                    ) {
-                                                        items(items = state.audiobookList, key = { book -> book.id }) { book ->
-                                                            BookGridItem(
-                                                                book = book,
-                                                                progressLabel = progressLabelOf(book),
-                                                                isPlaying = isPlayingBook(book),
-                                                                onLongClick = { bookWithActions.value = book },
-                                                                onClick = { onBookClick(book) }
-                                                            )
-                                                        }
-                                                    }
-
-                                                    LibraryLayout.COMPACT -> LazyColumn(modifier = Modifier.fillMaxSize()) {
-                                                        items(items = state.audiobookList, key = { book -> book.id }) { book ->
-                                                            BookCompactItem(
+                                                        ) {
+                                                            BookItem(
                                                                 book = book,
                                                                 progressLabel = progressLabelOf(book),
                                                                 isPlaying = isPlayingBook(book),
@@ -618,103 +461,123 @@ fun BooksListScreen(
                                                         }
                                                     }
                                                 }
-                                            }
 
-                                            BookActionsMenu(
-                                                book = bookWithActions.value,
-                                                onDismiss = { bookWithActions.value = null },
-                                                onPlay = onBookClick,
-                                                onMark = markBook,
-                                                onRemove = { book ->
-                                                    bookToDelete.value = book
-                                                    showDeleteDialog.value = true
-                                                },
-                                                onEditDetails = { book -> navigateToBookDetails(book.id) },
-                                                extras = BookMenuExtras(
-                                                    onQueue = { book, playNext -> viewModel.queue(book, playNext) },
-                                                    onOpenText = { book -> documentsViewModel.show(book.id) },
-                                                    onShowInFolder = { book -> navigateTo.folders(FolderTree.locationOf(book)) },
-                                                ),
-                                            )
-                                        }
-
-                                        if (showDeleteDialog.value) {
-                                            AbbayActionDialog(
-                                                onDismiss = {
-                                                    showDeleteDialog.value = false
-                                                    bookToDelete.value = null
-                                                },
-                                                title = stringResource(R.string.delete_book_dialog_title),
-                                                body = stringResource(R.string.delete_book_dialog_body),
-                                                actionButtonTitle = stringResource(R.string.delete),
-                                                onAction = {
-                                                    bookToDelete.value?.let { book ->
-                                                        if (selectedBook?.id == book.id) viewModel.stopPlayer()
-                                                        viewModel.removeBook(book)
+                                                LibraryLayout.GRID -> LazyVerticalGrid(
+                                                    columns = GridCells.Adaptive(minSize = GRID_CELL_MIN_WIDTH),
+                                                    contentPadding = PaddingValues(horizontal = 10.dp),
+                                                    modifier = Modifier.fillMaxSize()
+                                                ) {
+                                                    items(items = state.audiobookList, key = { book -> book.id }) { book ->
+                                                        BookGridItem(
+                                                            book = book,
+                                                            progressLabel = progressLabelOf(book),
+                                                            isPlaying = isPlayingBook(book),
+                                                            onLongClick = { bookWithActions.value = book },
+                                                            onClick = { onBookClick(book) }
+                                                        )
                                                     }
-                                                    showDeleteDialog.value = false
-                                                    bookToDelete.value = null
-                                                },
-                                            )
+                                                }
+
+                                                LibraryLayout.COMPACT -> LazyColumn(modifier = Modifier.fillMaxSize()) {
+                                                    items(items = state.audiobookList, key = { book -> book.id }) { book ->
+                                                        BookCompactItem(
+                                                            book = book,
+                                                            progressLabel = progressLabelOf(book),
+                                                            isPlaying = isPlayingBook(book),
+                                                            onLongClick = { bookWithActions.value = book },
+                                                            onClick = { onBookClick(book) }
+                                                        )
+                                                    }
+                                                }
+                                            }
                                         }
 
-                                        if (showErrorDialog.value) {
-                                            FileNotFoundDialog(
-                                                showErrorDialog = showErrorDialog,
-                                                onShown = {
-                                                    viewModel.stopPlayer()
-                                                    selectedBook?.let { if (!it.hasError) viewModel.markBookAsError(it) }
-                                                },
-                                                onDismiss = { viewModel.selectBook(null, null) }
-                                            )
-                                        }
-
-                                        if (hasBookEnded) {
-                                            AbbayActionDialog(
-                                                onDismiss = viewModel::dismissBookEndedDialog,
-                                                title = stringResource(R.string.book_ended_dialog_title),
-                                                body = stringResource(R.string.book_ended_dialog_body),
-                                                actionButtonTitle = stringResource(R.string.ok),
-                                                onAction = viewModel::dismissBookEndedDialog,
-                                                icon = Icons.Default.CheckCircle,
-                                                isDestructive = false,
-                                                showCancel = false,
-                                            )
-                                        }
-                                    }
-
-                                    is NoBookSelected -> EmptyLibrary(
-                                        onAddFile = { openFileSelector.launch(fileFilterList) },
-                                        onAddFolder = { openFolderSelector.launch(null) },
-                                        onExploreLibriVox = navigateTo.librivox,
-                                    )
-
-                                    is Loading -> Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(MaterialTheme.colorScheme.primary),
-                                    ) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.align(Alignment.Center),
-                                            color = MaterialTheme.colorScheme.tertiary
+                                        BookActionsMenu(
+                                            book = bookWithActions.value,
+                                            onDismiss = { bookWithActions.value = null },
+                                            onPlay = onBookClick,
+                                            onMark = markBook,
+                                            onRemove = { book ->
+                                                bookToDelete.value = book
+                                                showDeleteDialog.value = true
+                                            },
+                                            onEditDetails = { book -> navigateToBookDetails(book.id) },
+                                            extras = BookMenuExtras(
+                                                onQueue = { book, playNext -> viewModel.queue(book, playNext) },
+                                                onOpenText = { book -> player.documentsViewModel.show(book.id) },
+                                                onShowInFolder = { book -> navigateTo.folders(FolderTree.locationOf(book)) },
+                                            ),
                                         )
                                     }
 
-                                    is LegacyFolderMigration -> LegacyFolderMigrationContent(
-                                        onChooseFolder = { legacyFolderSelector.launch(documentUriOfTree(state.legacyFolderUri)) },
-                                        onSkip = { viewModel.completeLegacyMigration(null) }
+                                    if (showDeleteDialog.value) {
+                                        AbbayActionDialog(
+                                            onDismiss = {
+                                                showDeleteDialog.value = false
+                                                bookToDelete.value = null
+                                            },
+                                            title = stringResource(R.string.delete_book_dialog_title),
+                                            body = stringResource(R.string.delete_book_dialog_body),
+                                            actionButtonTitle = stringResource(R.string.delete),
+                                            onAction = {
+                                                bookToDelete.value?.let { book ->
+                                                    if (selectedBook?.id == book.id) viewModel.stopPlayer()
+                                                    viewModel.removeBook(book)
+                                                }
+                                                showDeleteDialog.value = false
+                                                bookToDelete.value = null
+                                            },
+                                        )
+                                    }
+
+                                    if (showErrorDialog.value) {
+                                        FileNotFoundDialog(
+                                            showErrorDialog = showErrorDialog,
+                                            onShown = {
+                                                viewModel.stopPlayer()
+                                                selectedBook?.let { if (!it.hasError) viewModel.markBookAsError(it) }
+                                            },
+                                            onDismiss = { viewModel.selectBook(null, null) }
+                                        )
+                                    }
+
+                                    if (hasBookEnded) {
+                                        AbbayActionDialog(
+                                            onDismiss = viewModel::dismissBookEndedDialog,
+                                            title = stringResource(R.string.book_ended_dialog_title),
+                                            body = stringResource(R.string.book_ended_dialog_body),
+                                            actionButtonTitle = stringResource(R.string.ok),
+                                            onAction = viewModel::dismissBookEndedDialog,
+                                            icon = Icons.Default.CheckCircle,
+                                            isDestructive = false,
+                                            showCancel = false,
+                                        )
+                                    }
+                                }
+
+                                is NoBookSelected -> EmptyLibrary(
+                                    onAddFile = { openFileSelector.launch(fileFilterList) },
+                                    onAddFolder = { openFolderSelector.launch(null) },
+                                    onExploreLibriVox = navigateTo.librivox,
+                                )
+
+                                is Loading -> Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(MaterialTheme.colorScheme.primary),
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.align(Alignment.Center),
+                                        color = MaterialTheme.colorScheme.tertiary
                                     )
                                 }
+
+                                is LegacyFolderMigration -> LegacyFolderMigrationContent(
+                                    onChooseFolder = { legacyFolderSelector.launch(documentUriOfTree(state.legacyFolderUri)) },
+                                    onSkip = { viewModel.completeLegacyMigration(null) }
+                                )
                             }
                         }
-                    }
-                    if (isWide && selectedBook != null) {
-                        Box(
-                            modifier = Modifier
-                                .width(PLAYER_PANE_WIDTH)
-                                .fillMaxHeight()
-                                .background(MaterialTheme.colorScheme.surface),
-                        ) { playerPane(playerPaneState) }
                     }
                 }
             }
@@ -727,9 +590,6 @@ fun BooksListScreen(
         }
     }
 }
-
-private const val LIST_DETAIL_MIN_WIDTH_DP = 840
-private val PLAYER_PANE_WIDTH = 420.dp
 
 private val GRID_CELL_MIN_WIDTH = 110.dp
 
