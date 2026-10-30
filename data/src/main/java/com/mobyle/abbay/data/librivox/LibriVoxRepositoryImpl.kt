@@ -15,6 +15,7 @@ import com.model.DataResult
 import com.model.LibriVoxBook
 import com.model.LibriVoxDetails
 import com.model.LibriVoxDownload
+import com.model.LibriVoxDownloadMode
 import com.model.NetworkStatus
 import com.repository.LibriVoxRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -38,6 +39,7 @@ class LibriVoxRepositoryImpl @Inject constructor(
     private val dao: LibraryDao,
     private val scheduler: LibriVoxDownloadScheduler,
     private val tracker: LibriVoxDownloadTracker,
+    private val control: LibriVoxDownloadControl,
     private val contentSource: DocumentContentDataSource,
 ) : LibriVoxRepository {
     override suspend fun popular(): DataResult<List<LibriVoxBook>> = guarded { catalog.popular() }
@@ -61,7 +63,7 @@ class LibriVoxRepositoryImpl @Inject constructor(
         if (book.sections.isEmpty()) return@withContext DataResult.Failure(DataError.NOT_AN_AUDIOBOOK)
         dao.getBookByLibriVoxId(book.id)?.let { existing ->
             if (existing.hidden) dao.updateBook(existing.copy(hidden = false))
-            scheduler.enqueue(existing.id, allowsCellular, replace = false)
+            control.start(existing.id, allowsCellular)
             return@withContext DataResult.Success(existing.id.toString())
         }
         val sidecarId = UUID.randomUUID().toString()
@@ -87,16 +89,23 @@ class LibriVoxRepositoryImpl @Inject constructor(
             metadataComplete = true,
             sidecarId = sidecarId,
             librivoxId = book.id,
+            librivoxDownload = LibriVoxDownloadMode.ACTIVE.name,
         )
         val bookId = dao.insertBookWithTracks(entity, tracksOf(book))
         scheduler.enqueue(bookId, allowsCellular, replace = false)
         DataResult.Success(bookId.toString())
     }
 
-    override fun retryDownload(bookId: String, allowsCellular: Boolean) {
-        val id = bookId.toLongOrNull() ?: return
-        tracker.clear(id)
-        scheduler.enqueue(id, allowsCellular, replace = true)
+    override suspend fun startDownload(bookId: String, allowsCellular: Boolean) {
+        bookId.toLongOrNull()?.let { control.start(it, allowsCellular) }
+    }
+
+    override suspend fun pauseDownload(bookId: String) {
+        bookId.toLongOrNull()?.let { control.pause(it) }
+    }
+
+    override suspend fun removeDownload(bookId: String) {
+        bookId.toLongOrNull()?.let { control.remove(it) }
     }
 
     override fun networkStatus(): NetworkStatus {
@@ -135,7 +144,7 @@ class LibriVoxRepositoryImpl @Inject constructor(
                 else -> active[track.id] ?: ChapterDownload(ChapterDownloadStatus.WAITING)
             }
         }
-        return LibriVoxDownload.of(chapters, tracks.map { it.sizeBytes })
+        return LibriVoxDownload.of(chapters, tracks.map { it.sizeBytes }, LibriVoxDownloadControl.modeOf(details.book.librivoxDownload))
     }
 
     private suspend fun <T> guarded(block: suspend () -> T): DataResult<T> = try {

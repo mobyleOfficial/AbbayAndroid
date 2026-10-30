@@ -9,13 +9,19 @@ import com.mobyle.abbay.presentation.booklist.widgets.player.progressFraction
 import com.mobyle.abbay.presentation.booklist.widgets.player.timeLeftLabel
 import com.model.Book
 import com.model.BookState
+import com.model.LibriVoxDownload
+import com.model.LibriVoxDownloadMode
 
-val LocalDownloadProgress = compositionLocalOf<Map<String, Float>> { emptyMap() }
+val LocalDownloadProgress = compositionLocalOf<Map<String, LibriVoxDownload>> { emptyMap() }
 
 @Composable
 fun bookStatusLine(book: Book): String {
-    LocalDownloadProgress.current[book.id]?.let { fraction ->
-        return stringResource(R.string.librivox_book_status_downloading, (fraction * PERCENT).toInt())
+    LocalDownloadProgress.current[book.id]?.let { download ->
+        return if (download.mode == LibriVoxDownloadMode.PAUSED) {
+            stringResource(R.string.librivox_book_status_paused)
+        } else {
+            stringResource(R.string.librivox_book_status_downloading, (download.fraction * PERCENT).toInt())
+        }
     }
     val position = PlayerPosition.of(book)
     val chapter = position.chapter

@@ -11,6 +11,7 @@ import com.model.BookFile
 import com.model.BookState
 import com.model.Bookmark
 import com.model.LibraryRoot
+import com.model.LibriVoxDownload
 import com.model.MultipleBooks
 import com.model.ScanStatus
 import com.player.PlaybackStatus
@@ -161,8 +162,8 @@ class BooksListViewModel @Inject constructor(
     private val scanStatus: StateFlow<ScanStatus> = observeScanStatus()
         .stateIn(viewModelScope, SharingStarted.Eagerly, ScanStatus())
 
-    val downloadProgress: StateFlow<Map<String, Float>> = observeLibriVoxDownloads()
-        .map { downloads -> downloads.filterValues { !it.isComplete }.mapValues { it.value.fraction } }
+    val downloadProgress: StateFlow<Map<String, LibriVoxDownload>> = observeLibriVoxDownloads()
+        .map { downloads -> downloads.filterValues { it.isInProgress } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
     val hasSelectedFolder: StateFlow<Boolean> = roots.map { it.isNotEmpty() }

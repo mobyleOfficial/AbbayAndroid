@@ -9,14 +9,32 @@ enum class ChapterDownloadStatus {
 
 data class ChapterDownload(val status: ChapterDownloadStatus, val fraction: Float = 0f)
 
-data class LibriVoxDownload(val chapters: List<ChapterDownload>, val fraction: Float) {
+enum class LibriVoxDownloadMode {
+    ACTIVE,
+    PAUSED,
+    OFF,
+}
+
+data class LibriVoxDownload(
+    val chapters: List<ChapterDownload>,
+    val fraction: Float,
+    val mode: LibriVoxDownloadMode = LibriVoxDownloadMode.ACTIVE,
+) {
     val isComplete: Boolean get() = chapters.all { it.status == ChapterDownloadStatus.DOWNLOADED }
+
+    val isInProgress: Boolean get() = !isComplete && mode != LibriVoxDownloadMode.OFF
+
+    val hasDownloadedChapters: Boolean get() = chapters.any { it.status == ChapterDownloadStatus.DOWNLOADED }
 
     val hasFailures: Boolean get() = chapters.any { it.status == ChapterDownloadStatus.FAILED }
 
     companion object {
-        fun of(chapters: List<ChapterDownload>, expectedBytes: List<Long>): LibriVoxDownload {
-            if (chapters.isEmpty()) return LibriVoxDownload(chapters, 0f)
+        fun of(
+            chapters: List<ChapterDownload>,
+            expectedBytes: List<Long>,
+            mode: LibriVoxDownloadMode = LibriVoxDownloadMode.ACTIVE,
+        ): LibriVoxDownload {
+            if (chapters.isEmpty()) return LibriVoxDownload(chapters, 0f, mode)
             val done = chapters.map { chapter ->
                 when (chapter.status) {
                     ChapterDownloadStatus.DOWNLOADED -> 1f
@@ -31,7 +49,7 @@ data class LibriVoxDownload(val chapters: List<ChapterDownload>, val fraction: F
             } else {
                 done.sum() / chapters.size
             }
-            return LibriVoxDownload(chapters, fraction)
+            return LibriVoxDownload(chapters, fraction, mode)
         }
     }
 }

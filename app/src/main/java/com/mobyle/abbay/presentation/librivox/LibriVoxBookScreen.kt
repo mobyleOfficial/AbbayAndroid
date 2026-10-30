@@ -13,8 +13,11 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudDownload
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,7 +25,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
@@ -33,10 +38,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.mobyle.abbay.presentation.common.theme.rememberCoverTint
+import com.mobyle.abbay.presentation.common.widgets.AbbayActionDialog
 import com.mobyle.abbay.presentation.common.widgets.AbbayAlertDialog
+import com.mobyle.abbay.presentation.common.widgets.AbbayDropdownMenu
+import com.mobyle.abbay.presentation.common.widgets.AbbayMenuItem
 import com.mobyle.abbay.presentation.common.widgets.AbbayScreen
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
 import com.model.LibriVoxDownload
+import com.model.LibriVoxDownloadMode
 
 @Composable
 fun LibriVoxBookScreen(
@@ -49,6 +58,7 @@ fun LibriVoxBookScreen(
     val download by viewModel.download.collectAsState()
     val isStarting by viewModel.isStarting.collectAsState()
     val cellularPromptBytes by viewModel.cellularPromptBytes.collectAsState()
+    var isConfirmingRemoval by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val isActionScrolledAway by remember { derivedStateOf { listState.firstVisibleItemIndex > ACTION_ITEM_INDEX } }
     val scaffoldState = rememberScaffoldState()
@@ -67,12 +77,29 @@ fun LibriVoxBookScreen(
         title = stringResource(R.string.librivox_title),
         onClose = close,
         scaffoldState = scaffoldState,
-        actions = { if (isActionScrolledAway && action.isEnabled) CompactActionButton(action) },
+        actions = {
+            if (isActionScrolledAway && action.isEnabled) CompactActionButton(action)
+            download?.takeIf { it.isInProgress || it.hasDownloadedChapters }?.let { current ->
+                DownloadMenu(isComplete = current.isComplete, onRemove = { isConfirmingRemoval = true })
+            }
+        },
     ) {
         BookPage(state, action, download, listState, viewModel)
     }
 
     cellularPromptBytes?.let { bytes -> CellularDownloadDialog(bytes, onAnswer = viewModel::answerCellularPrompt) }
+    if (isConfirmingRemoval) {
+        AbbayActionDialog(
+            title = stringResource(R.string.librivox_remove_download_title),
+            body = stringResource(R.string.librivox_remove_download_body),
+            actionButtonTitle = stringResource(R.string.librivox_remove_download_confirm),
+            onDismiss = { isConfirmingRemoval = false },
+            onAction = {
+                isConfirmingRemoval = false
+                viewModel.removeDownload()
+            },
+        )
+    }
 }
 
 @Composable
@@ -94,11 +121,17 @@ private fun BookPage(
     ) {
         item { Hero(book, isPlaceholder = state !is LibriVoxBookState.Loaded) }
         item { ActionButton(action, modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) }
-        download?.let { current -> item { DownloadSummary(current, onRetry = viewModel::retryFailedChapters) } }
+        download?.let { current ->
+            item { DownloadSummary(current, onPause = viewModel::pauseDownload, onResume = viewModel::resumeDownload) }
+        }
         when (state) {
             is LibriVoxBookState.Failed -> item { FailedDetails(onRetry = viewModel::load) }
             is LibriVoxBookState.Placeholder -> placeholderContent()
-            is LibriVoxBookState.Loaded -> loadedContent(state, download, onRetry = viewModel::retryFailedChapters)
+            is LibriVoxBookState.Loaded -> loadedContent(
+                state,
+                download?.takeUnless { it.mode == LibriVoxDownloadMode.OFF },
+                onRetry = viewModel::resumeDownload,
+            )
         }
         item { Credit() }
     }
@@ -135,6 +168,24 @@ private fun Credit() {
             .fillMaxWidth()
             .padding(horizontal = 32.dp, vertical = 24.dp),
     )
+}
+
+@Composable
+private fun DownloadMenu(isComplete: Boolean, onRemove: () -> Unit) {
+    var isExpanded by remember { mutableStateOf(false) }
+    IconButton(onClick = { isExpanded = true }) {
+        Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.librivox_more_options), tint = AbbayColors.content)
+    }
+    AbbayDropdownMenu(expanded = isExpanded, onDismissRequest = { isExpanded = false }) {
+        AbbayMenuItem(
+            text = stringResource(if (isComplete) R.string.librivox_remove_download else R.string.librivox_cancel_download),
+            leadingIcon = Icons.Outlined.Delete,
+            onClick = {
+                isExpanded = false
+                onRemove()
+            },
+        )
+    }
 }
 
 @Composable

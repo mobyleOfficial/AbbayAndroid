@@ -16,7 +16,9 @@ import com.usecase.GetNetworkStatus
 import com.usecase.ObserveLibriVoxDetails
 import com.usecase.ObserveLibriVoxDownloads
 import com.usecase.ObserveLibriVoxLibrary
-import com.usecase.RetryLibriVoxDownload
+import com.usecase.PauseLibriVoxDownload
+import com.usecase.RemoveLibriVoxDownload
+import com.usecase.StartLibriVoxDownload
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -72,7 +74,9 @@ class LibriVoxBookViewModelTest {
         ),
         observeDetails = ObserveLibriVoxDetails(repository),
         addLibriVoxBook = AddLibriVoxBook(repository),
-        retryLibriVoxDownload = RetryLibriVoxDownload(repository),
+        startLibriVoxDownload = StartLibriVoxDownload(repository),
+        pauseLibriVoxDownload = PauseLibriVoxDownload(repository),
+        removeLibriVoxDownload = RemoveLibriVoxDownload(repository),
         getNetworkStatus = GetNetworkStatus(repository),
         observeLibriVoxLibrary = ObserveLibriVoxLibrary(repository),
         observeLibriVoxDownloads = ObserveLibriVoxDownloads(repository),
@@ -153,8 +157,12 @@ class LibriVoxBookViewModelTest {
         viewModel.download()
         assertEquals(emptyList<Pair<LibriVoxBook, Boolean>>(), repository.added)
 
-        viewModel.retryFailedChapters()
-        assertEquals(listOf("7" to true), repository.retried)
+        viewModel.pauseDownload()
+        viewModel.resumeDownload()
+        viewModel.removeDownload()
+        assertEquals(listOf("7"), repository.paused)
+        assertEquals(listOf("7" to true), repository.started)
+        assertEquals(listOf("7"), repository.removed)
     }
 
     private fun MutableSharedFlow<DataResult<LibriVoxDetails>?>.takeWhileNotNull() = transformWhile { result ->

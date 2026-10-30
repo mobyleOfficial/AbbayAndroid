@@ -3,6 +3,7 @@ package com.librivox
 import com.model.ChapterDownload
 import com.model.ChapterDownloadStatus
 import com.model.LibriVoxDownload
+import com.model.LibriVoxDownloadMode
 import com.model.NetworkStatus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -39,5 +40,13 @@ class LibriVoxDownloadTest {
         assertEquals(CellularDownloadPolicy.Decision.Proceed(allowsCellular = true), CellularDownloadPolicy.decide(1_000L, metered))
         assertEquals(CellularDownloadPolicy.Decision.AskUser, CellularDownloadPolicy.decide(large, metered))
         assertEquals(CellularDownloadPolicy.Decision.Proceed(allowsCellular = false), CellularDownloadPolicy.decide(large, wifi))
+    }
+
+    @Test
+    fun aPausedDownloadIsStillInProgressButAStoppedOneIsNot() {
+        val chapters = listOf(ChapterDownload(ChapterDownloadStatus.DOWNLOADED), ChapterDownload(ChapterDownloadStatus.WAITING))
+        assertTrue(LibriVoxDownload.of(chapters, listOf(1L, 1L), LibriVoxDownloadMode.PAUSED).isInProgress)
+        assertFalse(LibriVoxDownload.of(chapters, listOf(1L, 1L), LibriVoxDownloadMode.OFF).isInProgress)
+        assertTrue(LibriVoxDownload.of(chapters, listOf(1L, 1L), LibriVoxDownloadMode.OFF).hasDownloadedChapters)
     }
 }

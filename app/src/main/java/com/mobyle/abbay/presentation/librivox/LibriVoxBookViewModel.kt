@@ -12,7 +12,9 @@ import com.usecase.GetNetworkStatus
 import com.usecase.ObserveLibriVoxDetails
 import com.usecase.ObserveLibriVoxDownloads
 import com.usecase.ObserveLibriVoxLibrary
-import com.usecase.RetryLibriVoxDownload
+import com.usecase.PauseLibriVoxDownload
+import com.usecase.RemoveLibriVoxDownload
+import com.usecase.StartLibriVoxDownload
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -45,7 +47,9 @@ class LibriVoxBookViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val observeDetails: ObserveLibriVoxDetails,
     private val addLibriVoxBook: AddLibriVoxBook,
-    private val retryLibriVoxDownload: RetryLibriVoxDownload,
+    private val startLibriVoxDownload: StartLibriVoxDownload,
+    private val pauseLibriVoxDownload: PauseLibriVoxDownload,
+    private val removeLibriVoxDownload: RemoveLibriVoxDownload,
     private val getNetworkStatus: GetNetworkStatus,
     observeLibriVoxLibrary: ObserveLibriVoxLibrary,
     observeLibriVoxDownloads: ObserveLibriVoxDownloads,
@@ -125,10 +129,21 @@ class LibriVoxBookViewModel @Inject constructor(
         if (useMobileData != null) start(loaded.book, allowsCellular = useMobileData)
     }
 
-    fun retryFailedChapters() {
+    fun resumeDownload() {
         val bookId = libraryBookId.value ?: return
         val decision = CellularDownloadPolicy.decide(state.value.book.totalBytes, getNetworkStatus())
-        retryLibriVoxDownload(bookId, allowsCellular = (decision as? CellularDownloadPolicy.Decision.Proceed)?.allowsCellular ?: true)
+        val allowsCellular = (decision as? CellularDownloadPolicy.Decision.Proceed)?.allowsCellular ?: true
+        viewModelScope.launch { startLibriVoxDownload(bookId, allowsCellular) }
+    }
+
+    fun pauseDownload() {
+        val bookId = libraryBookId.value ?: return
+        viewModelScope.launch { pauseLibriVoxDownload(bookId) }
+    }
+
+    fun removeDownload() {
+        val bookId = libraryBookId.value ?: return
+        viewModelScope.launch { removeLibriVoxDownload(bookId) }
     }
 
     private fun start(book: LibriVoxBook, allowsCellular: Boolean) {

@@ -28,9 +28,10 @@ class Migration6To7Test {
         }
 
         helper.runMigrationsAndValidate(DATABASE, 7, true, Migration6To7).apply {
-            query("SELECT librivox_id FROM book WHERE id = 1").use { cursor ->
+            query("SELECT librivox_id, librivox_download FROM book WHERE id = 1").use { cursor ->
                 cursor.moveToFirst()
                 assertTrue(cursor.isNull(0))
+                assertTrue(cursor.isNull(1))
             }
             query("SELECT remote_url FROM track WHERE id = 1").use { cursor ->
                 cursor.moveToFirst()

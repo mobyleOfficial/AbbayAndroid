@@ -12,4 +12,6 @@
         <item quantity="one">%1$d de %2$d capítulo</item>
         <item quantity="other">%1$d de %2$d capítulos</item>
     </plurals>
+    <string name="librivox_notification_pause">Pausar</string>
+    <string name="librivox_notification_cancel">Cancelar</string>
 </resources>

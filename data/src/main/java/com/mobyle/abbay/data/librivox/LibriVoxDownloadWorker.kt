@@ -14,11 +14,13 @@ import com.mobyle.abbay.data.R
 import com.mobyle.abbay.data.database.dao.BookWithDetails
 import com.mobyle.abbay.data.database.dao.LibraryDao
 import com.mobyle.abbay.data.database.entity.TrackEntity
+import com.model.LibriVoxDownloadMode
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.io.IOException
 
 @HiltWorker
@@ -36,23 +38,27 @@ class LibriVoxDownloadWorker @AssistedInject constructor(
         val bookId = inputData.getLong(KEY_BOOK_ID, -1L)
         val details = dao.getBookWithDetails(bookId) ?: return@withContext Result.success()
         val librivoxId = details.book.librivoxId ?: return@withContext Result.success()
+        if (!isActive(bookId)) return@withContext Result.success()
         val pending = inListeningOrder(details.tracks.filter { it.remoteUrl != null && !LibriVoxFiles.isLocal(it.documentUri) }, details)
-        if (pending.isEmpty()) return@withContext Result.success()
+        if (pending.isEmpty()) Result.success() else downloadAll(details, librivoxId, pending)
+    }
 
+    private suspend fun downloadAll(details: BookWithDetails, librivoxId: String, pending: List<TrackEntity>): Result {
+        val bookId = details.book.id
         createChannel()
         val total = details.tracks.size
         var done = total - pending.size
-        runCatching { setForeground(foregroundInfo(details.book.title, done, total, 0f)) }
+        runCatching { setForeground(foregroundInfo(bookId, details.book.title, done, total, 0f)) }
 
         var failures = 0
         for (track in pending) {
-            if (isStopped || dao.getBook(bookId) == null) break
+            if (isStopped || !isActive(bookId)) break
             val succeeded = downloadWithRetries(bookId, librivoxId, track) { fraction ->
-                updateNotification(details.book.title, done, total, fraction)
+                updateNotification(bookId, details.book.title, done, total, fraction)
             }
             if (succeeded) done++ else failures++
         }
-        when {
+        return when {
             isStopped -> Result.retry()
             failures == 0 -> Result.success()
             runAttemptCount >= MAX_RUN_ATTEMPTS -> Result.failure()
@@ -79,11 +85,7 @@ class LibriVoxDownloadWorker @AssistedInject constructor(
                     }
                 }
             }
-            if (result.isSuccess) {
-                dao.updateTrackUri(track.id, Uri.fromFile(destination).toString())
-                tracker.finished(bookId, track.id)
-                return true
-            }
+            if (result.isSuccess) return keep(bookId, track, destination)
             val isTransient = result.exceptionOrNull() is IOException
             if (isStopped || !isTransient || attempt == ATTEMPTS_PER_CHAPTER - 1) break
             delay(RETRY_DELAY_MS * (attempt + 1))
@@ -91,6 +93,19 @@ class LibriVoxDownloadWorker @AssistedInject constructor(
         if (isStopped) tracker.finished(bookId, track.id) else tracker.failed(bookId, track.id)
         return false
     }
+
+    private suspend fun keep(bookId: Long, track: TrackEntity, destination: File): Boolean {
+        tracker.finished(bookId, track.id)
+        if (!isActive(bookId)) {
+            destination.delete()
+            return false
+        }
+        dao.updateTrackUri(track.id, Uri.fromFile(destination).toString())
+        return true
+    }
+
+    private suspend fun isActive(bookId: Long): Boolean =
+        dao.getBook(bookId)?.let { LibriVoxDownloadControl.modeOf(it.librivoxDownload) == LibriVoxDownloadMode.ACTIVE } == true
 
     private fun inListeningOrder(tracks: List<TrackEntity>, details: BookWithDetails): List<TrackEntity> {
         val sorted = tracks.sortedBy { it.indexInBook }
@@ -107,14 +122,14 @@ class LibriVoxDownloadWorker @AssistedInject constructor(
         0f
     }
 
-    private fun updateNotification(title: String, done: Int, total: Int, fraction: Float) {
+    private fun updateNotification(bookId: Long, title: String, done: Int, total: Int, fraction: Float) {
         val now = System.currentTimeMillis()
         if (now - lastNotificationAt < NOTIFICATION_INTERVAL_MS) return
         lastNotificationAt = now
-        runCatching { setForegroundAsync(foregroundInfo(title, done, total, fraction)) }
+        runCatching { setForegroundAsync(foregroundInfo(bookId, title, done, total, fraction)) }
     }
 
-    private fun foregroundInfo(title: String, done: Int, total: Int, fraction: Float): ForegroundInfo {
+    private fun foregroundInfo(bookId: Long, title: String, done: Int, total: Int, fraction: Float): ForegroundInfo {
         val progress = ((done + fraction) / total.coerceAtLeast(1) * PROGRESS_SCALE).toInt()
         val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_download)
@@ -124,6 +139,16 @@ class LibriVoxDownloadWorker @AssistedInject constructor(
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
+            .addAction(
+                0,
+                applicationContext.getString(R.string.librivox_notification_pause),
+                LibriVoxDownloadActionReceiver.pauseIntent(applicationContext, bookId)
+            )
+            .addAction(
+                0,
+                applicationContext.getString(R.string.librivox_notification_cancel),
+                LibriVoxDownloadActionReceiver.cancelIntent(applicationContext, bookId)
+            )
             .build()
         return ForegroundInfo(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
     }

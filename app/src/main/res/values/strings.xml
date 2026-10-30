@@ -616,4 +616,15 @@
         <item quantity="one">%1$d chapter</item>
         <item quantity="other">%1$d chapters</item>
     </plurals>
+    <string name="librivox_pause">Pause</string>
+    <string name="librivox_resume">Resume</string>
+    <string name="librivox_paused">Download paused · %1$d%%</string>
+    <string name="librivox_streaming_only">Not downloaded · plays over the internet</string>
+    <string name="librivox_book_status_paused">Download paused</string>
+    <string name="librivox_more_options">More options</string>
+    <string name="librivox_cancel_download">Cancel download</string>
+    <string name="librivox_remove_download">Remove download</string>
+    <string name="librivox_remove_download_title">Remove the download?</string>
+    <string name="librivox_remove_download_body">The downloaded chapters are deleted. The book stays in your library and plays over the internet.</string>
+    <string name="librivox_remove_download_confirm">Remove</string>
 </resources>

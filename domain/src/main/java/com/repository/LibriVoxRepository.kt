@@ -20,7 +20,11 @@ interface LibriVoxRepository {
 
     suspend fun add(book: LibriVoxBook, allowsCellular: Boolean): DataResult<String>
 
-    fun retryDownload(bookId: String, allowsCellular: Boolean)
+    suspend fun startDownload(bookId: String, allowsCellular: Boolean)
+
+    suspend fun pauseDownload(bookId: String)
+
+    suspend fun removeDownload(bookId: String)
 
     fun networkStatus(): NetworkStatus
 }

@@ -5,7 +5,7 @@ Abbay is an Android audiobook player app built with Jetpack Compose and ExoPlaye
 ## Features
 
 - 📚 Browse and play audiobooks from folders or single files (MP3, M4A/M4B, Opus, FLAC, …)
-- 🌐 Free public-domain audiobooks from LibriVox: search or browse the most popular, download in the background (with a warning before large downloads on mobile data) and start listening while chapters are still downloading. Network access is limited to archive.org and librivox.org over HTTPS
+- 🌐 Free public-domain audiobooks from LibriVox: search or browse the most popular, download in the background (pause, resume or cancel from the book page or the notification; a warning before large downloads on mobile data) and start listening while chapters are still downloading. Network access is limited to archive.org and librivox.org over HTTPS
 - 🗂️ Library tabs (In progress, New, Finished — shown, hidden and ordered in Settings) with list, grid and compact layouts
 - 📖 Chapters from CUE sheets, M4B/MP4, ID3 and Matroska/Ogg tags, or one per file; chapter list, swipe the cover to change chapter
 - ⏩ Small and large skips (15 s / 30 s / 5 min by default); hold a skip button to repeat it; double-tap the cover to skip

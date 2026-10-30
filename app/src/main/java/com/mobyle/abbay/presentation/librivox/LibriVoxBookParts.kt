@@ -5,7 +5,6 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -18,8 +17,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.CircularProgressIndicator
@@ -34,7 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -51,10 +47,8 @@ import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
 import com.mobyle.abbay.presentation.common.widgets.BookThumbnail
-import com.mobyle.abbay.presentation.common.widgets.ProgressCapsule
 import com.mobyle.abbay.presentation.statistics.listeningTime
 import com.model.LibriVoxBook
-import com.model.LibriVoxDownload
 import java.util.Locale
 
 @Composable
@@ -148,47 +142,6 @@ internal fun CompactActionButton(action: PrimaryAction) {
         Icon(if (action.isInLibrary) Icons.Rounded.PlayArrow else Icons.Rounded.Download, contentDescription = null)
         Spacer(Modifier.width(4.dp))
         Text(stringResource(if (action.isInLibrary) R.string.librivox_listen else R.string.librivox_download))
-    }
-}
-
-@Composable
-internal fun DownloadSummary(download: LibriVoxDownload, onRetry: () -> Unit) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp)
-            .padding(bottom = 12.dp),
-    ) {
-        when {
-            download.isComplete -> StatusText(Icons.Outlined.CheckCircle, stringResource(R.string.librivox_downloaded))
-            download.hasFailures -> Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.weight(1f)) { StatusText(Icons.Outlined.ErrorOutline, stringResource(R.string.librivox_download_failed)) }
-                AbbayTextButton(onClick = onRetry) { Text(stringResource(R.string.librivox_retry)) }
-            }
-            else -> {
-                Text(
-                    stringResource(R.string.librivox_downloading, (download.fraction * PERCENT).toInt()),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = AbbayColors.content,
-                )
-                ProgressCapsule(fraction = download.fraction, height = 4.dp)
-                Text(
-                    stringResource(R.string.librivox_listen_while_downloading),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = AbbayColors.content.copy(alpha = SECONDARY_ALPHA),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun StatusText(icon: ImageVector, text: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(20.dp))
-        Spacer(Modifier.width(8.dp))
-        Text(text, style = MaterialTheme.typography.bodyMedium, color = AbbayColors.content)
     }
 }
 

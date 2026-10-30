@@ -45,4 +45,5 @@ data class BookEntity(
     @ColumnInfo(name = "narrator_override") val narratorOverride: String? = null,
     @ColumnInfo(name = "description_override") val descriptionOverride: String? = null,
     @ColumnInfo(name = "librivox_id") val librivoxId: String? = null,
+    @ColumnInfo(name = "librivox_download") val librivoxDownload: String? = null,
 )

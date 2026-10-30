@@ -128,6 +128,7 @@ import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
 import com.model.BookState
 import com.model.Bookmark
+import com.model.LibriVoxDownload
 import com.model.MultipleBooks
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -871,7 +872,7 @@ private fun LibraryPullToRefresh(
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
-    downloadProgress: Map<String, Float> = emptyMap(),
+    downloadProgress: Map<String, LibriVoxDownload> = emptyMap(),
     content: @Composable BoxScope.() -> Unit,
 ) {
     val pullToRefreshState = rememberPullToRefreshState()

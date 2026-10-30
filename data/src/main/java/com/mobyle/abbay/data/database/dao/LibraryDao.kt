@@ -124,6 +124,12 @@ interface LibraryDao {
         return bookId
     }
 
+    @Query("UPDATE book SET librivox_download = :mode WHERE id = :bookId")
+    suspend fun setLibriVoxDownload(bookId: Long, mode: String)
+
+    @Query("UPDATE track SET document_uri = remote_url WHERE book_id = :bookId AND remote_url IS NOT NULL")
+    suspend fun resetTracksToRemote(bookId: Long)
+
     @Query("UPDATE track SET document_uri = :documentUri WHERE id = :trackId")
     suspend fun updateTrackUri(trackId: Long, documentUri: String)
 

@@ -21,7 +21,9 @@ class FakeLibriVoxRepository(
     val downloads = MutableStateFlow<Map<String, LibriVoxDownload>>(emptyMap())
     val searches = mutableListOf<String>()
     val added = mutableListOf<Pair<LibriVoxBook, Boolean>>()
-    val retried = mutableListOf<Pair<String, Boolean>>()
+    val started = mutableListOf<Pair<String, Boolean>>()
+    val paused = mutableListOf<String>()
+    val removed = mutableListOf<String>()
     var popularCalls = 0
 
     override suspend fun popular(): DataResult<List<LibriVoxBook>> = popularResult.also { popularCalls++ }
@@ -41,8 +43,16 @@ class FakeLibriVoxRepository(
         return DataResult.Success(bookId)
     }
 
-    override fun retryDownload(bookId: String, allowsCellular: Boolean) {
-        retried += bookId to allowsCellular
+    override suspend fun startDownload(bookId: String, allowsCellular: Boolean) {
+        started += bookId to allowsCellular
+    }
+
+    override suspend fun pauseDownload(bookId: String) {
+        paused += bookId
+    }
+
+    override suspend fun removeDownload(bookId: String) {
+        removed += bookId
     }
 
     override fun networkStatus(): NetworkStatus = network

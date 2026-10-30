@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 7,
-    "identityHash": "14f3f295052a234cbcc4b8fc30af361e",
+    "identityHash": "5aac90cc63acc0583e82e3d7e2afded0",
     "entities": [
       {
         "tableName": "library_root",
@@ -61,7 +61,7 @@
       },
       {
         "tableName": "book",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `root_id` INTEGER, `relative_path` TEXT NOT NULL, `folder_uri` TEXT NOT NULL, `folder_document_id` TEXT NOT NULL, `title` TEXT NOT NULL, `author` TEXT, `narrator` TEXT, `description` TEXT, `cover_uri` TEXT, `cover_source` TEXT, `duration_ms` INTEGER NOT NULL, `track_count` INTEGER NOT NULL, `is_single_file` INTEGER NOT NULL, `added_at` INTEGER NOT NULL, `last_scanned_at` INTEGER NOT NULL, `folder_last_modified` INTEGER NOT NULL, `metadata_complete` INTEGER NOT NULL DEFAULT 0, `missing_since` INTEGER, `hidden` INTEGER NOT NULL DEFAULT 0, `sidecar_id` TEXT NOT NULL, `title_override` TEXT, `author_override` TEXT, `narrator_override` TEXT, `description_override` TEXT, `librivox_id` TEXT, FOREIGN KEY(`root_id`) REFERENCES `library_root`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `root_id` INTEGER, `relative_path` TEXT NOT NULL, `folder_uri` TEXT NOT NULL, `folder_document_id` TEXT NOT NULL, `title` TEXT NOT NULL, `author` TEXT, `narrator` TEXT, `description` TEXT, `cover_uri` TEXT, `cover_source` TEXT, `duration_ms` INTEGER NOT NULL, `track_count` INTEGER NOT NULL, `is_single_file` INTEGER NOT NULL, `added_at` INTEGER NOT NULL, `last_scanned_at` INTEGER NOT NULL, `folder_last_modified` INTEGER NOT NULL, `metadata_complete` INTEGER NOT NULL DEFAULT 0, `missing_since` INTEGER, `hidden` INTEGER NOT NULL DEFAULT 0, `sidecar_id` TEXT NOT NULL, `title_override` TEXT, `author_override` TEXT, `narrator_override` TEXT, `description_override` TEXT, `librivox_id` TEXT, `librivox_download` TEXT, FOREIGN KEY(`root_id`) REFERENCES `library_root`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -218,6 +218,12 @@
           {
             "fieldPath": "librivoxId",
             "columnName": "librivox_id",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "librivoxDownload",
+            "columnName": "librivox_download",
             "affinity": "TEXT",
             "notNull": false
           }
@@ -1175,7 +1181,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '14f3f295052a234cbcc4b8fc30af361e')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5aac90cc63acc0583e82e3d7e2afded0')"
     ]
   }
 }
