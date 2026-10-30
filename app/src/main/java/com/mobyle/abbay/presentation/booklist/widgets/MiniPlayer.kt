@@ -196,6 +196,7 @@ private fun Cover(
     Box(modifier) {
         PlayerCover(
             thumbnail = book.thumbnail,
+            isStreamingOnly = isStreamingOnly(book),
             playerIcon = playerIcon,
             gesturesEnabled = gesturesEnabled,
             onTap = { if (playerIcon != PlayingState.LOADING) actions.onCoverClick(book.progress) },

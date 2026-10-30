@@ -625,4 +625,5 @@
     <string name="librivox_remove_download_body">Os capítulos baixados serão apagados. O livro continua na biblioteca e toca pela internet.</string>
     <string name="librivox_remove_download_confirm">Remover</string>
     <string name="librivox_listen_without_download">Ouvir sem baixar</string>
+    <string name="librivox_streaming_only_badge">Só streaming</string>
 </resources>

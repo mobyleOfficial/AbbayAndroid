@@ -2,6 +2,7 @@ package com.mobyle.abbay.presentation.booklist.widgets
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +31,7 @@ import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.mobyle.abbay.presentation.common.widgets.BookThumbnail
 import com.mobyle.abbay.presentation.common.widgets.ProgressCapsule
+import com.mobyle.abbay.presentation.common.widgets.StreamingBadge
 import com.mobyle.abbay.presentation.utils.debounceClick
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
@@ -52,7 +54,10 @@ fun BookItem(
             .padding(horizontal = 4.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        BookThumbnail(book.thumbnail)
+        Box {
+            BookThumbnail(book.thumbnail)
+            if (isStreamingOnly(book)) StreamingBadge(size = 20.dp, inset = 3.dp)
+        }
         Column(
             modifier = Modifier
                 .weight(1f)

@@ -12,17 +12,23 @@ import com.model.BookState
 import com.model.LibriVoxDownload
 import com.model.LibriVoxDownloadMode
 
-val LocalDownloadProgress = compositionLocalOf<Map<String, LibriVoxDownload>> { emptyMap() }
+val LocalLibriVoxDownloads = compositionLocalOf<Map<String, LibriVoxDownload>> { emptyMap() }
 
 @Composable
 fun bookStatusLine(book: Book): String {
-    LocalDownloadProgress.current[book.id]?.let { download ->
-        return if (download.mode == LibriVoxDownloadMode.PAUSED) {
-            stringResource(R.string.librivox_book_status_paused)
-        } else {
-            stringResource(R.string.librivox_book_status_downloading, (download.fraction * PERCENT).toInt())
-        }
+    val download = LocalLibriVoxDownloads.current[book.id]
+    return when (download?.mode) {
+        LibriVoxDownloadMode.PAUSED -> stringResource(R.string.librivox_book_status_paused)
+        LibriVoxDownloadMode.ACTIVE -> stringResource(R.string.librivox_book_status_downloading, (download.fraction * PERCENT).toInt())
+        LibriVoxDownloadMode.OFF, null -> listeningStatusLine(book)
     }
+}
+
+@Composable
+fun isStreamingOnly(book: Book): Boolean = LocalLibriVoxDownloads.current[book.id]?.mode == LibriVoxDownloadMode.OFF
+
+@Composable
+private fun listeningStatusLine(book: Book): String {
     val position = PlayerPosition.of(book)
     val chapter = position.chapter
     return when {

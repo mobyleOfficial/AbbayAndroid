@@ -6,13 +6,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.mobyle.abbay.presentation.utils.debounceClick
 import com.model.Book
@@ -30,6 +36,14 @@ fun BookCompactItem(book: Book, progressLabel: String, isPlaying: Boolean, onLon
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BookTitle(book, isPlaying, maxLines = 1, modifier = Modifier.weight(1f))
+            if (isStreamingOnly(book)) {
+                Icon(
+                    Icons.Outlined.Cloud,
+                    contentDescription = stringResource(R.string.librivox_streaming_only_badge),
+                    tint = secondaryContent(),
+                    modifier = Modifier.padding(start = 8.dp).size(16.dp),
+                )
+            }
             Text(
                 bookStatusLine(book),
                 style = statusStyle(),

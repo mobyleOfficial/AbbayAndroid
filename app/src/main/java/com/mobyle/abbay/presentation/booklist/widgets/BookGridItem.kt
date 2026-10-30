@@ -2,6 +2,7 @@ package com.mobyle.abbay.presentation.booklist.widgets
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +20,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mobyle.abbay.presentation.common.widgets.BookThumbnail
 import com.mobyle.abbay.presentation.common.widgets.ProgressCapsule
+import com.mobyle.abbay.presentation.common.widgets.StreamingBadge
 import com.mobyle.abbay.presentation.utils.debounceClick
 import com.model.Book
 
@@ -34,14 +36,17 @@ fun BookGridItem(book: Book, progressLabel: String, isPlaying: Boolean, onLongCl
             .padding(4.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        BookThumbnail(
-            book.thumbnail,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f),
-            cornerRadius = COVER_RADIUS,
-            shadow = true,
-        )
+        Box {
+            BookThumbnail(
+                book.thumbnail,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f),
+                cornerRadius = COVER_RADIUS,
+                shadow = true,
+            )
+            if (isStreamingOnly(book)) StreamingBadge(size = 26.dp, inset = 6.dp)
+        }
         BookTitle(book, isPlaying, maxLines = TITLE_LINES, modifier = Modifier.padding(top = 4.dp).heightIn(min = titleHeight))
         Text(bookStatusLine(book), style = statusStyle(), color = secondaryContent(), maxLines = 1, overflow = TextOverflow.Ellipsis)
         Text(progressLabel, style = timeStyle(), color = secondaryContent(), maxLines = 1)

@@ -165,8 +165,8 @@ class BooksListViewModel @Inject constructor(
     private val scanStatus: StateFlow<ScanStatus> = observeScanStatus()
         .stateIn(viewModelScope, SharingStarted.Eagerly, ScanStatus())
 
-    val downloadProgress: StateFlow<Map<String, LibriVoxDownload>> = observeLibriVoxDownloads()
-        .map { downloads -> downloads.filterValues { it.isInProgress } }
+    val libriVoxDownloads: StateFlow<Map<String, LibriVoxDownload>> = observeLibriVoxDownloads()
+        .map { downloads -> downloads.filterValues { !it.isComplete } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
     val hasSelectedFolder: StateFlow<Boolean> = roots.map { it.isNotEmpty() }
