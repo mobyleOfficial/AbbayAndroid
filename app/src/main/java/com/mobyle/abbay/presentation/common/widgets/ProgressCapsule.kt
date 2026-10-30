@@ -13,10 +13,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
 
-/**
- * A thin capsule progress bar on a translucent track (AbbayiOS's `ProgressCapsule`): the library cells', the
- * chapter rows' and the mini player's. Decorative: the text next to it says the same.
- */
 @Composable
 fun ProgressCapsule(
     fraction: Float,

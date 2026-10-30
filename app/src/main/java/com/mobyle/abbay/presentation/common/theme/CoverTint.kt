@@ -27,12 +27,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.graphics.Color as AndroidColor
 
-/**
- * The colour of a book's cover, as AbbayiOS's `CoverTint`: the average of a tiny downscale of the cover.
- * On a dark theme it is darkened until white text on it passes WCAG's 4.5:1 (the mini player, the player and the
- * chapter panel sit on it); on a light theme a pale wash of it over the surface keeps the theme's dark text readable.
- * Without a cover it is the theme's surface.
- */
 object CoverTint {
     private const val SAMPLE_SIDE = 16
     private const val MINIMUM_CONTRAST = 4.5f
@@ -43,12 +37,10 @@ object CoverTint {
     private const val CACHE_SIZE = 128
     private const val HSV_COMPONENTS = 3
 
-    /** Averages by thumbnail, theme-independent. */
     private val averages = LruCache<String, Int>(CACHE_SIZE)
 
     fun cachedAverage(thumbnail: String?): Color? = thumbnail?.let { averages.get(it) }?.let { Color(it) }
 
-    /** Decodes the cover straight to [SAMPLE_SIDE] px (never the full image) and averages it, off the main thread. */
     suspend fun average(context: Context, thumbnail: String): Color? = cachedAverage(thumbnail) ?: run {
         val request = ImageRequest.Builder(context)
             .data(thumbnail)
@@ -80,7 +72,6 @@ object CoverTint {
         return Color(red = (red / alpha).toInt(), green = (green / alpha).toInt(), blue = (blue / alpha).toInt())
     }
 
-    /** The dark-theme tint: [color] darkened (keeping its hue) until white text on it reaches 4.5:1. */
     fun darkenedForWhiteText(color: Color): Color {
         val hsv = FloatArray(HSV_COMPONENTS)
         AndroidColor.colorToHSV(color.toArgb(), hsv)
@@ -94,7 +85,6 @@ object CoverTint {
         return candidate
     }
 
-    /** The light-theme tint: a wash of [color] over [surface], as strong as [content] text still allows at 4.5:1. */
     fun washedOver(color: Color, surface: Color, content: Color): Color {
         var fraction = LIGHT_WASH
         var candidate = lerp(surface, color, fraction)
@@ -105,7 +95,6 @@ object CoverTint {
         return candidate
     }
 
-    /** WCAG 2 contrast ratio between two opaque colours. */
     fun contrast(first: Color, second: Color): Float {
         val lighter = maxOf(first.luminance(), second.luminance())
         val darker = minOf(first.luminance(), second.luminance())
@@ -115,16 +104,11 @@ object CoverTint {
     private const val LUMINANCE_OFFSET = 0.05f
 }
 
-/** Whether the current theme is a dark one (Dark, Black, or a dark wallpaper scheme). */
 val isDarkTheme: Boolean
     @Composable get() = MaterialTheme.colorScheme.surface.luminance() < HALF_LUMINANCE
 
 private const val HALF_LUMINANCE = 0.5f
 
-/**
- * The tint of [thumbnail] for the current theme. A cover seen before has it on the first frame; otherwise the
- * surface shows until it is computed, then the tint fades in.
- */
 @Composable
 fun rememberCoverTint(thumbnail: String?): Color {
     val context = LocalContext.current
@@ -141,11 +125,6 @@ fun rememberCoverTint(thumbnail: String?): Color {
     return tint
 }
 
-/**
- * The player's background (AbbayiOS's `playerGradient`): the flat [tint] at the top, shading towards near-black
- * (near-surface on a light theme) at the bottom, where the transport sits. [gradientStrength] fades the shading in,
- * so the collapsed mini player is the flat tint and the open player the full gradient.
- */
 @Composable
 fun Modifier.coverTintBackground(tint: Color, gradientStrength: Float = 1f): Modifier {
     val shade = if (isDarkTheme) Color.Black else MaterialTheme.colorScheme.surface

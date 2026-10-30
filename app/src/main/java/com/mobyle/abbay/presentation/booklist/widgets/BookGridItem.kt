@@ -22,11 +22,6 @@ import com.mobyle.abbay.presentation.common.widgets.ProgressCapsule
 import com.mobyle.abbay.presentation.utils.debounceClick
 import com.model.Book
 
-/**
- * Cover-first grid cell, as AbbayiOS's library grid: the square cover with its shadow, the title on a fixed
- * two-line height, the status line with the elapsed time, and the progress bar's slot (kept when empty, so every
- * cell in a row is as tall as the others).
- */
 @Composable
 fun BookGridItem(book: Book, progressLabel: String, isPlaying: Boolean, onLongClick: () -> Unit, onClick: () -> Unit) {
     val titleHeight = with(LocalDensity.current) { (TITLE_LINE_HEIGHT_SP * TITLE_LINES * fontScale).dp }

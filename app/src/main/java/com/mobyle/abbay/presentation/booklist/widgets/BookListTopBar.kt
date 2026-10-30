@@ -52,7 +52,6 @@ fun BookListTopBar(
     var showMoreMenu by remember { mutableStateOf(false) }
 
     TopAppBar(
-        // On the library's own background, as AbbayiOS's large title.
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary),
         title = {
             Text(

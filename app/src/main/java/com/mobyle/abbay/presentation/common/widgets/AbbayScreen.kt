@@ -33,7 +33,6 @@ fun AbbayScreen(
 ) {
     Scaffold(scaffoldState = scaffoldState, topBar = {
         TopAppBar(
-            // On the screen's own background, as AbbayiOS's navigation bars.
             backgroundColor = MaterialTheme.colorScheme.primary,
             elevation = 0.dp,
             title = {

@@ -45,7 +45,6 @@ fun PlayerCover(
     val configuration = LocalConfiguration.current
     val coverSizePx = with(LocalDensity.current) { minOf(configuration.screenWidthDp, configuration.screenHeightDp).dp.roundToPx() }
     BoxWithConstraints(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        // Square, as large as the room allows (AbbayiOS's player cover), with corners that follow its size.
         val side = minOf(maxWidth, maxHeight)
         val shape = RoundedCornerShape(coverCornerRadius(side))
         Box(modifier = Modifier.size(side)) {
@@ -60,7 +59,6 @@ fun PlayerCover(
                     ),
             ) {
                 playerIcon.toIcon()?.let { icon ->
-                    // The tap-to-play hint, on a small disc so it reads over any cover without darkening it.
                     Box(
                         modifier = Modifier
                             .align(Alignment.Center)

@@ -34,10 +34,6 @@ import com.mobyle.abbay.presentation.utils.debounceClick
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
 
-/**
- * A library row in the look of AbbayiOS's cells: the cover, the title (in the accent with a "now playing" mark
- * while it plays), the status line with the elapsed time, and a thin progress bar while the book is started.
- */
 @Composable
 fun BookItem(
     book: Book,
@@ -87,7 +83,6 @@ fun BookItem(
     }
 }
 
-/** The title: the accent and a "now playing" glyph while this book plays (never colour alone). */
 @Composable
 internal fun BookTitle(book: Book, isPlaying: Boolean, maxLines: Int, modifier: Modifier = Modifier) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
@@ -127,7 +122,6 @@ internal fun statusStyle() = MaterialTheme.typography.bodySmall.copy(fontSize = 
 @Composable
 internal fun timeStyle() = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, fontFamily = FontFamily.Monospace)
 
-/** The row behind a book whose file is missing (as before). */
 internal val ErrorRowColor = Color(0xff1f1113)
 
 private val ROW_RADIUS = 12.dp

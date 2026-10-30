@@ -592,7 +592,6 @@
     <string name="widget_sleep_timer_on">Start sleep timer</string>
     <string name="widget_sleep_timer_off">Turn off sleep timer</string>
 
-    <!-- AbbayiOS visual parity -->
     <string name="book_status_new">New</string>
     <string name="book_status_finished">Finished ✓</string>
     <string name="book_status_chapter">Ch %1$d/%2$d</string>

@@ -9,10 +9,6 @@ import com.mobyle.abbay.presentation.booklist.widgets.player.timeLeftLabel
 import com.model.Book
 import com.model.BookState
 
-/**
- * A library cell's one status line (AbbayiOS's `MediaView.detailLine`): *Finished ✓*, *New* before it is started,
- * then *Ch N/M* for a book with chapters or the time left for one without.
- */
 @Composable
 fun bookStatusLine(book: Book): String {
     val position = PlayerPosition.of(book)
@@ -29,7 +25,6 @@ fun bookStatusLine(book: Book): String {
     }
 }
 
-/** 0…1 through the book while it is started and not finished; null otherwise (the cell shows no bar). */
 fun bookStartedFraction(book: Book): Float? = when {
     book.state == BookState.FINISHED || book.bookPositionMs <= 0L || book.duration <= 0L -> null
     else -> progressFraction(book.bookPositionMs, book.duration)

@@ -83,7 +83,6 @@ fun PlayerControls(
     }
 }
 
-/** The title in bold, then "Author · Chapter n of N" (announced politely by TalkBack when the chapter changes). */
 @Composable
 private fun TitleBlock(book: Book, position: PlayerPosition) {
     Column(modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
@@ -147,7 +146,6 @@ private fun ChapterSeekBar(position: PlayerPosition, labels: ProgressLabels, ski
                 draggedFraction = null
             },
             interactionSource = interactionSource,
-            // AbbayiOS's scrubber: a 6 dp capsule track with a solid fill, and a thumb that grows while dragged.
             thumb = { ScrubberThumb(isDragging = isDragging || draggedFraction != null) },
             track = {
                 ProgressCapsule(
@@ -179,7 +177,6 @@ private fun ScrubberThumb(isDragging: Boolean) {
     )
 }
 
-/** Elapsed time, the chapter's name (truncating) and the remaining or total time, under the scrubber. */
 @Composable
 private fun SeekLabels(elapsedMs: Long, position: PlayerPosition, labels: ProgressLabels) {
     Row(
@@ -271,7 +268,6 @@ private fun TransportRow(
     }
 }
 
-/** The circular arrow with the amount written inside it, as SF Symbols' gobackward.15 / goforward.30. */
 @Composable
 private fun SkipButton(label: String, seconds: Int, isForward: Boolean = false, onClick: () -> Unit) {
     Box(
@@ -297,7 +293,6 @@ private fun SkipButton(label: String, seconds: Int, isForward: Boolean = false, 
     }
 }
 
-/** The minutes-long skips: quieter than the main transport. */
 @Composable
 private fun LargeSkipButton(icon: ImageVector, label: String, onClick: () -> Unit) {
     Box(

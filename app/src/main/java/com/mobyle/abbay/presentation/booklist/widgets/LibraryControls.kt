@@ -84,7 +84,6 @@ fun LibraryControls(
     }
 }
 
-/** The tabs as capsules (AbbayiOS's look): the selected one filled, the others on a faint fill. */
 @Composable
 private fun LibraryTabPills(
     tab: LibraryTab,

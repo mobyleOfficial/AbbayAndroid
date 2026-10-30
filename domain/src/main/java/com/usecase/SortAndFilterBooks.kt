@@ -31,10 +31,6 @@ class SortAndFilterBooks @Inject constructor() {
         return visibleBooks.sortedWith(if (ascending) comparator else comparator.reversed())
     }
 
-    /**
-     * The tab chosen automatically: In progress when it is non-empty, otherwise All. A hidden choice
-     * falls back to All, then to the first of [visibleTabs].
-     */
     fun defaultTab(books: List<Book>, visibleTabs: List<LibraryTab> = LibraryTab.entries): LibraryTab {
         val preferred = if (books.any { it.state == BookState.IN_PROGRESS }) LibraryTab.IN_PROGRESS else LibraryTab.ALL
         return listOf(preferred, LibraryTab.ALL).firstOrNull { it in visibleTabs } ?: visibleTabs.first()

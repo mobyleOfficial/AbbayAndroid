@@ -29,12 +29,6 @@ import com.mobyle.abbay.presentation.common.theme.SpanishGrayColor
 import com.mobyle.abbay.presentation.common.theme.SurfaceColor
 import com.mobyle.abbay.presentation.common.theme.isDarkTheme
 
-/**
- * Every cover in the app, as AbbayiOS's `ArtworkView`: the cover filling its frame, rounded corners that follow
- * its size ([coverCornerRadius]) unless [cornerRadius] is given, a thin light edge and an optional soft shadow.
- * A book without a cover, or one that fails to load, shows the generic tile (a dark gradient with headphones).
- * Decorative: the book's title is always next to it.
- */
 @Composable
 fun BookThumbnail(
     byteArray: String?,
@@ -55,7 +49,6 @@ fun BookThumbnail(
                 .border(EDGE_WIDTH, Color.White.copy(alpha = EDGE_ALPHA), shape),
             contentAlignment = Alignment.Center,
         ) {
-            // The glyph sits under the cover: it shows while loading, and stays when there is no cover.
             Icon(
                 Icons.Outlined.Headphones,
                 contentDescription = null,
@@ -68,7 +61,6 @@ fun BookThumbnail(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(byteArray)
                         .apply { requestSizePx?.let { size(it) } }
-                        // Each size gets its own decode: the grid's larger covers must not reuse the list's small one.
                         .precision(Precision.EXACT)
                         .crossfade(true)
                         .build(),
@@ -80,7 +72,6 @@ fun BookThumbnail(
     }
 }
 
-/** Small covers (rows, the mini player) get tight corners, the player's large cover about 14 dp (AbbayiOS). */
 fun coverCornerRadius(side: Dp): Dp = when {
     side < 40.dp -> 4.dp
     side < 120.dp -> 8.dp

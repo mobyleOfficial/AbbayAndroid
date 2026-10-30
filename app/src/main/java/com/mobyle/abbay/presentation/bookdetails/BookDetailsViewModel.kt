@@ -44,7 +44,6 @@ class BookDetailsViewModel @Inject constructor(
     private val _coverCandidates = MutableStateFlow(emptyList<CoverCandidate>())
     val coverCandidates: StateFlow<List<CoverCandidate>> get() = _coverCandidates
 
-    /** Title, author, narrator and description as edited; null until the book is loaded. */
     var draft by mutableStateOf<BookOverrides?>(null)
         private set
 
@@ -56,7 +55,6 @@ class BookDetailsViewModel @Inject constructor(
         draft = edited
     }
 
-    /** Leaving the screen keeps the edits; the write must outlive the screen's scope, which closes with it. */
     fun saveChanges() {
         val edited = draft ?: return
         val current = details.value ?: return
@@ -75,7 +73,6 @@ class BookDetailsViewModel @Inject constructor(
 
     private fun BookDetails.toOverrides() = BookOverrides(title, author.orEmpty(), narrator.orEmpty(), description.orEmpty())
 
-    /** As the repository stores them: trimmed, blank as absent. */
     private fun BookOverrides.normalized() = BookOverrides(
         title = title?.trim()?.takeIf(String::isNotEmpty),
         author = author?.trim()?.takeIf(String::isNotEmpty),

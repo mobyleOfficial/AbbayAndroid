@@ -46,7 +46,6 @@ fun SettingItem(
             )
             content?.invoke()
         }
-        // A hairline inset to the label, as AbbayiOS's grouped lists.
         HorizontalDivider(
             thickness = 0.5.dp,
             color = AbbayColors.content.copy(alpha = DIVIDER_ALPHA),

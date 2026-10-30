@@ -27,10 +27,6 @@ import com.mobyle.abbay.presentation.common.widgets.AbbayDropdownMenu
 import com.mobyle.abbay.presentation.common.widgets.AbbayMenuItem
 import com.mobyle.abbay.presentation.common.widgets.CircleIconButton
 
-/**
- * Top bar of the expanded player, as AbbayiOS's: a round collapse button (⌄) on the left, then cast · lock ·
- * overflow, on the cover tint behind it. The title sits under the cover and the speed in the pill under the transport.
- */
 @Composable
 fun PlayerTopBar(
     isScreenLocked: Boolean,

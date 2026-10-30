@@ -39,7 +39,6 @@ import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.model.Book
 
-/** Speed on the left, Chapters on the right (only for a book with chapters), as AbbayiOS's glass pills. */
 @Composable
 internal fun PillsRow(book: Book, position: PlayerPosition, chapters: ChaptersToggle, actions: PlayerActions) {
     var showSpeedSheet by remember { mutableStateOf(false) }

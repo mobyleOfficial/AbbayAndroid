@@ -17,7 +17,6 @@ import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.mobyle.abbay.presentation.utils.debounceClick
 import com.model.Book
 
-/** One-line list row without cover: the title, the status line and the elapsed time, over a hairline. */
 @Composable
 fun BookCompactItem(book: Book, progressLabel: String, isPlaying: Boolean, onLongClick: () -> Unit, onClick: () -> Unit) {
     Column {

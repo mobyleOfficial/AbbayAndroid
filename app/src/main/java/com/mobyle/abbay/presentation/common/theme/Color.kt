@@ -8,10 +8,9 @@ val SecondaryColor = Color(0xFFFFFFFF) // White text/icons
 val TertiaryColor = Color(0xFF0BDA51) // Green accent
 val SurfaceColor = Color(0xFF353539) // Slightly lighter dark surface
 
-// The rest of AbbayiOS's palette (ColorConstants.plist), so both apps share one look.
-val Background2Color = Color(0xFF1B1B1F) // Deepest dark: placeholder covers, text on the accent
-val LightSilverColor = Color(0xFFD9D9D9) // Secondary text on dark
-val SpanishGrayColor = Color(0xFF9B9B9B) // Placeholder glyphs
+val Background2Color = Color(0xFF1B1B1F)
+val LightSilverColor = Color(0xFFD9D9D9)
+val SpanishGrayColor = Color(0xFF9B9B9B)
 
 // Additional colors for better contrast and Android 15 compatibility
 val OnPrimaryColor = Color(0xFFFFFFFF) // White on primary

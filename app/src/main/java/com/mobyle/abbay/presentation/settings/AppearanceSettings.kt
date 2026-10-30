@@ -159,7 +159,6 @@ internal fun SettingSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit,
 
 @Composable
 internal fun SectionHeader(labelResource: Int) {
-    // A small uppercase section title in the secondary colour, as AbbayiOS's grouped settings.
     Text(
         text = stringResource(labelResource).uppercase(),
         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),

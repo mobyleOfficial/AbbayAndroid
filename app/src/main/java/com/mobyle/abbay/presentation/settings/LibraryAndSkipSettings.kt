@@ -15,7 +15,6 @@ import com.settings.NotificationSkipButtons
 import com.settings.QuickAction
 import com.settings.RescanOnStart
 
-/** Settings → Library preferences: default tab, layout, rescan on start, missing books, tabs. */
 @Composable
 internal fun LibraryPreferenceSettings(settings: AppSettings, change: ((AppSettings) -> AppSettings) -> Unit) {
     Column {

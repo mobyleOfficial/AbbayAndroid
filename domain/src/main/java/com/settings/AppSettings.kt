@@ -19,9 +19,7 @@ data class AppSettings(
     val librarySortAscending: Boolean = false,
     /** null means "auto": In progress when it is non-empty, otherwise All. */
     val libraryTab: LibraryTab? = null,
-    /** Order of the library tabs; see [LibraryTab.ordered]. */
     val libraryTabOrder: List<LibraryTab> = LibraryTab.entries,
-    /** Tabs left out of the library; at least one always stays (see [LibraryTab.visible]). */
     val hiddenLibraryTabs: Set<LibraryTab> = emptySet(),
     val libraryLayout: LibraryLayout = LibraryLayout.LIST,
     val missingBookRetentionDays: Int = 30,
@@ -98,7 +96,6 @@ data class AppSettings(
     /** Cast phase 2: send the audio with its effects instead of the original files. */
     val castProcessedAudio: Boolean = true,
 ) {
-    /** The tabs the library shows, in order. */
     val visibleLibraryTabs: List<LibraryTab> get() = LibraryTab.visible(libraryTabOrder, hiddenLibraryTabs)
 
     companion object {

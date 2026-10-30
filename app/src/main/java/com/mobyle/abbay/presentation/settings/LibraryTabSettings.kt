@@ -16,7 +16,6 @@ import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.booklist.widgets.labelResource
 import com.settings.AppSettings
 
-/** Settings → Library tabs: which tabs the library shows and in what order. */
 @Composable
 internal fun LibraryTabSettings(settings: AppSettings, change: ((AppSettings) -> AppSettings) -> Unit) {
     val orderedTabs = LibraryTab.ordered(settings.libraryTabOrder)
@@ -37,7 +36,6 @@ internal fun LibraryTabSettings(settings: AppSettings, change: ((AppSettings) ->
                     description = stringResource(R.string.settings_tab_move_down, label),
                     enabled = index < orderedTabs.lastIndex,
                 ) { change { it.copy(libraryTabOrder = orderedTabs.swapped(index, index + 1)) } }
-                // The last shown tab cannot be hidden: the library always has one.
                 SettingSwitch(
                     checked = isShown,
                     enabled = !isShown || visibleTabs.size > 1,
@@ -46,7 +44,6 @@ internal fun LibraryTabSettings(settings: AppSettings, change: ((AppSettings) ->
                             if (show) {
                                 current.copy(hiddenLibraryTabs = current.hiddenLibraryTabs - tab)
                             } else {
-                                // A hidden default tab goes back to Automatic.
                                 current.copy(
                                     hiddenLibraryTabs = current.hiddenLibraryTabs + tab,
                                     libraryTab = current.libraryTab.takeIf { it != tab },

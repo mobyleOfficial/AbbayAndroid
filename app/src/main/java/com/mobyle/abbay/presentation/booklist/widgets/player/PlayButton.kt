@@ -17,10 +17,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
 
-/**
- * Play/pause; a spinner while the book is loading. [filled] draws it as the player's dominant control: the glyph
- * in the background colour on a disc in the content colour (AbbayiOS's player).
- */
 @Composable
 fun PlayButton(playerIcon: PlayingState, size: Dp = 48.dp, filled: Boolean = false, onClick: () -> Unit) {
     val glyphColor = if (filled) MaterialTheme.colorScheme.primary else AbbayColors.content

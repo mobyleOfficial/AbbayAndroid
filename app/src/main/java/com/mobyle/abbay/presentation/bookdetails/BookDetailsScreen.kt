@@ -62,7 +62,6 @@ fun BookDetailsScreen(viewModel: BookDetailsViewModel = hiltViewModel(), onConve
     val details by viewModel.details.collectAsState()
     val candidates by viewModel.coverCandidates.collectAsState()
 
-    // Back, the close button or any other way out applies the edits, when there are any.
     DisposableEffect(viewModel) { onDispose { viewModel.saveChanges() } }
 
     AbbayScreen(title = stringResource(R.string.details_title), onClose = close) {
@@ -140,7 +139,6 @@ private fun DetailsCover(coverUri: String?, onClick: () -> Unit) {
     )
 }
 
-/** Title, author, narrator and description; saved as overrides on leaving the screen, audio files stay untouched. */
 @Composable
 private fun MetadataEditor(draft: BookOverrides, onEdit: (BookOverrides) -> Unit) {
     Column {
@@ -256,10 +254,6 @@ private fun CoverChooser(
     }
 }
 
-/**
- * The screens are painted with `primary`, which the default colours use for the focused border, the label and the
- * cursor, so those vanished into the background: the accent marks focus and the content colour draws the rest.
- */
 @Composable
 private fun DetailsField(labelResource: Int, value: String, singleLine: Boolean = true, onValueChange: (String) -> Unit) {
     val accent = MaterialTheme.colorScheme.tertiary

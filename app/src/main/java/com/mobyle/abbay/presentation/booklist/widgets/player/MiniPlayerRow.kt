@@ -24,10 +24,6 @@ import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.mobyle.abbay.presentation.common.widgets.ProgressCapsule
 import com.model.Book
 
-/**
- * Collapsed player, as AbbayiOS's mini player: the title, "chapter · time left", play/pause and a thin line for the
- * book's progress along the bottom. It sits on the cover's tint (drawn by the player behind it).
- */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MiniPlayerRow(

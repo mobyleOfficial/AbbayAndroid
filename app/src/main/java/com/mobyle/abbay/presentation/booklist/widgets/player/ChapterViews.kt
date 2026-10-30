@@ -41,12 +41,6 @@ import com.mobyle.abbay.presentation.utils.debounceClick
 import com.model.Chapter
 import kotlin.math.ceil
 
-/**
- * The player's chapter list as a bottom sheet: a "Chapters" header with the time left in the book, and one row per
- * chapter. Chapters before the current one are finished (dimmed, with a check); the current one is in the accent on
- * a faint accent fill, with ▶, its progress and the time left in it; the others show their length. It opens scrolled
- * to the current chapter, and a tap on a row plays that chapter and closes the sheet.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChaptersSheet(
@@ -131,7 +125,6 @@ private fun ChapterPanelRow(chapter: Chapter, state: ChapterRowState, currentPro
     }
 }
 
-/** The chapter's number, or ▶ on the current one. */
 @Composable
 private fun ChapterLeadingMark(chapter: Chapter, isCurrent: Boolean) {
     Box(modifier = Modifier.width(NUMBER_WIDTH)) {
@@ -152,7 +145,6 @@ private fun ChapterLeadingMark(chapter: Chapter, isCurrent: Boolean) {
     }
 }
 
-/** A check on a finished chapter, the time left on the current one, the length on the others. */
 @Composable
 private fun ChapterTrailing(chapter: Chapter, state: ChapterRowState, currentProgress: Float) {
     val length = chapter.endMs - chapter.startMs
@@ -178,7 +170,6 @@ private fun ChapterTrailing(chapter: Chapter, state: ChapterRowState, currentPro
     }
 }
 
-/** A chapter's length in whole minutes, rounded up so a short chapter never reads "0 min". */
 @Composable
 private fun chapterLengthText(durationMs: Long): String {
     val totalMinutes = ceil(durationMs.coerceAtLeast(0L) / MILLIS_PER_MINUTE).toInt()
@@ -192,7 +183,6 @@ private fun chapterLengthText(durationMs: Long): String {
 
 private val NUMBER_WIDTH = 28.dp
 
-// Dimmed and secondary text keep 4.5:1 on the dark and the light sheet.
 private const val SECONDARY_ALPHA = 0.7f
 private const val DIMMED_ALPHA = 0.65f
 private const val DIVIDER_ALPHA = 0.08f

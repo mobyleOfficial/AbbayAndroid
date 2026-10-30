@@ -77,5 +77,4 @@ data class PlayerDisplay(
     val hiddenQuickActions: Set<QuickAction> = emptySet(),
 )
 
-/** Whether the chapter panel is open, and how to toggle it (the panel itself floats over the cover). */
 class ChaptersToggle(val isOpen: Boolean = false, val onToggle: () -> Unit = {}, val onClose: () -> Unit = {})

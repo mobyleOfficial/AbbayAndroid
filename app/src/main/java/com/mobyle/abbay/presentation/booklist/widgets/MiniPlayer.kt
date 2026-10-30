@@ -84,7 +84,6 @@ fun MiniPlayer(
     MotionLayout(
         motionScene = rememberPlayerMotionScene(),
         progress = fraction,
-        // The cover's colour behind the whole player: flat on the mini player, shading to dark as it opens (AbbayiOS).
         modifier = modifier.fillMaxSize().coverTintBackground(tint, gradientStrength = fraction),
     ) {
         MiniPlayerRow(
@@ -137,7 +136,6 @@ fun MiniPlayer(
     if (chapters.isOpen) PlayerChaptersSheet(book, position, chapters, actions)
 }
 
-/** A chapter picked in the sheet plays and closes it. */
 @Composable
 private fun PlayerChaptersSheet(book: Book, position: PlayerPosition, chapters: ChaptersToggle, actions: PlayerActions) {
     ChaptersSheet(
@@ -193,7 +191,6 @@ private fun playingStateOf(playerState: PlayerState, isAwaitingPlayback: Boolean
     else -> PlayingState.PAUSED
 }
 
-/** The cover with its gestures: a tap plays or pauses, double taps seek, swipes change chapter. */
 @Composable
 private fun Cover(
     book: Book,
@@ -217,7 +214,6 @@ private fun Cover(
     }
 }
 
-/** The chapter sheet's open state, closed whenever the player collapses. */
 @Composable
 private fun rememberChaptersToggle(isExpanded: Boolean): ChaptersToggle {
     var isOpen by remember { mutableStateOf(false) }

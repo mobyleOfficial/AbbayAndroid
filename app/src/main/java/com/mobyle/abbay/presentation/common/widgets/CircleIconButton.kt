@@ -16,10 +16,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
 
-/**
- * An icon in a small translucent circle with a light edge: the look of AbbayiOS's glass buttons (close, collapse).
- * The touch target stays 48 dp.
- */
 @Composable
 fun CircleIconButton(
     icon: ImageVector,

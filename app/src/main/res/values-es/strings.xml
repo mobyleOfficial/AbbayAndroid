@@ -586,7 +586,6 @@
     <string name="widget_sleep_timer_on">Iniciar temporizador</string>
     <string name="widget_sleep_timer_off">Apagar temporizador</string>
 
-    <!-- AbbayiOS visual parity -->
     <string name="book_status_new">Nuevo</string>
     <string name="book_status_finished">Terminado ✓</string>
     <string name="book_status_chapter">Cap. %1$d/%2$d</string>
