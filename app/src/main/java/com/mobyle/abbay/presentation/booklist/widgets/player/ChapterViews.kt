@@ -1,39 +1,33 @@
 package com.mobyle.abbay.presentation.booklist.widgets.player
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
@@ -42,40 +36,28 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
-import com.mobyle.abbay.presentation.common.theme.isDarkTheme
 import com.mobyle.abbay.presentation.common.widgets.ProgressCapsule
 import com.mobyle.abbay.presentation.utils.debounceClick
 import com.model.Chapter
 import kotlin.math.ceil
 
 /**
- * The player's chapter list as a panel floating over the cover (AbbayiOS's `ChaptersPanel`, G2): a handle that
- * closes it, a "Chapters" header with the time left in the book, and one row per chapter. Chapters before the
- * current one are finished (dimmed, with a check); the current one is in the accent on a faint accent fill, with ▶,
- * its progress and the time left in it; the others show their length. It opens scrolled to the current chapter,
- * and a tap on a row plays that chapter and closes the panel.
+ * The player's chapter list as a bottom sheet: a "Chapters" header with the time left in the book, and one row per
+ * chapter. Chapters before the current one are finished (dimmed, with a check); the current one is in the accent on
+ * a faint accent fill, with ▶, its progress and the time left in it; the others show their length. It opens scrolled
+ * to the current chapter, and a tap on a row plays that chapter and closes the sheet.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChaptersPanel(
+fun ChaptersSheet(
     chapters: List<Chapter>,
     position: PlayerPosition,
     bookTimeLeft: String,
-    tint: Color,
     onSelect: (Chapter) -> Unit,
-    onClose: () -> Unit,
-    modifier: Modifier = Modifier,
+    onDismiss: () -> Unit,
 ) {
-    val shape = RoundedCornerShape(PANEL_RADIUS)
     val currentIndex = position.chapter?.index ?: 0
-    // Darker than the player behind it, so the accent and white text keep their contrast over any cover.
-    val fill = if (isDarkTheme) lerp(tint, Color.Black, PANEL_DARKENING) else MaterialTheme.colorScheme.surface
-    Column(
-        modifier = modifier
-            .clip(shape)
-            .background(fill)
-            .border(0.5.dp, AbbayColors.content.copy(alpha = EDGE_ALPHA), shape),
-    ) {
-        PanelHandle(onClose)
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.surface) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -84,13 +66,13 @@ fun ChaptersPanel(
                 stringResource(R.string.player_chapters),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                 color = AbbayColors.content,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).semantics { heading() },
             )
             Text(bookTimeLeft, style = MaterialTheme.typography.bodySmall, color = AbbayColors.content.copy(alpha = SECONDARY_ALPHA))
         }
         val listState = rememberLazyListState()
         LaunchedEffect(Unit) { listState.scrollToItem((currentIndex - 1).coerceAtLeast(0)) }
-        LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+        LazyColumn(state = listState, modifier = Modifier.fillMaxWidth()) {
             itemsIndexed(chapters, key = { _, chapter -> chapter.index }) { index, chapter ->
                 ChapterPanelRow(
                     chapter = chapter,
@@ -109,27 +91,6 @@ fun ChaptersPanel(
                 )
             }
         }
-    }
-}
-
-/** The grabber at the panel's top: a tap closes it (TalkBack's "Close chapters" button). */
-@Composable
-private fun PanelHandle(onClose: () -> Unit) {
-    val closeLabel = stringResource(R.string.player_close_chapters)
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 32.dp)
-            .clickable(role = Role.Button, onClick = onClose)
-            .semantics { contentDescription = closeLabel },
-        contentAlignment = Alignment.Center,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(width = 36.dp, height = 4.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(AbbayColors.content.copy(alpha = HANDLE_ALPHA)),
-        )
     }
 }
 
@@ -229,13 +190,9 @@ private fun chapterLengthText(durationMs: Long): String {
     }
 }
 
-private val PANEL_RADIUS = 26.dp
 private val NUMBER_WIDTH = 28.dp
-private const val PANEL_DARKENING = 0.55f
-private const val EDGE_ALPHA = 0.15f
-private const val HANDLE_ALPHA = 0.3f
 
-// Dimmed and secondary text keep 4.5:1 on the dark and the light panel.
+// Dimmed and secondary text keep 4.5:1 on the dark and the light sheet.
 private const val SECONDARY_ALPHA = 0.7f
 private const val DIMMED_ALPHA = 0.65f
 private const val DIVIDER_ALPHA = 0.08f
