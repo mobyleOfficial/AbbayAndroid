@@ -12,4 +12,8 @@ enum class DataError {
     UNREADABLE,
 
     INVALID_FORMAT,
+
+    NETWORK,
+
+    NOT_AN_AUDIOBOOK,
 }

@@ -531,6 +531,10 @@ class PlaybackService : MediaLibraryService() {
             PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND,
             -> PlaybackErrorPolicy.ErrorKind.STORAGE
 
+            PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
+            PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT,
+            -> PlaybackErrorPolicy.ErrorKind.NETWORK
+
             else -> PlaybackErrorPolicy.ErrorKind.UNPLAYABLE
         }
         val failedIndex = exoPlayer.currentMediaItemIndex
@@ -560,6 +564,11 @@ class PlaybackService : MediaLibraryService() {
             Decision.StopStorageUnavailable -> {
                 exoPlayer.stop()
                 broadcastProblem(PROBLEM_STORAGE_UNAVAILABLE, failedFileName)
+            }
+
+            Decision.PauseForNetwork -> {
+                savePosition()
+                broadcastProblem(PROBLEM_NETWORK_UNAVAILABLE, failedFileName)
             }
         }
     }
@@ -755,6 +764,7 @@ class PlaybackService : MediaLibraryService() {
         const val PROBLEM_BOOK_UNPLAYABLE = "bookUnplayable"
         const val PROBLEM_STORAGE_UNAVAILABLE = "storageUnavailable"
         const val PROBLEM_NOISE_REDUCTION_TOO_SLOW = "noiseReductionTooSlow"
+        const val PROBLEM_NETWORK_UNAVAILABLE = "networkUnavailable"
         private const val PERIODIC_SAVE_INTERVAL_MS = 10_000L
         private const val MILLISECONDS_PER_SECOND = 1_000L
 

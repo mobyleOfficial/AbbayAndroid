@@ -5,6 +5,8 @@ object PlaybackErrorPolicy {
         STORAGE,
 
         UNPLAYABLE,
+
+        NETWORK,
     }
 
     sealed interface Decision {
@@ -15,10 +17,13 @@ object PlaybackErrorPolicy {
         data object StopAtEnd : Decision
 
         data object StopStorageUnavailable : Decision
+
+        data object PauseForNetwork : Decision
     }
 
     fun decide(kind: ErrorKind, failedTrackIndex: Int, trackCount: Int, previouslyFailedTracks: Set<Int>): Decision {
         if (kind == ErrorKind.STORAGE) return Decision.StopStorageUnavailable
+        if (kind == ErrorKind.NETWORK) return Decision.PauseForNetwork
 
         val failedTracks = previouslyFailedTracks + failedTrackIndex
         return when {

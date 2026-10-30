@@ -15,6 +15,7 @@ import androidx.room.PrimaryKey
         Index(value = ["root_id"]),
         Index(value = ["root_id", "relative_path"], unique = true),
         Index(value = ["sidecar_id"], unique = true),
+        Index(value = ["librivox_id"], unique = true),
     ],
 )
 data class BookEntity(
@@ -43,4 +44,5 @@ data class BookEntity(
     @ColumnInfo(name = "author_override") val authorOverride: String? = null,
     @ColumnInfo(name = "narrator_override") val narratorOverride: String? = null,
     @ColumnInfo(name = "description_override") val descriptionOverride: String? = null,
+    @ColumnInfo(name = "librivox_id") val librivoxId: String? = null,
 )

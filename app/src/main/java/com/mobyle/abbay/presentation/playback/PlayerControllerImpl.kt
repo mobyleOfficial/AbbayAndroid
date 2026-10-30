@@ -65,6 +65,7 @@ class PlayerControllerImpl @Inject constructor(@ApplicationContext private val c
                         PlayerError.TrackSkipped(args.getString(PlaybackCommands.EXTRA_FILE_NAME).orEmpty())
                     PlaybackService.PROBLEM_BOOK_UNPLAYABLE -> PlayerError.BookUnplayable
                     PlaybackService.PROBLEM_NOISE_REDUCTION_TOO_SLOW -> PlayerError.NoiseReductionTooSlow
+                    PlaybackService.PROBLEM_NETWORK_UNAVAILABLE -> PlayerError.NetworkUnavailable
                     else -> PlayerError.StorageUnavailable
                 }
                 mutableErrors.tryEmit(error)

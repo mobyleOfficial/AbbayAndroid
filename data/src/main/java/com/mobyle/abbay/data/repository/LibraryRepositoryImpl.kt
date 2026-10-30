@@ -13,6 +13,9 @@ import com.mobyle.abbay.data.library.BookLocation
 import com.mobyle.abbay.data.library.BookMetadataEnricher
 import com.mobyle.abbay.data.library.BookProjection
 import com.mobyle.abbay.data.library.ScannedBookWriter
+import com.mobyle.abbay.data.librivox.LibriVoxDownloadScheduler
+import com.mobyle.abbay.data.librivox.LibriVoxDownloadTracker
+import com.mobyle.abbay.data.librivox.LibriVoxFiles
 import com.mobyle.abbay.data.scanner.FileKinds
 import com.mobyle.abbay.data.scanner.LibraryScanner
 import com.mobyle.abbay.data.scanner.ScannedBook
@@ -79,6 +82,9 @@ class LibraryRepositoryImpl @Inject constructor(
     private val metadataSource: TrackMetadataDataSource,
     private val sidecarSync: SidecarSync,
     private val effectDefaults: EffectDefaults,
+    private val libriVoxFiles: LibriVoxFiles,
+    private val libriVoxDownloads: LibriVoxDownloadScheduler,
+    private val libriVoxTracker: LibriVoxDownloadTracker,
 ) : LibraryRepository {
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
     private val scanMutex = Mutex()
@@ -189,14 +195,27 @@ class LibraryRepositoryImpl @Inject constructor(
     override suspend fun fullScan() = scan(force = true)
 
     override suspend fun hideBook(bookId: String) = withContext(ioDispatcher) {
-        bookId.toLongOrNull()?.let { dao.hideBook(it) } ?: Unit
+        val id = bookId.toLongOrNull() ?: return@withContext
+        val libriVoxBook = dao.getBook(id)?.takeIf { it.librivoxId != null }
+        if (libriVoxBook == null) {
+            dao.hideBook(id)
+            return@withContext
+        }
+        libriVoxDownloads.cancel(id)
+        libriVoxTracker.clear(id)
+        dao.deleteBooks(listOf(id))
+        libriVoxBook.librivoxId?.let(libriVoxFiles::delete)
+        contentSource.deleteCover(libriVoxBook.sidecarId)
     }
 
     override suspend fun clearLibrary() = withContext(ioDispatcher) {
         val roots = dao.getRoots()
+        libriVoxDownloads.cancelAll()
+        libriVoxTracker.clearAll()
         dao.getAllBooks().forEach { contentSource.deleteCover(it.sidecarId) }
         dao.getSingleFileBooks().forEach { contentSource.releasePersistablePermission(it.relativePath) }
         dao.clearLibrary()
+        libriVoxFiles.deleteAll()
         roots.forEach { contentSource.releasePersistablePermission(it.treeUri) }
     }
 
@@ -345,6 +364,7 @@ class LibraryRepositoryImpl @Inject constructor(
             try {
                 dao.getRoots().filter { it.isAccessible }.forEach { root -> scanRoot(root, force) }
                 checkSingleFileBooks()
+                libriVoxFiles.restoreMissingFiles()
                 deleteBooksMissingForTooLong()
             } finally {
                 val processedBooks = scanStatus.value.processedBooks

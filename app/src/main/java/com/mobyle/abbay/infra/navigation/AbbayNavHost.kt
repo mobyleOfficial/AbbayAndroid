@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -23,6 +24,10 @@ import com.mobyle.abbay.presentation.diagnostics.DiagnosticsScreen
 import com.mobyle.abbay.presentation.folders.FolderScreen
 import com.mobyle.abbay.presentation.folders.FolderViewModel
 import com.mobyle.abbay.presentation.history.HistoryScreen
+import com.mobyle.abbay.presentation.librivox.LibriVoxBookScreen
+import com.mobyle.abbay.presentation.librivox.LibriVoxBookViewModel
+import com.mobyle.abbay.presentation.librivox.LibriVoxSearchScreen
+import com.mobyle.abbay.presentation.librivox.LibriVoxSearchViewModel
 import com.mobyle.abbay.presentation.queue.QueueScreen
 import com.mobyle.abbay.presentation.search.SearchScreen
 import com.mobyle.abbay.presentation.settings.SettingsScreen
@@ -54,6 +59,7 @@ fun AbbayNavHost(
                 navigateTo = LibraryDestinations(
                     queue = { navController.navigate(NavigationItem.Queue.route) },
                     search = { navController.navigate(NavigationItem.Search.route) },
+                    librivox = { navController.navigate(NavigationItem.LibriVox.routeFor()) },
                     folders = { location -> navController.navigate(NavigationItem.Folders.routeFor(location)) },
                     statistics = { navController.navigate(NavigationItem.Statistics.route) },
                     bookStatistics = { bookId -> navController.navigate(NavigationItem.BookStatistics.routeFor(bookId)) },
@@ -64,6 +70,8 @@ fun AbbayNavHost(
         }
 
         libraryExtras(viewModel, navController)
+
+        libriVoxScreens(viewModel, navController)
 
         modal(NavigationItem.BookDetails.route) {
             BookDetailsScreen(
@@ -142,7 +150,11 @@ private fun NavGraphBuilder.libraryExtras(viewModel: BooksListViewModel, navCont
     }
 
     modal(NavigationItem.Search.route) {
-        SearchScreen(onPlay = { playFromLibrary(it.id) }, close = { navController.popBackStack() })
+        SearchScreen(
+            onPlay = { playFromLibrary(it.id) },
+            onSearchLibriVox = { query -> navController.navigate(NavigationItem.LibriVox.routeFor(query)) },
+            close = { navController.popBackStack() },
+        )
     }
 
     composable(
@@ -188,9 +200,26 @@ private fun NavGraphBuilder.libraryExtras(viewModel: BooksListViewModel, navCont
     }
 }
 
+private fun NavGraphBuilder.libriVoxScreens(viewModel: BooksListViewModel, navController: NavHostController) {
+    modal(NavigationItem.LibriVox.route, arguments = optionalStrings(LibriVoxSearchViewModel.QUERY_ARGUMENT)) {
+        LibriVoxSearchScreen(
+            onOpenBook = { book -> navController.navigate(NavigationItem.LibriVoxBookPage.routeFor(book)) },
+            close = { navController.popBackStack() },
+        )
+    }
+
+    modal(NavigationItem.LibriVoxBookPage.route, arguments = LIBRIVOX_BOOK_ARGUMENTS) {
+        LibriVoxBookScreen(onListen = { bookId ->
+            viewModel.requestPlay(bookId)
+            navController.popBackStack(NavigationItem.BookList.route, inclusive = false)
+        }, close = { navController.popBackStack() })
+    }
+}
+
 class LibraryDestinations(
     val queue: () -> Unit = {},
     val search: () -> Unit = {},
+    val librivox: () -> Unit = {},
     val folders: (FolderLocation) -> Unit = {},
     val statistics: () -> Unit = {},
     val bookStatistics: (bookId: String) -> Unit = {},
@@ -198,9 +227,10 @@ class LibraryDestinations(
     val text: (bookId: String) -> Unit = {},
 )
 
-private fun NavGraphBuilder.modal(route: String, screen: @Composable () -> Unit) {
+private fun NavGraphBuilder.modal(route: String, arguments: List<NamedNavArgument> = emptyList(), screen: @Composable () -> Unit) {
     composable(
         route = route,
+        arguments = arguments,
         enterTransition = {
             slideIntoContainer(
                 AnimatedContentTransitionScope.SlideDirection.Up,
@@ -217,5 +247,15 @@ private fun NavGraphBuilder.modal(route: String, screen: @Composable () -> Unit)
         screen()
     }
 }
+
+private fun optionalStrings(vararg names: String): List<NamedNavArgument> = names.map { name ->
+    navArgument(name) {
+        type = NavType.StringType
+        defaultValue = ""
+    }
+}
+
+private val LIBRIVOX_BOOK_ARGUMENTS = listOf(navArgument(LibriVoxBookViewModel.ID_ARGUMENT) { type = NavType.StringType }) +
+    optionalStrings(LibriVoxBookViewModel.TITLE_ARGUMENT, LibriVoxBookViewModel.AUTHORS_ARGUMENT, LibriVoxBookViewModel.CREATOR_ARGUMENT)
 
 private val FOLDER_ARGUMENTS = listOf(FolderViewModel.KIND_ARGUMENT, FolderViewModel.ROOT_ARGUMENT, FolderViewModel.PATH_ARGUMENT)

@@ -6,4 +6,10 @@
         <item quantity="one">%1$d de %2$d archivo · unos %3$s de ahorro</item>
         <item quantity="other">%1$d de %2$d archivos · unos %3$s de ahorro</item>
     </plurals>
+    <string name="librivox_channel">Descargas de LibriVox</string>
+    <string name="librivox_notification_title">Descargando %1$s</string>
+    <plurals name="librivox_notification_text">
+        <item quantity="one">%1$d de %2$d capítulo</item>
+        <item quantity="other">%1$d de %2$d capítulos</item>
+    </plurals>
 </resources>

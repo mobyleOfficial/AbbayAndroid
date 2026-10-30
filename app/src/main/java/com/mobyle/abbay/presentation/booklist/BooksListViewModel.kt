@@ -32,6 +32,7 @@ import com.usecase.ImportLegacyProgress
 import com.usecase.ObserveAppSettings
 import com.usecase.ObserveBooks
 import com.usecase.ObserveLibraryRoots
+import com.usecase.ObserveLibriVoxDownloads
 import com.usecase.ObserveScanStatus
 import com.usecase.OpenExternalFile
 import com.usecase.PrepareLegacyFolderMigration
@@ -92,6 +93,7 @@ class BooksListViewModel @Inject constructor(
     observeAppSettings: ObserveAppSettings,
     private val addToQueue: AddToQueue,
     private val getOpusEncoder: GetOpusEncoder,
+    observeLibriVoxDownloads: ObserveLibriVoxDownloads,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<BooksListUiState>(BooksListUiState.Loading)
     val uiState: StateFlow<BooksListUiState> get() = _uiState
@@ -129,6 +131,9 @@ class BooksListViewModel @Inject constructor(
     private val _noiseReductionTurnedOff = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val noiseReductionTurnedOff: SharedFlow<Unit> = _noiseReductionTurnedOff.asSharedFlow()
 
+    private val _networkUnavailable = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val networkUnavailable: SharedFlow<Unit> = _networkUnavailable.asSharedFlow()
+
     private val _bookmarkAdded = MutableSharedFlow<Bookmark>(extraBufferCapacity = 1)
     val bookmarkAdded: SharedFlow<Bookmark> get() = _bookmarkAdded.asSharedFlow()
 
@@ -155,6 +160,10 @@ class BooksListViewModel @Inject constructor(
 
     private val scanStatus: StateFlow<ScanStatus> = observeScanStatus()
         .stateIn(viewModelScope, SharingStarted.Eagerly, ScanStatus())
+
+    val downloadProgress: StateFlow<Map<String, Float>> = observeLibriVoxDownloads()
+        .map { downloads -> downloads.filterValues { !it.isComplete }.mapValues { it.value.fraction } }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
     val hasSelectedFolder: StateFlow<Boolean> = roots.map { it.isNotEmpty() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
@@ -259,6 +268,7 @@ class BooksListViewModel @Inject constructor(
             when (error) {
                 is PlayerError.TrackSkipped -> _skippedTrackMessages.tryEmit(error.fileName)
                 PlayerError.NoiseReductionTooSlow -> _noiseReductionTurnedOff.tryEmit(Unit)
+                PlayerError.NetworkUnavailable -> _networkUnavailable.tryEmit(Unit)
                 PlayerError.BookUnplayable, PlayerError.StorageUnavailable -> {
                     selectedBook.value?.let { book ->
                         playerController.stop()

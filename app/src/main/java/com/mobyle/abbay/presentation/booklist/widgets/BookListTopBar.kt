@@ -4,6 +4,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Search
@@ -54,7 +55,11 @@ fun BookListTopBar(
                     Icon(Icons.Rounded.Search, stringResource(R.string.search_title), tint = AbbayColors.content)
                 }
 
-                AddContentButton(openFolderSelector = openFolderSelector, openFileSelector = openFileSelector)
+                AddContentButton(
+                    openFolderSelector = openFolderSelector,
+                    openFileSelector = openFileSelector,
+                    openLibriVox = more.onLibriVox
+                )
 
                 IconButton(onClick = { showMoreMenu = true }) {
                     Icon(Icons.Rounded.MoreVert, stringResource(R.string.library_more), tint = AbbayColors.content)
@@ -81,7 +86,7 @@ fun BookListTopBar(
 }
 
 @Composable
-private fun AddContentButton(openFolderSelector: () -> Unit, openFileSelector: () -> Unit) {
+private fun AddContentButton(openFolderSelector: () -> Unit, openFileSelector: () -> Unit, openLibriVox: () -> Unit) {
     var showAddMenu by remember { mutableStateOf(false) }
 
     IconButton(onClick = { showAddMenu = true }) {
@@ -109,11 +114,21 @@ private fun AddContentButton(openFolderSelector: () -> Unit, openFileSelector: (
                 openFileSelector()
             }
         )
+
+        AbbayMenuItem(
+            text = stringResource(R.string.librivox_add_menu),
+            leadingIcon = Icons.Outlined.Public,
+            onClick = {
+                showAddMenu = false
+                openLibriVox()
+            }
+        )
     }
 }
 
 class LibraryMenu(
     val onSearch: () -> Unit = {},
+    val onLibriVox: () -> Unit = {},
     val onQueue: () -> Unit = {},
     val onFolders: () -> Unit = {},
     val onStatistics: () -> Unit = {},

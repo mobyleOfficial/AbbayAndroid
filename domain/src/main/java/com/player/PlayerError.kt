@@ -8,4 +8,6 @@ sealed interface PlayerError {
     data object StorageUnavailable : PlayerError
 
     data object NoiseReductionTooSlow : PlayerError
+
+    data object NetworkUnavailable : PlayerError
 }

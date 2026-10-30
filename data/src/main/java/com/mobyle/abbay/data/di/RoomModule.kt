@@ -8,6 +8,7 @@ import com.mobyle.abbay.data.database.Migration2To3
 import com.mobyle.abbay.data.database.Migration3To4
 import com.mobyle.abbay.data.database.Migration4To5
 import com.mobyle.abbay.data.database.Migration5To6
+import com.mobyle.abbay.data.database.Migration6To7
 import com.mobyle.abbay.data.database.dao.AudioEffectsDao
 import com.mobyle.abbay.data.database.dao.ExtrasDao
 import com.mobyle.abbay.data.database.dao.LegacyDao
@@ -27,7 +28,7 @@ class RoomModule {
     @Singleton
     fun providesAppDatabase(@ApplicationContext context: Context): AbbayDatabase =
         Room.databaseBuilder(context, AbbayDatabase::class.java, AbbayDatabase.DATABASE_NAME)
-            .addMigrations(Migration1To2, Migration2To3, Migration3To4, Migration4To5, Migration5To6)
+            .addMigrations(Migration1To2, Migration2To3, Migration3To4, Migration4To5, Migration5To6, Migration6To7)
             .build()
 
     @Provides

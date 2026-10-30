@@ -6,4 +6,10 @@
         <item quantity="one">%1$d of %2$d file · about %3$s to save</item>
         <item quantity="other">%1$d of %2$d files · about %3$s to save</item>
     </plurals>
+    <string name="librivox_channel">LibriVox downloads</string>
+    <string name="librivox_notification_title">Downloading %1$s</string>
+    <plurals name="librivox_notification_text">
+        <item quantity="one">%1$d of %2$d chapter</item>
+        <item quantity="other">%1$d of %2$d chapters</item>
+    </plurals>
 </resources>

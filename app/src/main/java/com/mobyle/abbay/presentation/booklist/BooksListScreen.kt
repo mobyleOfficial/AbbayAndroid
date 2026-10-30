@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.material.rememberBottomSheetState
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,6 +53,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -96,6 +98,7 @@ import com.mobyle.abbay.presentation.booklist.widgets.LegacyFolderMigrationConte
 import com.mobyle.abbay.presentation.booklist.widgets.LibraryControls
 import com.mobyle.abbay.presentation.booklist.widgets.LibraryMenu
 import com.mobyle.abbay.presentation.booklist.widgets.LibraryTabEmptyState
+import com.mobyle.abbay.presentation.booklist.widgets.LocalDownloadProgress
 import com.mobyle.abbay.presentation.booklist.widgets.MiniPlayer
 import com.mobyle.abbay.presentation.booklist.widgets.ReconnectBanner
 import com.mobyle.abbay.presentation.booklist.widgets.UpNextBanner
@@ -158,6 +161,7 @@ fun BooksListScreen(
     val showErrorDialog = remember { mutableStateOf(false) }
     val hasSelectedFolder by viewModel.hasSelectedFolder.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val downloadProgress by viewModel.downloadProgress.collectAsState()
     val hasBookEnded by viewModel.showBookEndedDialog.collectAsState()
     val isScreenLocked by viewModel.isScreenLocked.collectAsState()
     val shouldOpenPlayerInStartup by viewModel.shouldOpenPlayerInStartup.collectAsState()
@@ -261,6 +265,11 @@ fun BooksListScreen(
     val noiseReductionOffMessage = stringResource(R.string.effects_noise_reduction_disabled)
     LaunchedEffect(Unit) {
         viewModel.noiseReductionTurnedOff.collect { bottomSheetState.snackbarHostState.showSnackbar(noiseReductionOffMessage) }
+    }
+
+    val networkUnavailableMessage = stringResource(R.string.librivox_playback_offline)
+    LaunchedEffect(Unit) {
+        viewModel.networkUnavailable.collect { bottomSheetState.snackbarHostState.showSnackbar(networkUnavailableMessage) }
     }
 
     val skippedTrackMessage = stringResource(R.string.playback_track_skipped)
@@ -469,6 +478,7 @@ fun BooksListScreen(
                                 isContentEnabled = booksListState is BookListSuccess || booksListState is NoBookSelected,
                                 more = LibraryMenu(
                                     onSearch = navigateTo.search,
+                                    onLibriVox = navigateTo.librivox,
                                     onQueue = navigateTo.queue,
                                     onFolders = { navigateTo.folders(FolderLocation.TOP) },
                                     onStatistics = navigateTo.statistics,
@@ -541,6 +551,7 @@ fun BooksListScreen(
                                         isRefreshing = isRefreshing,
                                         onRefresh = { if (hasSelectedFolder) viewModel.onRefreshClicked() },
                                         modifier = Modifier.weight(1f),
+                                        downloadProgress = downloadProgress,
                                     ) {
                                         val progressLabelOf: (Book) -> String = { book ->
                                             progressLabel(book, selectedBook, isPlaying, currentProgress)
@@ -674,7 +685,8 @@ fun BooksListScreen(
 
                                 is NoBookSelected -> EmptyLibrary(
                                     onAddFile = { openFileSelector.launch(fileFilterList) },
-                                    onAddFolder = { openFolderSelector.launch(null) }
+                                    onAddFolder = { openFolderSelector.launch(null) },
+                                    onExploreLibriVox = navigateTo.librivox,
                                 )
 
                                 is Loading -> Box(
@@ -785,7 +797,7 @@ private fun documentUriOfTree(treeUri: String): Uri? = runCatching {
 }.getOrNull()
 
 @Composable
-private fun EmptyLibrary(onAddFile: () -> Unit, onAddFolder: () -> Unit) {
+private fun EmptyLibrary(onAddFile: () -> Unit, onAddFolder: () -> Unit, onExploreLibriVox: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -826,6 +838,13 @@ private fun EmptyLibrary(onAddFile: () -> Unit, onAddFolder: () -> Unit) {
             content = AbbayColors.content,
             onClick = onAddFolder,
         )
+        AbbayTextButton(onClick = onExploreLibriVox, modifier = Modifier.padding(top = 4.dp).heightIn(min = 48.dp)) {
+            Icon(Icons.Outlined.Public, contentDescription = null, modifier = Modifier.size(18.dp))
+            androidx.compose.material3.Text(
+                stringResource(R.string.librivox_empty_library_button),
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
     }
 }
 
@@ -852,6 +871,7 @@ private fun LibraryPullToRefresh(
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
+    downloadProgress: Map<String, Float> = emptyMap(),
     content: @Composable BoxScope.() -> Unit,
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
@@ -868,7 +888,7 @@ private fun LibraryPullToRefresh(
                 color = MaterialTheme.colorScheme.tertiary,
             )
         },
-        content = content,
+        content = { CompositionLocalProvider(LocalDownloadProgress provides downloadProgress) { content() } },
     )
 }
 

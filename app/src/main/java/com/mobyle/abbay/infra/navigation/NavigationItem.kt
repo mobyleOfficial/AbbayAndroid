@@ -3,6 +3,9 @@ package com.mobyle.abbay.infra.navigation
 import android.net.Uri
 import com.library.FolderLocation
 import com.mobyle.abbay.presentation.folders.FolderViewModel
+import com.mobyle.abbay.presentation.librivox.LibriVoxBookViewModel
+import com.mobyle.abbay.presentation.librivox.LibriVoxSearchViewModel
+import com.model.LibriVoxBook
 
 enum class Screen {
     BOOKS_LIST,
@@ -20,6 +23,8 @@ enum class Screen {
     DIAGNOSTICS,
     LICENSES,
     CONVERTER,
+    LIBRIVOX,
+    LIBRIVOX_BOOK,
 }
 
 sealed class NavigationItem(val route: String) {
@@ -41,6 +46,22 @@ sealed class NavigationItem(val route: String) {
         fun routeFor(bookId: String?) = "${Screen.CONVERTER.name}?bookId=${bookId.orEmpty()}"
     }
     data object Search : NavigationItem(Screen.SEARCH.name)
+    data object LibriVox : NavigationItem(
+        "${Screen.LIBRIVOX.name}?${LibriVoxSearchViewModel.QUERY_ARGUMENT}={${LibriVoxSearchViewModel.QUERY_ARGUMENT}}",
+    ) {
+        fun routeFor(query: String = "") = "${Screen.LIBRIVOX.name}?${LibriVoxSearchViewModel.QUERY_ARGUMENT}=${Uri.encode(query)}"
+    }
+    data object LibriVoxBookPage : NavigationItem(
+        "${Screen.LIBRIVOX_BOOK.name}/{${LibriVoxBookViewModel.ID_ARGUMENT}}" +
+            "?${LibriVoxBookViewModel.TITLE_ARGUMENT}={${LibriVoxBookViewModel.TITLE_ARGUMENT}}" +
+            "&${LibriVoxBookViewModel.AUTHORS_ARGUMENT}={${LibriVoxBookViewModel.AUTHORS_ARGUMENT}}" +
+            "&${LibriVoxBookViewModel.CREATOR_ARGUMENT}={${LibriVoxBookViewModel.CREATOR_ARGUMENT}}",
+    ) {
+        fun routeFor(book: LibriVoxBook) = "${Screen.LIBRIVOX_BOOK.name}/${Uri.encode(book.id)}" +
+            "?${LibriVoxBookViewModel.TITLE_ARGUMENT}=${Uri.encode(book.title)}" +
+            "&${LibriVoxBookViewModel.AUTHORS_ARGUMENT}=${Uri.encode(book.authors)}" +
+            "&${LibriVoxBookViewModel.CREATOR_ARGUMENT}=${Uri.encode(book.creator.orEmpty())}"
+    }
     data object Folders : NavigationItem(
         "${Screen.FOLDERS.name}?${FolderViewModel.KIND_ARGUMENT}={${FolderViewModel.KIND_ARGUMENT}}" +
             "&${FolderViewModel.ROOT_ARGUMENT}={${FolderViewModel.ROOT_ARGUMENT}}" +

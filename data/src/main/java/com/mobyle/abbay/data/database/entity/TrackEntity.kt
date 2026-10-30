@@ -27,4 +27,5 @@ data class TrackEntity(
     @ColumnInfo(name = "track_number_tag") val trackNumberTag: Int?,
     val unplayable: Boolean,
     @ColumnInfo(name = "metadata_read", defaultValue = "0") val metadataRead: Boolean = false,
+    @ColumnInfo(name = "remote_url") val remoteUrl: String? = null,
 )

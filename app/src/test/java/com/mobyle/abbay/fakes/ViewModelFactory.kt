@@ -20,6 +20,7 @@ import com.usecase.ImportLegacyProgress
 import com.usecase.ObserveAppSettings
 import com.usecase.ObserveBooks
 import com.usecase.ObserveLibraryRoots
+import com.usecase.ObserveLibriVoxDownloads
 import com.usecase.ObserveScanStatus
 import com.usecase.OpenExternalFile
 import com.usecase.PrepareLegacyFolderMigration
@@ -46,6 +47,7 @@ class ViewModelFactory(
     val statisticsRepository: FakeStatisticsRepository = FakeStatisticsRepository(),
     val converterRepository: FakeConverterRepository = FakeConverterRepository(),
     val languageRepository: FakeLanguageRepository = FakeLanguageRepository(),
+    val libriVoxRepository: FakeLibriVoxRepository = FakeLibriVoxRepository(),
 ) {
     fun booksListViewModel() = BooksListViewModel(
         playerController = playerController,
@@ -73,6 +75,7 @@ class ViewModelFactory(
         observeAppSettings = ObserveAppSettings(settingsRepository),
         addToQueue = AddToQueue(queueRepository),
         getOpusEncoder = GetOpusEncoder(converterRepository),
+        observeLibriVoxDownloads = ObserveLibriVoxDownloads(libriVoxRepository),
     )
 
     fun settingsViewModel() = SettingsViewModel(

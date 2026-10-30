@@ -12,6 +12,7 @@ import com.mobyle.abbay.data.effects.PlaybackOptionsRepositoryImpl
 import com.mobyle.abbay.data.extras.CharacterRepositoryImpl
 import com.mobyle.abbay.data.extras.QueueRepositoryImpl
 import com.mobyle.abbay.data.extras.StatisticsRepositoryImpl
+import com.mobyle.abbay.data.librivox.LibriVoxRepositoryImpl
 import com.mobyle.abbay.data.repository.LegacyMigrationRepositoryImpl
 import com.mobyle.abbay.data.repository.LibraryRepositoryImpl
 import com.mobyle.abbay.data.repository.ListeningRepositoryImpl
@@ -26,6 +27,7 @@ import com.repository.CharacterRepository
 import com.repository.ConverterRepository
 import com.repository.LegacyMigrationRepository
 import com.repository.LibraryRepository
+import com.repository.LibriVoxRepository
 import com.repository.ListeningRepository
 import com.repository.PlaybackOptionsRepository
 import com.repository.QueueRepository
@@ -46,6 +48,9 @@ import javax.inject.Singleton
 abstract class DataModule {
     @Binds
     abstract fun bindLibraryRepository(implementation: LibraryRepositoryImpl): LibraryRepository
+
+    @Binds
+    abstract fun bindLibriVoxRepository(implementation: LibriVoxRepositoryImpl): LibriVoxRepository
 
     @Binds
     abstract fun bindListeningRepository(implementation: ListeningRepositoryImpl): ListeningRepository

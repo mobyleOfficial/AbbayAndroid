@@ -41,8 +41,18 @@ interface LibraryDao {
     @Query("SELECT * FROM book WHERE root_id = :rootId")
     suspend fun getBooksOfRoot(rootId: Long): List<BookEntity>
 
-    @Query("SELECT * FROM book WHERE root_id IS NULL")
+    @Query("SELECT * FROM book WHERE root_id IS NULL AND librivox_id IS NULL")
     suspend fun getSingleFileBooks(): List<BookEntity>
+
+    @Query("SELECT * FROM book WHERE librivox_id IS NOT NULL")
+    suspend fun getLibriVoxBooks(): List<BookEntity>
+
+    @Transaction
+    @Query("SELECT * FROM book WHERE librivox_id IS NOT NULL AND hidden = 0")
+    fun observeLibriVoxBooks(): Flow<List<BookWithDetails>>
+
+    @Query("SELECT * FROM book WHERE librivox_id = :librivoxId")
+    suspend fun getBookByLibriVoxId(librivoxId: String): BookEntity?
 
     @Transaction
     @Query("SELECT * FROM book")
@@ -106,6 +116,16 @@ interface LibraryDao {
 
     @Insert
     suspend fun insertTracks(tracks: List<TrackEntity>)
+
+    @Transaction
+    suspend fun insertBookWithTracks(book: BookEntity, tracks: List<TrackEntity>): Long {
+        val bookId = insertBook(book)
+        insertTracks(tracks.map { it.copy(bookId = bookId) })
+        return bookId
+    }
+
+    @Query("UPDATE track SET document_uri = :documentUri WHERE id = :trackId")
+    suspend fun updateTrackUri(trackId: Long, documentUri: String)
 
     @Transaction
     suspend fun replaceTracks(bookId: Long, tracks: List<TrackEntity>) {
