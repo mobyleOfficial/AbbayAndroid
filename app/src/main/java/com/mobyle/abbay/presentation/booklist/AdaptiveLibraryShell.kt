@@ -3,12 +3,13 @@ package com.mobyle.abbay.presentation.booklist
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -45,9 +46,9 @@ import com.model.Book
 
 /**
  * The app's screens ([content]) as browsing, with the player beside them when the room the app is given fits both
- * panes (`AdaptiveLayout`). While the chapters are open the player moves to the leading side, taking the larger
- * share, and the chapters take browsing's place at the pane width. Browsing keeps its slot in every state, so it is
- * never rebuilt: under the chapters it is only hidden, and closing them returns to the same screen and scroll.
+ * panes (`AdaptiveLayout`). The chapters open over browsing, beside the player, which stays where it is. Browsing
+ * keeps its slot in every state, so it is never rebuilt: under the chapters it is only hidden, and closing them
+ * returns to the same screen and scroll.
  *
  * In one pane this adds nothing: the library screen owns the player as its bottom sheet. Split, the player lives
  * here, so Search, LibriVox, the queue or Settings open beside it, and while it is closed a mini player sits under
@@ -78,9 +79,6 @@ fun AdaptiveLibraryShell(dependencies: LibraryPlayerDependencies, content: @Comp
     }
 }
 
-/** What the panes show; the player slides in or out only between [CLOSED] and [PLAYER]. */
-private enum class PaneState { CLOSED, PLAYER, CHAPTERS }
-
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun Panes(host: LibraryPlayerHost, book: Book?, dependencies: LibraryPlayerDependencies, browsing: @Composable () -> Unit) {
@@ -88,7 +86,10 @@ private fun Panes(host: LibraryPlayerHost, book: Book?, dependencies: LibraryPla
     val paneWidth = (host.paneLayout as? PaneLayout.Split)?.playerWidth ?: 0.dp
     val showsPlayer = book != null && presentation.isOpen
     val showsChapters = showsPlayer && presentation.isShowingChapters && book?.chapters.orEmpty().isNotEmpty()
-    val reveal = playerPaneReveal(paneStateOf(showsPlayer = showsPlayer, showsChapters = showsChapters))
+    val reveal = playerPaneReveal(showsPlayer)
+    val chapters = updateTransition(showsChapters, label = "chapters")
+    // Browsing hides only once the chapters cover it, and shows again as soon as they start to leave.
+    val isBrowsingCovered = chapters.currentState && chapters.targetState
     // Read while composing only when the pane shows or hides, and when browsing gives it room: the frames of the
     // slide only move pixels, since re-measuring the screens beside it on every frame drops frames.
     val isPaneShown by remember(reveal) { derivedStateOf { reveal.value > 0f } }
@@ -100,18 +101,19 @@ private fun Panes(host: LibraryPlayerHost, book: Book?, dependencies: LibraryPla
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                if (showsChapters) PlayerPane(book, paneSheetState, presentation, dependencies, Modifier.weight(1f))
-                Box(modifier = (if (showsChapters) Modifier.width(paneWidth) else Modifier.weight(1f)).fillMaxHeight()) {
-                    Box(modifier = Modifier.fillMaxSize().hiddenUnder(showsChapters)) { browsing() }
-                    if (showsChapters) {
-                        ChaptersPane(
-                            chapters = book.chapters,
-                            position = PlayerPosition.of(book),
-                            bookTimeLeft = timeLeftLabel(book.duration - book.bookPositionMs, book.speed),
-                            onSelect = { chapter -> dependencies.viewModel.seekToBookPosition(chapter.startMs) },
-                            onClose = { presentation.setChapters(open = false) },
-                            modifier = Modifier.fillMaxSize(),
-                        )
+                Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    Box(modifier = Modifier.fillMaxSize().hiddenUnder(isBrowsingCovered)) { browsing() }
+                    chapters.AnimatedVisibility(visible = { it }, enter = chaptersEnter, exit = chaptersExit) {
+                        book?.let {
+                            ChaptersPane(
+                                chapters = it.chapters,
+                                position = PlayerPosition.of(it),
+                                bookTimeLeft = timeLeftLabel(it.duration - it.bookPositionMs, it.speed),
+                                onSelect = { chapter -> dependencies.viewModel.seekToBookPosition(chapter.startMs) },
+                                onClose = { presentation.setChapters(open = false) },
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
                     }
                 }
                 // Browsing narrows once the pane has slid over it, and widens again as soon as it starts to leave.
@@ -128,7 +130,7 @@ private fun Panes(host: LibraryPlayerHost, book: Book?, dependencies: LibraryPla
         }
         // Full height, over the mini player's row, so its size never changes as the mini player leaves or returns.
         // Kept composed off the trailing edge while closed, so opening it only moves pixels; silent while hidden.
-        if (book != null && !showsChapters) {
+        if (book != null) {
             PlayerPane(
                 book = book,
                 sheetState = paneSheetState,
@@ -144,22 +146,13 @@ private fun Panes(host: LibraryPlayerHost, book: Book?, dependencies: LibraryPla
     }
 }
 
-private fun paneStateOf(showsPlayer: Boolean, showsChapters: Boolean) = when {
-    showsChapters -> PaneState.CHAPTERS
-    showsPlayer -> PaneState.PLAYER
-    else -> PaneState.CLOSED
-}
-
-/** How much of the trailing player pane is shown. The chapters swap the player's side, so that change is instant. */
+/** How much of the trailing player pane is shown. The chapters open beside it, so they never move it. */
 @Composable
-private fun playerPaneReveal(state: PaneState): State<Float> =
-    updateTransition(state, label = "panes").animateFloat(
-        transitionSpec = {
-            val swapsSides = initialState == PaneState.CHAPTERS || targetState == PaneState.CHAPTERS
-            if (swapsSides) snap() else tween(PANE_SLIDE_MS, easing = FastOutSlowInEasing)
-        },
+private fun playerPaneReveal(showsPlayer: Boolean): State<Float> =
+    updateTransition(showsPlayer, label = "panes").animateFloat(
+        transitionSpec = { tween(PANE_SLIDE_MS, easing = FastOutSlowInEasing) },
         label = "playerPane",
-    ) { if (it == PaneState.PLAYER) 1f else 0f }
+    ) { if (it) 1f else 0f }
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -179,5 +172,10 @@ private const val PANE_SLIDE_MS = 320
 /** The mini player drops away as the pane slides in, and rises as it leaves; its size never animates (see `Panes`). */
 private val miniPlayerEnter = slideInVertically(tween(PANE_SLIDE_MS)) { it } + fadeIn(tween(PANE_SLIDE_MS))
 private val miniPlayerExit = slideOutVertically(tween(PANE_SLIDE_MS)) { it } + fadeOut(tween(PANE_SLIDE_MS))
+
+/** The chapters come out of the player's side over browsing, a short way, and go back the same way. */
+private const val CHAPTERS_MS = 220
+private val chaptersEnter = slideInHorizontally(tween(CHAPTERS_MS, easing = FastOutSlowInEasing)) { it / 8 } + fadeIn(tween(CHAPTERS_MS))
+private val chaptersExit = slideOutHorizontally(tween(CHAPTERS_MS, easing = FastOutSlowInEasing)) { it / 8 } + fadeOut(tween(CHAPTERS_MS))
 
 val MINI_PLAYER_HEIGHT = 72.dp
