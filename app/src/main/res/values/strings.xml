@@ -2,7 +2,6 @@
     <string name="app_name">Abbay</string>
     <string name="book_list_top_bar_title">Your Audiobooks</string>
     <string name="book_list_top_bar_folder_button_description">Add folder</string>
-    <string name="book_list_top_bar_file_button_description">Add file</string>
     <string name="no_book_selected_primary_button_title">Add a File</string>
     <string name="no_book_selected_secondary_button_title">Add a Folder</string>
     <string name="no_book_selected_or">or</string>
@@ -26,7 +25,6 @@
     <string name="change_folder_dialog_title">Change Books Folder</string>
     <string name="change_folder_dialog_body">Are you sure you want to change the books folder? This will replace all current books with the ones from the new folder.</string>
     
-    <string name="refresh_content_description">Refresh</string>
     <string name="add_content_description">Add</string>
     <string name="add_folder">Add Folder</string>
     <string name="add_file">Add File</string>
