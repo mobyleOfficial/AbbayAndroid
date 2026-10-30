@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.widgets.AbbayAlertDialog
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
+import com.mobyle.abbay.presentation.common.widgets.abbayTextFieldColors
 import com.model.Bookmark
 
 @Composable
@@ -28,6 +29,7 @@ fun BookmarkNoteDialog(initialNote: String, onSave: (String) -> Unit, onDismiss:
                 onValueChange = { note = it.take(Bookmark.MAX_NOTE_LENGTH) },
                 label = { Text(stringResource(R.string.bookmark_note)) },
                 supportingText = { Text(stringResource(R.string.bookmark_note_counter, note.length, Bookmark.MAX_NOTE_LENGTH)) },
+                colors = abbayTextFieldColors(),
                 modifier = Modifier.heightIn(min = 120.dp),
             )
         },
