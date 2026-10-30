@@ -107,7 +107,6 @@ fun MyApplicationTheme(
         SideEffect {
             val window = (view.context as Activity).window
             // Older Android versions color the bars themselves; on 15+ the app draws behind them (MainActivity).
-            // Transparent: MainActivity paints the strip behind it, in the app bars' color or the open player's.
             window.statusBarColor = Color.Transparent.toArgb()
             window.navigationBarColor = colorScheme.primary.toArgb()
             // No system scrim over the navigation bar: the app's own background shows through, like the status bar.

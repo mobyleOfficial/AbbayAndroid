@@ -12,11 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 
-/**
- * The colour of the strip behind the status bar (MainActivity): the app bars' `primary`, unless something drawn right
- * under it, such as the open player, gives its own top colour. The colour is read while drawing, so one that follows
- * a drag repaints the strip without recomposing anything.
- */
 class StatusBarColor {
     internal var override by mutableStateOf<(() -> Color)?>(null)
 }
@@ -29,7 +24,6 @@ fun Modifier.statusBarBackground(statusBarColor: StatusBarColor): Modifier {
     return drawBehind { drawRect(statusBarColor.override?.invoke() ?: appBarColor) }
 }
 
-/** While composed, [color] paints the status bar; null leaves it to the app bars. */
 @Composable
 fun OverrideStatusBarColor(color: (() -> Color)?) {
     val statusBarColor = LocalStatusBarColor.current

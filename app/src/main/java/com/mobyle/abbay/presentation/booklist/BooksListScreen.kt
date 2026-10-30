@@ -721,10 +721,8 @@ fun BooksListScreen(
 private const val LIST_DETAIL_MIN_WIDTH_DP = 840
 private val PLAYER_PANE_WIDTH = 420.dp
 
-/** About three covers across a phone, as AbbayiOS's library grid. */
 private val GRID_CELL_MIN_WIDTH = 110.dp
 
-/** The open player reaches the status bar: it takes the player's flat top, the cover's tint, as the player opens. */
 @Composable
 private fun PlayerStatusBarColor(thumbnail: String?, playerSheetState: BottomSheetScaffoldState, isShown: Boolean) {
     val appBarColor = MaterialTheme.colorScheme.primary
@@ -791,7 +789,6 @@ private fun documentUriOfTree(treeUri: String): Uri? = runCatching {
     DocumentsContract.buildDocumentUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
 }.getOrNull()
 
-/** The empty library, as AbbayiOS's: a glyph, the title and hint, then the two ways in as capsules. */
 @Composable
 private fun EmptyLibrary(onAddFile: () -> Unit, onAddFolder: () -> Unit) {
     Column(

@@ -107,10 +107,6 @@ class MainActivity : ComponentActivity() {
             }
 
             MyApplicationTheme(themeMode = appSettings.value.themeMode, dynamicColor = appSettings.value.dynamicColor) {
-                // The app draws behind the system bars: Android 15+ ignores window.statusBarColor, and the window
-                // background behind the bars follows the system's dark mode, not the app's theme. The status bar
-                // follows the app bars (or the open player), the navigation bar the app's background; only the
-                // content is inset.
                 val statusBarColor = remember { StatusBarColor() }
                 CompositionLocalProvider(LocalStatusBarColor provides statusBarColor) {
                     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.primary) {
@@ -125,7 +121,6 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .weight(1f)
                                     .fillMaxWidth()
-                                    // The status bar space is above; app bars must not add it again.
                                     .consumeWindowInsets(WindowInsets.statusBars)
                                     .windowInsetsPadding(
                                         WindowInsets.systemBars.only(
