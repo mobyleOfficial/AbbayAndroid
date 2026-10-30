@@ -17,6 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layoutId
@@ -75,14 +76,13 @@ fun MiniPlayer(
     val isExpanded = fraction == 1f
     val position = PlayerPosition.of(book)
     val playerIcon = playingStateOf(playerState, isAwaitingPlayback)
-    val tint = rememberCoverTint(book.thumbnail)
     val chapterToggle = chaptersToggleOf(chapters, rememberChaptersToggle(isExpanded), isSheet = onClose == null, isExpanded)
     PlayerEffects(book, playerState, actions)
 
     MotionLayout(
         motionScene = rememberPlayerMotionScene(),
         progress = fraction,
-        modifier = modifier.fillMaxSize().coverTintBackground(tint, gradientStrength = fraction),
+        modifier = modifier.fillMaxSize().coverTintBackground(rememberCoverTint(book.thumbnail), gradientStrength = fraction),
     ) {
         MiniPlayerRow(
             book = book,
@@ -115,6 +115,7 @@ fun MiniPlayer(
             skips = skips,
             actions = actions,
             gesturesEnabled = isExpanded && !isScreenLocked,
+            isPane = onClose != null,
             modifier = Modifier.padding(8.dp).layoutId(LayoutId.THUMBNAIL.id),
         )
 
@@ -205,6 +206,7 @@ private fun Cover(
     actions: PlayerActions,
     gesturesEnabled: Boolean,
     modifier: Modifier = Modifier,
+    isPane: Boolean = false,
 ) {
     Box(modifier) {
         PlayerCover(
@@ -217,6 +219,8 @@ private fun Cover(
             onDoubleTapRight = { actions.onSeekBy(skips.smallForwardSeconds * MILLIS_PER_SECOND) },
             onSwipeToPrevious = actions.onPreviousChapter,
             onSwipeToNext = actions.onNextChapter,
+            // A pane is narrow and can be tall (a tablet in portrait): the cover stays by its title, the spare height above.
+            alignment = if (isPane) Alignment.BottomCenter else Alignment.Center,
         )
     }
 }
