@@ -18,24 +18,25 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.Switch
 import androidx.compose.material.SwitchDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -44,13 +45,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import coil.size.Precision
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.booklist.widgets.player.chapterTitle
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.mobyle.abbay.presentation.common.widgets.AbbayScreen
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
+import com.mobyle.abbay.presentation.common.widgets.BookThumbnail
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.BookDetails
 import com.model.BookOverrides
@@ -62,12 +62,16 @@ fun BookDetailsScreen(viewModel: BookDetailsViewModel = hiltViewModel(), onConve
     val details by viewModel.details.collectAsState()
     val candidates by viewModel.coverCandidates.collectAsState()
 
+    // Back, the close button or any other way out applies the edits, when there are any.
+    DisposableEffect(viewModel) { onDispose { viewModel.saveChanges() } }
+
     AbbayScreen(title = stringResource(R.string.details_title), onClose = close) {
         details?.let { bookDetails ->
             BookDetailsContent(
                 details = bookDetails,
+                draft = viewModel.draft,
                 coverCandidates = candidates,
-                onSave = viewModel::saveOverrides,
+                onEdit = viewModel::editDraft,
                 onSortByTrackNumber = viewModel::changeSortByTrackNumber,
                 onOpenCoverChooser = viewModel::loadCoverCandidates,
                 onChooseCover = viewModel::chooseCover,
@@ -81,8 +85,9 @@ fun BookDetailsScreen(viewModel: BookDetailsViewModel = hiltViewModel(), onConve
 @Composable
 fun BookDetailsContent(
     details: BookDetails,
+    draft: BookOverrides?,
     coverCandidates: List<CoverCandidate>,
-    onSave: (BookOverrides) -> Unit,
+    onEdit: (BookOverrides) -> Unit,
     onSortByTrackNumber: (Boolean) -> Unit,
     onOpenCoverChooser: () -> Unit,
     onChooseCover: (String) -> Unit,
@@ -98,7 +103,7 @@ fun BookDetailsContent(
                 showCoverChooser = true
             }
         }
-        item { MetadataEditor(details, onSave) }
+        draft?.let { editedOverrides -> item { MetadataEditor(editedOverrides, onEdit) } }
         // Only books with MP3 files and a converter-capable device.
         onConvert?.let { convert -> item { AbbayTextButton(onClick = convert) { Text(stringResource(R.string.details_convert)) } } }
         fileSections(details, onSortByTrackNumber)
@@ -124,39 +129,26 @@ fun BookDetailsContent(
 @Composable
 private fun DetailsCover(coverUri: String?, onClick: () -> Unit) {
     val coverLabel = stringResource(R.string.details_cover)
-    AsyncImage(
-        model = ImageRequest.Builder(LocalContext.current).data(coverUri)
-            // Exact size: otherwise Coil's memory cache may hand back the small decode of the list thumbnail.
-            .precision(Precision.EXACT)
-            .fallback(R.drawable.file_music).error(R.drawable.file_music).build(),
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
-        // The fallback icon follows the theme (it was white on the light theme).
-        colorFilter = if (coverUri == null) ColorFilter.tint(AbbayColors.content) else null,
+    BookThumbnail(
+        coverUri,
         modifier = Modifier
             .padding(vertical = 16.dp)
             .size(COVER_SIZE.dp)
-            .clip(RoundedCornerShape(12.dp))
             .semantics { contentDescription = coverLabel }
             .clickable(onClick = onClick),
+        shadow = true,
     )
 }
 
-/** Title, author, narrator and description; saved as overrides, audio files stay untouched. */
+/** Title, author, narrator and description; saved as overrides on leaving the screen, audio files stay untouched. */
 @Composable
-private fun MetadataEditor(details: BookDetails, onSave: (BookOverrides) -> Unit) {
-    var title by rememberSaveable(details.id) { mutableStateOf(details.title) }
-    var author by rememberSaveable(details.id) { mutableStateOf(details.author.orEmpty()) }
-    var narrator by rememberSaveable(details.id) { mutableStateOf(details.narrator.orEmpty()) }
-    var description by rememberSaveable(details.id) { mutableStateOf(details.description.orEmpty()) }
-
+private fun MetadataEditor(draft: BookOverrides, onEdit: (BookOverrides) -> Unit) {
     Column {
-        DetailsField(R.string.details_title_field, title) { title = it }
-        DetailsField(R.string.details_author, author) { author = it }
-        DetailsField(R.string.details_narrator, narrator) { narrator = it }
-        DetailsField(R.string.details_description, description, singleLine = false) { description = it }
-        AbbayTextButton(onClick = { onSave(BookOverrides(title, author, narrator, description)) }) {
-            Text(stringResource(R.string.details_save), color = MaterialTheme.colorScheme.tertiary)
+        DetailsField(R.string.details_title_field, draft.title.orEmpty()) { onEdit(draft.copy(title = it)) }
+        DetailsField(R.string.details_author, draft.author.orEmpty()) { onEdit(draft.copy(author = it)) }
+        DetailsField(R.string.details_narrator, draft.narrator.orEmpty()) { onEdit(draft.copy(narrator = it)) }
+        DetailsField(R.string.details_description, draft.description.orEmpty(), singleLine = false) {
+            onEdit(draft.copy(description = it))
         }
     }
 }
@@ -264,13 +256,30 @@ private fun CoverChooser(
     }
 }
 
+/**
+ * The screens are painted with `primary`, which the default colours use for the focused border, the label and the
+ * cursor, so those vanished into the background: the accent marks focus and the content colour draws the rest.
+ */
 @Composable
 private fun DetailsField(labelResource: Int, value: String, singleLine: Boolean = true, onValueChange: (String) -> Unit) {
+    val accent = MaterialTheme.colorScheme.tertiary
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(stringResource(labelResource)) },
         singleLine = singleLine,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedTextColor = AbbayColors.content,
+            unfocusedTextColor = AbbayColors.content,
+            focusedContainerColor = AbbayColors.content.copy(alpha = FIELD_FILL_ALPHA),
+            unfocusedContainerColor = AbbayColors.content.copy(alpha = FIELD_FILL_ALPHA),
+            cursorColor = accent,
+            selectionColors = TextSelectionColors(handleColor = accent, backgroundColor = accent.copy(alpha = SELECTION_ALPHA)),
+            focusedBorderColor = accent,
+            unfocusedBorderColor = AbbayColors.content.copy(alpha = UNFOCUSED_BORDER_ALPHA),
+            focusedLabelColor = accent,
+            unfocusedLabelColor = AbbayColors.content.copy(alpha = UNFOCUSED_LABEL_ALPHA),
+        ),
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
     )
 }
@@ -294,3 +303,7 @@ private fun SectionTitle(labelResource: Int) {
 
 private const val COVER_SIZE = 180
 private const val CANDIDATE_SIZE = 96
+private const val FIELD_FILL_ALPHA = 0.05f
+private const val SELECTION_ALPHA = 0.4f
+private const val UNFOCUSED_BORDER_ALPHA = 0.5f
+private const val UNFOCUSED_LABEL_ALPHA = 0.75f

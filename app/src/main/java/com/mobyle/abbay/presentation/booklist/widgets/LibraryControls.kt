@@ -1,9 +1,17 @@
 package com.mobyle.abbay.presentation.booklist.widgets
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
@@ -15,10 +23,6 @@ import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.ViewHeadline
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,9 +31,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.library.LibraryLayout
 import com.library.LibrarySortOrder
@@ -59,28 +66,7 @@ fun LibraryControls(
             .background(MaterialTheme.colorScheme.primary),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        ScrollableTabRow(
-            selectedTabIndex = tabs.indexOf(tab),
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = AbbayColors.content,
-            edgePadding = 8.dp,
-            divider = {},
-            indicator = { positions ->
-                TabRowDefaults.SecondaryIndicator(
-                    modifier = Modifier.tabIndicatorOffset(positions[tabs.indexOf(tab)]),
-                    color = MaterialTheme.colorScheme.tertiary
-                )
-            },
-            modifier = Modifier.weight(1f)
-        ) {
-            tabs.forEach { libraryTab ->
-                Tab(
-                    selected = libraryTab == tab,
-                    onClick = { onTabSelected(libraryTab) },
-                    text = { Text(stringResource(libraryTab.labelResource())) }
-                )
-            }
-        }
+        LibraryTabPills(tab = tab, tabs = tabs, onTabSelected = onTabSelected, modifier = Modifier.weight(1f))
         SortMenu(sortOrder, sortAscending, onSortOrderSelected)
         LayoutMenu(layout, onLayoutSelected)
     }
@@ -97,6 +83,47 @@ fun LibraryControls(
         )
     }
 }
+
+/** The tabs as capsules (AbbayiOS's look): the selected one filled, the others on a faint fill. */
+@Composable
+private fun LibraryTabPills(
+    tab: LibraryTab,
+    tabs: List<LibraryTab>,
+    onTabSelected: (LibraryTab) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .selectableGroup()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        tabs.forEach { libraryTab ->
+            val isSelected = libraryTab == tab
+            Box(
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .selectable(selected = isSelected, role = Role.Tab, onClick = { onTabSelected(libraryTab) }),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    stringResource(libraryTab.labelResource()),
+                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else AbbayColors.content,
+                    maxLines = 1,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(if (isSelected) AbbayColors.content else AbbayColors.content.copy(alpha = UNSELECTED_FILL_ALPHA))
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                )
+            }
+        }
+    }
+}
+
+private const val UNSELECTED_FILL_ALPHA = 0.08f
 
 @Composable
 private fun SortMenu(sortOrder: LibrarySortOrder, sortAscending: Boolean, onSortOrderSelected: (LibrarySortOrder) -> Unit) {

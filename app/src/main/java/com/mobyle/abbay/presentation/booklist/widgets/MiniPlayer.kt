@@ -1,19 +1,21 @@
 package com.mobyle.abbay.presentation.booklist.widgets
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.BottomSheetScaffoldState
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -21,10 +23,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -33,8 +34,8 @@ import androidx.constraintlayout.compose.MotionLayout
 import androidx.constraintlayout.compose.MotionScene
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.booklist.widgets.models.LayoutId
-import com.mobyle.abbay.presentation.booklist.widgets.player.ChapterList
-import com.mobyle.abbay.presentation.booklist.widgets.player.ChapterRow
+import com.mobyle.abbay.presentation.booklist.widgets.player.ChaptersPanel
+import com.mobyle.abbay.presentation.booklist.widgets.player.ChaptersToggle
 import com.mobyle.abbay.presentation.booklist.widgets.player.MiniPlayerRow
 import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerActions
 import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerControls
@@ -47,6 +48,9 @@ import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerTopBar
 import com.mobyle.abbay.presentation.booklist.widgets.player.PlayingState
 import com.mobyle.abbay.presentation.booklist.widgets.player.ScreenLockedAlert
 import com.mobyle.abbay.presentation.booklist.widgets.player.SleepSheetSettings
+import com.mobyle.abbay.presentation.booklist.widgets.player.timeLeftLabel
+import com.mobyle.abbay.presentation.common.theme.coverTintBackground
+import com.mobyle.abbay.presentation.common.theme.rememberCoverTint
 import com.mobyle.abbay.presentation.effects.AudioEffectsPanel
 import com.mobyle.abbay.presentation.options.PlaybackOptionsPanel
 import com.mobyle.abbay.presentation.utils.currentFraction
@@ -76,18 +80,19 @@ fun MiniPlayer(
     options: PlaybackOptionsPanel = PlaybackOptionsPanel(),
     display: PlayerDisplay = PlayerDisplay(),
 ) {
-    val scope = rememberCoroutineScope()
-    val motionScene = rememberPlayerMotionScene()
-    val isExpanded = scaffoldState.currentFraction == 1f
+    val fraction = scaffoldState.currentFraction.coerceIn(0f, 1f)
+    val isExpanded = fraction == 1f
     val position = PlayerPosition.of(book)
     val playerIcon = playingStateOf(playerState, isAwaitingPlayback)
-
+    val tint = rememberCoverTint(book.thumbnail)
+    val chapters = rememberChaptersToggle(isExpanded)
     PlayerEffects(book, playerState, actions)
 
     MotionLayout(
-        motionScene = motionScene,
-        progress = scaffoldState.currentFraction.coerceIn(0f, 1f),
-        modifier = modifier.fillMaxSize(),
+        motionScene = rememberPlayerMotionScene(),
+        progress = fraction,
+        // The cover's colour behind the whole player: flat on the mini player, shading to dark as it opens (AbbayiOS).
+        modifier = modifier.fillMaxSize().coverTintBackground(tint, gradientStrength = fraction),
     ) {
         MiniPlayerRow(
             book = book,
@@ -105,6 +110,7 @@ fun MiniPlayer(
             skips = skips,
             actions = actions,
             modifier = Modifier.fillMaxWidth().layoutId(LayoutId.CONTENT.id).padding(controlsPadding),
+            chapters = chapters,
             sleepTimer = playerState.sleepTimer,
             sleepSettings = sleepSettings,
             effects = effects,
@@ -114,20 +120,19 @@ fun MiniPlayer(
 
         CoverAndChapters(
             book = book,
-            position = position,
             playerIcon = playerIcon,
             skips = skips,
             actions = actions,
-            isExpanded = isExpanded,
+            tint = tint,
+            chapters = chapters,
             gesturesEnabled = isExpanded && !isScreenLocked,
             modifier = Modifier.padding(8.dp).layoutId(LayoutId.THUMBNAIL.id),
         )
 
         ExpandedTopBar(
-            book = book,
             isScreenLocked = isScreenLocked,
             actions = actions,
-            onCollapse = { scope.launch { scaffoldState.bottomSheetState.collapse() } },
+            scaffoldState = scaffoldState,
             modifier = Modifier.fillMaxWidth().layoutId(LayoutId.TOP_CONTENT.id),
         )
 
@@ -139,15 +144,13 @@ fun MiniPlayer(
     }
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
-private fun ExpandedTopBar(book: Book, isScreenLocked: Boolean, actions: PlayerActions, onCollapse: () -> Unit, modifier: Modifier) {
+private fun ExpandedTopBar(isScreenLocked: Boolean, actions: PlayerActions, scaffoldState: BottomSheetScaffoldState, modifier: Modifier) {
+    val scope = rememberCoroutineScope()
     PlayerTopBar(
-        title = book.name,
-        speed = book.speed,
-        onSpeedChange = actions.onSpeedChange,
-        onSetDefaultSpeed = actions.onSetDefaultSpeed,
         isScreenLocked = isScreenLocked,
-        onCollapse = onCollapse,
+        onCollapse = { scope.launch { scaffoldState.bottomSheetState.collapse() } },
         onLockToggle = actions.onLockScreen,
         onOpenDetails = actions.onOpenDetails,
         onMarkFinished = actions.onMarkFinished,
@@ -182,67 +185,59 @@ private fun playingStateOf(playerState: PlayerState, isAwaitingPlayback: Boolean
     else -> PlayingState.PAUSED
 }
 
-/** Cover with its gestures, then the chapter row and the inline chapter list. */
+/** The cover with its gestures and, over it while open, the chapter panel (AbbayiOS's G2 dropdown). */
 @Composable
 private fun CoverAndChapters(
     book: Book,
-    position: PlayerPosition,
     playerIcon: PlayingState,
     skips: PlayerSkips,
     actions: PlayerActions,
-    isExpanded: Boolean,
+    tint: Color,
+    chapters: ChaptersToggle,
     gesturesEnabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    var showChapters by remember { mutableStateOf(false) }
-    LaunchedEffect(isExpanded) { if (!isExpanded) showChapters = false }
-
     Box(modifier) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.TopCenter)
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f))
-                .clip(RoundedCornerShape(8.dp)),
-            horizontalAlignment = Alignment.CenterHorizontally,
+        PlayerCover(
+            thumbnail = book.thumbnail,
+            playerIcon = playerIcon,
+            gesturesEnabled = gesturesEnabled,
+            onTap = { if (playerIcon != PlayingState.LOADING) actions.onCoverClick(book.progress) },
+            onDoubleTapLeft = { actions.onSeekBy(-skips.smallBackSeconds * MILLIS_PER_SECOND) },
+            onDoubleTapRight = { actions.onSeekBy(skips.smallForwardSeconds * MILLIS_PER_SECOND) },
+            onSwipeToPrevious = actions.onPreviousChapter,
+            onSwipeToNext = actions.onNextChapter,
+        )
+
+        AnimatedVisibility(
+            visible = chapters.isOpen,
+            enter = fadeIn() + scaleIn(initialScale = PANEL_INITIAL_SCALE, transformOrigin = TransformOrigin(1f, 1f)),
+            exit = fadeOut() + scaleOut(targetScale = PANEL_INITIAL_SCALE, transformOrigin = TransformOrigin(1f, 1f)),
+            modifier = Modifier.fillMaxSize(),
         ) {
-            Box(modifier = Modifier.weight(1f).clip(shape = RoundedCornerShape(percent = 10))) {
-                PlayerCover(
-                    thumbnail = book.thumbnail,
-                    playerIcon = playerIcon,
-                    gesturesEnabled = gesturesEnabled,
-                    onTap = { if (playerIcon != PlayingState.LOADING) actions.onCoverClick(book.progress) },
-                    onDoubleTapLeft = { actions.onSeekBy(-skips.smallBackSeconds * MILLIS_PER_SECOND) },
-                    onDoubleTapRight = { actions.onSeekBy(skips.smallForwardSeconds * MILLIS_PER_SECOND) },
-                    onSwipeToPrevious = actions.onPreviousChapter,
-                    onSwipeToNext = actions.onNextChapter,
-                )
-            }
-
-            AnimatedVisibility(
-                visible = isExpanded && position.chapterCount > 1,
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            ) {
-                ChapterRow(
-                    chapter = position.chapter,
-                    chapterCount = position.chapterCount,
-                    isExpanded = showChapters,
-                    onClick = { showChapters = !showChapters },
-                )
-            }
-
-            AnimatedVisibility(visible = showChapters && isExpanded) {
-                ChapterList(
-                    chapters = book.chapters,
-                    currentIndex = position.chapter?.index ?: 0,
-                    onSelect = { chapter ->
-                        showChapters = false
-                        actions.onSeekToBookPosition(chapter.startMs)
-                    },
-                )
-            }
+            BackHandler(onBack = chapters.onClose)
+            ChaptersPanel(
+                chapters = book.chapters,
+                position = PlayerPosition.of(book),
+                bookTimeLeft = timeLeftLabel(book.duration - book.bookPositionMs, book.speed),
+                tint = tint,
+                onSelect = { chapter ->
+                    chapters.onClose()
+                    actions.onSeekToBookPosition(chapter.startMs)
+                },
+                onClose = chapters.onClose,
+                modifier = Modifier.fillMaxSize(),
+            )
         }
     }
+}
+
+/** The chapter panel's open state, closed whenever the player collapses. */
+@Composable
+private fun rememberChaptersToggle(isExpanded: Boolean): ChaptersToggle {
+    var isOpen by remember { mutableStateOf(false) }
+    LaunchedEffect(isExpanded) { if (!isExpanded) isOpen = false }
+    return ChaptersToggle(isOpen = isOpen && isExpanded, onToggle = { isOpen = !isOpen }, onClose = { isOpen = false })
 }
 
 /** Locked player: a tap explains the lock, a double tap unlocks (existing AbbayAndroid behavior). */
@@ -267,3 +262,4 @@ private fun LockOverlay(isScreenLocked: Boolean, onUnlock: () -> Unit, modifier:
 private val controlsPadding = PaddingValues(start = 28.dp, end = 28.dp, top = 16.dp, bottom = 30.dp)
 
 private const val MILLIS_PER_SECOND = 1_000L
+private const val PANEL_INITIAL_SCALE = 0.2f

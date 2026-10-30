@@ -7,126 +7,128 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.mobyle.abbay.R
-import com.mobyle.abbay.presentation.common.theme.AbbayTextStyles
+import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.mobyle.abbay.presentation.common.widgets.BookThumbnail
-import com.mobyle.abbay.presentation.common.widgets.SVGIcon
+import com.mobyle.abbay.presentation.common.widgets.ProgressCapsule
 import com.mobyle.abbay.presentation.utils.debounceClick
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.Book
-import com.model.MultipleBooks
 
+/**
+ * A library row in the look of AbbayiOS's cells: the cover, the title (in the accent with a "now playing" mark
+ * while it plays), the status line with the elapsed time, and a thin progress bar while the book is started.
+ */
 @Composable
 fun BookItem(
     book: Book,
-    isSelected: Boolean,
-    progress: String,
-    intermediaryProgress: Long,
-    currentMediaIndex: Int,
+    progressLabel: String,
+    isPlaying: Boolean,
     onLongClick: (() -> Unit)? = null,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
-    val bookColor = if (book.hasError) {
-        Color(0xff1f1113)
-    } else {
-        MaterialTheme.colorScheme.primary
-    }
-
-    Column(
+    Row(
         modifier = Modifier
-            .padding(top = 8.dp)
             .fillMaxWidth()
-            .background(bookColor)
-            .debounceClick(onLongClick = onLongClick) {
-                onClick.invoke()
-            },
-        verticalArrangement = Arrangement.SpaceEvenly,
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(ROW_RADIUS))
+            .background(if (book.hasError) ErrorRowColor else Color.Transparent)
+            .debounceClick(onLongClick = onLongClick, onClick = onClick)
+            .padding(horizontal = 4.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
+        BookThumbnail(book.thumbnail)
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp, bottom = 8.dp)
+                .weight(1f)
+                .padding(start = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            BookThumbnail(book.thumbnail)
-            Column(
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        book.name,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = AbbayTextStyles.bookTitleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .weight(1f)
-                    )
-                    if (book.hasError) {
-                        Icon(
-                            imageVector = Icons.Default.Error,
-                            contentDescription = stringResource(R.string.error_playing_file),
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier
-                                .size(24.dp)
-                                .padding(end = 8.dp)
-                        )
-                    }
-                }
-
-                Row {
-                    if (book is MultipleBooks) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                        ) {
-                            SVGIcon(
-                                path = R.drawable.ic_book,
-                                description = stringResource(R.string.book_icon),
-                                modifier = Modifier.padding(start = 8.dp, end = 4.dp)
-                            )
-
-                            Text(
-                                "$currentMediaIndex/${book.bookFileList.size}",
-                                style = AbbayTextStyles.subtitleText,
-                            )
-                        }
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                    ) {
-                        SVGIcon(
-                            path = R.drawable.ic_clock,
-                            description = stringResource(R.string.clock_icon),
-                            modifier = Modifier.padding(start = 8.dp, end = 4.dp)
-                        )
-                        val currentProgress = if (isSelected) {
-                            progress
-                        } else {
-                            intermediaryProgress.plus(book.progress).toHHMMSS()
-                        }
-
-                        Text(
-                            "$currentProgress/${book.duration.toHHMMSS()}",
-                            style = AbbayTextStyles.progressText
-                        )
-                    }
-                }
+            BookTitle(book, isPlaying, maxLines = 2)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    bookStatusLine(book),
+                    style = statusStyle(),
+                    color = secondaryContent(),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    "$progressLabel / ${book.duration.toHHMMSS()}",
+                    style = timeStyle(),
+                    color = secondaryContent(),
+                    maxLines = 1,
+                    modifier = Modifier.padding(start = 8.dp),
+                )
             }
+            val fraction = bookStartedFraction(book)
+            ProgressCapsule(fraction = fraction ?: 0f, modifier = Modifier.alpha(if (fraction == null) 0f else 1f))
         }
     }
 }
+
+/** The title: the accent and a "now playing" glyph while this book plays (never colour alone). */
+@Composable
+internal fun BookTitle(book: Book, isPlaying: Boolean, maxLines: Int, modifier: Modifier = Modifier) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
+        if (isPlaying) {
+            Icon(
+                Icons.Default.GraphicEq,
+                contentDescription = stringResource(R.string.book_now_playing),
+                tint = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.padding(end = 4.dp).size(16.dp),
+            )
+        }
+        Text(
+            book.name,
+            maxLines = maxLines,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, fontSize = 15.sp),
+            color = if (isPlaying) MaterialTheme.colorScheme.tertiary else AbbayColors.content,
+            modifier = Modifier.weight(1f, fill = false),
+        )
+        if (book.hasError) {
+            Icon(
+                imageVector = Icons.Default.Error,
+                contentDescription = stringResource(R.string.error_playing_file),
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(start = 4.dp).size(18.dp),
+            )
+        }
+    }
+}
+
+@Composable
+internal fun secondaryContent(): Color = AbbayColors.content.copy(alpha = SECONDARY_ALPHA)
+
+@Composable
+internal fun statusStyle() = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp)
+
+@Composable
+internal fun timeStyle() = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, fontFamily = FontFamily.Monospace)
+
+/** The row behind a book whose file is missing (as before). */
+internal val ErrorRowColor = Color(0xff1f1113)
+
+private val ROW_RADIUS = 12.dp
+private const val SECONDARY_ALPHA = 0.75f

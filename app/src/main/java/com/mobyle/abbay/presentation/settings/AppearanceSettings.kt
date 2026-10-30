@@ -20,7 +20,11 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.widgets.AbbayDropdownMenu
 import com.mobyle.abbay.presentation.common.widgets.AbbayMenuItem
@@ -155,11 +159,14 @@ internal fun SettingSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit,
 
 @Composable
 internal fun SectionHeader(labelResource: Int) {
+    // A small uppercase section title in the secondary colour, as AbbayiOS's grouped settings.
     Text(
-        text = stringResource(labelResource),
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp),
+        text = stringResource(labelResource).uppercase(),
+        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECTION_HEADER_ALPHA),
+        modifier = Modifier
+            .padding(start = 16.dp, top = 24.dp, bottom = 6.dp)
+            .semantics { heading() },
     )
 }
 
@@ -176,3 +183,5 @@ private fun ThemeMode.labelResource(): Int = when (this) {
     ThemeMode.DARK -> R.string.theme_dark
     ThemeMode.BLACK -> R.string.theme_black
 }
+
+private const val SECTION_HEADER_ALPHA = 0.7f

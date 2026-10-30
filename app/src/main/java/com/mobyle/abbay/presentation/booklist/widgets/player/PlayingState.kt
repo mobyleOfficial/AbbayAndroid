@@ -1,8 +1,8 @@
 package com.mobyle.abbay.presentation.booklist.widgets.player
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -15,8 +15,8 @@ enum class PlayingState {
 }
 
 fun PlayingState.toIcon(): ImageVector? = when (this) {
-    PlayingState.PLAYING -> Icons.Default.Pause
-    PlayingState.PAUSED -> Icons.Default.PlayArrow
+    PlayingState.PLAYING -> Icons.Rounded.Pause
+    PlayingState.PAUSED -> Icons.Rounded.PlayArrow
     PlayingState.LOADING -> null
 }
 

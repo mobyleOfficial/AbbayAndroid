@@ -6,13 +6,15 @@ import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,7 +24,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.getString
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
@@ -48,10 +52,12 @@ fun BookListTopBar(
     var showMoreMenu by remember { mutableStateOf(false) }
 
     TopAppBar(
+        // On the library's own background, as AbbayiOS's large title.
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary),
         title = {
             Text(
                 getString(context, R.string.book_list_top_bar_title),
-                style = AbbayTextStyles.bookTitleLarge,
+                style = AbbayTextStyles.bookTitleLarge.copy(fontSize = 28.sp, fontWeight = FontWeight.Bold),
                 color = AbbayColors.content
             )
         },
@@ -69,7 +75,7 @@ fun BookListTopBar(
                         )
                     } else {
                         Icon(
-                            Icons.Filled.Refresh,
+                            Icons.Rounded.Refresh,
                             contentDescription = stringResource(R.string.refresh_content_description),
                             tint = AbbayColors.content.copy(alpha = if (hasSelectedFolder) 1f else 0.5f)
                         )
@@ -81,7 +87,7 @@ fun BookListTopBar(
                         onClick = { showAddMenu = true },
                     ) {
                         Icon(
-                            Icons.Filled.Add,
+                            Icons.Rounded.Add,
                             contentDescription = stringResource(R.string.add_content_description),
                             tint = AbbayColors.content
                         )
@@ -119,19 +125,19 @@ fun BookListTopBar(
                 }
 
                 IconButton(onClick = more.onSearch) {
-                    Icon(Icons.Filled.Search, stringResource(R.string.search_title), tint = AbbayColors.content)
+                    Icon(Icons.Rounded.Search, stringResource(R.string.search_title), tint = AbbayColors.content)
                 }
 
                 IconButton(onClick = openSettings) {
                     Icon(
-                        Icons.Filled.Settings,
+                        Icons.Outlined.Settings,
                         stringResource(R.string.settings),
                         tint = AbbayColors.content,
                     )
                 }
 
                 IconButton(onClick = { showMoreMenu = true }) {
-                    Icon(Icons.Filled.MoreVert, stringResource(R.string.library_more), tint = AbbayColors.content)
+                    Icon(Icons.Rounded.MoreVert, stringResource(R.string.library_more), tint = AbbayColors.content)
                 }
                 AbbayDropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {
                     listOf(

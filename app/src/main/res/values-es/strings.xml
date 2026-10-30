@@ -144,7 +144,6 @@
     <string name="details_author">Autor</string>
     <string name="details_narrator">Narrador</string>
     <string name="details_description">Descripción</string>
-    <string name="details_save">Guardar</string>
     <string name="details_duration">Duración</string>
     <string name="details_files">Archivos</string>
     <string name="details_location">Carpeta</string>
@@ -586,4 +585,13 @@
     <string name="widget_add_bookmark">Añadir marcador</string>
     <string name="widget_sleep_timer_on">Iniciar temporizador</string>
     <string name="widget_sleep_timer_off">Apagar temporizador</string>
+
+    <!-- AbbayiOS visual parity -->
+    <string name="book_status_new">Nuevo</string>
+    <string name="book_status_finished">Terminado ✓</string>
+    <string name="book_status_chapter">Cap. %1$d/%2$d</string>
+    <string name="book_now_playing">Reproduciendo</string>
+    <string name="player_close_chapters">Cerrar capítulos</string>
+    <string name="player_chapter_current">Capítulo actual</string>
+    <string name="player_chapter_finished">Terminado</string>
 </resources>

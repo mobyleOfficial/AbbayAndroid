@@ -145,7 +145,6 @@
     <string name="details_author">Author</string>
     <string name="details_narrator">Narrator</string>
     <string name="details_description">Description</string>
-    <string name="details_save">Save</string>
     <string name="details_duration">Duration</string>
     <string name="details_files">Files</string>
     <string name="details_location">Folder</string>
@@ -592,4 +591,13 @@
     <string name="widget_add_bookmark">Add bookmark</string>
     <string name="widget_sleep_timer_on">Start sleep timer</string>
     <string name="widget_sleep_timer_off">Turn off sleep timer</string>
+
+    <!-- AbbayiOS visual parity -->
+    <string name="book_status_new">New</string>
+    <string name="book_status_finished">Finished ✓</string>
+    <string name="book_status_chapter">Ch %1$d/%2$d</string>
+    <string name="book_now_playing">Now playing</string>
+    <string name="player_close_chapters">Close chapters</string>
+    <string name="player_chapter_current">Current chapter</string>
+    <string name="player_chapter_finished">Finished</string>
 </resources>
