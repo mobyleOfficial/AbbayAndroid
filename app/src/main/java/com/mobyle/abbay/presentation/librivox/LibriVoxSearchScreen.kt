@@ -190,8 +190,10 @@ internal fun ResultsList(
     libraryIds: Set<String>,
     onOpenBook: (LibriVoxBook) -> Unit,
     overline: @Composable (LibriVoxBook) -> String? = { null },
+    header: (@Composable () -> Unit)? = null,
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
+        header?.let { content -> item { content() } }
         items(books, key = { it.id }) { book ->
             LibriVoxResultRow(book, isInLibrary = book.id in libraryIds, overline = overline(book), onClick = { onOpenBook(book) })
             HorizontalDivider(
