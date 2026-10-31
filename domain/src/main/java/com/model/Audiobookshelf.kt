@@ -5,6 +5,19 @@ data class AudiobookshelfAccount(val serverUrl: String, val username: String, va
 
 data class AudiobookshelfLibrary(val id: String, val name: String)
 
+/** How a library's books are listed. */
+enum class AudiobookshelfSort {
+    RECENTLY_ADDED,
+    TITLE,
+    AUTHOR,
+}
+
+/** One page of a long list; [hasMore] when the server has more after it. */
+data class AudiobookshelfPage<T>(val items: List<T>, val hasMore: Boolean)
+
+/** A series of a library, shown with the cover of its first book. */
+data class AudiobookshelfSeries(val id: String, val name: String, val bookCount: Int, val coverUrl: String)
+
 enum class AudiobookshelfSignInError {
     INVALID_ADDRESS,
     UNREACHABLE,

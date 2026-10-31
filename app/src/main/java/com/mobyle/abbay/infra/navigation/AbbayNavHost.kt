@@ -21,6 +21,8 @@ import com.mobyle.abbay.presentation.about.LicensesScreen
 import com.mobyle.abbay.presentation.audiobookshelf.AudiobookshelfBookScreen
 import com.mobyle.abbay.presentation.audiobookshelf.AudiobookshelfBookViewModel
 import com.mobyle.abbay.presentation.audiobookshelf.AudiobookshelfScreen
+import com.mobyle.abbay.presentation.audiobookshelf.AudiobookshelfSeriesScreen
+import com.mobyle.abbay.presentation.audiobookshelf.AudiobookshelfSeriesViewModel
 import com.mobyle.abbay.presentation.bookdetails.BookDetailsScreen
 import com.mobyle.abbay.presentation.booklist.AdaptiveLibraryShell
 import com.mobyle.abbay.presentation.booklist.BooksListScreen
@@ -303,6 +305,14 @@ private fun NavGraphBuilder.catalogScreens(viewModel: BooksListViewModel, host: 
     modal(NavigationItem.Audiobookshelf.route, isReadableWidth = false) {
         AudiobookshelfScreen(
             onOpenBook = { book -> navController.navigate(NavigationItem.AudiobookshelfBookPage.routeFor(book)) },
+            onOpenSeries = { series -> navController.navigate(NavigationItem.AudiobookshelfSeriesPage.routeFor(series)) },
+            close = { navController.popBackStack() },
+        )
+    }
+
+    modal(NavigationItem.AudiobookshelfSeriesPage.route, arguments = AUDIOBOOKSHELF_SERIES_ARGUMENTS) {
+        AudiobookshelfSeriesScreen(
+            onOpenBook = { book -> navController.navigate(NavigationItem.AudiobookshelfBookPage.routeFor(book)) },
             close = { navController.popBackStack() },
         )
     }
@@ -310,6 +320,7 @@ private fun NavGraphBuilder.catalogScreens(viewModel: BooksListViewModel, host: 
     modal(NavigationItem.AudiobookshelfBookPage.route, arguments = AUDIOBOOKSHELF_BOOK_ARGUMENTS) {
         AudiobookshelfBookScreen(
             onListen = { bookId -> play(bookId, viewModel, host, navController) },
+            onOpenSeries = { series -> navController.navigate(NavigationItem.AudiobookshelfSeriesPage.routeFor(series)) },
             close = { navController.popBackStack() },
         )
     }
@@ -373,5 +384,10 @@ private val LIBRIVOX_BOOK_ARGUMENTS = listOf(navArgument(LibriVoxBookViewModel.I
 private val AUDIOBOOKSHELF_BOOK_ARGUMENTS =
     listOf(navArgument(AudiobookshelfBookViewModel.ID_ARGUMENT) { type = NavType.StringType }) +
         optionalStrings(AudiobookshelfBookViewModel.TITLE_ARGUMENT, AudiobookshelfBookViewModel.AUTHORS_ARGUMENT)
+
+private val AUDIOBOOKSHELF_SERIES_ARGUMENTS = listOf(
+    navArgument(AudiobookshelfSeriesViewModel.LIBRARY_ARGUMENT) { type = NavType.StringType },
+    navArgument(AudiobookshelfSeriesViewModel.SERIES_ARGUMENT) { type = NavType.StringType },
+) + optionalStrings(AudiobookshelfSeriesViewModel.NAME_ARGUMENT)
 
 private val FOLDER_ARGUMENTS = listOf(FolderViewModel.KIND_ARGUMENT, FolderViewModel.ROOT_ARGUMENT, FolderViewModel.PATH_ARGUMENT)

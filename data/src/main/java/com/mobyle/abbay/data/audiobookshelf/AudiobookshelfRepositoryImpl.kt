@@ -10,7 +10,10 @@ import com.mobyle.abbay.data.librivox.LibriVoxDownloadScheduler
 import com.mobyle.abbay.data.storage.DocumentContentDataSource
 import com.model.AudiobookshelfAccount
 import com.model.AudiobookshelfLibrary
+import com.model.AudiobookshelfPage
+import com.model.AudiobookshelfSeries
 import com.model.AudiobookshelfSignIn
+import com.model.AudiobookshelfSort
 import com.model.DataError
 import com.model.DataResult
 import com.model.LibriVoxBook
@@ -50,13 +53,20 @@ class AudiobookshelfRepositoryImpl @Inject constructor(
 
     override suspend fun libraries(): DataResult<List<AudiobookshelfLibrary>> = guarded { api.libraries() }
 
-    override suspend fun recentlyAdded(libraryId: String): DataResult<List<LibriVoxBook>> = guarded { api.recentlyAdded(libraryId) }
+    override suspend fun books(libraryId: String, sort: AudiobookshelfSort, page: Int): DataResult<AudiobookshelfPage<LibriVoxBook>> =
+        guarded { api.books(libraryId, sort, page) }
 
     override suspend fun search(libraryId: String, query: String): DataResult<List<LibriVoxBook>> {
         val text = query.trim()
         if (text.isEmpty()) return DataResult.Success(emptyList())
         return guarded { api.search(libraryId, text) }
     }
+
+    override suspend fun series(libraryId: String, page: Int): DataResult<AudiobookshelfPage<AudiobookshelfSeries>> =
+        guarded { api.series(libraryId, page) }
+
+    override suspend fun seriesBooks(libraryId: String, seriesId: String): DataResult<List<LibriVoxBook>> =
+        guarded { api.seriesBooks(libraryId, seriesId) }
 
     override fun coverUrlOf(itemId: String): String = api.coverUrlOf(itemId)
 

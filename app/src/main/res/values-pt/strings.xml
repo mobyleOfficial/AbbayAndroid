@@ -647,6 +647,10 @@
     <string name="audiobookshelf_sign_out">Sair</string>
     <string name="audiobookshelf_search_hint">Buscar nesta biblioteca</string>
     <string name="audiobookshelf_recent">Adicionados recentemente</string>
+    <string name="audiobookshelf_all">Todos</string>
+    <string name="audiobookshelf_sort_label">Ordenar por</string>
+    <string name="audiobookshelf_sort_title">Título</string>
+    <string name="audiobookshelf_sort_author">Autor</string>
     <string name="audiobookshelf_offline_body">Conecte-se à internet para navegar pelo seu servidor.</string>
     <string name="audiobookshelf_failed_title">O servidor não respondeu</string>
     <string name="audiobookshelf_no_libraries_title">Nenhuma biblioteca de audiolivros</string>
@@ -655,4 +659,16 @@
     <string name="audiobookshelf_empty_library_body">Os livros adicionados a esta biblioteca no servidor aparecem aqui.</string>
     <string name="audiobookshelf_no_results_body">Tente o título, o autor ou menos palavras.</string>
     <string name="audiobookshelf_credit">Do seu servidor Audiobookshelf, %1$s.</string>
+    <string name="audiobookshelf_series">Séries</string>
+    <string name="audiobookshelf_series_sequence">Livro %1$s</string>
+    <string name="catalog_series_book">%1$s · Livro %2$s</string>
+    <string name="catalog_open_series">abrir a série</string>
+    <string name="audiobookshelf_no_series_title">Nenhuma série aqui</string>
+    <string name="audiobookshelf_no_series_body">Os livros agrupados em séries no servidor aparecem aqui.</string>
+    <string name="audiobookshelf_empty_series_title">Nenhum livro nesta série</string>
+    <string name="audiobookshelf_empty_series_body">Os livros podem ter sido movidos ou removidos no servidor.</string>
+    <plurals name="audiobookshelf_series_book_count">
+        <item quantity="one">%d livro</item>
+        <item quantity="other">%d livros</item>
+    </plurals>
 </resources>

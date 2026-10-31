@@ -2,6 +2,7 @@ package com.mobyle.abbay.data.audiobookshelf
 
 import java.net.URI
 import java.net.URLEncoder
+import java.util.Base64
 import java.util.Locale
 
 object AudiobookshelfUrls {
@@ -18,6 +19,9 @@ object AudiobookshelfUrls {
     fun fileUrl(serverUrl: String, itemId: String, ino: String) = "$serverUrl/api/items/${segment(itemId)}/file/${segment(ino)}"
 
     fun coverUrl(serverUrl: String, itemId: String) = "$serverUrl/api/items/${segment(itemId)}/cover?width=$COVER_WIDTH"
+
+    /** The items filter for one series: the server takes its id in base64. */
+    fun seriesFilter(seriesId: String) = "series." + Base64.getEncoder().encodeToString(seriesId.toByteArray(Charsets.UTF_8))
 
     fun itemPage(serverUrl: String, itemId: String) = "$serverUrl/item/${segment(itemId)}"
 

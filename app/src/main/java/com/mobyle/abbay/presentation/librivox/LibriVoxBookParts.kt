@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.CircularProgressIndicator
@@ -48,6 +49,7 @@ import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
 import com.mobyle.abbay.presentation.common.widgets.BookThumbnail
 import com.mobyle.abbay.presentation.statistics.listeningTime
+import com.model.CatalogSeries
 import com.model.LibriVoxBook
 import java.util.Locale
 
@@ -107,6 +109,40 @@ private fun languageName(code: String, locale: Locale): String? {
     if (code.isBlank()) return null
     val name = Locale.forLanguageTag(code).getDisplayLanguage(locale)
     return name.takeIf { it.isNotBlank() && !it.equals(code, ignoreCase = true) }?.replaceFirstChar { it.titlecase(locale) }
+}
+
+/** The series the book is in, and its place there: opens the series. */
+@Composable
+internal fun SeriesLink(series: CatalogSeries, onClick: () -> Unit) {
+    val sequence = series.sequence?.takeIf(String::isNotBlank)
+    val label = if (sequence != null) stringResource(R.string.catalog_series_book, series.name, sequence) else series.name
+    Row(
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp)
+            .padding(top = 8.dp)
+            .heightIn(min = 48.dp)
+            .clip(CircleShape)
+            .clickable(role = Role.Button, onClickLabel = stringResource(R.string.catalog_open_series), onClick = onClick),
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.tertiary,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false),
+        )
+        Icon(
+            Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.tertiary,
+            modifier = Modifier.size(20.dp),
+        )
+    }
 }
 
 @Composable

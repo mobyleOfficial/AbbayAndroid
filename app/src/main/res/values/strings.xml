@@ -651,6 +651,10 @@
     <string name="audiobookshelf_sign_out">Sign out</string>
     <string name="audiobookshelf_search_hint">Search this library</string>
     <string name="audiobookshelf_recent">Recently added</string>
+    <string name="audiobookshelf_all">All</string>
+    <string name="audiobookshelf_sort_label">Sort by</string>
+    <string name="audiobookshelf_sort_title">Title</string>
+    <string name="audiobookshelf_sort_author">Author</string>
     <string name="audiobookshelf_offline_body">Connect to the internet to browse your server.</string>
     <string name="audiobookshelf_failed_title">The server didn\'t answer</string>
     <string name="audiobookshelf_no_libraries_title">No audiobook libraries</string>
@@ -659,4 +663,16 @@
     <string name="audiobookshelf_empty_library_body">Books added to this library on the server show up here.</string>
     <string name="audiobookshelf_no_results_body">Try the title, the author or fewer words.</string>
     <string name="audiobookshelf_credit">From your Audiobookshelf server, %1$s.</string>
+    <string name="audiobookshelf_series">Series</string>
+    <string name="audiobookshelf_series_sequence">Book %1$s</string>
+    <string name="catalog_series_book">%1$s · Book %2$s</string>
+    <string name="catalog_open_series">open the series</string>
+    <string name="audiobookshelf_no_series_title">No series here</string>
+    <string name="audiobookshelf_no_series_body">Books grouped into series on the server show up here.</string>
+    <string name="audiobookshelf_empty_series_title">No books in this series</string>
+    <string name="audiobookshelf_empty_series_body">Its books may have moved or been removed on the server.</string>
+    <plurals name="audiobookshelf_series_book_count">
+        <item quantity="one">%d book</item>
+        <item quantity="other">%d books</item>
+    </plurals>
 </resources>

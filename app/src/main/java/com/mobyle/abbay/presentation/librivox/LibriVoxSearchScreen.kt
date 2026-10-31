@@ -155,7 +155,7 @@ internal fun CoverGrid(heading: String, books: List<LibriVoxBook>, onOpenBook: (
 }
 
 @Composable
-private fun PopularCell(book: LibriVoxBook, onClick: () -> Unit) {
+internal fun PopularCell(book: LibriVoxBook, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .padding(6.dp)
@@ -185,10 +185,15 @@ private fun PopularCell(book: LibriVoxBook, onClick: () -> Unit) {
 }
 
 @Composable
-internal fun ResultsList(books: List<LibriVoxBook>, libraryIds: Set<String>, onOpenBook: (LibriVoxBook) -> Unit) {
+internal fun ResultsList(
+    books: List<LibriVoxBook>,
+    libraryIds: Set<String>,
+    onOpenBook: (LibriVoxBook) -> Unit,
+    overline: @Composable (LibriVoxBook) -> String? = { null },
+) {
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
         items(books, key = { it.id }) { book ->
-            LibriVoxResultRow(book, isInLibrary = book.id in libraryIds, onClick = { onOpenBook(book) })
+            LibriVoxResultRow(book, isInLibrary = book.id in libraryIds, overline = overline(book), onClick = { onOpenBook(book) })
             HorizontalDivider(
                 color = AbbayColors.content.copy(alpha = DIVIDER_ALPHA),
                 modifier = Modifier.padding(start = 16.dp + ROW_COVER + 16.dp),
@@ -198,7 +203,7 @@ internal fun ResultsList(books: List<LibriVoxBook>, libraryIds: Set<String>, onO
 }
 
 @Composable
-private fun LibriVoxResultRow(book: LibriVoxBook, isInLibrary: Boolean, onClick: () -> Unit) {
+private fun LibriVoxResultRow(book: LibriVoxBook, isInLibrary: Boolean, overline: String?, onClick: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -209,6 +214,14 @@ private fun LibriVoxResultRow(book: LibriVoxBook, isInLibrary: Boolean, onClick:
     ) {
         BookThumbnail(book.coverUrl, modifier = Modifier.size(ROW_COVER))
         Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
+            overline?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.tertiary,
+                    maxLines = 1,
+                )
+            }
             Text(
                 book.title,
                 style = MaterialTheme.typography.bodyLarge,

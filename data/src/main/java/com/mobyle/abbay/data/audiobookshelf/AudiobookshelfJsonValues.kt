@@ -29,6 +29,17 @@ internal fun JsonObject.boolean(key: String): Boolean? = (get(key) as? JsonPrimi
 internal fun JsonObject.millis(key: String): Long? =
     (get(key) as? JsonPrimitive)?.doubleOrNull?.takeIf { it >= 0 }?.let { (it * MILLIS_PER_SECOND).toLong() }
 
+/**
+ * Whether a page of [limit] rows, number [page] from 0, has more after it: by the total the server gives, or, from a
+ * server that gives none, by a full page.
+ */
+internal fun hasMorePages(body: String, page: Int, limit: Int): Boolean {
+    val root = objectOf(body) ?: return false
+    val rows = (root["results"] as? JsonArray)?.size ?: 0
+    val total = root.long("total")
+    return if (total != null) (page + 1).toLong() * limit < total else rows >= limit
+}
+
 /** Names from a list of people, as objects with a name or as plain strings. */
 internal fun names(element: JsonElement?): String = (element as? JsonArray).orEmpty().mapNotNull { person ->
     when (person) {

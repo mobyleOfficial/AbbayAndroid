@@ -56,28 +56,32 @@ import com.mobyle.abbay.presentation.common.widgets.AbbayDropdownMenu
 import com.mobyle.abbay.presentation.common.widgets.AbbayMenuItem
 import com.mobyle.abbay.presentation.common.widgets.AbbayScreen
 import com.mobyle.abbay.presentation.common.widgets.abbayTextFieldColors
-import com.mobyle.abbay.presentation.librivox.CoverGrid
+import com.mobyle.abbay.presentation.librivox.PopularCell
 import com.mobyle.abbay.presentation.librivox.ResultsList
 import com.mobyle.abbay.presentation.librivox.StateMessage
 import com.model.AudiobookshelfAccount
 import com.model.AudiobookshelfLibrary
+import com.model.AudiobookshelfSeries
+import com.model.CatalogSeries
 import com.model.LibriVoxBook
 
 @Composable
 fun AudiobookshelfScreen(
     viewModel: AudiobookshelfViewModel = hiltViewModel(),
+    signInViewModel: AudiobookshelfSignInViewModel = hiltViewModel(),
     onOpenBook: (LibriVoxBook) -> Unit,
+    onOpenSeries: (CatalogSeries) -> Unit,
     close: () -> Unit,
 ) {
-    val account by viewModel.account.collectAsState()
+    val account by signInViewModel.account.collectAsState()
     val signedIn = account?.takeIf(AudiobookshelfAccount::isSignedIn)
 
     AbbayScreen(
         title = stringResource(R.string.audiobookshelf_title),
         onClose = close,
-        actions = { signedIn?.let { AccountMenu(it, onSignOut = viewModel::signOut) } },
+        actions = { signedIn?.let { AccountMenu(it, onSignOut = signInViewModel::signOut) } },
     ) {
-        if (signedIn == null) SignInForm(account, viewModel) else Browse(viewModel, onOpenBook)
+        if (signedIn == null) SignInForm(account, signInViewModel) else Browse(viewModel, onOpenBook, onOpenSeries)
     }
 }
 
@@ -108,8 +112,10 @@ private fun AccountMenu(account: AudiobookshelfAccount, onSignOut: () -> Unit) {
 }
 
 @Composable
-private fun Browse(viewModel: AudiobookshelfViewModel, onOpenBook: (LibriVoxBook) -> Unit) {
+private fun Browse(viewModel: AudiobookshelfViewModel, onOpenBook: (LibriVoxBook) -> Unit, onOpenSeries: (CatalogSeries) -> Unit) {
     val query by viewModel.query.collectAsState()
+    val tab by viewModel.tab.collectAsState()
+    val sort by viewModel.sort.collectAsState()
     val state by viewModel.state.collectAsState()
     val libraries by viewModel.libraries.collectAsState()
     val selectedLibraryId by viewModel.selectedLibraryId.collectAsState()
@@ -138,12 +144,18 @@ private fun Browse(viewModel: AudiobookshelfViewModel, onOpenBook: (LibriVoxBook
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         )
         if (libraries.size > 1) LibraryPicker(libraries, selectedLibraryId, onSelect = viewModel::selectLibrary)
+        if (query.isBlank()) ShelfTabs(tab, onSelect = viewModel::selectTab)
         BrowseContent(
             state = state,
-            isQueryBlank = query.isBlank(),
+            emptyShelf = { EmptyShelf(tab, isQueryBlank = query.isBlank(), onRetry = viewModel::retry) },
             libraryIds = libraryBookIds.keys,
             onOpenBook = onOpenBook,
+            onOpenSeries = { series ->
+                selectedLibraryId?.let { libraryId -> onOpenSeries(CatalogSeries(series.id, series.name, sequence = null, libraryId)) }
+            },
             onRetry = viewModel::retry,
+            onLoadMore = viewModel::loadMore,
+            booksHeader = { SortPicker(sort, onSelect = viewModel::selectSort) },
         )
     }
 }
@@ -151,10 +163,13 @@ private fun Browse(viewModel: AudiobookshelfViewModel, onOpenBook: (LibriVoxBook
 @Composable
 private fun BrowseContent(
     state: AudiobookshelfBrowseState,
-    isQueryBlank: Boolean,
+    emptyShelf: @Composable () -> Unit,
     libraryIds: Set<String>,
     onOpenBook: (LibriVoxBook) -> Unit,
+    onOpenSeries: (AudiobookshelfSeries) -> Unit,
     onRetry: () -> Unit,
+    onLoadMore: () -> Unit,
+    booksHeader: @Composable () -> Unit,
 ) {
     when (val current = state) {
         AudiobookshelfBrowseState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -178,22 +193,40 @@ private fun BrowseContent(
             body = stringResource(R.string.audiobookshelf_no_libraries_body),
             onRetry = onRetry,
         )
-        AudiobookshelfBrowseState.NoResults -> if (isQueryBlank) {
-            StateMessage(
-                icon = Icons.Outlined.LibraryBooks,
-                title = stringResource(R.string.audiobookshelf_empty_library_title),
-                body = stringResource(R.string.audiobookshelf_empty_library_body),
-                onRetry = onRetry,
-            )
-        } else {
-            StateMessage(
-                icon = Icons.Outlined.SearchOff,
-                title = stringResource(R.string.librivox_no_results_title),
-                body = stringResource(R.string.audiobookshelf_no_results_body),
-            )
+        AudiobookshelfBrowseState.NoResults -> emptyShelf()
+        is AudiobookshelfBrowseState.Books -> PagedGrid(current.books, key = {
+            it.id
+        }, current.more, onLoadMore, header = booksHeader) { book ->
+            PopularCell(book, onClick = { onOpenBook(book) })
         }
-        is AudiobookshelfBrowseState.Recent -> CoverGrid(stringResource(R.string.audiobookshelf_recent), current.books, onOpenBook)
         is AudiobookshelfBrowseState.Results -> ResultsList(current.books, libraryIds, onOpenBook)
+        is AudiobookshelfBrowseState.Series -> PagedGrid(current.series, key = { it.id }, current.more, onLoadMore) { series ->
+            SeriesCell(series, onClick = { onOpenSeries(series) })
+        }
+    }
+}
+
+/** Nothing to show: an empty library, no series in it, or no match for the search. */
+@Composable
+private fun EmptyShelf(tab: AudiobookshelfTab, isQueryBlank: Boolean, onRetry: () -> Unit) {
+    when {
+        !isQueryBlank -> StateMessage(
+            icon = Icons.Outlined.SearchOff,
+            title = stringResource(R.string.librivox_no_results_title),
+            body = stringResource(R.string.audiobookshelf_no_results_body),
+        )
+        tab == AudiobookshelfTab.SERIES -> StateMessage(
+            icon = Icons.Outlined.LibraryBooks,
+            title = stringResource(R.string.audiobookshelf_no_series_title),
+            body = stringResource(R.string.audiobookshelf_no_series_body),
+            onRetry = onRetry,
+        )
+        else -> StateMessage(
+            icon = Icons.Outlined.LibraryBooks,
+            title = stringResource(R.string.audiobookshelf_empty_library_title),
+            body = stringResource(R.string.audiobookshelf_empty_library_body),
+            onRetry = onRetry,
+        )
     }
 }
 

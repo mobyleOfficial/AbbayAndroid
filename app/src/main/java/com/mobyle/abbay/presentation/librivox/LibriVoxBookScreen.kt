@@ -4,6 +4,7 @@ import android.text.format.Formatter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -59,6 +60,7 @@ import com.mobyle.abbay.presentation.common.widgets.AbbayDropdownMenu
 import com.mobyle.abbay.presentation.common.widgets.AbbayMenuItem
 import com.mobyle.abbay.presentation.common.widgets.AbbayScreen
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
+import com.model.CatalogSeries
 import com.model.LibriVoxDownload
 import com.model.LibriVoxDownloadMode
 import com.model.LibriVoxSection
@@ -86,6 +88,7 @@ fun CatalogBookScreen(
     credit: String,
     onListen: (bookId: String) -> Unit,
     close: () -> Unit,
+    onOpenSeries: ((CatalogSeries) -> Unit)? = null,
 ) {
     val state by viewModel.state.collectAsState()
     val libraryBookId by viewModel.libraryBookId.collectAsState()
@@ -120,7 +123,7 @@ fun CatalogBookScreen(
             }
         },
     ) {
-        BookPage(state, action, download, listState, viewModel, credit)
+        BookPage(state, action, download, listState, viewModel, credit, onOpenSeries)
     }
 
     cellularPromptBytes?.let { bytes -> CellularDownloadDialog(bytes, onAnswer = viewModel::answerCellularPrompt) }
@@ -146,6 +149,7 @@ private fun BookPage(
     listState: LazyListState,
     viewModel: CatalogBookViewModel,
     credit: String,
+    onOpenSeries: ((CatalogSeries) -> Unit)?,
 ) {
     val book = state.book
     val tint = rememberCoverTint(book.coverUrl)
@@ -156,7 +160,13 @@ private fun BookPage(
             .fillMaxSize()
             .background(Brush.verticalGradient(0f to tint, HERO_FADE to MaterialTheme.colorScheme.primary)),
     ) {
-        item { Hero(book, isPlaceholder = state !is LibriVoxBookState.Loaded) }
+        item {
+            Column {
+                Hero(book, isPlaceholder = state !is LibriVoxBookState.Loaded)
+                val series = book.series?.takeIf { it.id.isNotBlank() }
+                if (series != null && onOpenSeries != null) SeriesLink(series, onClick = { onOpenSeries(series) })
+            }
+        }
         item {
             ActionButton(
                 action,

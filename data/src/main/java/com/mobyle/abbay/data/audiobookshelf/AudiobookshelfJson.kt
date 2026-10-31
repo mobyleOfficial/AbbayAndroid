@@ -92,7 +92,7 @@ object AudiobookshelfJson {
         }
     }
 
-    private fun lightBook(item: JsonObject, coverUrlOf: (String) -> String): LibriVoxBook? {
+    internal fun lightBook(item: JsonObject, coverUrlOf: (String) -> String): LibriVoxBook? {
         val media = item.objectAt("media")?.takeIf { isPlayableBook(item, it) } ?: return null
         val metadata = media.objectAt("metadata") ?: return null
         val id = item.string("id") ?: return null
@@ -105,6 +105,7 @@ object AudiobookshelfJson {
             coverUrl = coverUrlOf(id),
             language = metadata.string("language").orEmpty(),
             durationMs = media.millis("duration") ?: 0L,
+            series = AudiobookshelfSeriesJson.seriesOf(item, metadata),
         )
     }
 

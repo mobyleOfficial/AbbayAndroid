@@ -61,7 +61,7 @@ import com.model.AudiobookshelfAccount
 import com.model.AudiobookshelfSignInError
 
 @Composable
-internal fun SignInForm(account: AudiobookshelfAccount?, viewModel: AudiobookshelfViewModel) {
+internal fun SignInForm(account: AudiobookshelfAccount?, viewModel: AudiobookshelfSignInViewModel) {
     val isSigningIn by viewModel.isSigningIn.collectAsState()
     val error by viewModel.signInError.collectAsState()
     var server by rememberSaveable { mutableStateOf(account?.serverUrl.orEmpty()) }

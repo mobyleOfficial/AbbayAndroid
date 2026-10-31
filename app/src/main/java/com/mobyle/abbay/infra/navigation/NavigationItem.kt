@@ -3,9 +3,11 @@ package com.mobyle.abbay.infra.navigation
 import android.net.Uri
 import com.library.FolderLocation
 import com.mobyle.abbay.presentation.audiobookshelf.AudiobookshelfBookViewModel
+import com.mobyle.abbay.presentation.audiobookshelf.AudiobookshelfSeriesViewModel
 import com.mobyle.abbay.presentation.folders.FolderViewModel
 import com.mobyle.abbay.presentation.librivox.LibriVoxBookViewModel
 import com.mobyle.abbay.presentation.librivox.LibriVoxSearchViewModel
+import com.model.CatalogSeries
 import com.model.LibriVoxBook
 
 enum class Screen {
@@ -28,6 +30,7 @@ enum class Screen {
     LIBRIVOX_BOOK,
     AUDIOBOOKSHELF,
     AUDIOBOOKSHELF_BOOK,
+    AUDIOBOOKSHELF_SERIES,
 }
 
 sealed class NavigationItem(val route: String) {
@@ -74,6 +77,15 @@ sealed class NavigationItem(val route: String) {
         fun routeFor(book: LibriVoxBook) = "${Screen.AUDIOBOOKSHELF_BOOK.name}/${Uri.encode(book.id)}" +
             "?${AudiobookshelfBookViewModel.TITLE_ARGUMENT}=${Uri.encode(book.title)}" +
             "&${AudiobookshelfBookViewModel.AUTHORS_ARGUMENT}=${Uri.encode(book.authors)}"
+    }
+    data object AudiobookshelfSeriesPage : NavigationItem(
+        "${Screen.AUDIOBOOKSHELF_SERIES.name}/{${AudiobookshelfSeriesViewModel.LIBRARY_ARGUMENT}}" +
+            "/{${AudiobookshelfSeriesViewModel.SERIES_ARGUMENT}}" +
+            "?${AudiobookshelfSeriesViewModel.NAME_ARGUMENT}={${AudiobookshelfSeriesViewModel.NAME_ARGUMENT}}",
+    ) {
+        fun routeFor(series: CatalogSeries) = "${Screen.AUDIOBOOKSHELF_SERIES.name}/${Uri.encode(series.libraryId)}" +
+            "/${Uri.encode(series.id)}" +
+            "?${AudiobookshelfSeriesViewModel.NAME_ARGUMENT}=${Uri.encode(series.name)}"
     }
     data object Folders : NavigationItem(
         "${Screen.FOLDERS.name}?${FolderViewModel.KIND_ARGUMENT}={${FolderViewModel.KIND_ARGUMENT}}" +
