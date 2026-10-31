@@ -631,4 +631,32 @@
     <string name="librivox_remove_download_confirm">Remove</string>
     <string name="librivox_listen_without_download">Listen without downloading</string>
     <string name="librivox_streaming_only_badge">Streaming only</string>
+    <string name="audiobookshelf_title" translatable="false">Audiobookshelf</string>
+    <string name="audiobookshelf_add_menu">My Audiobookshelf server</string>
+    <string name="audiobookshelf_sign_in_title">Connect to your server</string>
+    <string name="audiobookshelf_sign_in_body">Listen to the books on your own Audiobookshelf server, over the internet or downloaded.</string>
+    <string name="audiobookshelf_session_ended">Your session on this server ended. Sign in again.</string>
+    <string name="audiobookshelf_server">Server address</string>
+    <string name="audiobookshelf_server_hint">audiobooks.example.com</string>
+    <string name="audiobookshelf_username">Username</string>
+    <string name="audiobookshelf_password">Password</string>
+    <string name="audiobookshelf_show_password">Show password</string>
+    <string name="audiobookshelf_hide_password">Hide password</string>
+    <string name="audiobookshelf_sign_in">Connect</string>
+    <string name="audiobookshelf_error_address">Check the server address and the username.</string>
+    <string name="audiobookshelf_error_unreachable">Couldn\'t reach the server. Check the address and your connection.</string>
+    <string name="audiobookshelf_error_not_server">No Audiobookshelf server answered at this address.</string>
+    <string name="audiobookshelf_error_credentials">Wrong username or password.</string>
+    <string name="audiobookshelf_signed_in_as">%1$s on %2$s</string>
+    <string name="audiobookshelf_sign_out">Sign out</string>
+    <string name="audiobookshelf_search_hint">Search this library</string>
+    <string name="audiobookshelf_recent">Recently added</string>
+    <string name="audiobookshelf_offline_body">Connect to the internet to browse your server.</string>
+    <string name="audiobookshelf_failed_title">The server didn\'t answer</string>
+    <string name="audiobookshelf_no_libraries_title">No audiobook libraries</string>
+    <string name="audiobookshelf_no_libraries_body">This server has no book library you can open.</string>
+    <string name="audiobookshelf_empty_library_title">No audiobooks here yet</string>
+    <string name="audiobookshelf_empty_library_body">Books added to this library on the server show up here.</string>
+    <string name="audiobookshelf_no_results_body">Try the title, the author or fewer words.</string>
+    <string name="audiobookshelf_credit">From your Audiobookshelf server, %1$s.</string>
 </resources>

@@ -61,10 +61,29 @@ import com.mobyle.abbay.presentation.common.widgets.AbbayScreen
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
 import com.model.LibriVoxDownload
 import com.model.LibriVoxDownloadMode
+import com.model.LibriVoxSection
 
 @Composable
 fun LibriVoxBookScreen(
     viewModel: LibriVoxBookViewModel = hiltViewModel(),
+    onListen: (bookId: String) -> Unit,
+    close: () -> Unit,
+) {
+    CatalogBookScreen(
+        viewModel = viewModel,
+        title = stringResource(R.string.librivox_title),
+        credit = stringResource(R.string.librivox_credit),
+        onListen = onListen,
+        close = close,
+    )
+}
+
+/** The page of a book from an online catalog: its cover, download or stream, and chapters. */
+@Composable
+fun CatalogBookScreen(
+    viewModel: CatalogBookViewModel,
+    title: String,
+    credit: String,
     onListen: (bookId: String) -> Unit,
     close: () -> Unit,
 ) {
@@ -91,7 +110,7 @@ fun LibriVoxBookScreen(
     )
 
     AbbayScreen(
-        title = stringResource(R.string.librivox_title),
+        title = title,
         onClose = close,
         scaffoldState = scaffoldState,
         actions = {
@@ -101,7 +120,7 @@ fun LibriVoxBookScreen(
             }
         },
     ) {
-        BookPage(state, action, download, listState, viewModel)
+        BookPage(state, action, download, listState, viewModel, credit)
     }
 
     cellularPromptBytes?.let { bytes -> CellularDownloadDialog(bytes, onAnswer = viewModel::answerCellularPrompt) }
@@ -125,7 +144,8 @@ private fun BookPage(
     action: PrimaryAction,
     download: LibriVoxDownload?,
     listState: LazyListState,
-    viewModel: LibriVoxBookViewModel,
+    viewModel: CatalogBookViewModel,
+    credit: String,
 ) {
     val book = state.book
     val tint = rememberCoverTint(book.coverUrl)
@@ -156,7 +176,7 @@ private fun BookPage(
                 onRetry = viewModel::resumeDownload,
             )
         }
-        item { Credit() }
+        item { Credit(credit) }
     }
 }
 
@@ -169,6 +189,20 @@ private fun LazyListScope.placeholderContent() {
 private fun LazyListScope.loadedContent(state: LibriVoxBookState.Loaded, download: LibriVoxDownload?, onRetry: () -> Unit) {
     item { if (state.isAwaitingTitles) DescriptionPlaceholder() else Description(state.book.description) }
     item { SectionHeading() }
+    val chapters = state.book.chapters
+    if (chapters.size > state.book.sections.size) {
+        // A file holds several chapters: list those; the download shows in the summary above.
+        itemsIndexed(chapters) { index, chapter ->
+            ChapterRow(
+                index = index,
+                section = LibriVoxSection(chapter.title, chapter.endMs - chapter.startMs, listenUrl = "", sizeBytes = 0L),
+                download = null,
+                isTitleLoading = false,
+                onRetry = onRetry,
+            )
+        }
+        return
+    }
     itemsIndexed(state.book.sections) { index, section ->
         ChapterRow(
             index = index,
@@ -181,9 +215,9 @@ private fun LazyListScope.loadedContent(state: LibriVoxBookState.Loaded, downloa
 }
 
 @Composable
-private fun Credit() {
+private fun Credit(text: String) {
     Text(
-        stringResource(R.string.librivox_credit),
+        text,
         style = MaterialTheme.typography.bodySmall,
         color = AbbayColors.content.copy(alpha = SECONDARY_ALPHA),
         textAlign = TextAlign.Center,

@@ -64,6 +64,7 @@ import com.model.Book
 import com.player.NowPlayingPublisher
 import com.player.PlaybackIntents
 import com.player.SleepTimerState
+import com.repository.RemoteMediaAuth
 import com.settings.AppSettings
 import com.settings.HeadsetLongPressAction
 import com.settings.NotificationSkipButtons
@@ -175,6 +176,9 @@ class PlaybackService : MediaLibraryService() {
     @Inject
     lateinit var addToQueue: AddToQueue
 
+    @Inject
+    lateinit var remoteMediaAuth: RemoteMediaAuth
+
     private lateinit var widgetFeed: WidgetFeed
 
     private val autoLibrary by lazy { AutoLibrary(this, observeBooks, observeBookmarks, getLastBook) }
@@ -191,7 +195,7 @@ class PlaybackService : MediaLibraryService() {
         observeSettings()
 
         val effectsState = EffectsState()
-        exoPlayer = AudiobookExoPlayer.build(this, effectsState, audioRoute)
+        exoPlayer = AudiobookExoPlayer.build(this, effectsState, audioRoute, remoteMediaAuth)
         createLibraryExtras(effectsState)
         commands = PlaybackCommandHandler(
             player = activePlaylist,

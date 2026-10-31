@@ -5,6 +5,9 @@ import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.ResolvingDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.audio.AudioSink
@@ -18,10 +21,16 @@ import com.mobyle.abbay.presentation.playback.effects.TrackTimeAudioSink
 import com.mobyle.abbay.presentation.playback.remote.AudioRoute
 import com.mobyle.abbay.presentation.playback.remote.RoutingAudioSink
 import com.mobyle.abbay.presentation.playback.remote.StreamingAudioSink
+import com.repository.RemoteMediaAuth
 
 @OptIn(UnstableApi::class)
 object AudiobookExoPlayer {
-    fun build(context: Context, effects: EffectsState, route: AudioRoute = AudioRoute()): ExoPlayer {
+    fun build(
+        context: Context,
+        effects: EffectsState,
+        route: AudioRoute = AudioRoute(),
+        remoteMediaAuth: RemoteMediaAuth = RemoteMediaAuth { emptyMap() },
+    ): ExoPlayer {
         val extractorsFactory = DefaultExtractorsFactory()
             .setConstantBitrateSeekingEnabled(true)
             .setMp3ExtractorFlags(Mp3Extractor.FLAG_ENABLE_INDEX_SEEKING)
@@ -33,12 +42,20 @@ object AudiobookExoPlayer {
         val renderersFactory = EffectsRenderersFactory(context, effects, route).setEnableAudioTrackPlaybackParams(true)
 
         return ExoPlayer.Builder(context, renderersFactory)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(context, extractorsFactory))
+            .setMediaSourceFactory(DefaultMediaSourceFactory(authorizedDataSource(context, remoteMediaAuth), extractorsFactory))
             .setAudioAttributes(audioAttributes, true)
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
     }
+
+    /** Streams from a signed-in server (Audiobookshelf) carry its token; files and other urls are left as they are. */
+    private fun authorizedDataSource(context: Context, auth: RemoteMediaAuth): DataSource.Factory =
+        ResolvingDataSource.Factory(DefaultDataSource.Factory(context)) { dataSpec ->
+            val scheme = dataSpec.uri.scheme
+            val headers = if (scheme == "http" || scheme == "https") auth.headersFor(dataSpec.uri.toString()) else emptyMap()
+            if (headers.isEmpty()) dataSpec else dataSpec.withAdditionalHeaders(headers)
+        }
 }
 
 @OptIn(UnstableApi::class)

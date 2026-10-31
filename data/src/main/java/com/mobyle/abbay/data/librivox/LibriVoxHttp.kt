@@ -14,10 +14,40 @@ import javax.inject.Singleton
 
 class HttpStatusException(val status: Int) : IOException("HTTP $status")
 
+/**
+ * Which hosts a request may reach, redirects included, and the headers it carries there. The headers go only to
+ * allowed hosts, so a token never follows a redirect elsewhere.
+ */
+interface HostAccess {
+    val headers: Map<String, String> get() = emptyMap()
+
+    fun isAllowed(url: URL): Boolean
+
+    /** The public catalogs: LibriVox and the Internet Archive, over https. */
+    object Catalog : HostAccess {
+        override fun isAllowed(url: URL) = LibriVoxHttp.isAllowed(url)
+    }
+}
+
+/** The same hosts, with [extra] headers too. */
+fun HostAccess.withHeaders(extra: Map<String, String>): HostAccess {
+    val base = this
+    return object : HostAccess {
+        override val headers = base.headers + extra
+
+        override fun isAllowed(url: URL) = base.isAllowed(url)
+    }
+}
+
 @Singleton
 class LibriVoxHttp @Inject constructor() {
-    fun getText(url: String, query: Map<String, String> = emptyMap(), timeoutMs: Int = DEFAULT_TIMEOUT_MS): String {
-        val connection = connect(withQuery(url, query), timeoutMs)
+    fun getText(
+        url: String,
+        query: Map<String, String> = emptyMap(),
+        timeoutMs: Int = DEFAULT_TIMEOUT_MS,
+        access: HostAccess = HostAccess.Catalog,
+    ): String {
+        val connection = connect(withQuery(url, query), timeoutMs, access)
         try {
             checkedStatus(connection)
             return connection.inputStream.bufferedReader().use { it.readText() }
@@ -26,8 +56,31 @@ class LibriVoxHttp @Inject constructor() {
         }
     }
 
-    fun getBytes(url: String, maxBytes: Int): ByteArray {
-        val connection = connect(url, DEFAULT_TIMEOUT_MS)
+    /** Posts [json] to [url] without following redirects: a redirected post would lose its body. */
+    fun postJson(url: String, json: String, access: HostAccess, timeoutMs: Int = DEFAULT_TIMEOUT_MS): String {
+        val target = URL(url)
+        if (!access.isAllowed(target)) throw IOException("Host not allowed: ${target.host}")
+        val connection = (target.openConnection() as HttpURLConnection).apply {
+            connectTimeout = timeoutMs
+            readTimeout = timeoutMs
+            instanceFollowRedirects = false
+            requestMethod = "POST"
+            doOutput = true
+            setRequestProperty("Accept", "application/json")
+            setRequestProperty("Content-Type", "application/json; charset=utf-8")
+            access.headers.forEach { (name, value) -> setRequestProperty(name, value) }
+        }
+        try {
+            connection.outputStream.use { it.write(json.toByteArray(Charsets.UTF_8)) }
+            checkedStatus(connection)
+            return connection.inputStream.bufferedReader().use { it.readText() }
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    fun getBytes(url: String, maxBytes: Int, access: HostAccess = HostAccess.Catalog): ByteArray {
+        val connection = connect(url, DEFAULT_TIMEOUT_MS, access)
         try {
             checkedStatus(connection)
             val bytes = connection.inputStream.use { it.readAtMost(maxBytes + 1) }
@@ -38,11 +91,17 @@ class LibriVoxHttp @Inject constructor() {
         }
     }
 
-    fun download(url: String, destination: File, isStopped: () -> Boolean, onProgress: (received: Long, total: Long) -> Unit) {
+    fun download(
+        url: String,
+        destination: File,
+        isStopped: () -> Boolean,
+        access: HostAccess = HostAccess.Catalog,
+        onProgress: (received: Long, total: Long) -> Unit,
+    ) {
         val partial = File(destination.parentFile, destination.name + PARTIAL_SUFFIX)
         val alreadyReceived = if (partial.exists()) partial.length() else 0L
         val headers = if (alreadyReceived > 0) mapOf("Range" to "bytes=$alreadyReceived-") else emptyMap()
-        val connection = connect(url, DOWNLOAD_TIMEOUT_MS, headers)
+        val connection = connect(url, DOWNLOAD_TIMEOUT_MS, access, headers)
         try {
             val isResumed = checkedStatus(connection) == HttpURLConnection.HTTP_PARTIAL
             val offset = if (isResumed) alreadyReceived else 0L
@@ -85,16 +144,21 @@ class LibriVoxHttp @Inject constructor() {
         return status
     }
 
-    private fun connect(url: String, timeoutMs: Int, headers: Map<String, String> = emptyMap()): HttpURLConnection {
+    private fun connect(
+        url: String,
+        timeoutMs: Int,
+        access: HostAccess,
+        headers: Map<String, String> = emptyMap(),
+    ): HttpURLConnection {
         var target = URL(url)
         repeat(MAX_REDIRECTS) {
-            if (!isAllowed(target)) throw IOException("Host not allowed: ${target.host}")
+            if (!access.isAllowed(target)) throw IOException("Host not allowed: ${target.host}")
             val connection = (target.openConnection() as HttpURLConnection).apply {
                 connectTimeout = timeoutMs
                 readTimeout = timeoutMs
                 instanceFollowRedirects = false
                 setRequestProperty("Accept", "application/json, */*")
-                headers.forEach { (name, value) -> setRequestProperty(name, value) }
+                (access.headers + headers).forEach { (name, value) -> setRequestProperty(name, value) }
             }
             val location = connection.getHeaderField("Location")
             if (connection.responseCode !in REDIRECTS || location == null) return connection

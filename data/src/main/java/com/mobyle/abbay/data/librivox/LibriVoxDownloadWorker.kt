@@ -11,6 +11,8 @@ import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import com.mobyle.abbay.data.R
+import com.mobyle.abbay.data.audiobookshelf.AudiobookshelfAuth
+import com.mobyle.abbay.data.audiobookshelf.AudiobookshelfUrls
 import com.mobyle.abbay.data.database.dao.BookWithDetails
 import com.mobyle.abbay.data.database.dao.LibraryDao
 import com.mobyle.abbay.data.database.entity.TrackEntity
@@ -31,6 +33,7 @@ class LibriVoxDownloadWorker @AssistedInject constructor(
     private val http: LibriVoxHttp,
     private val files: LibriVoxFiles,
     private val tracker: LibriVoxDownloadTracker,
+    private val audiobookshelf: AudiobookshelfAuth,
 ) : CoroutineWorker(context, parameters) {
     private var lastNotificationAt = 0L
 
@@ -66,32 +69,55 @@ class LibriVoxDownloadWorker @AssistedInject constructor(
         }
     }
 
+    private enum class Attempt { DONE, RETRY, GIVE_UP }
+
     private suspend fun downloadWithRetries(bookId: Long, librivoxId: String, track: TrackEntity, onFraction: (Float) -> Unit): Boolean {
         val remoteUrl = track.remoteUrl ?: return false
         val destination = files.fileFor(librivoxId, remoteUrl) ?: return false.also { tracker.failed(bookId, track.id) }
         tracker.downloading(bookId, track.id, 0f)
-        var reportedFraction = 0f
-        for (attempt in 0 until ATTEMPTS_PER_CHAPTER) {
-            val result = runCatching {
-                destination.parentFile?.mkdirs()
-                if (!destination.exists()) {
-                    http.download(remoteUrl, destination, isStopped = { isStopped }) { received, total ->
-                        val fraction = if (total > 0) received.toFloat() / total else expectedFraction(received, track.sizeBytes)
-                        if (fraction - reportedFraction >= PROGRESS_STEP) {
-                            reportedFraction = fraction
-                            tracker.downloading(bookId, track.id, fraction)
-                            onFraction(fraction)
-                        }
-                    }
-                }
-            }
-            if (result.isSuccess) return keep(bookId, track, destination)
-            val isTransient = result.exceptionOrNull() is IOException
-            if (isStopped || !isTransient || attempt == ATTEMPTS_PER_CHAPTER - 1) break
-            delay(RETRY_DELAY_MS * (attempt + 1))
+        val progress = ChapterProgress(bookId, track, onFraction)
+        var retries = 0
+        var attempt = downloadOnce(librivoxId, remoteUrl, destination, progress)
+        while (attempt == Attempt.RETRY && !isStopped && ++retries < ATTEMPTS_PER_CHAPTER) {
+            delay(RETRY_DELAY_MS * retries)
+            attempt = downloadOnce(librivoxId, remoteUrl, destination, progress)
         }
+        if (attempt == Attempt.DONE) return keep(bookId, track, destination)
         if (isStopped) tracker.finished(bookId, track.id) else tracker.failed(bookId, track.id)
         return false
+    }
+
+    /** One try at a chapter. Audiobookshelf media carries the server's token, renewed once the server refuses it. */
+    private fun downloadOnce(librivoxId: String, remoteUrl: String, destination: File, progress: ChapterProgress): Attempt {
+        val isAudiobookshelf = AudiobookshelfUrls.isAudiobookshelf(librivoxId)
+        val access = (if (isAudiobookshelf) audiobookshelf.mediaAccess() else HostAccess.Catalog) ?: return Attempt.GIVE_UP
+        val failure = runCatching {
+            destination.parentFile?.mkdirs()
+            if (!destination.exists()) {
+                http.download(remoteUrl, destination, isStopped = {
+                    isStopped
+                }, access = access, onProgress = progress::report)
+            }
+        }.exceptionOrNull()
+        val isRejected = isAudiobookshelf && (failure as? HttpStatusException)?.status == AudiobookshelfAuth.HTTP_UNAUTHORIZED
+        return when {
+            failure == null -> Attempt.DONE
+            isRejected && !audiobookshelf.renew(access) -> Attempt.GIVE_UP
+            failure is IOException -> Attempt.RETRY
+            else -> Attempt.GIVE_UP
+        }
+    }
+
+    private inner class ChapterProgress(private val bookId: Long, private val track: TrackEntity, private val onFraction: (Float) -> Unit) {
+        private var reported = 0f
+
+        fun report(received: Long, total: Long) {
+            val fraction = if (total > 0) received.toFloat() / total else expectedFraction(received, track.sizeBytes)
+            if (fraction - reported < PROGRESS_STEP) return
+            reported = fraction
+            tracker.downloading(bookId, track.id, fraction)
+            onFraction(fraction)
+        }
     }
 
     private suspend fun keep(bookId: Long, track: TrackEntity, destination: File): Boolean {

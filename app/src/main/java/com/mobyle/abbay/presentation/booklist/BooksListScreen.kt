@@ -352,6 +352,7 @@ fun BooksListScreen(
                                 more = LibraryMenu(
                                     onSearch = navigateTo.search,
                                     onLibriVox = navigateTo.librivox,
+                                    onAudiobookshelf = navigateTo.audiobookshelf,
                                     onQueue = navigateTo.queue,
                                     onFolders = { navigateTo.folders(FolderLocation.TOP) },
                                     onStatistics = navigateTo.statistics,

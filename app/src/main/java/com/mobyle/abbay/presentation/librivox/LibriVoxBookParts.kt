@@ -94,9 +94,10 @@ internal fun Hero(book: LibriVoxBook, isPlaceholder: Boolean) {
 @Composable
 private fun metadataLine(book: LibriVoxBook): String {
     val context = LocalContext.current
+    val chapterCount = maxOf(book.sections.size, book.chapters.size)
     return listOfNotNull(
         book.durationMs.takeIf { it > 0 }?.let { listeningTime(it) },
-        pluralStringResource(R.plurals.librivox_chapter_count, book.sections.size, book.sections.size),
+        pluralStringResource(R.plurals.librivox_chapter_count, chapterCount, chapterCount),
         book.totalBytes.takeIf { it > 0 }?.let { Formatter.formatShortFileSize(context, it) },
         languageName(book.language, Locale.getDefault()),
     ).joinToString(" · ")

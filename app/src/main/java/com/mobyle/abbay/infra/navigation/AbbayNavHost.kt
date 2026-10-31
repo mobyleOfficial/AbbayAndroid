@@ -18,6 +18,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.library.FolderLocation
 import com.mobyle.abbay.presentation.about.LicensesScreen
+import com.mobyle.abbay.presentation.audiobookshelf.AudiobookshelfBookScreen
+import com.mobyle.abbay.presentation.audiobookshelf.AudiobookshelfBookViewModel
+import com.mobyle.abbay.presentation.audiobookshelf.AudiobookshelfScreen
 import com.mobyle.abbay.presentation.bookdetails.BookDetailsScreen
 import com.mobyle.abbay.presentation.booklist.AdaptiveLibraryShell
 import com.mobyle.abbay.presentation.booklist.BooksListScreen
@@ -79,6 +82,7 @@ private fun playerDependencies(
         queue = { navController.navigate(NavigationItem.Queue.route) },
         search = { navController.navigate(NavigationItem.Search.route) },
         librivox = { navController.navigate(NavigationItem.LibriVox.routeFor()) },
+        audiobookshelf = { navController.navigate(NavigationItem.Audiobookshelf.route) },
         folders = { location -> navController.navigate(NavigationItem.Folders.routeFor(location)) },
         statistics = { navController.navigate(NavigationItem.Statistics.route) },
         bookStatistics = { bookId -> navController.navigate(NavigationItem.BookStatistics.routeFor(bookId)) },
@@ -153,7 +157,7 @@ private fun AbbayScreens(
 
         libraryExtras(viewModel, host, navController)
 
-        libriVoxScreens(viewModel, host, navController)
+        catalogScreens(viewModel, host, navController)
 
         modal(NavigationItem.BookDetails.route) {
             BookDetailsScreen(
@@ -279,7 +283,8 @@ private fun NavGraphBuilder.libraryExtras(viewModel: BooksListViewModel, host: L
     }
 }
 
-private fun NavGraphBuilder.libriVoxScreens(viewModel: BooksListViewModel, host: LibraryPlayerHost, navController: NavHostController) {
+/** The online catalogs: LibriVox, and the user's Audiobookshelf server. */
+private fun NavGraphBuilder.catalogScreens(viewModel: BooksListViewModel, host: LibraryPlayerHost, navController: NavHostController) {
     // A grid of covers: wider shows more of them.
     modal(NavigationItem.LibriVox.route, arguments = optionalStrings(LibriVoxSearchViewModel.QUERY_ARGUMENT), isReadableWidth = false) {
         LibriVoxSearchScreen(
@@ -290,6 +295,20 @@ private fun NavGraphBuilder.libriVoxScreens(viewModel: BooksListViewModel, host:
 
     modal(NavigationItem.LibriVoxBookPage.route, arguments = LIBRIVOX_BOOK_ARGUMENTS) {
         LibriVoxBookScreen(
+            onListen = { bookId -> play(bookId, viewModel, host, navController) },
+            close = { navController.popBackStack() },
+        )
+    }
+
+    modal(NavigationItem.Audiobookshelf.route, isReadableWidth = false) {
+        AudiobookshelfScreen(
+            onOpenBook = { book -> navController.navigate(NavigationItem.AudiobookshelfBookPage.routeFor(book)) },
+            close = { navController.popBackStack() },
+        )
+    }
+
+    modal(NavigationItem.AudiobookshelfBookPage.route, arguments = AUDIOBOOKSHELF_BOOK_ARGUMENTS) {
+        AudiobookshelfBookScreen(
             onListen = { bookId -> play(bookId, viewModel, host, navController) },
             close = { navController.popBackStack() },
         )
@@ -306,6 +325,7 @@ class LibraryDestinations(
     val queue: () -> Unit = {},
     val search: () -> Unit = {},
     val librivox: () -> Unit = {},
+    val audiobookshelf: () -> Unit = {},
     val folders: (FolderLocation) -> Unit = {},
     val statistics: () -> Unit = {},
     val bookStatistics: (bookId: String) -> Unit = {},
@@ -349,5 +369,9 @@ private fun optionalStrings(vararg names: String): List<NamedNavArgument> = name
 
 private val LIBRIVOX_BOOK_ARGUMENTS = listOf(navArgument(LibriVoxBookViewModel.ID_ARGUMENT) { type = NavType.StringType }) +
     optionalStrings(LibriVoxBookViewModel.TITLE_ARGUMENT, LibriVoxBookViewModel.AUTHORS_ARGUMENT, LibriVoxBookViewModel.CREATOR_ARGUMENT)
+
+private val AUDIOBOOKSHELF_BOOK_ARGUMENTS =
+    listOf(navArgument(AudiobookshelfBookViewModel.ID_ARGUMENT) { type = NavType.StringType }) +
+        optionalStrings(AudiobookshelfBookViewModel.TITLE_ARGUMENT, AudiobookshelfBookViewModel.AUTHORS_ARGUMENT)
 
 private val FOLDER_ARGUMENTS = listOf(FolderViewModel.KIND_ARGUMENT, FolderViewModel.ROOT_ARGUMENT, FolderViewModel.PATH_ARGUMENT)

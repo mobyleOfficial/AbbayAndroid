@@ -129,6 +129,12 @@ fun LibriVoxSearchScreen(
 
 @Composable
 private fun PopularGrid(books: List<LibriVoxBook>, onOpenBook: (LibriVoxBook) -> Unit) {
+    CoverGrid(stringResource(R.string.librivox_popular), books, onOpenBook)
+}
+
+/** Covers under a [heading]; wider windows show more of them. */
+@Composable
+internal fun CoverGrid(heading: String, books: List<LibriVoxBook>, onOpenBook: (LibriVoxBook) -> Unit) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = GRID_CELL_MIN_WIDTH),
         contentPadding = PaddingValues(start = 10.dp, end = 10.dp, bottom = 24.dp),
@@ -136,7 +142,7 @@ private fun PopularGrid(books: List<LibriVoxBook>, onOpenBook: (LibriVoxBook) ->
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             Text(
-                stringResource(R.string.librivox_popular),
+                heading,
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = AbbayColors.content,
                 modifier = Modifier
@@ -179,7 +185,7 @@ private fun PopularCell(book: LibriVoxBook, onClick: () -> Unit) {
 }
 
 @Composable
-private fun ResultsList(books: List<LibriVoxBook>, libraryIds: Set<String>, onOpenBook: (LibriVoxBook) -> Unit) {
+internal fun ResultsList(books: List<LibriVoxBook>, libraryIds: Set<String>, onOpenBook: (LibriVoxBook) -> Unit) {
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
         items(books, key = { it.id }) { book ->
             LibriVoxResultRow(book, isInLibrary = book.id in libraryIds, onClick = { onOpenBook(book) })
