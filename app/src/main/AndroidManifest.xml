@@ -25,6 +25,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Abbay"
+        android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <meta-data
             android:name="google_analytics_adid_collection_enabled"

@@ -4,6 +4,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.MoreVert
@@ -58,7 +59,8 @@ fun BookListTopBar(
                 AddContentButton(
                     openFolderSelector = openFolderSelector,
                     openFileSelector = openFileSelector,
-                    openLibriVox = more.onLibriVox
+                    openLibriVox = more.onLibriVox,
+                    openAudiobookshelf = more.onAudiobookshelf,
                 )
 
                 IconButton(onClick = { showMoreMenu = true }) {
@@ -86,7 +88,12 @@ fun BookListTopBar(
 }
 
 @Composable
-private fun AddContentButton(openFolderSelector: () -> Unit, openFileSelector: () -> Unit, openLibriVox: () -> Unit) {
+private fun AddContentButton(
+    openFolderSelector: () -> Unit,
+    openFileSelector: () -> Unit,
+    openLibriVox: () -> Unit,
+    openAudiobookshelf: () -> Unit,
+) {
     var showAddMenu by remember { mutableStateOf(false) }
 
     IconButton(onClick = { showAddMenu = true }) {
@@ -123,12 +130,22 @@ private fun AddContentButton(openFolderSelector: () -> Unit, openFileSelector: (
                 openLibriVox()
             }
         )
+
+        AbbayMenuItem(
+            text = stringResource(R.string.audiobookshelf_add_menu),
+            leadingIcon = Icons.Outlined.Dns,
+            onClick = {
+                showAddMenu = false
+                openAudiobookshelf()
+            }
+        )
     }
 }
 
 class LibraryMenu(
     val onSearch: () -> Unit = {},
     val onLibriVox: () -> Unit = {},
+    val onAudiobookshelf: () -> Unit = {},
     val onQueue: () -> Unit = {},
     val onFolders: () -> Unit = {},
     val onStatistics: () -> Unit = {},

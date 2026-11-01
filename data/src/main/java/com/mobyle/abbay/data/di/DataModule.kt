@@ -5,6 +5,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
+import com.mobyle.abbay.data.audiobookshelf.AudiobookshelfRepositoryImpl
+import com.mobyle.abbay.data.audiobookshelf.AudiobookshelfSession
 import com.mobyle.abbay.data.backup.BackupRepositoryImpl
 import com.mobyle.abbay.data.converter.ConverterRepositoryImpl
 import com.mobyle.abbay.data.effects.AudioEffectsRepositoryImpl
@@ -22,6 +24,7 @@ import com.mobyle.abbay.data.storage.DocumentTreeSource
 import com.mobyle.abbay.data.storage.SafDocumentTreeDataSource
 import com.mobyle.abbay.data.subtitles.SubtitleRepositoryImpl
 import com.repository.AudioEffectsRepository
+import com.repository.AudiobookshelfRepository
 import com.repository.BackupRepository
 import com.repository.CharacterRepository
 import com.repository.ConverterRepository
@@ -31,6 +34,7 @@ import com.repository.LibriVoxRepository
 import com.repository.ListeningRepository
 import com.repository.PlaybackOptionsRepository
 import com.repository.QueueRepository
+import com.repository.RemoteMediaAuth
 import com.repository.SettingsRepository
 import com.repository.StatisticsRepository
 import com.repository.SubtitleRepository
@@ -51,6 +55,12 @@ abstract class DataModule {
 
     @Binds
     abstract fun bindLibriVoxRepository(implementation: LibriVoxRepositoryImpl): LibriVoxRepository
+
+    @Binds
+    abstract fun bindAudiobookshelfRepository(implementation: AudiobookshelfRepositoryImpl): AudiobookshelfRepository
+
+    @Binds
+    abstract fun bindRemoteMediaAuth(implementation: AudiobookshelfSession): RemoteMediaAuth
 
     @Binds
     abstract fun bindListeningRepository(implementation: ListeningRepositoryImpl): ListeningRepository

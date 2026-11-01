@@ -1,5 +1,10 @@
 package com.model
 
+/**
+ * A book from an online catalog, before it is in the library: LibriVox, or an Audiobookshelf server. Each section is
+ * one audio file; [chapters] are the book's own chapters when the catalog knows them (a single-file book, say), and
+ * [series] the series it belongs to.
+ */
 data class LibriVoxBook(
     val id: String,
     val title: String,
@@ -10,6 +15,8 @@ data class LibriVoxBook(
     val language: String = "",
     val durationMs: Long = 0L,
     val sections: List<LibriVoxSection> = emptyList(),
+    val chapters: List<CatalogChapter> = emptyList(),
+    val series: CatalogSeries? = null,
 ) {
     val totalBytes: Long get() = sections.sumOf { it.sizeBytes }
 
@@ -20,6 +27,24 @@ data class LibriVoxBook(
     }
 }
 
-data class LibriVoxSection(val title: String, val durationMs: Long, val listenUrl: String, val sizeBytes: Long)
+data class LibriVoxSection(
+    val title: String,
+    val durationMs: Long,
+    val listenUrl: String,
+    val sizeBytes: Long,
+    /** The file's own name, when its url does not end with it. */
+    val fileName: String = "",
+)
+
+/**
+ * A series a catalog book belongs to, in the catalog [libraryId] that holds it; [sequence] is the book's place in it
+ * ("1", "2.5"), when known. A blank [id] names the series without a way to open it.
+ */
+data class CatalogSeries(val id: String, val name: String, val sequence: String?, val libraryId: String) {
+    /** The book's place as a number, to sort a series; books without one go last. */
+    val order: Double get() = sequence?.trim()?.toDoubleOrNull() ?: Double.MAX_VALUE
+}
+
+data class CatalogChapter(val title: String, val startMs: Long, val endMs: Long)
 
 data class LibriVoxDetails(val book: LibriVoxBook, val isAwaitingTitles: Boolean)
