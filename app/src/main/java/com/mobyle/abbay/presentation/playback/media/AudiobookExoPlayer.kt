@@ -14,7 +14,6 @@ import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.extractor.DefaultExtractorsFactory
-import androidx.media3.extractor.mp3.Mp3Extractor
 import com.mobyle.abbay.presentation.playback.effects.AudiobookAudioChain
 import com.mobyle.abbay.presentation.playback.effects.EffectsState
 import com.mobyle.abbay.presentation.playback.effects.TrackTimeAudioSink
@@ -31,9 +30,9 @@ object AudiobookExoPlayer {
         route: AudioRoute = AudioRoute(),
         remoteMediaAuth: RemoteMediaAuth = RemoteMediaAuth { emptyMap() },
     ): ExoPlayer {
-        val extractorsFactory = DefaultExtractorsFactory()
-            .setConstantBitrateSeekingEnabled(true)
-            .setMp3ExtractorFlags(Mp3Extractor.FLAG_ENABLE_INDEX_SEEKING)
+        // No MP3 index seeking (D-022): it ignores the file's Xing/VBRI seek table and reads the whole file up to
+        // the saved position before the first sound, which takes seconds deep into a long single-file book.
+        val extractorsFactory = DefaultExtractorsFactory().setConstantBitrateSeekingEnabled(true)
         val audioAttributes = AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)
             .setContentType(C.AUDIO_CONTENT_TYPE_SPEECH)
