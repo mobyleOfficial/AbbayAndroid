@@ -99,6 +99,22 @@ class ReadAlongSessionTest {
 
         override suspend fun audioSource(book: Book) =
             ReadAlongAudioSource(listOf(ReadAlongAudioSource.Segment(segmentUri, 0, book.duration)), isDownloadable)
+
+        var bookText: ReadAlongBookText? = null
+
+        override suspend fun bookText(book: Book): ReadAlongBookText? = bookText
+
+        override suspend fun epub(book: Book): ReadAlongEpub? = null
+
+        override suspend fun chooseEpub(bookId: String, uri: String?) = true
+
+        val introSeen = mutableSetOf<String>()
+
+        override suspend fun isIntroSeen(bookId: String) = bookId in introSeen
+
+        override suspend fun setIntroSeen(bookId: String, seen: Boolean) {
+            if (seen) introSeen += bookId else introSeen -= bookId
+        }
     }
 
     private val transcriber = FakeTranscriber()
@@ -311,6 +327,31 @@ class ReadAlongSessionTest {
         runCurrent()
 
         assertEquals("pt-BR", repository.languages["book"])
+    }
+
+    @Test
+    fun `without a stored language the one the book's EPUB declares wins over detection`() = runTest {
+        repository.languages.clear()
+        repository.bookText = ReadAlongBookText.of("pt-PT", listOf("Era uma vez"))
+        val session = session(appLanguage = "en-US")
+
+        session.show(book, 0)
+        runCurrent()
+
+        assertEquals("pt-BR", repository.languages["book"])
+        assertEquals("pt-BR", session.snapshot.value.language)
+    }
+
+    @Test
+    fun `an EPUB in a language without a model leaves the language to detection`() = runTest {
+        repository.languages.clear()
+        repository.bookText = ReadAlongBookText.of("ja", listOf("むかしむかし"))
+        val session = session()
+
+        session.show(book, 0)
+        runCurrent()
+
+        assertEquals("en-US", repository.languages["book"])
     }
 
     @Test

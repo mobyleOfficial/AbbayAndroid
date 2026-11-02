@@ -2,6 +2,8 @@ package com.mobyle.abbay.fakes
 
 import com.model.Book
 import com.readalong.ReadAlongAudioSource
+import com.readalong.ReadAlongBookText
+import com.readalong.ReadAlongEpub
 import com.readalong.ReadAlongTranscript
 import com.repository.ReadAlongRepository
 
@@ -43,7 +45,22 @@ class FakeReadAlongRepository : ReadAlongRepository {
     override suspend fun forgetBooks() {
         languages.clear()
         syncOffsets.clear()
+        introSeen.clear()
     }
 
     override suspend fun audioSource(book: Book) = ReadAlongAudioSource(emptyList(), isDownloadable = false)
+
+    override suspend fun bookText(book: Book): ReadAlongBookText? = null
+
+    override suspend fun epub(book: Book): ReadAlongEpub? = null
+
+    override suspend fun chooseEpub(bookId: String, uri: String?) = true
+
+    val introSeen = mutableSetOf<String>()
+
+    override suspend fun isIntroSeen(bookId: String) = bookId in introSeen
+
+    override suspend fun setIntroSeen(bookId: String, seen: Boolean) {
+        if (seen) introSeen += bookId else introSeen -= bookId
+    }
 }

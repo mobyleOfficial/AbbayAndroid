@@ -10,13 +10,14 @@ import com.player.PlayerController
 import com.readalong.ReadAlongLine
 import com.readalong.ReadAlongSession
 import com.readalong.ReadAlongSnapshot
+import com.readalong.ReadAlongState
 import com.readalong.ReadAlongSync
 import com.readalong.ReadAlongTranscriber
 import com.repository.ReadAlongRepository
 import com.usecase.GetAppLanguage
 import com.usecase.ObserveAppSettings
-import com.usecase.SetReadAlongShowsText
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +25,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
@@ -40,13 +43,15 @@ import javax.inject.Inject
  *
  * The shown time is the scrubber's while a finger drags it, else the player's, polled every [POLL_INTERVAL_MS] while
  * the text shows. The text follows it moved by the book's [sync] adjustment, for when the two drift apart.
+ *
+ * Where the book has an EPUB beside its audio, the lines shown are its text, timed against the transcript
+ * ([com.readalong.ReadAlongAligner]); the transcript itself is still what is made and saved, so the EPUB can come and go.
  */
 @HiltViewModel
 class ReadAlongViewModel @Inject constructor(
     transcriber: ReadAlongTranscriber,
-    repository: ReadAlongRepository,
     private val playerController: PlayerController,
-    private val setShowsText: SetReadAlongShowsText,
+    private val repository: ReadAlongRepository,
     observeAppSettings: ObserveAppSettings,
     getAppLanguage: GetAppLanguage,
 ) : ViewModel() {
@@ -58,7 +63,24 @@ class ReadAlongViewModel @Inject constructor(
         appLanguage = { getAppLanguage().tag.ifEmpty { Locale.getDefault().toLanguageTag() } },
     )
 
-    val snapshot: StateFlow<ReadAlongSnapshot> = session.snapshot
+    /** The EPUB the shown book's text comes from: the one in its folder, or one picked for it. */
+    val bookText = ReadAlongBookTextSource(viewModelScope, repository)
+
+    /** What the text shows: the session's, with the book's own text wherever it matches the audio. */
+    val snapshot: StateFlow<ReadAlongSnapshot> = combine(session.snapshot, bookText.aligner, bookText.isLoading) {
+            shown,
+            bookAligner,
+            isLoading
+        ->
+        val transcript = shown.transcript
+        when {
+            transcript == null -> shown
+            // Until the book's EPUB is known, its text isn't shown as generated: it may be about to become the book's.
+            isLoading && shown.state == ReadAlongState.Ready -> shown.copy(state = ReadAlongState.Preparing, transcript = null)
+            bookAligner == null -> shown
+            else -> shown.copy(transcript = bookAligner.aligned(transcript))
+        }
+    }.conflate().flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.Eagerly, ReadAlongSnapshot())
 
     /** The listener's correction of the text against the audio, for the book shown. */
     val sync = ReadAlongSyncAdjustment(viewModelScope, repository)
@@ -76,6 +98,13 @@ class ReadAlongViewModel @Inject constructor(
 
     val isEnabled: StateFlow<Boolean> = observeAppSettings().map { it.readAlongEnabled }.distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /** The square's text or cover, and the explanation before each book's text first shows. */
+    val textToggle = ReadAlongTextToggle(
+        viewModelScope,
+        isIntroSeen = repository::isIntroSeen,
+        markIntroSeen = { bookId -> repository.setIntroSeen(bookId, true) },
+    )
 
     private var shownBook: Book? = null
     private var shownCount = 0
@@ -95,6 +124,11 @@ class ReadAlongViewModel @Inject constructor(
         follow(book)
     }
 
+    /** [book] opened in the player, still on its cover: its EPUB is read now, so the text is the book's from the start. */
+    fun prepare(book: Book) {
+        if (isEnabled.value) bookText.load(book)
+    }
+
     /** The book shown changed while the text stays (another book loaded, or its files changed). */
     fun follow(book: Book) {
         if (shownCount == 0) return
@@ -107,7 +141,10 @@ class ReadAlongViewModel @Inject constructor(
             return
         }
         filesSignature = signature
-        if (previous?.id != book.id) sync.load(book.id)
+        if (previous?.id != book.id) {
+            sync.load(book.id)
+            bookText.load(book)
+        }
         if (previous?.id != book.id || polling == null) {
             mutableTimeMs.value = timeOf(book)
             session.show(book, mutableTimeMs.value)
@@ -138,8 +175,6 @@ class ReadAlongViewModel @Inject constructor(
     /** The listener says [line] is the one being read now. */
     fun alignTo(line: ReadAlongLine) = sync.align(line, timeMs.value)
 
-    fun setShowsText(showsText: Boolean) = viewModelScope.launch { setShowsText.invoke(showsText) }
-
     private fun startPolling() {
         polling?.cancel()
         polling = viewModelScope.launch {
@@ -158,6 +193,8 @@ class ReadAlongViewModel @Inject constructor(
         polling?.cancel()
         polling = null
         shownBook = null
+        bookText.load(null)
+        textToggle.showCover()
         session.disable()
     }
 

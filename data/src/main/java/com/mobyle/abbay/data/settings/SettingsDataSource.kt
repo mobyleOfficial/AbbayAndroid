@@ -103,9 +103,38 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
         }
     }
 
-    /** Every book's read-along language and sync adjustment, forgotten when the library is cleared. */
+    suspend fun readAlongEpub(bookId: String): String? = dataStore.data.first()[SettingsKeys.readAlongEpub(bookId)]
+
+    suspend fun setReadAlongEpub(bookId: String, uri: String?) {
+        dataStore.edit { preferences ->
+            uri?.let { preferences[SettingsKeys.readAlongEpub(bookId)] = it } ?: preferences.remove(SettingsKeys.readAlongEpub(bookId))
+        }
+    }
+
+    suspend fun readAlongIntroSeen(bookId: String): Boolean = dataStore.data.first()[SettingsKeys.readAlongIntroSeen(bookId)] == true
+
+    suspend fun setReadAlongIntroSeen(bookId: String, seen: Boolean) {
+        dataStore.edit { preferences ->
+            if (seen) {
+                preferences[
+                    SettingsKeys.readAlongIntroSeen(
+                        bookId
+                    )
+                ] = true
+            } else {
+                preferences.remove(SettingsKeys.readAlongIntroSeen(bookId))
+            }
+        }
+    }
+
+    /** Every book's read-along language, sync adjustment, chosen EPUB and explanation seen, forgotten when the library is cleared. */
     suspend fun clearReadAlongBookSettings() {
-        val prefixes = listOf(SettingsKeys.READ_ALONG_LANGUAGE_PREFIX, SettingsKeys.READ_ALONG_SYNC_OFFSET_PREFIX)
+        val prefixes = listOf(
+            SettingsKeys.READ_ALONG_LANGUAGE_PREFIX,
+            SettingsKeys.READ_ALONG_SYNC_OFFSET_PREFIX,
+            SettingsKeys.READ_ALONG_EPUB_PREFIX,
+            SettingsKeys.READ_ALONG_INTRO_SEEN_PREFIX,
+        )
         dataStore.edit { preferences ->
             preferences.asMap().keys.filter { key -> prefixes.any { key.name.startsWith(it) } }.forEach { preferences.remove(it) }
         }
@@ -195,7 +224,6 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
         preferences[SettingsKeys.language] = updated.language.name
         preferences[SettingsKeys.castProcessedAudio] = updated.castProcessedAudio
         preferences[SettingsKeys.readAlongEnabled] = updated.readAlongEnabled
-        preferences[SettingsKeys.readAlongShowsText] = updated.readAlongShowsText
         preferences[SettingsKeys.libraryTabOrder] = updated.libraryTabOrder.joinToString(TAB_SEPARATOR) { it.name }
         preferences[SettingsKeys.hiddenLibraryTabs] = updated.hiddenLibraryTabs.mapTo(mutableSetOf()) { it.name }
     }
@@ -212,7 +240,6 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
         language = enumOrDefault(preferences[SettingsKeys.language], language),
         castProcessedAudio = preferences.valueOr(SettingsKeys.castProcessedAudio, castProcessedAudio),
         readAlongEnabled = preferences.valueOr(SettingsKeys.readAlongEnabled, readAlongEnabled),
-        readAlongShowsText = preferences.valueOr(SettingsKeys.readAlongShowsText, readAlongShowsText),
         libraryTabOrder = preferences[SettingsKeys.libraryTabOrder]?.split(TAB_SEPARATOR)
             ?.mapNotNull { name -> LibraryTab.entries.firstOrNull { it.name == name } }
             ?: libraryTabOrder,

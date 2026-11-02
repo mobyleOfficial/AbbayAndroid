@@ -7,6 +7,8 @@ import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
 import com.readalong.ReadAlongAudioSource
+import com.readalong.ReadAlongBookText
+import com.readalong.ReadAlongEpub
 import com.readalong.ReadAlongTranscript
 import com.repository.ReadAlongRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -20,6 +22,8 @@ class ReadAlongRepositoryImpl @Inject constructor(
     private val store: ReadAlongTranscriptStore,
     private val models: VoskModelInstaller,
     private val settings: SettingsDataSource,
+    private val epubs: ReadAlongEpubs,
+    private val reader: EpubTextReader,
 ) : ReadAlongRepository {
     override suspend fun load(bookId: String) = store.load(bookId)
 
@@ -39,6 +43,10 @@ class ReadAlongRepositoryImpl @Inject constructor(
 
     override suspend fun setSyncOffset(bookId: String, offsetMs: Long) = settings.setReadAlongSyncOffset(bookId, offsetMs)
 
+    override suspend fun isIntroSeen(bookId: String): Boolean = settings.readAlongIntroSeen(bookId)
+
+    override suspend fun setIntroSeen(bookId: String, seen: Boolean) = settings.setReadAlongIntroSeen(bookId, seen)
+
     override suspend fun forgetBooks() = settings.clearReadAlongBookSettings()
 
     /**
@@ -46,11 +54,7 @@ class ReadAlongRepositoryImpl @Inject constructor(
      * downloaded) has no uri; so has a local file that can't be opened any more (moved, or its folder's access lost).
      */
     override suspend fun audioSource(book: Book): ReadAlongAudioSource = withContext(Dispatchers.IO) {
-        val tracks = when (book) {
-            is MultipleBooks -> book.bookFileList
-            is BookFile -> listOf(book)
-            else -> emptyList()
-        }
+        val tracks = tracksOf(book)
         var start = 0L
         val segments = tracks.map { track ->
             val duration = if (tracks.size == 1) maxOf(track.duration, book.duration) else track.duration
@@ -59,6 +63,18 @@ class ReadAlongRepositoryImpl @Inject constructor(
             }
         }
         ReadAlongAudioSource(segments, isDownloadable = tracks.any { isRemote(it.uri) })
+    }
+
+    override suspend fun epub(book: Book): ReadAlongEpub? = epubs.epub(book)
+
+    override suspend fun bookText(book: Book): ReadAlongBookText? = epubs.epub(book)?.let { reader.read(it.uri) }
+
+    override suspend fun chooseEpub(bookId: String, uri: String?): Boolean = epubs.choose(bookId, uri)
+
+    private fun tracksOf(book: Book): List<BookFile> = when (book) {
+        is MultipleBooks -> book.bookFileList
+        is BookFile -> listOf(book)
+        else -> emptyList()
     }
 
     private fun isRemote(uri: String) = uri.startsWith("http://") || uri.startsWith("https://")

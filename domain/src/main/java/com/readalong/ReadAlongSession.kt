@@ -280,7 +280,8 @@ class ReadAlongSession(
 
     /**
      * The book's language: its own setting wins (a bare code, from LibriVox, is matched to a supported locale and saved
-     * back as one); else a short sample is scored with each installed candidate; else the app's language.
+     * back as one); else the one its EPUB declares; else a short sample is scored with each installed candidate; else
+     * the app's language.
      */
     private suspend fun resolveLanguage(
         resolvedBook: Book,
@@ -288,12 +289,18 @@ class ReadAlongSession(
         resolvedSource: ReadAlongAudioSource,
         currentGeneration: Int,
     ): String? {
-        val stored = repository.language(resolvedBook.id)
+        val stored = repository.language(resolvedBook.id) ?: declaredLanguage(resolvedBook, supported)
         return if (stored != null) {
             matchedStoredLanguage(resolvedBook, stored, supported)
         } else {
             detectedLanguage(resolvedBook, supported, resolvedSource, currentGeneration)
         }
+    }
+
+    /** The language the book's EPUB declares, as a bare code ("en-GB" is "en"), when a supported locale speaks it. */
+    private suspend fun declaredLanguage(resolvedBook: Book, supported: List<String>): String? {
+        val declared = repository.bookText(resolvedBook)?.language?.let(ReadAlongLanguage::languageOf) ?: return null
+        return declared.takeIf { code -> supported.any { ReadAlongLanguage.languageOf(it) == code } }
     }
 
     private suspend fun matchedStoredLanguage(resolvedBook: Book, stored: String, supported: List<String>): String {

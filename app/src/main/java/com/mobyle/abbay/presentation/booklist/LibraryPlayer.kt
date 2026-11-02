@@ -7,8 +7,11 @@ import androidx.compose.material.BottomSheetScaffoldState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import com.effects.AudioEffects
@@ -30,11 +33,14 @@ import com.mobyle.abbay.presentation.effects.AudioEffectsPanel
 import com.mobyle.abbay.presentation.effects.AudioEffectsViewModel
 import com.mobyle.abbay.presentation.options.PlaybackOptionsPanel
 import com.mobyle.abbay.presentation.options.PlaybackOptionsViewModel
+import com.mobyle.abbay.presentation.readalong.ReadAlongIntroDialog
 import com.mobyle.abbay.presentation.readalong.ReadAlongPlayback
 import com.mobyle.abbay.presentation.readalong.ReadAlongSquare
 import com.mobyle.abbay.presentation.readalong.ReadAlongViewModel
+import com.mobyle.abbay.presentation.utils.currentFraction
 import com.model.Book
 import com.model.BookState
+import com.readalong.ReadAlongAvailability
 import com.settings.AppSettings
 import kotlinx.coroutines.launch
 
@@ -79,6 +85,8 @@ fun LibraryPlayer(
     val playbackOptions by dependencies.optionsViewModel.options.collectAsState()
     val audioEffects by dependencies.effectsViewModel.effects.collectAsState()
     val equalizerPresets by dependencies.effectsViewModel.presets.collectAsState()
+    val showsText by dependencies.readAlongViewModel.textToggle.showsText.collectAsState()
+    ReadAlongOpensOnCover(book, sheetState, dependencies.readAlongViewModel)
 
     Column(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         MiniPlayer(
@@ -94,7 +102,7 @@ fun LibraryPlayer(
                 largeForwardSeconds = appSettings.largeForwardSeconds,
             ),
             actions = playerActions(book, dependencies, showsCastButton = appSettings.showCastButton),
-            readAlong = playerReadAlong(book, dependencies, appSettings, playingStateOf(playerState, isAwaitingPlayback)),
+            readAlong = playerReadAlong(book, dependencies, appSettings, showsText, playingStateOf(playerState, isAwaitingPlayback)),
             effects = dependencies.effectsPanel(isCasting = playerState.isCasting, effects = audioEffects, presets = equalizerPresets),
             options = PlaybackOptionsPanel(
                 options = playbackOptions,
@@ -156,11 +164,30 @@ private fun playerActions(book: Book, dependencies: LibraryPlayerDependencies, s
     )
 }
 
-/** The Text pill and the read-along square, when Read-along is on in Settings. */
+/**
+ * A book always opens on its cover: the text goes back to the cover when another book loads and when the player
+ * closes. The first tap on Text explains where the text comes from first.
+ */
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun ReadAlongOpensOnCover(book: Book, sheetState: BottomSheetScaffoldState, readAlong: ReadAlongViewModel) {
+    val isClosed by remember(sheetState) { derivedStateOf { sheetState.currentFraction <= 0f } }
+    val toggle = readAlong.textToggle
+    LaunchedEffect(book.id, isClosed) { if (isClosed) toggle.showCover() }
+    LaunchedEffect(book.id) {
+        toggle.showCover()
+        if (ReadAlongAvailability.isOffered(book)) readAlong.prepare(book)
+    }
+    val isIntroShown by toggle.isIntroShown.collectAsState()
+    if (isIntroShown) ReadAlongIntroDialog(onConfirm = toggle::confirmIntro, onDismiss = toggle::dismissIntro)
+}
+
+/** The Text pill and the read-along square, when Read-along is on in Settings and the book has audio on the device. */
 private fun playerReadAlong(
     book: Book,
     dependencies: LibraryPlayerDependencies,
     settings: AppSettings,
+    showsText: Boolean,
     playerIcon: PlayingState
 ): PlayerReadAlong {
     val readAlong = dependencies.readAlongViewModel
@@ -173,9 +200,9 @@ private fun playerReadAlong(
     )
     return PlayerReadAlong(
         toggle = ReadAlongToggle(
-            isOffered = settings.readAlongEnabled,
-            showsText = settings.readAlongShowsText,
-            onToggle = { readAlong.setShowsText(!settings.readAlongShowsText) },
+            isOffered = settings.readAlongEnabled && ReadAlongAvailability.isOffered(book),
+            showsText = showsText,
+            onToggle = { readAlong.textToggle.toggle(book.id) },
         ),
         square = { modifier, alignment -> ReadAlongSquare(book, readAlong, playback, modifier, alignment) },
     )

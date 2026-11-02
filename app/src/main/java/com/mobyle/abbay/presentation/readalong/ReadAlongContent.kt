@@ -3,6 +3,7 @@ package com.mobyle.abbay.presentation.readalong
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +12,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -26,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -50,6 +54,9 @@ import kotlinx.coroutines.delay
  * left; on the right the sync adjustment, once there is text, and [trailing] (expand, or collapse); [center] between
  * them (the full screen's play/pause).
  *
+ * While the line shown was generated from the audio (no EPUB, or a passage it doesn't match), a note at the top says
+ * so, and that it can be wrong; it stays when the controls hide.
+ *
  * The bar hides after [CONTROLS_HIDE_DELAY_MS] without interaction, for immersion; a tap anywhere brings it back (the
  * first tap only does that), as does scrolling the lines. It stays while it may be needed: with TalkBack on, while
  * a menu is open, and while the text isn't ready (the label is how another language is picked).
@@ -62,6 +69,7 @@ fun ReadAlongContent(
     onLineTap: (ReadAlongLine) -> Unit,
     onLanguagePick: (String) -> Unit,
     sync: ReadAlongSyncControls,
+    bookText: ReadAlongBookTextControls,
     modifier: Modifier = Modifier,
     center: @Composable () -> Unit = {},
     trailing: @Composable () -> Unit = {},
@@ -86,6 +94,7 @@ fun ReadAlongContent(
         Box(modifier = Modifier.fillMaxSize()) {
             ShownText(snapshot, timeMs, style, onLineTap, sync.onAlign, onScroll = reveal)
         }
+        GeneratedTextNotice(snapshot, timeMs, modifier = Modifier.align(Alignment.TopCenter))
         Row(
             modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter),
             verticalAlignment = Alignment.CenterVertically,
@@ -97,6 +106,7 @@ fun ReadAlongContent(
                     isOpen = isMenuOpen,
                     onOpenChange = { isMenuOpen = it },
                     onPick = onLanguagePick,
+                    bookText = bookText,
                 )
             }
             Box { FadingControl(visible = !areControlsHidden, content = center) }
@@ -172,6 +182,36 @@ private fun ShownText(
     }
 }
 
+/** *AI-generated text · may contain mistakes* over the top of the text, while the line shown is the transcription's. */
+@Composable
+private fun GeneratedTextNotice(snapshot: ReadAlongSnapshot, timeMs: Long, modifier: Modifier = Modifier) {
+    val transcript = snapshot.transcript
+    if (snapshot.state != ReadAlongState.Ready || transcript == null) return
+    val line = when (val display = transcript.display(timeMs)) {
+        is ReadAlongDisplay.Line -> transcript.lines[display.position.line]
+        is ReadAlongDisplay.Upcoming -> transcript.lines[display.line]
+        ReadAlongDisplay.Music -> null
+    }
+    if (line == null || line.fromBook) return
+    Row(
+        modifier = modifier
+            .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+            .clip(CircleShape)
+            .background(Color.Black.copy(alpha = NOTICE_FILL_ALPHA))
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+        Text(
+            stringResource(R.string.read_along_generated_notice),
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.White,
+            maxLines = 2,
+        )
+    }
+}
+
 /** ♪ for a long stretch without speech: a sentence there read as an error. TalkBack still says *No speech here*. */
 @Composable
 private fun Music() {
@@ -235,5 +275,6 @@ private fun Status(state: ReadAlongState, style: ReadAlongStyle) {
 
 const val CONTROLS_HIDE_DELAY_MS = 3_000L
 private const val MUSIC_ALPHA = 0.7f
+private const val NOTICE_FILL_ALPHA = 0.55f
 private const val TRACK_ALPHA = 0.3f
 private const val PERCENT = 100

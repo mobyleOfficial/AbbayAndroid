@@ -15,9 +15,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.MenuBook
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.FileOpen
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -46,7 +50,10 @@ import com.mobyle.abbay.R
 import com.readalong.ReadAlongLanguage
 import com.readalong.ReadAlongSnapshot
 
-/** *English ▾* in the bottom-leading corner once the language is known; it stays when it can't be read, so another can be picked. */
+/**
+ * *English ▾* in the bottom-leading corner once the language is known; it stays when it can't be read, so another can be
+ * picked. Below the languages, where the text comes from: the EPUB in the book's folder, or one picked from anywhere.
+ */
 @Composable
 internal fun LanguageMenu(
     snapshot: ReadAlongSnapshot,
@@ -54,6 +61,7 @@ internal fun LanguageMenu(
     isOpen: Boolean,
     onOpenChange: (Boolean) -> Unit,
     onPick: (String) -> Unit,
+    bookText: ReadAlongBookTextControls,
 ) {
     val language = snapshot.language ?: return
     if (snapshot.choices.isEmpty()) return
@@ -105,7 +113,42 @@ internal fun LanguageMenu(
                     },
                 )
             }
+            HorizontalDivider()
+            BookTextItems(bookText, close = { onOpenChange(false) })
         }
+    }
+}
+
+/** The EPUB in use, and choosing, changing or dropping one picked for the book (one in its folder is always used). */
+@Composable
+private fun BookTextItems(bookText: ReadAlongBookTextControls, close: () -> Unit) {
+    val epub = bookText.epub
+    if (epub != null) {
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.read_along_epub_in_use, epub.name), maxLines = 2) },
+            leadingIcon = { Icon(Icons.AutoMirrored.Rounded.MenuBook, contentDescription = null) },
+            onClick = {},
+            enabled = false,
+        )
+    }
+    if (epub?.isInBookFolder == true) return
+    DropdownMenuItem(
+        text = { Text(stringResource(if (epub == null) R.string.read_along_epub_choose else R.string.read_along_epub_change)) },
+        leadingIcon = { Icon(Icons.Rounded.FileOpen, contentDescription = null) },
+        onClick = {
+            close()
+            bookText.onChoose()
+        },
+    )
+    if (epub != null) {
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.read_along_epub_remove)) },
+            leadingIcon = { Icon(Icons.Rounded.Close, contentDescription = null) },
+            onClick = {
+                close()
+                bookText.onRemove()
+            },
+        )
     }
 }
 

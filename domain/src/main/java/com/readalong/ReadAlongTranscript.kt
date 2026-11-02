@@ -5,12 +5,15 @@ import kotlin.math.abs
 /** One recognised word. Times are book time, so a transcript stays valid whatever file or playback speed produced it. */
 data class ReadAlongWord(val text: String, val startMs: Long, val endMs: Long)
 
-/** A run of words shown and scrolled as one line. The text is derived from the words, so the two never disagree. */
-data class ReadAlongLine(val startMs: Long, val endMs: Long, val words: List<ReadAlongWord>) {
+/**
+ * A run of words shown and scrolled as one line. The text is derived from the words, so the two never disagree.
+ * [fromBook] when the words are the book's own text (from its EPUB) timed against the audio, rather than recognised.
+ */
+data class ReadAlongLine(val startMs: Long, val endMs: Long, val words: List<ReadAlongWord>, val fromBook: Boolean = false) {
     val text: String get() = words.joinToString(" ") { it.text }
 
     /** The same line [deltaMs] later: the engine times from where it began reading, the transcript in book time. */
-    fun shifted(deltaMs: Long): ReadAlongLine = ReadAlongLine(
+    fun shifted(deltaMs: Long): ReadAlongLine = copy(
         startMs = startMs + deltaMs,
         endMs = endMs + deltaMs,
         words = words.map { it.copy(startMs = it.startMs + deltaMs, endMs = it.endMs + deltaMs) },
@@ -20,7 +23,7 @@ data class ReadAlongLine(val startMs: Long, val endMs: Long, val words: List<Rea
     fun clipped(limitMs: Long): ReadAlongLine? {
         if (startMs >= limitMs) return null
         val kept = words.filter { it.startMs < limitMs }.map { it.copy(endMs = minOf(it.endMs, limitMs)) }
-        return ReadAlongLine(startMs, minOf(endMs, limitMs), kept)
+        return copy(endMs = minOf(endMs, limitMs), words = kept)
     }
 }
 

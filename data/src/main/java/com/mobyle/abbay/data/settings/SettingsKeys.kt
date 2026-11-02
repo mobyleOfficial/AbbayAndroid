@@ -67,7 +67,6 @@ internal object SettingsKeys {
     val language = stringPreferencesKey("language")
     val castProcessedAudio = booleanPreferencesKey("castProcessedAudio")
     val readAlongEnabled = booleanPreferencesKey("readAlong")
-    val readAlongShowsText = booleanPreferencesKey("readAlongShowsText")
 
     val libraryTabOrder = stringPreferencesKey("libraryTabOrder")
     val hiddenLibraryTabs = stringSetPreferencesKey("hiddenLibraryTabs")
@@ -81,6 +80,16 @@ internal object SettingsKeys {
     fun readAlongSyncOffset(bookId: String) = longPreferencesKey("readAlongSyncOffset.$bookId")
 
     const val READ_ALONG_SYNC_OFFSET_PREFIX = "readAlongSyncOffset."
+
+    /** The EPUB chosen for a book's read-along text, when its folder has none. */
+    fun readAlongEpub(bookId: String) = stringPreferencesKey("$READ_ALONG_EPUB_PREFIX$bookId")
+
+    const val READ_ALONG_EPUB_PREFIX = "readAlongEpub."
+
+    /** A book's first tap on Text explained where its text comes from. */
+    fun readAlongIntroSeen(bookId: String) = booleanPreferencesKey("$READ_ALONG_INTRO_SEEN_PREFIX$bookId")
+
+    const val READ_ALONG_INTRO_SEEN_PREFIX = "readAlongIntroSeen."
 
     val legacyFolderUri = stringPreferencesKey("legacyFolderUri")
     val legacyFolderMigrated = booleanPreferencesKey("legacyFolderMigrated")

@@ -10,5 +10,7 @@ class HideBook @Inject constructor(private val repository: LibraryRepository, pr
         readAlong.delete(bookId)
         readAlong.setLanguage(bookId, null)
         readAlong.setSyncOffset(bookId, 0)
+        readAlong.chooseEpub(bookId, null)
+        readAlong.setIntroSeen(bookId, false)
     }
 }

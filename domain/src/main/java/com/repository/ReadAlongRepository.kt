@@ -2,6 +2,8 @@ package com.repository
 
 import com.model.Book
 import com.readalong.ReadAlongAudioSource
+import com.readalong.ReadAlongBookText
+import com.readalong.ReadAlongEpub
 import com.readalong.ReadAlongTranscript
 
 /**
@@ -37,9 +39,30 @@ interface ReadAlongRepository {
     /** 0 forgets the adjustment. */
     suspend fun setSyncOffset(bookId: String, offsetMs: Long)
 
-    /** Every book's language and sync adjustment go: the library was cleared. */
+    /** Whether the book's first tap on Text already explained where its text comes from. */
+    suspend fun isIntroSeen(bookId: String): Boolean
+
+    /** False forgets it, so the explanation shows again the next time the book's text is asked for. */
+    suspend fun setIntroSeen(bookId: String, seen: Boolean)
+
+    /** Every book's language, sync adjustment, chosen EPUB and explanation seen go: the library was cleared. */
     suspend fun forgetBooks()
 
     /** Where the book's audio is on this device. */
     suspend fun audioSource(book: Book): ReadAlongAudioSource
+
+    /**
+     * The EPUB whose text the book shows: one in the audiobook's folder (the one last opened when there are several, or,
+     * for a downloaded LibriVox book, one beside its files) wins; else the one chosen for it ([chooseEpub]); else null.
+     */
+    suspend fun epub(book: Book): ReadAlongEpub?
+
+    /** The text of the book's [epub]; null without one, or when it can't be read. Kept while the same one is asked for. */
+    suspend fun bookText(book: Book): ReadAlongBookText?
+
+    /**
+     * Uses the EPUB at [uri] (picked from anywhere) for the book, keeping access to it across restarts; null forgets the
+     * choice. False, and nothing kept, when the file can't be read as an EPUB with text.
+     */
+    suspend fun chooseEpub(bookId: String, uri: String?): Boolean
 }

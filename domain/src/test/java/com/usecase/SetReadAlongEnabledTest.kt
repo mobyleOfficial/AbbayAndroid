@@ -2,6 +2,8 @@ package com.usecase
 
 import com.model.Book
 import com.readalong.ReadAlongAudioSource
+import com.readalong.ReadAlongBookText
+import com.readalong.ReadAlongEpub
 import com.readalong.ReadAlongTranscript
 import com.repository.ReadAlongRepository
 import com.repository.SettingsRepository
@@ -52,6 +54,20 @@ class SetReadAlongEnabledTest {
         override suspend fun forgetBooks() = Unit
 
         override suspend fun audioSource(book: Book) = ReadAlongAudioSource(emptyList(), isDownloadable = false)
+
+        override suspend fun bookText(book: Book): ReadAlongBookText? = null
+
+        override suspend fun epub(book: Book): ReadAlongEpub? = null
+
+        override suspend fun chooseEpub(bookId: String, uri: String?) = true
+
+        val introSeen = mutableSetOf<String>()
+
+        override suspend fun isIntroSeen(bookId: String) = bookId in introSeen
+
+        override suspend fun setIntroSeen(bookId: String, seen: Boolean) {
+            if (seen) introSeen += bookId else introSeen -= bookId
+        }
     }
 
     private val settings = Settings()
@@ -67,13 +83,12 @@ class SetReadAlongEnabledTest {
     }
 
     @Test
-    fun `turning it off deletes every transcript and model and shows the cover again`() = runTest {
-        settings.flow.value = AppSettings(readAlongEnabled = true, readAlongShowsText = true)
+    fun `turning it off deletes every transcript and model`() = runTest {
+        settings.flow.value = AppSettings(readAlongEnabled = true)
 
         setEnabled(false)
 
         assertFalse(settings.flow.value.readAlongEnabled)
-        assertFalse(settings.flow.value.readAlongShowsText)
         assertTrue(readAlong.transcriptsDeleted)
         assertTrue(readAlong.modelsDeleted)
     }

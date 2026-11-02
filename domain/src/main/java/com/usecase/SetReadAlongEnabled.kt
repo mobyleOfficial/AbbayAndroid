@@ -10,7 +10,7 @@ class SetReadAlongEnabled @Inject constructor(
     private val readAlong: ReadAlongRepository,
 ) {
     suspend operator fun invoke(enabled: Boolean) {
-        settings.updateSettings { it.copy(readAlongEnabled = enabled, readAlongShowsText = enabled && it.readAlongShowsText) }
+        settings.updateSettings { it.copy(readAlongEnabled = enabled) }
         if (!enabled) {
             readAlong.deleteAll()
             readAlong.deleteModels()

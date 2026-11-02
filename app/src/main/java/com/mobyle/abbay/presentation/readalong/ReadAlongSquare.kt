@@ -2,6 +2,9 @@ package com.mobyle.abbay.presentation.readalong
 
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -32,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
@@ -71,6 +75,7 @@ fun ReadAlongSquare(
     val snapshot by viewModel.snapshot.collectAsState()
     val timeMs by viewModel.textTimeMs.collectAsState()
     val sync = rememberSyncControls(viewModel)
+    val bookText = rememberBookTextControls(viewModel)
     var fullScreenBookId by rememberSaveable { mutableStateOf<String?>(null) }
     val fill = squareFill()
     BoxWithConstraints(modifier = modifier.fillMaxSize(), contentAlignment = alignment) {
@@ -88,6 +93,7 @@ fun ReadAlongSquare(
                 onLineTap = { line -> playback.onSeekToBookPosition(viewModel.sync.audioTimeOf(line)) },
                 onLanguagePick = viewModel::setLanguage,
                 sync = sync,
+                bookText = bookText,
                 trailing = {
                     ReadAlongCornerButton(Icons.Rounded.OpenInFull, stringResource(R.string.read_along_full_screen)) {
                         fullScreenBookId = book.id
@@ -116,6 +122,7 @@ private fun ReadAlongFullScreen(book: Book, viewModel: ReadAlongViewModel, playb
         val snapshot by viewModel.snapshot.collectAsState()
         val timeMs by viewModel.textTimeMs.collectAsState()
         val sync = rememberSyncControls(viewModel)
+        val bookText = rememberBookTextControls(viewModel)
         val title = stringResource(R.string.read_along_toggle)
         Box(
             modifier = Modifier
@@ -132,6 +139,7 @@ private fun ReadAlongFullScreen(book: Book, viewModel: ReadAlongViewModel, playb
                 onLineTap = { line -> playback.onSeekToBookPosition(viewModel.sync.audioTimeOf(line)) },
                 onLanguagePick = viewModel::setLanguage,
                 sync = sync,
+                bookText = bookText,
                 center = { PlayPause(playback) },
                 trailing = {
                     ReadAlongCornerButton(Icons.Rounded.CloseFullscreen, stringResource(R.string.read_along_exit_full_screen), onClose)
@@ -193,6 +201,33 @@ private fun rememberSyncControls(viewModel: ReadAlongViewModel): ReadAlongSyncCo
         ReadAlongSyncControls(offsetMs, viewModel.sync::nudge, viewModel.sync::reset, viewModel::alignTo)
     }
 }
+
+/**
+ * The EPUB menu's state, and the system's file picker for choosing one: any EPUB the listener can reach (a file manager
+ * may label one as plain binary). One that can't be read is refused with a toast, and the text stays as it was.
+ */
+@Composable
+private fun rememberBookTextControls(viewModel: ReadAlongViewModel): ReadAlongBookTextControls {
+    val source = viewModel.bookText
+    val epub by source.epub.collectAsState()
+    val isRejected by source.isRejected.collectAsState()
+    val context = LocalContext.current
+    val rejected = stringResource(R.string.read_along_epub_rejected)
+    LaunchedEffect(isRejected) {
+        if (isRejected) {
+            Toast.makeText(context, rejected, Toast.LENGTH_LONG).show()
+            source.rejectionShown()
+        }
+    }
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let { source.choose(it.toString()) }
+    }
+    return remember(source, epub, picker) {
+        ReadAlongBookTextControls(epub, onChoose = { picker.launch(EPUB_TYPES) }, onRemove = source::remove)
+    }
+}
+
+private val EPUB_TYPES = arrayOf("application/epub+zip", "application/octet-stream")
 
 /** The square's dark fill under the white text: light over a dark tint, stronger over a light theme's pale tint. */
 @Composable
