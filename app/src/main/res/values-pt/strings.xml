@@ -671,4 +671,32 @@
         <item quantity="one">%d livro</item>
         <item quantity="other">%d livros</item>
     </plurals>
+
+    <!-- Read-along -->
+    <string name="settings_experimental">Experimental</string>
+    <string name="read_along_toggle">Leitura acompanhada</string>
+    <string name="read_along_footer">Mostra o texto do audiolivro enquanto ele toca, destacando as palavras lidas. O texto é gerado a partir do áudio neste aparelho, então pode errar palavras, principalmente nomes. Nada é enviado e o microfone nunca é usado. Na primeira vez que um idioma é usado, o modelo de fala dele (30–50 MB) é baixado uma vez.</string>
+    <string name="read_along_pill">Texto</string>
+    <string name="read_along_cover_pill">Capa</string>
+    <string name="read_along_show_cover">Mostrar capa</string>
+    <string name="read_along_preparing">Preparando o texto…</string>
+    <string name="read_along_downloading_model">Baixando o modelo de fala em %1$s…</string>
+    <string name="read_along_unsupported">Texto não disponível em %1$s.</string>
+    <string name="read_along_needs_download">O áudio precisa ser baixado primeiro para mostrar o texto.</string>
+    <string name="read_along_file_missing">O arquivo de áudio precisa estar neste aparelho para mostrar o texto.</string>
+    <string name="read_along_no_speech">Sem fala neste trecho.</string>
+    <string name="read_along_failed">Não foi possível gerar o texto.</string>
+    <string name="read_along_language">Idioma do texto</string>
+    <string name="read_along_line_hint">Tocar a partir desta linha</string>
+    <string name="read_along_full_screen">Tela cheia</string>
+    <string name="read_along_exit_full_screen">Sair da tela cheia</string>
+    <string name="read_along_sync">Sincronia do texto</string>
+    <string name="read_along_sync_in_sync">Sincronizado</string>
+    <string name="read_along_sync_ahead">Texto %1$s s adiantado</string>
+    <string name="read_along_sync_behind">Texto %1$s s atrasado</string>
+    <string name="read_along_sync_earlier">Adiantar texto</string>
+    <string name="read_along_sync_later">Atrasar texto</string>
+    <string name="read_along_sync_reset">Redefinir</string>
+    <string name="read_along_sync_tip">Texto fora de ritmo com o áudio? Use − e +, ou toque e segure a linha que está sendo lida para alinhar o texto com ela.</string>
+    <string name="read_along_line_sync_hint">Alinhar o texto com esta linha</string>
 </resources>

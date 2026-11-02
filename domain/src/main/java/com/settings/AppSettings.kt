@@ -70,6 +70,8 @@ data class AppSettings(
     val hiddenQuickActions: Set<QuickAction> = emptySet(),
     val language: AppLanguage = AppLanguage.SYSTEM,
     val castProcessedAudio: Boolean = true,
+    val readAlongEnabled: Boolean = false,
+    val readAlongShowsText: Boolean = false,
 ) {
     val visibleLibraryTabs: List<LibraryTab> get() = LibraryTab.visible(libraryTabOrder, hiddenLibraryTabs)
 

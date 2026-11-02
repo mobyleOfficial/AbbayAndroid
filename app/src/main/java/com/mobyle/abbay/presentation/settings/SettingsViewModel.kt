@@ -19,6 +19,7 @@ import com.usecase.ObserveLibraryRoots
 import com.usecase.RemoveLibraryRoot
 import com.usecase.ReplaceLibraryRoots
 import com.usecase.SetAppLanguage
+import com.usecase.SetReadAlongEnabled
 import com.usecase.UpdateAppSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -46,6 +47,7 @@ class SettingsViewModel @Inject constructor(
     observeLibraryRoots: ObserveLibraryRoots,
     getAppLanguage: GetAppLanguage,
     private val setAppLanguage: SetAppLanguage,
+    private val setReadAlongEnabled: SetReadAlongEnabled,
 ) : ViewModel() {
     private val settings: StateFlow<AppSettings> = observeAppSettings()
         .stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
@@ -63,6 +65,7 @@ class SettingsViewModel @Inject constructor(
     val themeMode: StateFlow<ThemeMode> = settings.mapState { it.themeMode }
     val dynamicColor: StateFlow<Boolean> = settings.mapState { it.dynamicColor }
     val shareDiagnostics: StateFlow<Boolean> = settings.mapState { it.shareDiagnostics }
+    val readAlongEnabled: StateFlow<Boolean> = settings.mapState { it.readAlongEnabled }
 
     val listeningSettings: StateFlow<AppSettings> get() = settings
     val showShowDeleteConfirmation: StateFlow<Boolean> get() = _showShowDeleteConfirmation
@@ -87,6 +90,9 @@ class SettingsViewModel @Inject constructor(
         _language.value = language
         viewModelScope.launch { updateAppSettings { it.copy(language = language) } }
     }
+
+    /** Off deletes every transcript and speech model read-along made. */
+    fun changeReadAlongEnabled(isEnabled: Boolean) = viewModelScope.launch { setReadAlongEnabled(isEnabled) }
 
     fun changeShareDiagnostics(isEnabled: Boolean) = viewModelScope.launch { updateAppSettings { it.copy(shareDiagnostics = isEnabled) } }
 

@@ -60,8 +60,12 @@ dependencies {
 
     implementation libs.androidx.media3.common
     implementation libs.androidx.media3.extractor
+    implementation libs.androidx.media3.exoplayer
 
     implementation libs.kotlinx.serialization.json
+
+    implementation libs.vosk.android
+    implementation(libs.jna) { artifact { type = 'aar' } }
 
     testImplementation libs.junit
     testImplementation libs.kotlinx.coroutines.test

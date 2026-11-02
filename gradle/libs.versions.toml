@@ -67,6 +67,9 @@ compose-bom-test = "2022.10.00"
 # Robolectric tests
 robolectric = "4.14.1"
 
+# Speech recognition (read-along)
+vosk = "0.3.75"
+
 # Firebase
 firebase-crashlytics = "18.6.2"
 firebase-analytics = "21.5.1"
@@ -162,6 +165,10 @@ androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+
+# Speech recognition (read-along)
+vosk-android = { group = "com.alphacephei", name = "vosk-android", version.ref = "vosk" }
+jna = { group = "net.java.dev.jna", name = "jna", version = "5.18.1" }
 
 # Firebase
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics", version.ref = "firebase-crashlytics" }

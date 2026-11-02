@@ -19,15 +19,23 @@ import com.mobyle.abbay.presentation.booklist.widgets.MiniPlayer
 import com.mobyle.abbay.presentation.booklist.widgets.player.ChaptersToggle
 import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerActions
 import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerDisplay
+import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerReadAlong
 import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerSkips
+import com.mobyle.abbay.presentation.booklist.widgets.player.PlayingState
+import com.mobyle.abbay.presentation.booklist.widgets.player.ReadAlongToggle
 import com.mobyle.abbay.presentation.booklist.widgets.player.SleepSheetSettings
+import com.mobyle.abbay.presentation.booklist.widgets.player.playingStateOf
 import com.mobyle.abbay.presentation.documents.CompanionDocumentsViewModel
 import com.mobyle.abbay.presentation.effects.AudioEffectsPanel
 import com.mobyle.abbay.presentation.effects.AudioEffectsViewModel
 import com.mobyle.abbay.presentation.options.PlaybackOptionsPanel
 import com.mobyle.abbay.presentation.options.PlaybackOptionsViewModel
+import com.mobyle.abbay.presentation.readalong.ReadAlongPlayback
+import com.mobyle.abbay.presentation.readalong.ReadAlongSquare
+import com.mobyle.abbay.presentation.readalong.ReadAlongViewModel
 import com.model.Book
 import com.model.BookState
+import com.settings.AppSettings
 import kotlinx.coroutines.launch
 
 /** What the player drives and where its menu leads, shared by the library's sheet and the player pane beside any screen. */
@@ -36,6 +44,7 @@ class LibraryPlayerDependencies(
     val effectsViewModel: AudioEffectsViewModel,
     val optionsViewModel: PlaybackOptionsViewModel,
     val documentsViewModel: CompanionDocumentsViewModel,
+    val readAlongViewModel: ReadAlongViewModel,
     val navigation: PlayerNavigation,
 )
 
@@ -85,6 +94,7 @@ fun LibraryPlayer(
                 largeForwardSeconds = appSettings.largeForwardSeconds,
             ),
             actions = playerActions(book, dependencies, showsCastButton = appSettings.showCastButton),
+            readAlong = playerReadAlong(book, dependencies, appSettings, playingStateOf(playerState, isAwaitingPlayback)),
             effects = dependencies.effectsPanel(isCasting = playerState.isCasting, effects = audioEffects, presets = equalizerPresets),
             options = PlaybackOptionsPanel(
                 options = playbackOptions,
@@ -142,6 +152,32 @@ private fun playerActions(book: Book, dependencies: LibraryPlayerDependencies, s
         onOpenBookText = { dependencies.documentsViewModel.show(book.id) },
         onOpenText = { navigation.destinations.text(book.id) },
         routeButton = { if (showsCastButton) CastButton() },
+        onScrub = dependencies.readAlongViewModel::scrub,
+    )
+}
+
+/** The Text pill and the read-along square, when Read-along is on in Settings. */
+private fun playerReadAlong(
+    book: Book,
+    dependencies: LibraryPlayerDependencies,
+    settings: AppSettings,
+    playerIcon: PlayingState
+): PlayerReadAlong {
+    val readAlong = dependencies.readAlongViewModel
+    val viewModel = dependencies.viewModel
+    val playback = ReadAlongPlayback(
+        playerIcon = playerIcon,
+        // Only into the loaded book: seeking an idle player would read back its 0 and save it as the book's position.
+        onSeekToBookPosition = { position -> if (viewModel.playerState.value.bookId == book.id) viewModel.seekToBookPosition(position) },
+        onPlayPause = { viewModel.onPlayButtonClicked(book, book.progress) },
+    )
+    return PlayerReadAlong(
+        toggle = ReadAlongToggle(
+            isOffered = settings.readAlongEnabled,
+            showsText = settings.readAlongShowsText,
+            onToggle = { readAlong.setShowsText(!settings.readAlongShowsText) },
+        ),
+        square = { modifier, alignment -> ReadAlongSquare(book, readAlong, playback, modifier, alignment) },
     )
 }
 

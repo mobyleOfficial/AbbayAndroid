@@ -33,6 +33,7 @@ import com.usecase.RequestFullScan
 import com.usecase.SaveListeningState
 import com.usecase.SetAppLanguage
 import com.usecase.SetBookState
+import com.usecase.SetReadAlongEnabled
 import com.usecase.SortAndFilterBooks
 import com.usecase.UpdateAppSettings
 import com.usecase.UpdateBookmarkNote
@@ -49,6 +50,7 @@ class ViewModelFactory(
     val converterRepository: FakeConverterRepository = FakeConverterRepository(),
     val languageRepository: FakeLanguageRepository = FakeLanguageRepository(),
     val libriVoxRepository: FakeLibriVoxRepository = FakeLibriVoxRepository(),
+    val readAlongRepository: FakeReadAlongRepository = FakeReadAlongRepository(),
 ) {
     fun booksListViewModel() = BooksListViewModel(
         playerController = playerController,
@@ -59,7 +61,7 @@ class ViewModelFactory(
         refreshLibrary = RefreshLibrary(libraryRepository),
         refreshLibraryOnStart = RefreshLibraryOnStart(libraryRepository, settingsRepository),
         requestFullScan = RequestFullScan(libraryRepository),
-        hideBook = HideBook(libraryRepository),
+        hideBook = HideBook(libraryRepository, readAlongRepository),
         setBookState = SetBookState(libraryRepository),
         sortAndFilterBooks = SortAndFilterBooks(),
         prepareLegacyFolderMigration = PrepareLegacyFolderMigration(legacyRepository, libraryRepository),
@@ -85,7 +87,7 @@ class ViewModelFactory(
         replaceLibraryRoots = ReplaceLibraryRoots(libraryRepository),
         addLibraryRoot = AddLibraryRoot(libraryRepository),
         removeLibraryRoot = RemoveLibraryRoot(libraryRepository),
-        clearLibrary = ClearLibrary(libraryRepository),
+        clearLibrary = ClearLibrary(libraryRepository, readAlongRepository),
         exportBackup = ExportBackup(backupRepository),
         importBackup = ImportBackup(backupRepository),
         clearStatistics = ClearStatistics(statisticsRepository),
@@ -93,5 +95,6 @@ class ViewModelFactory(
         observeLibraryRoots = ObserveLibraryRoots(libraryRepository),
         getAppLanguage = GetAppLanguage(languageRepository),
         setAppLanguage = SetAppLanguage(languageRepository),
+        setReadAlongEnabled = SetReadAlongEnabled(settingsRepository, readAlongRepository),
     )
 }

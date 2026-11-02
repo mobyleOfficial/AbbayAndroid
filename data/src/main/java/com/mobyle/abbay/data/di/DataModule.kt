@@ -15,6 +15,8 @@ import com.mobyle.abbay.data.extras.CharacterRepositoryImpl
 import com.mobyle.abbay.data.extras.QueueRepositoryImpl
 import com.mobyle.abbay.data.extras.StatisticsRepositoryImpl
 import com.mobyle.abbay.data.librivox.LibriVoxRepositoryImpl
+import com.mobyle.abbay.data.readalong.ReadAlongRepositoryImpl
+import com.mobyle.abbay.data.readalong.VoskReadAlongTranscriber
 import com.mobyle.abbay.data.repository.LegacyMigrationRepositoryImpl
 import com.mobyle.abbay.data.repository.LibraryRepositoryImpl
 import com.mobyle.abbay.data.repository.ListeningRepositoryImpl
@@ -23,6 +25,7 @@ import com.mobyle.abbay.data.settings.legacyPreferencesMigration
 import com.mobyle.abbay.data.storage.DocumentTreeSource
 import com.mobyle.abbay.data.storage.SafDocumentTreeDataSource
 import com.mobyle.abbay.data.subtitles.SubtitleRepositoryImpl
+import com.readalong.ReadAlongTranscriber
 import com.repository.AudioEffectsRepository
 import com.repository.AudiobookshelfRepository
 import com.repository.BackupRepository
@@ -34,6 +37,7 @@ import com.repository.LibriVoxRepository
 import com.repository.ListeningRepository
 import com.repository.PlaybackOptionsRepository
 import com.repository.QueueRepository
+import com.repository.ReadAlongRepository
 import com.repository.RemoteMediaAuth
 import com.repository.SettingsRepository
 import com.repository.StatisticsRepository
@@ -52,6 +56,12 @@ import javax.inject.Singleton
 abstract class DataModule {
     @Binds
     abstract fun bindLibraryRepository(implementation: LibraryRepositoryImpl): LibraryRepository
+
+    @Binds
+    abstract fun bindReadAlongRepository(implementation: ReadAlongRepositoryImpl): ReadAlongRepository
+
+    @Binds
+    abstract fun bindReadAlongTranscriber(implementation: VoskReadAlongTranscriber): ReadAlongTranscriber
 
     @Binds
     abstract fun bindLibriVoxRepository(implementation: LibriVoxRepositoryImpl): LibriVoxRepository

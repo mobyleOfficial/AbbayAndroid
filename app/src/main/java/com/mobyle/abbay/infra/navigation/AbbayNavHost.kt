@@ -47,6 +47,7 @@ import com.mobyle.abbay.presentation.librivox.LibriVoxSearchScreen
 import com.mobyle.abbay.presentation.librivox.LibriVoxSearchViewModel
 import com.mobyle.abbay.presentation.options.PlaybackOptionsViewModel
 import com.mobyle.abbay.presentation.queue.QueueScreen
+import com.mobyle.abbay.presentation.readalong.ReadAlongViewModel
 import com.mobyle.abbay.presentation.search.SearchScreen
 import com.mobyle.abbay.presentation.settings.SettingsScreen
 import com.mobyle.abbay.presentation.statistics.BookStatisticsScreen
@@ -62,9 +63,13 @@ fun AbbayNavHost(
     effectsViewModel: AudioEffectsViewModel = hiltViewModel(),
     optionsViewModel: PlaybackOptionsViewModel = hiltViewModel(),
     documentsViewModel: CompanionDocumentsViewModel = hiltViewModel(),
+    readAlongViewModel: ReadAlongViewModel = hiltViewModel(),
 ) {
-    val player = remember(viewModel, effectsViewModel, optionsViewModel, documentsViewModel, navController) {
-        playerDependencies(viewModel, effectsViewModel, optionsViewModel, documentsViewModel, navController)
+    val player = remember(viewModel, effectsViewModel, optionsViewModel, documentsViewModel, readAlongViewModel, navController) {
+        playerDependencies(
+            PlayerViewModels(viewModel, effectsViewModel, optionsViewModel, documentsViewModel, readAlongViewModel),
+            navController
+        )
     }
     AdaptiveLibraryShell(player) { host ->
         PlayBesideScreens(viewModel, host, navController)
@@ -73,13 +78,15 @@ fun AbbayNavHost(
 }
 
 // Above the screens, so the player pane (on a tablet or an unfolded foldable) stays beside any of them.
-private fun playerDependencies(
-    viewModel: BooksListViewModel,
-    effectsViewModel: AudioEffectsViewModel,
-    optionsViewModel: PlaybackOptionsViewModel,
-    documentsViewModel: CompanionDocumentsViewModel,
-    navController: NavHostController,
-): LibraryPlayerDependencies {
+private class PlayerViewModels(
+    val books: BooksListViewModel,
+    val effects: AudioEffectsViewModel,
+    val options: PlaybackOptionsViewModel,
+    val documents: CompanionDocumentsViewModel,
+    val readAlong: ReadAlongViewModel,
+)
+
+private fun playerDependencies(viewModels: PlayerViewModels, navController: NavHostController): LibraryPlayerDependencies {
     val destinations = LibraryDestinations(
         queue = { navController.navigate(NavigationItem.Queue.route) },
         search = { navController.navigate(NavigationItem.Search.route) },
@@ -94,10 +101,11 @@ private fun playerDependencies(
     val navigateToSettings = { navController.navigate(NavigationItem.Settings.route) }
     val navigateToBookDetails = { bookId: String -> navController.navigate(NavigationItem.BookDetails.routeFor(bookId)) }
     return LibraryPlayerDependencies(
-        viewModel = viewModel,
-        effectsViewModel = effectsViewModel,
-        optionsViewModel = optionsViewModel,
-        documentsViewModel = documentsViewModel,
+        viewModel = viewModels.books,
+        effectsViewModel = viewModels.effects,
+        optionsViewModel = viewModels.options,
+        documentsViewModel = viewModels.documents,
+        readAlongViewModel = viewModels.readAlong,
         navigation = PlayerNavigation(
             settings = navigateToSettings,
             bookDetails = navigateToBookDetails,

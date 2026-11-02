@@ -2,6 +2,7 @@ package com.mobyle.abbay.presentation.librivox
 
 import androidx.lifecycle.SavedStateHandle
 import com.mobyle.abbay.fakes.FakeLibriVoxRepository
+import com.mobyle.abbay.fakes.FakeReadAlongRepository
 import com.model.ChapterDownload
 import com.model.ChapterDownloadStatus
 import com.model.DataError
@@ -75,7 +76,7 @@ class LibriVoxBookViewModelTest {
             ),
         ),
         observeDetails = ObserveLibriVoxDetails(repository),
-        addLibriVoxBook = AddLibriVoxBook(repository),
+        addLibriVoxBook = AddLibriVoxBook(repository, FakeReadAlongRepository()),
         startLibriVoxDownload = StartLibriVoxDownload(repository),
         pauseLibriVoxDownload = PauseLibriVoxDownload(repository),
         removeLibriVoxDownload = RemoveLibriVoxDownload(repository),

@@ -66,11 +66,21 @@ internal object SettingsKeys {
     val hiddenQuickActions = stringSetPreferencesKey("hiddenQuickActions")
     val language = stringPreferencesKey("language")
     val castProcessedAudio = booleanPreferencesKey("castProcessedAudio")
+    val readAlongEnabled = booleanPreferencesKey("readAlong")
+    val readAlongShowsText = booleanPreferencesKey("readAlongShowsText")
 
     val libraryTabOrder = stringPreferencesKey("libraryTabOrder")
     val hiddenLibraryTabs = stringSetPreferencesKey("hiddenLibraryTabs")
 
     fun subtitleCharset(bookId: Long) = stringPreferencesKey("subtitleCharset.$bookId")
+
+    fun readAlongLanguage(bookId: String) = stringPreferencesKey("readAlongLanguage.$bookId")
+
+    const val READ_ALONG_LANGUAGE_PREFIX = "readAlongLanguage."
+
+    fun readAlongSyncOffset(bookId: String) = longPreferencesKey("readAlongSyncOffset.$bookId")
+
+    const val READ_ALONG_SYNC_OFFSET_PREFIX = "readAlongSyncOffset."
 
     val legacyFolderUri = stringPreferencesKey("legacyFolderUri")
     val legacyFolderMigrated = booleanPreferencesKey("legacyFolderMigrated")
