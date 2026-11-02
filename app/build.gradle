@@ -128,6 +128,8 @@ dependencies {
 
     implementation libs.material
 
+    implementation libs.vosk.android
+
     implementation libs.kotlinx.serialization.json.legacy
     implementation libs.kotlinx.serialization.json
 

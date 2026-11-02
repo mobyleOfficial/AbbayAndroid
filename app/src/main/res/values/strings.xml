@@ -416,6 +416,24 @@
     <string name="text_none">This file has no matching .srt or .lrc file.</string>
     <string name="text_go_to_line">Go to this line</string>
     <string name="text_choose_charset">%1$s is not UTF-8. Choose its character set:</string>
+
+    <string name="read_along_pill">Text</string>
+    <string name="read_along_cover_pill">Cover</string>
+    <string name="read_along_preparing">Preparing text…</string>
+    <string name="read_along_downloading">Downloading the %1$s speech model…</string>
+    <string name="read_along_unsupported">Text isn\'t available in %1$s.</string>
+    <string name="read_along_needs_download">The audio must be downloaded first to show its text.</string>
+    <string name="read_along_file_missing">The audio file must be on this phone to show its text.</string>
+    <string name="read_along_failed">Couldn\'t make the text.</string>
+    <string name="read_along_no_speech">No speech here</string>
+    <string name="read_along_go_to_line">Plays from this line</string>
+    <string name="read_along_language">Text language</string>
+    <string name="read_along_full_screen">Full screen</string>
+    <string name="read_along_exit_full_screen">Exit full screen</string>
+    <string name="read_along_settings">Read-along</string>
+    <string name="read_along_settings_footer">Shows the audiobook\'s text in the player, made on this phone from the book\'s own audio. It can be wrong. Nothing is sent and the microphone is never used.</string>
+    <string name="read_along_delete_model">Delete speech models</string>
+    <string name="read_along_model_size">%1$s of speech models on this phone</string>
     <string name="player_text">Text</string>
     <string name="settings_face_down_to_pause">Face down to pause (face up within 10 min resumes)</string>
     <string name="settings_flip_to_rewind">Quick flip to rewind 30 s</string>

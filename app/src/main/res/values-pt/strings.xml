@@ -417,6 +417,24 @@
     <string name="text_none">Este arquivo não tem um .srt ou .lrc correspondente.</string>
     <string name="text_go_to_line">Ir para esta linha</string>
     <string name="text_choose_charset">%1$s não está em UTF-8. Escolha a codificação:</string>
+
+    <string name="read_along_pill">Texto</string>
+    <string name="read_along_cover_pill">Capa</string>
+    <string name="read_along_preparing">Preparando o texto…</string>
+    <string name="read_along_downloading">Baixando o modelo de fala em %1$s…</string>
+    <string name="read_along_unsupported">O texto não está disponível em %1$s.</string>
+    <string name="read_along_needs_download">O áudio precisa ser baixado antes de mostrar o texto.</string>
+    <string name="read_along_file_missing">O arquivo de áudio precisa estar neste celular para mostrar o texto.</string>
+    <string name="read_along_failed">Não foi possível fazer o texto.</string>
+    <string name="read_along_no_speech">Sem fala aqui</string>
+    <string name="read_along_go_to_line">Toca a partir desta linha</string>
+    <string name="read_along_language">Idioma do texto</string>
+    <string name="read_along_full_screen">Tela cheia</string>
+    <string name="read_along_exit_full_screen">Sair da tela cheia</string>
+    <string name="read_along_settings">Leitura acompanhada</string>
+    <string name="read_along_settings_footer">Mostra o texto do audiolivro no player, feito neste celular a partir do áudio do próprio livro. Ele pode errar. Nada é enviado e o microfone nunca é usado.</string>
+    <string name="read_along_delete_model">Apagar modelos de fala</string>
+    <string name="read_along_model_size">%1$s de modelos de fala neste celular</string>
     <string name="player_text">Texto</string>
     <string name="settings_face_down_to_pause">Virar para baixo pausa (virar para cima em até 10 min retoma)</string>
     <string name="settings_flip_to_rewind">Giro rápido volta 30 s</string>

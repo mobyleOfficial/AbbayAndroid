@@ -11,6 +11,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.effects.AudioEffects
 import com.effects.EqualizerPreset
 import com.mobyle.abbay.infra.cast.CastButton
@@ -20,12 +21,17 @@ import com.mobyle.abbay.presentation.booklist.widgets.player.ChaptersToggle
 import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerActions
 import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerDisplay
 import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerSkips
+import com.mobyle.abbay.presentation.booklist.widgets.player.ReadAlongToggle
 import com.mobyle.abbay.presentation.booklist.widgets.player.SleepSheetSettings
 import com.mobyle.abbay.presentation.documents.CompanionDocumentsViewModel
 import com.mobyle.abbay.presentation.effects.AudioEffectsPanel
 import com.mobyle.abbay.presentation.effects.AudioEffectsViewModel
 import com.mobyle.abbay.presentation.options.PlaybackOptionsPanel
 import com.mobyle.abbay.presentation.options.PlaybackOptionsViewModel
+import com.mobyle.abbay.presentation.readalong.ReadAlongFullScreen
+import com.mobyle.abbay.presentation.readalong.ReadAlongPane
+import com.mobyle.abbay.presentation.readalong.ReadAlongUi
+import com.mobyle.abbay.presentation.readalong.ReadAlongViewModel
 import com.model.Book
 import com.model.BookState
 import kotlinx.coroutines.launch
@@ -70,6 +76,13 @@ fun LibraryPlayer(
     val playbackOptions by dependencies.optionsViewModel.options.collectAsState()
     val audioEffects by dependencies.effectsViewModel.effects.collectAsState()
     val equalizerPresets by dependencies.effectsViewModel.presets.collectAsState()
+    val readAlongViewModel: ReadAlongViewModel = hiltViewModel()
+    val readAlongUi by readAlongViewModel.ui.collectAsState()
+    val readAlongToggle = ReadAlongToggle(
+        isAvailable = readAlongUi.isAvailable,
+        isShowingText = readAlongUi.isShowingText,
+        onToggle = readAlongViewModel::toggleText,
+    )
 
     Column(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         MiniPlayer(
@@ -97,11 +110,25 @@ fun LibraryPlayer(
                 shakeSensitivity = appSettings.shakeSensitivity,
             ),
             display = PlayerDisplay(appSettings.progressLabels, appSettings.hiddenQuickActions),
+            readAlong = readAlongToggle,
+            readAlongPane = { modifier ->
+                ReadAlongPane(book = book, viewModel = readAlongViewModel, modifier = modifier) {
+                    readAlongViewModel.setFullScreen(true)
+                }
+            },
             chapters = presentation.chaptersToggle(),
             onClose = if (isPane) ({ scope.launch { presentation.close() } }) else null,
             onExpand = { scope.launch { presentation.open() } },
         )
     }
+
+    ReadAlongIfFullScreen(book, readAlongViewModel, readAlongUi)
+}
+
+@Composable
+private fun ReadAlongIfFullScreen(book: Book, viewModel: ReadAlongViewModel, ui: ReadAlongUi) {
+    if (!ui.isFullScreen) return
+    ReadAlongFullScreen(book = book, viewModel = viewModel, onClose = { viewModel.setFullScreen(false) })
 }
 
 private fun PlayerPresentation.chaptersToggle() = ChaptersToggle(

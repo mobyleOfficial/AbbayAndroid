@@ -40,6 +40,7 @@ import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerPosition
 import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerSkips
 import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerTopBar
 import com.mobyle.abbay.presentation.booklist.widgets.player.PlayingState
+import com.mobyle.abbay.presentation.booklist.widgets.player.ReadAlongToggle
 import com.mobyle.abbay.presentation.booklist.widgets.player.ScreenLockedAlert
 import com.mobyle.abbay.presentation.booklist.widgets.player.SleepSheetSettings
 import com.mobyle.abbay.presentation.booklist.widgets.player.chaptersToggleOf
@@ -70,6 +71,8 @@ fun MiniPlayer(
     options: PlaybackOptionsPanel = PlaybackOptionsPanel(),
     display: PlayerDisplay = PlayerDisplay(),
     chapters: ChaptersToggle? = null,
+    readAlong: ReadAlongToggle = ReadAlongToggle(),
+    readAlongPane: (@Composable (Modifier) -> Unit)? = null,
     onClose: (() -> Unit)? = null,
     onExpand: () -> Unit = {},
 ) {
@@ -100,6 +103,7 @@ fun MiniPlayer(
             effects = effects,
             options = options,
             display = display,
+            readAlong = readAlong,
         )
 
         Cover(
@@ -108,6 +112,9 @@ fun MiniPlayer(
             skips = skips,
             actions = actions,
             gesturesEnabled = isExpanded && !isScreenLocked,
+            isExpanded = isExpanded,
+            readAlong = readAlong,
+            readAlongPane = readAlongPane,
             isPane = onClose != null,
             modifier = Modifier.padding(8.dp).layoutId(LayoutId.THUMBNAIL.id),
         )
@@ -221,10 +228,18 @@ private fun Cover(
     skips: PlayerSkips,
     actions: PlayerActions,
     gesturesEnabled: Boolean,
+    isExpanded: Boolean,
+    readAlong: ReadAlongToggle,
+    readAlongPane: (@Composable (Modifier) -> Unit)?,
     modifier: Modifier = Modifier,
     isPane: Boolean = false,
 ) {
     Box(modifier) {
+        if (isExpanded && readAlong.isShowingText && readAlongPane != null) {
+            // The text takes the cover's square, like lyrics: nothing else on the player moves.
+            readAlongPane(Modifier.fillMaxSize())
+            return@Box
+        }
         PlayerCover(
             thumbnail = book.thumbnail,
             isStreamingOnly = isStreamingOnly(book),
