@@ -71,6 +71,13 @@ data class PlayerDisplay(
 
 class ChaptersToggle(val isOpen: Boolean = false, val onToggle: () -> Unit = {}, val onClose: () -> Unit = {})
 
+/** The player's read-along: whether it exists at all (the setting), whether the text or the cover shows, and the flip. */
+class ReadAlongToggle(
+    val isAvailable: Boolean = false,
+    val isShowingText: Boolean = false,
+    val onToggle: () -> Unit = {},
+)
+
 /** Hoisted when given (the chapters can be a pane beside a player pane); in a sheet, open only while the player is expanded. */
 internal fun chaptersToggleOf(hoisted: ChaptersToggle?, own: ChaptersToggle, isSheet: Boolean, isExpanded: Boolean): ChaptersToggle = when {
     hoisted == null -> own

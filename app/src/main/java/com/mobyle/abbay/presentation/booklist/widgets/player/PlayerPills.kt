@@ -15,7 +15,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.List
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Speed
+import androidx.compose.material.icons.rounded.Subject
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -40,7 +42,13 @@ import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.model.Book
 
 @Composable
-internal fun PillsRow(book: Book, position: PlayerPosition, chapters: ChaptersToggle, actions: PlayerActions) {
+internal fun PillsRow(
+    book: Book,
+    position: PlayerPosition,
+    chapters: ChaptersToggle,
+    actions: PlayerActions,
+    readAlong: ReadAlongToggle = ReadAlongToggle(),
+) {
     var showSpeedSheet by remember { mutableStateOf(false) }
     if (showSpeedSheet) {
         SpeedSheet(
@@ -59,6 +67,16 @@ internal fun PillsRow(book: Book, position: PlayerPosition, chapters: ChaptersTo
             color = if (isNormalSpeed) AbbayColors.content else MaterialTheme.colorScheme.tertiary,
             onClick = { showSpeedSheet = true },
         )
+        if (readAlong.isAvailable) {
+            Spacer(modifier = Modifier.size(8.dp))
+            PlayerPill(
+                text = stringResource(if (readAlong.isShowingText) R.string.read_along_cover_pill else R.string.read_along_pill),
+                description = stringResource(if (readAlong.isShowingText) R.string.read_along_cover_pill else R.string.read_along_pill),
+                icon = if (readAlong.isShowingText) Icons.Rounded.Image else Icons.Rounded.Subject,
+                color = AbbayColors.content,
+                onClick = readAlong.onToggle,
+            )
+        }
         Spacer(modifier = Modifier.weight(1f))
         if (position.chapterCount > 1) {
             PlayerPill(

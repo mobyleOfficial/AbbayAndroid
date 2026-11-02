@@ -25,6 +25,8 @@ The full, generated list of shipped libraries (including transitive ones) is pro
 | Material Components for Android | 1.12.0 | Apache-2.0 | Theme |
 | Robolectric (test only) | 4.14.1 | MIT | JVM UI tests |
 | Firebase Crashlytics, Firebase Analytics | 18.6.2 / 21.5.1 | Apache-2.0 SDKs; Google service terms | Crash reports, usage counters |
+| Vosk (`vosk-android`, the recogniser and its acoustic models built into one AAR) | 0.3.47 | Apache-2.0 | On-device speech recognition for read-along; the language's model is downloaded once, when the text is first shown |
+| Java Native Access (JNA, pulled by `vosk-android`) | 5.13.0 | Apache-2.0 or LGPL-2.1-or-later (JNA is dual-licensed; the license report lists both and the Apache-2.0 option is the one relied on) | Native bindings the recogniser is called through |
 
 ## Bundled source code
 | Code | Author / source | License | Location |
@@ -38,6 +40,7 @@ The full, generated list of shipped libraries (including transitive ones) is pro
 | `file_music`, `file_plus`, `folder_plus`, `ic_book`, `ic_clock`, `ic_play`, `ic_stop`, `img_no_permissions` vectors | Abbay project (pre-existing in AbbayAndroid, owner-provided) | MIT (project asset) | `app/src/main/res/drawable/` |
 | `vbr_no_xing.mp3`, `vbr_with_xing.mp3` test fixtures | Abbay project: synthetic silence/tone/noise generated in Python, encoded with LAME through ffmpeg as a build-time tool (no encoder code ships) | CC0 1.0 | `app/src/test/resources/` |
 | `moov_at_end.m4b` test fixture | Abbay project: synthetic 3 s 440 Hz tone, encoded to AAC in an M4B container (`moov` box after the audio data) with ffmpeg as a build-time tool (no encoder code ships) | CC0 1.0 | `app/src/test/resources/` |
+| Vosk speech models (`vosk-model-small-en-us-0.15`, `-es-0.42`, `-pt-0.3`) | Alpha Cephei Inc., alphacephei.com/vosk/models | Apache-2.0 | Downloaded to the app's private storage the first time read-along is shown in that language; not bundled in the APK. Each download is checked against a pinned size and SHA-256 before it is unpacked |
 | `ic_sleep_timer`, `ic_sleep_timer_off` vectors (notification sleep-timer button) | Abbay project, drawn for Phase 4 | MIT | `app/src/main/res/drawable/` |
 | Sleep-timer chime and shake confirmation tones | Abbay project: sine tones synthesized at run time in `TonePlayer` (no audio file) | MIT | `app/src/main/java/com/mobyle/abbay/presentation/playback/sleep/TonePlayer.kt` |
 | `ic_shortcut_resume`, `ic_shortcut_sleep`, `ic_tile_play` vectors (launcher shortcuts, Quick Settings tile) | Abbay project, drawn for Phase 7 | MIT | `app/src/main/res/drawable/` |
