@@ -23,6 +23,8 @@ The full, generated list of shipped libraries (including transitive ones) is pro
 | Coil (compose, svg) | 2.7.0 / 2.4.0 | Apache-2.0 | Image loading |
 | Glide Compose | 1.0.0-beta01 | BSD-2-Clause + Apache-2.0 | Image loading (to be consolidated on Coil) |
 | Material Components for Android | 1.12.0 | Apache-2.0 | Theme |
+| Vosk Android (`com.alphacephei:vosk-android`) | 0.3.75 | Apache-2.0 | Read-along: offline speech recognition (Kaldi), native `libvosk.so` per ABI |
+| JNA (`net.java.dev.jna:jna`, pulled by Vosk) | 5.18.1 | Apache-2.0 (dual-licensed LGPL-2.1+ / Apache-2.0; used under Apache-2.0) | Calls into `libvosk.so` |
 | Robolectric (test only) | 4.14.1 | MIT | JVM UI tests |
 | Firebase Crashlytics, Firebase Analytics | 18.6.2 / 21.5.1 | Apache-2.0 SDKs; Google service terms | Crash reports, usage counters |
 
@@ -42,3 +44,11 @@ The full, generated list of shipped libraries (including transitive ones) is pro
 | Sleep-timer chime and shake confirmation tones | Abbay project: sine tones synthesized at run time in `TonePlayer` (no audio file) | MIT | `app/src/main/java/com/mobyle/abbay/presentation/playback/sleep/TonePlayer.kt` |
 | `ic_shortcut_resume`, `ic_shortcut_sleep`, `ic_tile_play` vectors (launcher shortcuts, Quick Settings tile) | Abbay project, drawn for Phase 7 | MIT | `app/src/main/res/drawable/` |
 | `widget_*` vectors (home screen widgets) | Abbay project, drawn for Phase 7 | MIT | `app/src/main/res/drawable/` |
+
+## Downloaded at run time
+Not shipped in the app. Read-along downloads the speech model of a language the first time it is used, over https from alphacephei.com only, and checks its size and SHA-256 (pinned in `data/src/main/java/com/mobyle/abbay/data/readalong/VoskModels.kt`) before unpacking it. Turning Read-along off deletes them.
+
+| Model | Source | License |
+|---|---|---|
+| `vosk-model-small-en-us-0.15`, `-pt-0.3`, `-es-0.42`, `-fr-0.22`, `-de-0.15`, `-it-0.22`, `-nl-0.22`, `-ru-0.22`, `-pl-0.22`, `-ca-0.4`, `-tr-0.3` | Alpha Cephei, https://alphacephei.com/vosk/models | Apache-2.0 |
+| `vosk-model-small-cs-0.4-rhasspy` | Rhasspy project, repackaged by Alpha Cephei | MIT |

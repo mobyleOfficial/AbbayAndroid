@@ -82,6 +82,64 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
         }
     }
 
+    suspend fun readAlongLanguage(bookId: String): String? = dataStore.data.first()[SettingsKeys.readAlongLanguage(bookId)]
+
+    suspend fun setReadAlongLanguage(bookId: String, locale: String?) {
+        dataStore.edit { preferences ->
+            locale?.let { preferences[SettingsKeys.readAlongLanguage(bookId)] = it }
+                ?: preferences.remove(SettingsKeys.readAlongLanguage(bookId))
+        }
+    }
+
+    suspend fun readAlongSyncOffset(bookId: String): Long = dataStore.data.first()[SettingsKeys.readAlongSyncOffset(bookId)] ?: 0L
+
+    suspend fun setReadAlongSyncOffset(bookId: String, offsetMs: Long) {
+        dataStore.edit { preferences ->
+            if (offsetMs != 0L) {
+                preferences[SettingsKeys.readAlongSyncOffset(bookId)] = offsetMs
+            } else {
+                preferences.remove(SettingsKeys.readAlongSyncOffset(bookId))
+            }
+        }
+    }
+
+    suspend fun readAlongEpub(bookId: String): String? = dataStore.data.first()[SettingsKeys.readAlongEpub(bookId)]
+
+    suspend fun setReadAlongEpub(bookId: String, uri: String?) {
+        dataStore.edit { preferences ->
+            uri?.let { preferences[SettingsKeys.readAlongEpub(bookId)] = it } ?: preferences.remove(SettingsKeys.readAlongEpub(bookId))
+        }
+    }
+
+    suspend fun readAlongIntroSeen(bookId: String): Boolean = dataStore.data.first()[SettingsKeys.readAlongIntroSeen(bookId)] == true
+
+    suspend fun setReadAlongIntroSeen(bookId: String, seen: Boolean) {
+        dataStore.edit { preferences ->
+            if (seen) {
+                preferences[
+                    SettingsKeys.readAlongIntroSeen(
+                        bookId
+                    )
+                ] = true
+            } else {
+                preferences.remove(SettingsKeys.readAlongIntroSeen(bookId))
+            }
+        }
+    }
+
+    /** Every book's read-along language, sync adjustment, chosen EPUB and explanation seen, forgotten when the library is cleared. */
+    suspend fun clearReadAlongBookSettings() {
+        val prefixes = listOf(
+            SettingsKeys.READ_ALONG_LANGUAGE_PREFIX,
+            SettingsKeys.READ_ALONG_SYNC_OFFSET_PREFIX,
+            SettingsKeys.READ_ALONG_EPUB_PREFIX,
+            SettingsKeys.READ_ALONG_INTRO_SEEN_PREFIX,
+        )
+        dataStore.edit { preferences ->
+            preferences.asMap().keys.filter { key -> prefixes.any { key.name.startsWith(it) } }.forEach { preferences.remove(it) }
+        }
+    }
+
     suspend fun legacyFolderUri(): String? = dataStore.data.first().let { preferences ->
         if (preferences[SettingsKeys.legacyFolderMigrated] == true) null else preferences[SettingsKeys.legacyFolderUri]
     }
@@ -165,6 +223,7 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
         preferences[SettingsKeys.hiddenQuickActions] = updated.hiddenQuickActions.mapTo(mutableSetOf()) { it.name }
         preferences[SettingsKeys.language] = updated.language.name
         preferences[SettingsKeys.castProcessedAudio] = updated.castProcessedAudio
+        preferences[SettingsKeys.readAlongEnabled] = updated.readAlongEnabled
         preferences[SettingsKeys.libraryTabOrder] = updated.libraryTabOrder.joinToString(TAB_SEPARATOR) { it.name }
         preferences[SettingsKeys.hiddenLibraryTabs] = updated.hiddenLibraryTabs.mapTo(mutableSetOf()) { it.name }
     }
@@ -180,6 +239,7 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
             .mapNotNullTo(mutableSetOf()) { name -> QuickAction.entries.firstOrNull { it.name == name } },
         language = enumOrDefault(preferences[SettingsKeys.language], language),
         castProcessedAudio = preferences.valueOr(SettingsKeys.castProcessedAudio, castProcessedAudio),
+        readAlongEnabled = preferences.valueOr(SettingsKeys.readAlongEnabled, readAlongEnabled),
         libraryTabOrder = preferences[SettingsKeys.libraryTabOrder]?.split(TAB_SEPARATOR)
             ?.mapNotNull { name -> LibraryTab.entries.firstOrNull { it.name == name } }
             ?: libraryTabOrder,

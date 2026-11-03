@@ -671,4 +671,43 @@
         <item quantity="one">%d livro</item>
         <item quantity="other">%d livros</item>
     </plurals>
+
+    <!-- Read-along -->
+    <string name="settings_experimental">Experimental</string>
+    <string name="read_along_toggle">Leitura acompanhada</string>
+    <string name="read_along_footer">Mostra o texto do audiolivro enquanto ele toca, destacando as palavras lidas. Com o EPUB do livro na pasta do audiolivro, ou um escolhido para ele, o texto mostrado é o do próprio livro; sem ele, o texto é gerado por IA a partir do áudio neste aparelho, então pode errar palavras, principalmente nomes. Nada é enviado e o microfone nunca é usado. Na primeira vez que um idioma é usado, o modelo de fala dele (30–50 MB) é baixado uma vez.</string>
+    <string name="read_along_pill">Texto</string>
+    <string name="read_along_cover_pill">Capa</string>
+    <string name="read_along_show_cover">Mostrar capa</string>
+    <string name="read_along_preparing">Preparando o texto…</string>
+    <string name="read_along_downloading_model">Baixando o modelo de fala em %1$s…</string>
+    <string name="read_along_unsupported">Texto não disponível em %1$s.</string>
+    <string name="read_along_needs_download">O áudio precisa ser baixado primeiro para mostrar o texto.</string>
+    <string name="read_along_file_missing">O arquivo de áudio precisa estar neste aparelho para mostrar o texto.</string>
+    <string name="read_along_no_speech">Sem fala neste trecho.</string>
+    <string name="read_along_failed">Não foi possível gerar o texto.</string>
+    <string name="read_along_language">Idioma do texto</string>
+    <string name="read_along_line_hint">Tocar a partir desta linha</string>
+    <string name="read_along_full_screen">Tela cheia</string>
+    <string name="read_along_exit_full_screen">Sair da tela cheia</string>
+    <string name="read_along_sync">Sincronia do texto</string>
+    <string name="read_along_sync_in_sync">Sincronizado</string>
+    <string name="read_along_sync_ahead">Texto %1$s s adiantado</string>
+    <string name="read_along_sync_behind">Texto %1$s s atrasado</string>
+    <string name="read_along_sync_earlier">Adiantar texto</string>
+    <string name="read_along_sync_later">Atrasar texto</string>
+    <string name="read_along_sync_reset">Redefinir</string>
+    <string name="read_along_sync_tip">Texto fora de ritmo com o áudio? Use − e +, ou toque e segure a linha que está sendo lida para alinhar o texto com ela.</string>
+    <string name="read_along_line_sync_hint">Alinhar o texto com esta linha</string>
+    <string name="read_along_intro_title">Texto junto com o áudio</string>
+    <string name="read_along_intro_epub">Para ver o texto original do livro, coloque o arquivo EPUB dele na mesma pasta do audiolivro. Ou escolha um EPUB de qualquer lugar: com o texto aberto, toque no idioma, no canto inferior esquerdo do texto, e depois em “Usar texto de um EPUB…”. O texto acompanha o áudio, com a palavra lida em destaque.</string>
+    <string name="read_along_intro_generated">Sem EPUB, o texto é gerado por IA a partir do áudio, neste aparelho. Ele pode errar palavras, principalmente nomes, e não tem pontuação.</string>
+    <string name="read_along_intro_confirm">Mostrar texto</string>
+    <string name="read_along_intro_dismiss">Agora não</string>
+    <string name="read_along_generated_notice">Texto gerado por IA · pode conter erros</string>
+    <string name="read_along_epub_in_use">EPUB: %1$s</string>
+    <string name="read_along_epub_choose">Usar texto de um EPUB…</string>
+    <string name="read_along_epub_change">Usar outro EPUB…</string>
+    <string name="read_along_epub_remove">Parar de usar este EPUB</string>
+    <string name="read_along_epub_rejected">Não foi possível ler esse arquivo como EPUB.</string>
 </resources>

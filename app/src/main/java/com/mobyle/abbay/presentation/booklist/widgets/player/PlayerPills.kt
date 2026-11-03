@@ -11,10 +11,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.List
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.FormatQuote
+import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,7 +43,7 @@ import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.model.Book
 
 @Composable
-internal fun PillsRow(book: Book, position: PlayerPosition, chapters: ChaptersToggle, actions: PlayerActions) {
+internal fun PillsRow(book: Book, position: PlayerPosition, chapters: ChaptersToggle, readAlong: ReadAlongToggle, actions: PlayerActions) {
     var showSpeedSheet by remember { mutableStateOf(false) }
     if (showSpeedSheet) {
         SpeedSheet(
@@ -60,6 +63,16 @@ internal fun PillsRow(book: Book, position: PlayerPosition, chapters: ChaptersTo
             onClick = { showSpeedSheet = true },
         )
         Spacer(modifier = Modifier.weight(1f))
+        if (readAlong.isOffered) {
+            PlayerPill(
+                text = stringResource(if (readAlong.showsText) R.string.read_along_cover_pill else R.string.read_along_pill),
+                description = stringResource(if (readAlong.showsText) R.string.read_along_show_cover else R.string.read_along_pill),
+                icon = if (readAlong.showsText) Icons.Rounded.Image else Icons.Rounded.FormatQuote,
+                color = AbbayColors.content,
+                onClick = readAlong.onToggle,
+            )
+            if (position.chapterCount > 1) Spacer(modifier = Modifier.width(8.dp))
+        }
         if (position.chapterCount > 1) {
             PlayerPill(
                 text = stringResource(R.string.player_chapters),

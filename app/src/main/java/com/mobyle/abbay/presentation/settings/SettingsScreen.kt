@@ -153,6 +153,8 @@ fun SettingsScreen(
 
             item { AppearanceSettings(viewModel) }
 
+            item { ExperimentalSettings(viewModel) }
+
             item { AboutSettings(viewModel, openDiagnostics, openLicenses) }
         }
 

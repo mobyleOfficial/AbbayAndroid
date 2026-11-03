@@ -1,5 +1,7 @@
 package com.mobyle.abbay.presentation.booklist.widgets.player
 
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import com.listening.ShakeSensitivity
 import com.model.Book
 import com.model.Chapter
@@ -34,6 +36,8 @@ class PlayerActions(
     val onOpenBookText: () -> Unit = {},
     val onOpenText: () -> Unit = {},
     val routeButton: @androidx.compose.runtime.Composable () -> Unit = {},
+    /** The scrubber's finger is at this book position, or lifted (null): the read-along text follows it. */
+    val onScrub: (bookPositionMs: Long?) -> Unit = {},
 )
 
 data class PlayerSkips(
@@ -67,6 +71,15 @@ private const val END_TOLERANCE_MS = 30_000L
 data class PlayerDisplay(
     val progressLabels: ProgressLabels = ProgressLabels.ELAPSED_AND_REMAINING,
     val hiddenQuickActions: Set<QuickAction> = emptySet(),
+)
+
+/** The Text/Cover pill: offered when Read-along is on in Settings; [showsText] flips the cover square to the text. */
+class ReadAlongToggle(val isOffered: Boolean = false, val showsText: Boolean = false, val onToggle: () -> Unit = {})
+
+/** Read-along in the player: the pill, and the text drawn in the cover's place while it shows. */
+class PlayerReadAlong(
+    val toggle: ReadAlongToggle,
+    val square: @androidx.compose.runtime.Composable (Modifier, Alignment) -> Unit,
 )
 
 class ChaptersToggle(val isOpen: Boolean = false, val onToggle: () -> Unit = {}, val onClose: () -> Unit = {})
