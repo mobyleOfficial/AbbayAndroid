@@ -60,6 +60,7 @@ class SettingsViewModel @Inject constructor(
 
     val shouldPlayWhenAppIsClosed: StateFlow<Boolean> = settings.mapState { it.playWhenAppIsClosed }
     val shouldOpenPlayerInStartup: StateFlow<Boolean> = settings.mapState { it.openPlayerOnStartup }
+    val readAlongEnabled: StateFlow<Boolean> = settings.mapState { it.readAlongEnabled }
     val themeMode: StateFlow<ThemeMode> = settings.mapState { it.themeMode }
     val dynamicColor: StateFlow<Boolean> = settings.mapState { it.dynamicColor }
     val shareDiagnostics: StateFlow<Boolean> = settings.mapState { it.shareDiagnostics }
@@ -72,6 +73,10 @@ class SettingsViewModel @Inject constructor(
 
     fun changePlayWhenAppIsClosed(shouldPlayWhenAppIsClosed: Boolean) = viewModelScope.launch {
         updateAppSettings { it.copy(playWhenAppIsClosed = shouldPlayWhenAppIsClosed) }
+    }
+
+    fun changeReadAlong(enabled: Boolean) = viewModelScope.launch {
+        updateAppSettings { it.copy(readAlongEnabled = enabled) }
     }
 
     fun changeOpenPlayerInStartUp(shouldOpenPlayerInStartUp: Boolean) = viewModelScope.launch {

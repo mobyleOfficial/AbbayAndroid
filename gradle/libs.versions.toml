@@ -71,6 +71,9 @@ robolectric = "4.14.1"
 firebase-crashlytics = "18.6.2"
 firebase-analytics = "21.5.1"
 
+# On-device speech recognition
+vosk = "0.3.47"
+
 [libraries]
 # Startup, Baseline Profile and Macrobenchmark
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version = "1.3.1" }
@@ -150,6 +153,9 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 
 # Dependency Injection
 javax-inject = { group = "javax.inject", name = "javax.inject", version.ref = "javax-inject" }
+
+# On-device speech recognition (Apache-2.0; its JNA runtime is licensed LGPL-2.1-or-later)
+vosk-android = { group = "com.alphacephei", name = "vosk-android", version.ref = "vosk" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }

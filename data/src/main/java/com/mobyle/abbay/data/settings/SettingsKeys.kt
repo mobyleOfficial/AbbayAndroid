@@ -66,9 +66,12 @@ internal object SettingsKeys {
     val hiddenQuickActions = stringSetPreferencesKey("hiddenQuickActions")
     val language = stringPreferencesKey("language")
     val castProcessedAudio = booleanPreferencesKey("castProcessedAudio")
+    val readAlongEnabled = booleanPreferencesKey("readAlongEnabled")
 
     val libraryTabOrder = stringPreferencesKey("libraryTabOrder")
     val hiddenLibraryTabs = stringSetPreferencesKey("hiddenLibraryTabs")
+
+    fun readAlongLanguage(bookId: Long) = stringPreferencesKey("readAlongLanguage.$bookId")
 
     fun subtitleCharset(bookId: Long) = stringPreferencesKey("subtitleCharset.$bookId")
 

@@ -69,6 +69,7 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
             preferences[SettingsKeys.converterMinimumBatteryPercent] = updated.converterMinimumBatteryPercent
             preferences[SettingsKeys.converterSavedBytes] = updated.converterSavedBytes
             preferences[SettingsKeys.showCastButton] = updated.showCastButton
+            preferences[SettingsKeys.readAlongEnabled] = updated.readAlongEnabled
             writeDisplaySettings(preferences, updated)
         }
     }
@@ -79,6 +80,15 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
         dataStore.edit { preferences ->
             charset?.let { preferences[SettingsKeys.subtitleCharset(bookId)] = it }
                 ?: preferences.remove(SettingsKeys.subtitleCharset(bookId))
+        }
+    }
+
+    suspend fun readAlongLanguage(bookId: Long): String? = dataStore.data.first()[SettingsKeys.readAlongLanguage(bookId)]
+
+    suspend fun setReadAlongLanguage(bookId: Long, language: String?) {
+        dataStore.edit { preferences ->
+            language?.let { preferences[SettingsKeys.readAlongLanguage(bookId)] = it }
+                ?: preferences.remove(SettingsKeys.readAlongLanguage(bookId))
         }
     }
 
@@ -152,6 +162,7 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
             ),
             converterSavedBytes = preferences.valueOr(SettingsKeys.converterSavedBytes, defaults.converterSavedBytes),
             showCastButton = preferences.valueOr(SettingsKeys.showCastButton, defaults.showCastButton),
+            readAlongEnabled = preferences.valueOr(SettingsKeys.readAlongEnabled, defaults.readAlongEnabled),
         ).withDisplaySettings(preferences)
     }
 

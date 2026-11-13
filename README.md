@@ -5,9 +5,10 @@ Abbay is an Android audiobook player app built with Jetpack Compose and ExoPlaye
 ## Features
 
 - 📚 Browse and play audiobooks from folders or single files (MP3, M4A/M4B, Opus, FLAC, …)
-- 🌐 Free public-domain audiobooks from LibriVox: search or browse the most popular, listen without downloading (streaming only) or download in the background (pause, resume or cancel from the book page or the notification; a warning before large downloads on mobile data) and start listening while chapters are still downloading. Network access is limited to archive.org and librivox.org over HTTPS
+- 🌐 Free public-domain audiobooks from LibriVox: search or browse the most popular, listen without downloading (streaming only) or download in the background (pause, resume or cancel from the book page or the notification; a warning before large downloads on mobile data) and start listening while chapters are still downloading. Network access is limited to archive.org and librivox.org over HTTPS, plus the speech model read-along downloads from alphacephei.com the first time it is shown in a language (the Audiobookshelf feature talks to the server the user adds)
 - 🗂️ Library tabs (In progress, New, Finished — shown, hidden and ordered in Settings) with list, grid and compact layouts
 - 📖 Chapters from CUE sheets, M4B/MP4, ID3 and Matroska/Ogg tags, or one per file; chapter list, swipe the cover to change chapter
+- 🗣️ Read-along: the player shows the words being spoken, made on the phone from the book's own audio, with the line being read kept in the middle and the word being spoken highlighted; off by default, and the speech model for the language is installed once
 - ⏩ Small and large skips (15 s / 30 s / 5 min by default); hold a skip button to repeat it; double-tap the cover to skip
 - 🎚️ Speed 0.5–3.5× per book, with presets and a default for new books
 - 🎛️ Audio effects: noise reduction, silence trimming, volume boost and an equalizer
@@ -21,9 +22,9 @@ Abbay is an Android audiobook player app built with Jetpack Compose and ExoPlaye
 
 ## Screenshots
 
-| Library | Grid | Player | Audio effects |
-|---|---|---|---|
-| <img src="docs/screenshots/library.png" width="200" alt="Library list with the In progress tab and the mini player"/> | <img src="docs/screenshots/grid.png" width="200" alt="Library in grid layout"/> | <img src="docs/screenshots/player.png" width="200" alt="Player tinted with the cover's color"/> | <img src="docs/screenshots/effects.png" width="200" alt="Audio effects sheet over the player"/> |
+| Library | Grid | Player | Audio effects | Read-along |
+|---|---|---|---|---|
+| <img src="docs/screenshots/library.png" width="200" alt="Library list with the In progress tab and the mini player"/> | <img src="docs/screenshots/grid.png" width="200" alt="Library in grid layout"/> | <img src="docs/screenshots/player.png" width="200" alt="Player tinted with the cover's color"/> | <img src="docs/screenshots/effects.png" width="200" alt="Audio effects sheet over the player"/> | <img src="docs/screenshots/read-along.png" width="200" alt="The spoken text in the cover's square, the current word highlighted"/> |
 
 ## Getting Started
 
@@ -70,6 +71,8 @@ Inside `app/src/main/java/com/mobyle/abbay/`:
 | `presentation/cast/` | Cast: the files, or the audio with its effects as a live WAV stream |
 | `presentation/widget/` | Glance home-screen widgets |
 | `infra/dsp/` | Audio processing: silence trimming, equalizer, balance, loudness, pitch, resampler; RNNoise noise reduction through JNI (C sources in `app/src/main/cpp/`) |
+| `infra/readalong/` | Read-along's engine: decodes a book's file to 16 kHz mono PCM, runs the offline recogniser over it, and installs the language's speech model (pinned by size and SHA-256). The interface it implements, and the transcript's model, are in `:domain` (`com.readalong`) |
+| `presentation/readalong/` | Read-along's session (language, model, saved text, the run ahead of playback) and the text in the player's cover square, over the whole window |
 
 - `app/src/main/java/com/mobyle/abbay/presentation/booklist/widgets/MiniPlayer.kt` – The player (mini player and expanded state); its parts are in `widgets/player/`
 - `app/src/main/java/com/mobyle/abbay/presentation/bookdetails/` – Book details and metadata editing

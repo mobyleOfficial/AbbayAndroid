@@ -15,6 +15,7 @@ import com.mobyle.abbay.data.extras.CharacterRepositoryImpl
 import com.mobyle.abbay.data.extras.QueueRepositoryImpl
 import com.mobyle.abbay.data.extras.StatisticsRepositoryImpl
 import com.mobyle.abbay.data.librivox.LibriVoxRepositoryImpl
+import com.mobyle.abbay.data.readalong.ReadAlongRepositoryImpl
 import com.mobyle.abbay.data.repository.LegacyMigrationRepositoryImpl
 import com.mobyle.abbay.data.repository.LibraryRepositoryImpl
 import com.mobyle.abbay.data.repository.ListeningRepositoryImpl
@@ -34,6 +35,7 @@ import com.repository.LibriVoxRepository
 import com.repository.ListeningRepository
 import com.repository.PlaybackOptionsRepository
 import com.repository.QueueRepository
+import com.repository.ReadAlongRepository
 import com.repository.RemoteMediaAuth
 import com.repository.SettingsRepository
 import com.repository.StatisticsRepository
@@ -88,6 +90,9 @@ abstract class DataModule {
 
     @Binds
     abstract fun bindSubtitleRepository(implementation: SubtitleRepositoryImpl): SubtitleRepository
+
+    @Binds
+    abstract fun bindReadAlongRepository(implementation: ReadAlongRepositoryImpl): ReadAlongRepository
 
     @Binds
     abstract fun bindSettingsRepository(implementation: SettingsRepositoryImpl): SettingsRepository

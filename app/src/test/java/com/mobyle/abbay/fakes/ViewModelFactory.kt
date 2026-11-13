@@ -9,6 +9,7 @@ import com.usecase.AddToQueue
 import com.usecase.ClearLibrary
 import com.usecase.ClearStatistics
 import com.usecase.CompleteLegacyFolderMigration
+import com.usecase.DeleteReadAlongTranscript
 import com.usecase.ExportBackup
 import com.usecase.GetAppLanguage
 import com.usecase.GetAppSettings
@@ -49,6 +50,7 @@ class ViewModelFactory(
     val converterRepository: FakeConverterRepository = FakeConverterRepository(),
     val languageRepository: FakeLanguageRepository = FakeLanguageRepository(),
     val libriVoxRepository: FakeLibriVoxRepository = FakeLibriVoxRepository(),
+    val readAlongRepository: FakeReadAlongRepository = FakeReadAlongRepository(),
 ) {
     fun booksListViewModel() = BooksListViewModel(
         playerController = playerController,
@@ -60,6 +62,7 @@ class ViewModelFactory(
         refreshLibraryOnStart = RefreshLibraryOnStart(libraryRepository, settingsRepository),
         requestFullScan = RequestFullScan(libraryRepository),
         hideBook = HideBook(libraryRepository),
+        deleteReadAlongTranscript = DeleteReadAlongTranscript(readAlongRepository),
         setBookState = SetBookState(libraryRepository),
         sortAndFilterBooks = SortAndFilterBooks(),
         prepareLegacyFolderMigration = PrepareLegacyFolderMigration(legacyRepository, libraryRepository),

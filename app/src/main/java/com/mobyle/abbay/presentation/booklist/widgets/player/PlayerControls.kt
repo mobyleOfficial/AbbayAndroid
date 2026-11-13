@@ -67,13 +67,14 @@ fun PlayerControls(
     effects: AudioEffectsPanel = AudioEffectsPanel(),
     options: PlaybackOptionsPanel = PlaybackOptionsPanel(),
     display: PlayerDisplay = PlayerDisplay(),
+    readAlong: ReadAlongToggle = ReadAlongToggle(),
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         TitleBlock(book, position)
         ChapterSeekBar(position, display.progressLabels, skips, actions)
         BookProgress(book, position, silenceSavedMs = effects.effects?.silenceSavedMs ?: 0L)
         TransportRow(book, playerIcon, skips, actions)
-        PillsRow(book, position, chapters, actions)
+        PillsRow(book, position, chapters, actions, readAlong)
         QuickActionsRow(sleepTimer, sleepSettings, actions, effects = effects, options = options, hidden = display.hiddenQuickActions)
     }
 }
