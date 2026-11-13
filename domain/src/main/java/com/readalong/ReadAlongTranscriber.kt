@@ -28,6 +28,9 @@ interface ReadAlongTranscriber {
     /** Downloads the locale's model; returns at once when it is already installed. Throws when it can't. */
     suspend fun installModel(locale: String, onProgress: (Float) -> Unit = {})
 
+    /** Drops what a cancelled [installModel] already fetched for the locale, so it doesn't sit in storage. */
+    suspend fun discardModelDownload(locale: String) {}
+
     /**
      * Transcribes forward from [startMs] (book time), file after file, until the end of the book, the first file not on
      * the device, or cancellation. Each chunk carries finished lines and the span now covered.

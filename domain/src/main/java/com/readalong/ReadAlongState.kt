@@ -8,6 +8,9 @@ sealed interface ReadAlongState {
     /** Downloading the speech model for [locale]; [progress] in 0..1, null while unknown. */
     data class DownloadingModel(val locale: String, val progress: Float?) : ReadAlongState
 
+    /** The listener cancelled the download of [locale]'s model: nothing is fetched until they ask again or pick another language. */
+    data class ModelDownloadCancelled(val locale: String) : ReadAlongState
+
     /** No speech model exists for [locale]. */
     data class Unsupported(val locale: String) : ReadAlongState
 

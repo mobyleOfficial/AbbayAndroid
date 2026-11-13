@@ -94,6 +94,7 @@ fun ReadAlongSquare(
                 onLanguagePick = viewModel::setLanguage,
                 sync = sync,
                 bookText = bookText,
+                modelDownload = viewModel.modelDownload,
                 trailing = {
                     ReadAlongCornerButton(Icons.Rounded.OpenInFull, stringResource(R.string.read_along_full_screen)) {
                         fullScreenBookId = book.id
@@ -140,6 +141,7 @@ private fun ReadAlongFullScreen(book: Book, viewModel: ReadAlongViewModel, playb
                 onLanguagePick = viewModel::setLanguage,
                 sync = sync,
                 bookText = bookText,
+                modelDownload = viewModel.modelDownload,
                 center = { PlayPause(playback) },
                 trailing = {
                     ReadAlongCornerButton(Icons.Rounded.CloseFullscreen, stringResource(R.string.read_along_exit_full_screen), onClose)

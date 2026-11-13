@@ -149,6 +149,24 @@ class ReadAlongSession(
         prepare()
     }
 
+    /**
+     * The listener cancelled the speech model's download: it stops, what it fetched is dropped, and the text says so
+     * until they ask for it again ([retryModelDownload]) or pick another language. Showing the text again doesn't restart it.
+     */
+    fun cancelModelDownload() {
+        val downloading = state as? ReadAlongState.DownloadingModel ?: return
+        cancelWork()
+        state = ReadAlongState.ModelDownloadCancelled(downloading.locale)
+        scope.launch { transcriber.discardModelDownload(downloading.locale) }
+    }
+
+    /** The listener asked again for the model whose download they cancelled. */
+    fun retryModelDownload() {
+        if (state !is ReadAlongState.ModelDownloadCancelled) return
+        hasFailed = false
+        prepare()
+    }
+
     /** The text left the screen: the run stops, and what it transcribed is saved. */
     fun stop() {
         isShown = false
@@ -168,9 +186,9 @@ class ReadAlongSession(
     private val isWaitingForAudio: Boolean
         get() = state == ReadAlongState.NeedsDownload || state == ReadAlongState.FileMissing
 
-    /** Nothing prepared and nothing under way: neither preparing now nor waiting for the audio to arrive. */
+    /** Nothing prepared and nothing under way: neither preparing now, waiting for the audio, nor left cancelled by the listener. */
     private val isIdleUnprepared: Boolean
-        get() = !isPrepared && preparation == null && !isWaitingForAudio
+        get() = !isPrepared && preparation == null && !isWaitingForAudio && state !is ReadAlongState.ModelDownloadCancelled
 
     private val missingAudioState: ReadAlongState
         get() = if (source?.isDownloadable == true) ReadAlongState.NeedsDownload else ReadAlongState.FileMissing

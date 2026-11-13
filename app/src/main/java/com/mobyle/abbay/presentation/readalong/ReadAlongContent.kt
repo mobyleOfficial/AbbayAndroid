@@ -20,6 +20,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -70,6 +71,7 @@ fun ReadAlongContent(
     onLanguagePick: (String) -> Unit,
     sync: ReadAlongSyncControls,
     bookText: ReadAlongBookTextControls,
+    modelDownload: ReadAlongModelDownloadControls,
     modifier: Modifier = Modifier,
     center: @Composable () -> Unit = {},
     trailing: @Composable () -> Unit = {},
@@ -92,7 +94,7 @@ fun ReadAlongContent(
 
     Box(modifier = modifier.fillMaxSize().revealsControls(isHidden = { hiddenState }, reveal = reveal)) {
         Box(modifier = Modifier.fillMaxSize()) {
-            ShownText(snapshot, timeMs, style, onLineTap, sync.onAlign, onScroll = reveal)
+            ShownText(snapshot, timeMs, style, onLineTap, sync.onAlign, modelDownload, onScroll = reveal)
         }
         GeneratedTextNotice(snapshot, timeMs, modifier = Modifier.align(Alignment.TopCenter))
         Row(
@@ -155,11 +157,12 @@ private fun ShownText(
     style: ReadAlongStyle,
     onLineTap: (ReadAlongLine) -> Unit,
     onLineHold: (ReadAlongLine) -> Unit,
+    modelDownload: ReadAlongModelDownloadControls,
     onScroll: () -> Unit,
 ) {
     val transcript = snapshot.transcript
     if (snapshot.state != ReadAlongState.Ready || transcript == null) {
-        Status(snapshot.state, style)
+        Status(snapshot.state, style, modelDownload)
         return
     }
     // With animations off, only the line: a word lighting up every half second is motion too.
@@ -231,22 +234,13 @@ private fun Music() {
     }
 }
 
-/** Why there is no text to show yet, centred, with a spinner while something is under way. */
+/**
+ * Why there is no text to show yet, centred, with a spinner while something is under way. While the speech model
+ * downloads it can be cancelled, and once cancelled, downloaded again.
+ */
 @Composable
-private fun Status(state: ReadAlongState, style: ReadAlongStyle) {
-    val locale = LocalConfiguration.current.locales[0]
-    val message = when (state) {
-        ReadAlongState.Preparing, ReadAlongState.Ready -> stringResource(R.string.read_along_preparing)
-        is ReadAlongState.DownloadingModel ->
-            stringResource(R.string.read_along_downloading_model, ReadAlongLanguage.displayName(state.locale, locale))
-        is ReadAlongState.Unsupported -> stringResource(
-            R.string.read_along_unsupported,
-            ReadAlongLanguage.displayName(state.locale, locale)
-        )
-        ReadAlongState.NeedsDownload -> stringResource(R.string.read_along_needs_download)
-        ReadAlongState.FileMissing -> stringResource(R.string.read_along_file_missing)
-        ReadAlongState.Failed -> stringResource(R.string.read_along_failed)
-    }
+private fun Status(state: ReadAlongState, style: ReadAlongStyle, modelDownload: ReadAlongModelDownloadControls) {
+    val message = statusMessage(state)
     val progress = (state as? ReadAlongState.DownloadingModel)?.progress
     val isWorking = state == ReadAlongState.Preparing || state == ReadAlongState.Ready || state is ReadAlongState.DownloadingModel
     Column(
@@ -270,6 +264,39 @@ private fun Status(state: ReadAlongState, style: ReadAlongStyle) {
             color = Color.White,
             textAlign = TextAlign.Center,
         )
+        ModelDownloadButton(state, modelDownload)
+    }
+}
+
+@Composable
+private fun statusMessage(state: ReadAlongState): String {
+    val locale = LocalConfiguration.current.locales[0]
+    return when (state) {
+        ReadAlongState.Preparing, ReadAlongState.Ready -> stringResource(R.string.read_along_preparing)
+        is ReadAlongState.DownloadingModel ->
+            stringResource(R.string.read_along_downloading_model, ReadAlongLanguage.displayName(state.locale, locale))
+        is ReadAlongState.ModelDownloadCancelled ->
+            stringResource(R.string.read_along_model_download_cancelled, ReadAlongLanguage.displayName(state.locale, locale))
+        is ReadAlongState.Unsupported -> stringResource(
+            R.string.read_along_unsupported,
+            ReadAlongLanguage.displayName(state.locale, locale)
+        )
+        ReadAlongState.NeedsDownload -> stringResource(R.string.read_along_needs_download)
+        ReadAlongState.FileMissing -> stringResource(R.string.read_along_file_missing)
+        ReadAlongState.Failed -> stringResource(R.string.read_along_failed)
+    }
+}
+
+/** *Cancel download* while the speech model downloads; *Download again* once the listener cancelled it. */
+@Composable
+private fun ModelDownloadButton(state: ReadAlongState, modelDownload: ReadAlongModelDownloadControls) {
+    val (label, onClick) = when (state) {
+        is ReadAlongState.DownloadingModel -> R.string.read_along_cancel_model_download to modelDownload.onCancel
+        is ReadAlongState.ModelDownloadCancelled -> R.string.read_along_retry_model_download to modelDownload.onRetry
+        else -> return
+    }
+    TextButton(onClick = onClick) {
+        Text(stringResource(label), color = Color.White, fontWeight = FontWeight.SemiBold)
     }
 }
 

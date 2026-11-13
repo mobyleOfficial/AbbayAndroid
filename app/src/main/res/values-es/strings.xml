@@ -681,6 +681,9 @@
     <string name="read_along_show_cover">Mostrar portada</string>
     <string name="read_along_preparing">Preparando el texto…</string>
     <string name="read_along_downloading_model">Descargando el modelo de voz en %1$s…</string>
+    <string name="read_along_cancel_model_download">Cancelar descarga</string>
+    <string name="read_along_model_download_cancelled">No se descargó el modelo de voz en %1$s.</string>
+    <string name="read_along_retry_model_download">Volver a descargar</string>
     <string name="read_along_unsupported">El texto no está disponible en %1$s.</string>
     <string name="read_along_needs_download">Primero hay que descargar el audio para mostrar su texto.</string>
     <string name="read_along_file_missing">El archivo de audio tiene que estar en este dispositivo para mostrar su texto.</string>

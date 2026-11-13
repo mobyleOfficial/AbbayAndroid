@@ -75,6 +75,8 @@ class VoskReadAlongTranscriber @Inject constructor(
         installer.install(model.locale, onProgress)
     }
 
+    override suspend fun discardModelDownload(locale: String) = installer.discardDownload(locale)
+
     override fun transcribe(source: ReadAlongAudioSource, startMs: Long, locale: String): Flow<ReadAlongChunk> = channelFlow {
         val context = currentCoroutineContext()
         withModel(locale) { model ->

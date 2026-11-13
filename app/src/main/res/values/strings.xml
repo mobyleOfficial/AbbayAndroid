@@ -685,6 +685,9 @@
     <string name="read_along_show_cover">Show cover</string>
     <string name="read_along_preparing">Preparing text…</string>
     <string name="read_along_downloading_model">Downloading the %1$s speech model…</string>
+    <string name="read_along_cancel_model_download">Cancel download</string>
+    <string name="read_along_model_download_cancelled">The %1$s speech model wasn\'t downloaded.</string>
+    <string name="read_along_retry_model_download">Download again</string>
     <string name="read_along_unsupported">Text isn\'t available in %1$s.</string>
     <string name="read_along_needs_download">The audio must be downloaded first to show its text.</string>
     <string name="read_along_file_missing">The audio file must be on this device to show its text.</string>

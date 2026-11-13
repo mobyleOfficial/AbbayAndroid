@@ -63,6 +63,9 @@ class ReadAlongViewModel @Inject constructor(
         appLanguage = { getAppLanguage().tag.ifEmpty { Locale.getDefault().toLanguageTag() } },
     )
 
+    /** Cancelling the speech model's download, and asking for it again. */
+    val modelDownload = ReadAlongModelDownloadControls(onCancel = session::cancelModelDownload, onRetry = session::retryModelDownload)
+
     /** The EPUB the shown book's text comes from: the one in its folder, or one picked for it. */
     val bookText = ReadAlongBookTextSource(viewModelScope, repository)
 

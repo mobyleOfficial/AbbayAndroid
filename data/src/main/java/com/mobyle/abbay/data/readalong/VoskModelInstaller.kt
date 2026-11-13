@@ -6,6 +6,7 @@ import com.mobyle.abbay.data.librivox.LibriVoxHttp
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -55,10 +56,28 @@ class VoskModelInstaller internal constructor(
             http.download(model.url, archive, isStopped = { !context.isActive }, access = Publisher) { received, _ ->
                 onProgress((received.toFloat() / model.sizeBytes).coerceIn(0f, 1f))
             }
+            // A cancel that lands once the bytes are in must still stop it: nothing is installed after the listener said no.
             try {
+                context.ensureActive()
                 verify(archive, model)
-                unpack(archive, model)
+                context.ensureActive()
+                unpack(archive, model, beforeMoving = { context.ensureActive() })
             } finally {
+                archive.delete()
+            }
+        }
+    }
+
+    /**
+     * The listener cancelled the locale's download: the part already fetched goes, so a later download starts clean and
+     * nothing is left in the cache. Waits for the cancelled install to let go of the lock first.
+     */
+    suspend fun discardDownload(locale: String) {
+        val model = VoskModels.forLocale(locale) ?: return
+        lock.withLock {
+            withContext(Dispatchers.IO) {
+                val archive = File(downloads, model.archive)
+                File(downloads, archive.name + LibriVoxHttp.PARTIAL_SUFFIX).delete()
                 archive.delete()
             }
         }
@@ -89,20 +108,27 @@ class VoskModelInstaller internal constructor(
         ensure(hash.equals(model.sha256, ignoreCase = true)) { "Checksum mismatch for ${model.archive}" }
     }
 
-    /** Unpacks the archive next to the models, then moves the model's own folder into place whole. */
-    private fun unpack(archive: File, model: VoskModels.Model) {
+    /**
+     * Unpacks the archive next to the models, then moves the model's own folder into place whole. [beforeMoving] throws
+     * to stop short of that (a cancelled install); the unpacked files never stay behind.
+     */
+    private fun unpack(archive: File, model: VoskModels.Model, beforeMoving: () -> Unit) {
         val staging = File(root, ".${model.locale}.staging")
         staging.deleteRecursively()
         staging.mkdirs()
-        unzip(archive, staging)
-        val unpacked = File(staging, model.folder)
-        ensure(unpacked.isDirectory) { "Missing ${model.folder} in ${model.archive}" }
-        VoskModelLayout.modernise(unpacked)
-        File(unpacked, READY_MARK).writeText(model.archive)
-        val destination = folder(model.locale)
-        destination.deleteRecursively()
-        ensure(unpacked.renameTo(destination)) { "Could not move ${model.folder}" }
-        staging.deleteRecursively()
+        try {
+            unzip(archive, staging)
+            val unpacked = File(staging, model.folder)
+            ensure(unpacked.isDirectory) { "Missing ${model.folder} in ${model.archive}" }
+            VoskModelLayout.modernise(unpacked)
+            File(unpacked, READY_MARK).writeText(model.archive)
+            beforeMoving()
+            val destination = folder(model.locale)
+            destination.deleteRecursively()
+            ensure(unpacked.renameTo(destination)) { "Could not move ${model.folder}" }
+        } finally {
+            staging.deleteRecursively()
+        }
     }
 
     /** Refuses any entry that would land outside [into], and an archive that unpacks to more than [MAX_UNPACKED_BYTES]. */
@@ -129,10 +155,6 @@ class VoskModelInstaller internal constructor(
         return target.outputStream().use { output -> zip.copyTo(output) }
     }
 
-    private inline fun ensure(condition: Boolean, message: () -> String) {
-        if (!condition) throw IOException(message())
-    }
-
     /** The models' publisher, over https: no other host is reached, redirects included. */
     private object Publisher : HostAccess {
         override fun isAllowed(url: URL) = url.protocol == "https" && url.host.lowercase() == VoskModels.HOST
@@ -144,4 +166,8 @@ class VoskModelInstaller internal constructor(
         const val BUFFER_SIZE = 64 * 1024
         const val MAX_UNPACKED_BYTES = 400L * 1024 * 1024
     }
+}
+
+private inline fun ensure(condition: Boolean, message: () -> String) {
+    if (!condition) throw IOException(message())
 }

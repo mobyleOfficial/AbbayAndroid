@@ -4,6 +4,7 @@ import com.model.Book
 import com.model.BookFile
 import com.model.BookType
 import com.repository.ReadAlongRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -39,6 +40,10 @@ class ReadAlongSessionTest {
         var installFails = false
         var installs = 0
 
+        /** While set, an install waits on it, as a real download takes a while. */
+        var installGate: CompletableDeferred<Unit>? = null
+        val discarded = mutableListOf<String>()
+
         override fun supportedLocales() = listOf("en-US", "pt-BR")
 
         override suspend fun installedLocales() = installed.sorted()
@@ -51,8 +56,13 @@ class ReadAlongSessionTest {
 
         override suspend fun installModel(locale: String, onProgress: (Float) -> Unit) {
             installs += 1
+            installGate?.await()
             if (installFails) error("offline")
             installed += locale
+        }
+
+        override suspend fun discardModelDownload(locale: String) {
+            discarded += locale
         }
 
         override fun transcribe(source: ReadAlongAudioSource, startMs: Long, locale: String): Flow<ReadAlongChunk> {
@@ -277,6 +287,66 @@ class ReadAlongSessionTest {
         session.show(book, 0)
         runCurrent()
         assertEquals(2, transcriber.installs)
+        assertEquals(1, transcriber.runs.size)
+    }
+
+    @Test
+    fun `cancelling the model's download stops it, drops what it fetched and stays cancelled when the text shows again`() = runTest {
+        repository.languages["book"] = "pt-BR"
+        transcriber.installGate = CompletableDeferred()
+        val session = session()
+
+        session.show(book, 0)
+        runCurrent()
+        assertEquals(ReadAlongState.DownloadingModel("pt-BR", null), session.snapshot.value.state)
+
+        session.cancelModelDownload()
+        runCurrent()
+        assertEquals(ReadAlongState.ModelDownloadCancelled("pt-BR"), session.snapshot.value.state)
+        assertEquals(listOf("pt-BR"), transcriber.discarded)
+        assertTrue("pt-BR" !in transcriber.installed)
+
+        session.stop()
+        session.show(book, 0)
+        runCurrent()
+        assertEquals(ReadAlongState.ModelDownloadCancelled("pt-BR"), session.snapshot.value.state)
+        assertEquals(1, transcriber.installs)
+        assertEquals(0, transcriber.runs.size)
+    }
+
+    @Test
+    fun `downloading again after cancelling installs the model and transcribes`() = runTest {
+        repository.languages["book"] = "pt-BR"
+        transcriber.installGate = CompletableDeferred()
+        val session = session()
+        session.show(book, 0)
+        runCurrent()
+        session.cancelModelDownload()
+        runCurrent()
+
+        transcriber.installGate = null
+        session.retryModelDownload()
+        runCurrent()
+
+        assertEquals(2, transcriber.installs)
+        assertTrue("pt-BR" in transcriber.installed)
+        assertEquals(1, transcriber.runs.size)
+    }
+
+    @Test
+    fun `picking another language after cancelling prepares that one`() = runTest {
+        repository.languages["book"] = "pt-BR"
+        transcriber.installGate = CompletableDeferred()
+        val session = session()
+        session.show(book, 0)
+        runCurrent()
+        session.cancelModelDownload()
+        runCurrent()
+
+        session.setLanguage("en-US")
+        runCurrent()
+
+        assertEquals("en-US", session.snapshot.value.language)
         assertEquals(1, transcriber.runs.size)
     }
 
