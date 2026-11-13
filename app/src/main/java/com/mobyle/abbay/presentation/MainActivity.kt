@@ -45,6 +45,7 @@ import com.mobyle.abbay.presentation.common.theme.LocalStatusBarColor
 import com.mobyle.abbay.presentation.common.theme.MyApplicationTheme
 import com.mobyle.abbay.presentation.common.theme.StatusBarColor
 import com.mobyle.abbay.presentation.common.theme.statusBarBackground
+import com.mobyle.abbay.presentation.walkthrough.WalkthroughOverlay
 import com.model.DataResult
 import com.player.PlayerController
 import com.settings.AppSettings
@@ -133,6 +134,7 @@ class MainActivity : ComponentActivity() {
                                         viewModel = booksViewModel,
                                         navController = navController
                                     )
+                                    WalkthroughOverlay(booksViewModel)
                                 }
                             }
                         }

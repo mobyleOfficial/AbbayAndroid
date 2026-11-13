@@ -81,6 +81,9 @@ class SettingsViewModel @Inject constructor(
         updateAppSettings { it.copy(openPlayerOnStartup = shouldOpenPlayerInStartUp) }
     }
 
+    /** The library shows the tour again as soon as this lands. */
+    fun replayWalkthrough() = viewModelScope.launch { updateAppSettings { it.copy(walkthroughShown = false) } }
+
     fun changeThemeMode(themeMode: ThemeMode) = viewModelScope.launch { updateAppSettings { it.copy(themeMode = themeMode) } }
 
     fun changeDynamicColor(isEnabled: Boolean) = viewModelScope.launch { updateAppSettings { it.copy(dynamicColor = isEnabled) } }

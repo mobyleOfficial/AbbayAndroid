@@ -183,6 +183,12 @@ class BooksListViewModel @Inject constructor(
     private val _showReloadGuide = MutableStateFlow(false)
     val showReloadGuide: StateFlow<Boolean> get() = _showReloadGuide
 
+    // Decided once the saved settings and the library have loaded, so the tour never flashes over a library in use.
+    private val isWalkthroughDecided = MutableStateFlow(false)
+    val showWalkthrough: StateFlow<Boolean> = combine(isWalkthroughDecided, settings) { decided, appSettings ->
+        decided && !appSettings.walkthroughShown
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     private val _showBookEndedDialog = MutableStateFlow(false)
     val showBookEndedDialog: StateFlow<Boolean> get() = _showBookEndedDialog
 
@@ -285,6 +291,7 @@ class BooksListViewModel @Inject constructor(
             restoreLastBook()
             _shouldOpenPlayerInStartup.value = initialSettings.openPlayerOnStartup
             legacyFolderToReselect.value = prepareLegacyFolderMigration()
+            decideWalkthrough(initialSettings)
             refreshLibraryOnStart()
             importLegacyProgress()
         }
@@ -514,6 +521,21 @@ class BooksListViewModel @Inject constructor(
 
     fun onRefreshClicked() {
         if (settings.value.reloadGuideShown) requestFullScan() else _showReloadGuide.value = true
+    }
+
+    /** Someone who already used the app before the tour existed never gets it uninvited; it stays in Settings. */
+    private suspend fun decideWalkthrough(initialSettings: AppSettings) {
+        if (!initialSettings.walkthroughShown) {
+            val isExistingUser = initialSettings.lastBookId != null ||
+                legacyFolderToReselect.value != null ||
+                liveBooks.first().isNotEmpty()
+            if (isExistingUser) updateAppSettings { it.copy(walkthroughShown = true) }
+        }
+        isWalkthroughDecided.value = true
+    }
+
+    fun dismissWalkthrough() {
+        viewModelScope.launch { updateAppSettings { it.copy(walkthroughShown = true) } }
     }
 
     fun dismissReloadGuide() {

@@ -22,6 +22,7 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
             preferences[SettingsKeys.playWhenAppIsClosed] = updated.playWhenAppIsClosed
             preferences[SettingsKeys.openPlayerOnStartup] = updated.openPlayerOnStartup
             preferences[SettingsKeys.reloadGuideShown] = updated.reloadGuideShown
+            preferences[SettingsKeys.walkthroughShown] = updated.walkthroughShown
             updated.lastBookId?.let { preferences[SettingsKeys.lastBookId] = it } ?: preferences.remove(SettingsKeys.lastBookId)
             preferences[SettingsKeys.librarySortOrder] = updated.librarySortOrder.name
             preferences[SettingsKeys.librarySortAscending] = updated.librarySortAscending
@@ -161,6 +162,7 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
             playWhenAppIsClosed = preferences.valueOr(SettingsKeys.playWhenAppIsClosed, defaults.playWhenAppIsClosed),
             openPlayerOnStartup = preferences.valueOr(SettingsKeys.openPlayerOnStartup, defaults.openPlayerOnStartup),
             reloadGuideShown = preferences.valueOr(SettingsKeys.reloadGuideShown, defaults.reloadGuideShown),
+            walkthroughShown = preferences.valueOr(SettingsKeys.walkthroughShown, defaults.walkthroughShown),
             lastBookId = preferences[SettingsKeys.lastBookId],
             librarySortOrder = enumOrDefault(preferences[SettingsKeys.librarySortOrder], defaults.librarySortOrder),
             librarySortAscending = preferences.valueOr(SettingsKeys.librarySortAscending, defaults.librarySortAscending),
