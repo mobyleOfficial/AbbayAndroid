@@ -17,11 +17,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ExperimentalMotionApi
 import androidx.constraintlayout.compose.MotionLayout
@@ -37,6 +41,7 @@ import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerCover
 import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerDisplay
 import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerMenuExtras
 import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerPosition
+import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerReadAlong
 import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerSkips
 import com.mobyle.abbay.presentation.booklist.widgets.player.PlayerTopBar
 import com.mobyle.abbay.presentation.booklist.widgets.player.PlayingState
@@ -44,6 +49,7 @@ import com.mobyle.abbay.presentation.booklist.widgets.player.ReadAlongToggle
 import com.mobyle.abbay.presentation.booklist.widgets.player.ScreenLockedAlert
 import com.mobyle.abbay.presentation.booklist.widgets.player.SleepSheetSettings
 import com.mobyle.abbay.presentation.booklist.widgets.player.chaptersToggleOf
+import com.mobyle.abbay.presentation.booklist.widgets.player.playingStateOf
 import com.mobyle.abbay.presentation.booklist.widgets.player.timeLeftLabel
 import com.mobyle.abbay.presentation.common.theme.coverTintBackground
 import com.mobyle.abbay.presentation.common.theme.rememberCoverTint
@@ -51,7 +57,6 @@ import com.mobyle.abbay.presentation.effects.AudioEffectsPanel
 import com.mobyle.abbay.presentation.options.PlaybackOptionsPanel
 import com.mobyle.abbay.presentation.utils.currentFraction
 import com.model.Book
-import com.player.PlaybackStatus
 import com.player.PlayerState
 import kotlinx.coroutines.launch
 
@@ -71,10 +76,9 @@ fun MiniPlayer(
     options: PlaybackOptionsPanel = PlaybackOptionsPanel(),
     display: PlayerDisplay = PlayerDisplay(),
     chapters: ChaptersToggle? = null,
-    readAlong: ReadAlongToggle = ReadAlongToggle(),
-    readAlongPane: (@Composable (Modifier) -> Unit)? = null,
     onClose: (() -> Unit)? = null,
     onExpand: () -> Unit = {},
+    readAlong: PlayerReadAlong? = null,
 ) {
     val fraction = scaffoldState.currentFraction.coerceIn(0f, 1f)
     val isExpanded = fraction == 1f
@@ -82,56 +86,61 @@ fun MiniPlayer(
     val playerIcon = playingStateOf(playerState, isAwaitingPlayback)
     val chapterToggle = chaptersToggleOf(chapters, rememberChaptersToggle(isExpanded), isSheet = onClose == null, isExpanded)
     PlayerEffects(book, playerState, actions)
+    // Only once the player is fully open: while it moves, the cover shrinks into the mini player's.
+    val textInCover = readAlong?.takeIf { it.toggle.isOffered && it.toggle.showsText && isExpanded }
+    var coverBounds by remember { mutableStateOf(Rect.Zero) }
 
-    MotionLayout(
-        motionScene = rememberPlayerMotionScene(),
-        progress = fraction,
-        modifier = modifier.fillMaxSize().coverTintBackground(rememberCoverTint(book.thumbnail), gradientStrength = fraction),
-    ) {
-        CollapsedRow(book, position, playerIcon, isScreenLocked, actions, onExpand, isCollapsed = fraction == 0f)
+    Box(modifier = modifier.fillMaxSize()) {
+        MotionLayout(
+            motionScene = rememberPlayerMotionScene(),
+            progress = fraction,
+            modifier = Modifier.fillMaxSize().coverTintBackground(rememberCoverTint(book.thumbnail), gradientStrength = fraction),
+        ) {
+            CollapsedRow(book, position, playerIcon, isScreenLocked, actions, onExpand, isCollapsed = fraction == 0f)
 
-        PlayerControls(
-            book = book,
-            position = position,
-            playerIcon = playerIcon,
-            skips = skips,
-            actions = actions,
-            modifier = Modifier.fillMaxWidth().layoutId(LayoutId.CONTENT.id).padding(controlsPadding),
-            chapters = chapterToggle,
-            sleepTimer = playerState.sleepTimer,
-            sleepSettings = sleepSettings,
-            effects = effects,
-            options = options,
-            display = display,
-            readAlong = readAlong,
-        )
+            PlayerControls(
+                book = book,
+                position = position,
+                playerIcon = playerIcon,
+                skips = skips,
+                actions = actions,
+                modifier = Modifier.fillMaxWidth().layoutId(LayoutId.CONTENT.id).padding(controlsPadding),
+                chapters = chapterToggle,
+                sleepTimer = playerState.sleepTimer,
+                sleepSettings = sleepSettings,
+                effects = effects,
+                options = options,
+                display = display,
+                readAlong = readAlong?.toggle ?: ReadAlongToggle(),
+            )
 
-        Cover(
-            book = book,
-            playerIcon = playerIcon,
-            skips = skips,
-            actions = actions,
-            gesturesEnabled = isExpanded && !isScreenLocked,
-            isExpanded = isExpanded,
-            readAlong = readAlong,
-            readAlongPane = readAlongPane,
-            isPane = onClose != null,
-            modifier = Modifier.padding(8.dp).layoutId(LayoutId.THUMBNAIL.id),
-        )
+            Cover(
+                book = book,
+                playerIcon = playerIcon,
+                skips = skips,
+                actions = actions,
+                gesturesEnabled = isExpanded && !isScreenLocked,
+                isPane = onClose != null,
+                modifier = Modifier.padding(8.dp).layoutId(LayoutId.THUMBNAIL.id),
+                showsText = textInCover != null,
+                onBounds = { coverBounds = it },
+            )
 
-        ExpandedTopBar(
-            isScreenLocked = isScreenLocked,
-            actions = actions,
-            scaffoldState = scaffoldState,
-            onClose = onClose,
-            modifier = Modifier.fillMaxWidth().layoutId(LayoutId.TOP_CONTENT.id),
-        )
+            ExpandedTopBar(
+                isScreenLocked = isScreenLocked,
+                actions = actions,
+                scaffoldState = scaffoldState,
+                onClose = onClose,
+                modifier = Modifier.fillMaxWidth().layoutId(LayoutId.TOP_CONTENT.id),
+            )
 
-        LockOverlay(
-            isScreenLocked = isScreenLocked,
-            onUnlock = { actions.onLockScreen(false) },
-            modifier = Modifier.layoutId(LayoutId.LOCK_OVERLAY.id),
-        )
+            LockOverlay(
+                isScreenLocked = isScreenLocked,
+                onUnlock = { actions.onLockScreen(false) },
+                modifier = Modifier.layoutId(LayoutId.LOCK_OVERLAY.id),
+            )
+        }
+        textInCover?.let { TextOverCover(it, coverBounds, isPane = onClose != null, isScreenLocked, actions) }
     }
 
     if (onClose == null && chapterToggle.isOpen) PlayerChaptersSheet(book, position, chapterToggle, actions)
@@ -215,12 +224,6 @@ private fun PlayerEffects(book: Book, playerState: PlayerState, actions: PlayerA
     LaunchedEffect(playerState.currentTrackIndex) { if (playerState.playWhenReady) actions.onTrackChanged() }
 }
 
-private fun playingStateOf(playerState: PlayerState, isAwaitingPlayback: Boolean) = when {
-    isAwaitingPlayback -> PlayingState.LOADING
-    playerState.isPlaying && playerState.status == PlaybackStatus.READY -> PlayingState.PLAYING
-    else -> PlayingState.PAUSED
-}
-
 @Composable
 private fun Cover(
     book: Book,
@@ -228,30 +231,29 @@ private fun Cover(
     skips: PlayerSkips,
     actions: PlayerActions,
     gesturesEnabled: Boolean,
-    isExpanded: Boolean,
-    readAlong: ReadAlongToggle,
-    readAlongPane: (@Composable (Modifier) -> Unit)?,
     modifier: Modifier = Modifier,
     isPane: Boolean = false,
+    showsText: Boolean = false,
+    onBounds: (Rect) -> Unit = {},
 ) {
-    Box(modifier) {
-        if (isExpanded && readAlong.isShowingText && readAlongPane != null) {
-            // The text takes the cover's square, like lyrics: nothing else on the player moves.
-            readAlongPane(Modifier.fillMaxSize())
-            return@Box
-        }
+    val alignment = coverAlignment(isPane)
+    // In the motion layout's coordinates, which are the player box's: it fills the box from its corner.
+    Box(modifier.onGloballyPositioned { onBounds(it.boundsInParent()) }) {
+        // While the text shows, the cover stays in its slot but is not seen, tapped or read out: the text is drawn
+        // over it (`TextOverCover`), outside the motion layout, which kept stale sizes for content changing inside it.
+        val coverModifier = if (showsText) Modifier.alpha(0f).clearAndSetSemantics {} else Modifier
         PlayerCover(
+            modifier = coverModifier,
             thumbnail = book.thumbnail,
             isStreamingOnly = isStreamingOnly(book),
             playerIcon = playerIcon,
-            gesturesEnabled = gesturesEnabled,
+            gesturesEnabled = gesturesEnabled && !showsText,
             onTap = { if (playerIcon != PlayingState.LOADING) actions.onCoverClick(book.progress) },
             onDoubleTapLeft = { actions.onSeekBy(-skips.smallBackSeconds * MILLIS_PER_SECOND) },
             onDoubleTapRight = { actions.onSeekBy(skips.smallForwardSeconds * MILLIS_PER_SECOND) },
             onSwipeToPrevious = actions.onPreviousChapter,
             onSwipeToNext = actions.onNextChapter,
-            // A pane is narrow and can be tall (a tablet in portrait): the cover stays by its title, the spare height above.
-            alignment = if (isPane) Alignment.BottomCenter else Alignment.Center,
+            alignment = alignment,
         )
     }
 }
@@ -265,7 +267,7 @@ private fun rememberChaptersToggle(isExpanded: Boolean): ChaptersToggle {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun LockOverlay(isScreenLocked: Boolean, onUnlock: () -> Unit, modifier: Modifier = Modifier) {
+internal fun LockOverlay(isScreenLocked: Boolean, onUnlock: () -> Unit, modifier: Modifier = Modifier) {
     var showUnlockDialog by remember { mutableStateOf(false) }
     if (showUnlockDialog) ScreenLockedAlert { showUnlockDialog = false }
 

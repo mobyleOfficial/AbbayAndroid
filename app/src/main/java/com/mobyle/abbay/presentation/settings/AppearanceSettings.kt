@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.widgets.AbbayDropdownMenu
 import com.mobyle.abbay.presentation.common.widgets.AbbayMenuItem
+import com.mobyle.abbay.presentation.readalong.rememberIsTouchExplorationOn
 import com.settings.AppLanguage
 import com.settings.AppSettings
 import com.settings.ProgressLabels
@@ -81,6 +82,27 @@ fun PrivacySettings(viewModel: SettingsViewModel) {
         }
         Text(
             text = stringResource(R.string.settings_privacy_text),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        )
+    }
+}
+
+/**
+ * Features still being tried out: Read-along. Not drawn while TalkBack runs (as on iOS, where the owner chose not to
+ * offer the experimental switch to screen-reader users); the stored setting is left as it is. Turning it off deletes
+ * every transcript and speech model it made.
+ */
+@Composable
+fun ExperimentalSettings(viewModel: SettingsViewModel) {
+    if (rememberIsTouchExplorationOn()) return
+    val isEnabled by viewModel.readAlongEnabled.collectAsState()
+    Column {
+        SectionHeader(R.string.settings_experimental)
+        SwitchSetting(R.string.read_along_toggle, isEnabled, viewModel::changeReadAlongEnabled)
+        Text(
+            text = stringResource(R.string.read_along_footer),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),

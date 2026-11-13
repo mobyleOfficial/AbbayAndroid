@@ -1,5 +1,7 @@
 package com.mobyle.abbay.presentation.booklist.widgets.player
 
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import com.listening.ShakeSensitivity
 import com.model.Book
 import com.model.Chapter
@@ -34,6 +36,8 @@ class PlayerActions(
     val onOpenBookText: () -> Unit = {},
     val onOpenText: () -> Unit = {},
     val routeButton: @androidx.compose.runtime.Composable () -> Unit = {},
+    /** The scrubber's finger is at this book position, or lifted (null): the read-along text follows it. */
+    val onScrub: (bookPositionMs: Long?) -> Unit = {},
 )
 
 data class PlayerSkips(
@@ -69,14 +73,16 @@ data class PlayerDisplay(
     val hiddenQuickActions: Set<QuickAction> = emptySet(),
 )
 
-class ChaptersToggle(val isOpen: Boolean = false, val onToggle: () -> Unit = {}, val onClose: () -> Unit = {})
+/** The Text/Cover pill: offered when Read-along is on in Settings; [showsText] flips the cover square to the text. */
+class ReadAlongToggle(val isOffered: Boolean = false, val showsText: Boolean = false, val onToggle: () -> Unit = {})
 
-/** The player's read-along: whether it exists at all (the setting), whether the text or the cover shows, and the flip. */
-class ReadAlongToggle(
-    val isAvailable: Boolean = false,
-    val isShowingText: Boolean = false,
-    val onToggle: () -> Unit = {},
+/** Read-along in the player: the pill, and the text drawn in the cover's place while it shows. */
+class PlayerReadAlong(
+    val toggle: ReadAlongToggle,
+    val square: @androidx.compose.runtime.Composable (Modifier, Alignment) -> Unit,
 )
+
+class ChaptersToggle(val isOpen: Boolean = false, val onToggle: () -> Unit = {}, val onClose: () -> Unit = {})
 
 /** Hoisted when given (the chapters can be a pane beside a player pane); in a sheet, open only while the player is expanded. */
 internal fun chaptersToggleOf(hoisted: ChaptersToggle?, own: ChaptersToggle, isSheet: Boolean, isExpanded: Boolean): ChaptersToggle = when {

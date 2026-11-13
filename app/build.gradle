@@ -88,6 +88,10 @@ android {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
+        // JNA (read-along's speech engine) ships its dispatcher for ABIs Android no longer runs on.
+        jniLibs {
+            excludes += ['lib/armeabi/**', 'lib/mips/**', 'lib/mips64/**']
+        }
     }
 }
 
@@ -127,8 +131,6 @@ dependencies {
     implementation libs.glide.compose
 
     implementation libs.material
-
-    implementation libs.vosk.android
 
     implementation libs.kotlinx.serialization.json.legacy
     implementation libs.kotlinx.serialization.json

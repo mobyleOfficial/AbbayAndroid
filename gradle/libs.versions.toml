@@ -67,12 +67,12 @@ compose-bom-test = "2022.10.00"
 # Robolectric tests
 robolectric = "4.14.1"
 
+# Speech recognition (read-along)
+vosk = "0.3.75"
+
 # Firebase
 firebase-crashlytics = "18.6.2"
 firebase-analytics = "21.5.1"
-
-# On-device speech recognition
-vosk = "0.3.47"
 
 [libraries]
 # Startup, Baseline Profile and Macrobenchmark
@@ -154,9 +154,6 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 # Dependency Injection
 javax-inject = { group = "javax.inject", name = "javax.inject", version.ref = "javax-inject" }
 
-# On-device speech recognition (Apache-2.0; its JNA runtime is licensed LGPL-2.1-or-later)
-vosk-android = { group = "com.alphacephei", name = "vosk-android", version.ref = "vosk" }
-
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-junit" }
@@ -168,6 +165,10 @@ androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+
+# Speech recognition (read-along)
+vosk-android = { group = "com.alphacephei", name = "vosk-android", version.ref = "vosk" }
+jna = { group = "net.java.dev.jna", name = "jna", version = "5.18.1" }
 
 # Firebase
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics", version.ref = "firebase-crashlytics" }

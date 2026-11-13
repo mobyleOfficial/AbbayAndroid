@@ -74,7 +74,7 @@ fun PlayerControls(
         ChapterSeekBar(position, display.progressLabels, skips, actions)
         BookProgress(book, position, silenceSavedMs = effects.effects?.silenceSavedMs ?: 0L)
         TransportRow(book, playerIcon, skips, actions)
-        PillsRow(book, position, chapters, actions, readAlong)
+        PillsRow(book, position, chapters, readAlong, actions)
         QuickActionsRow(sleepTimer, sleepSettings, actions, effects = effects, options = options, hidden = display.hiddenQuickActions)
     }
 }
@@ -135,10 +135,14 @@ private fun ChapterSeekBar(position: PlayerPosition, labels: ProgressLabels, ski
     Column(modifier = Modifier.fillMaxWidth()) {
         Slider(
             value = fraction,
-            onValueChange = { draggedFraction = it },
+            onValueChange = {
+                draggedFraction = it
+                actions.onScrub(chapterStart + (it * position.chapterDurationMs).toLong())
+            },
             onValueChangeFinished = {
                 draggedFraction?.let { onSeek(chapterStart + (it * position.chapterDurationMs).toLong()) }
                 draggedFraction = null
+                actions.onScrub(null)
             },
             interactionSource = interactionSource,
             thumb = { ScrubberThumb(isDragging = isDragging || draggedFraction != null) },

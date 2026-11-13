@@ -25,7 +25,6 @@ import com.usecase.AddLibraryRoot
 import com.usecase.AddSingleFileBook
 import com.usecase.AddToQueue
 import com.usecase.CompleteLegacyFolderMigration
-import com.usecase.DeleteReadAlongTranscript
 import com.usecase.GetAppSettings
 import com.usecase.GetLastBook
 import com.usecase.GetOpusEncoder
@@ -81,7 +80,6 @@ class BooksListViewModel @Inject constructor(
     private val refreshLibraryOnStart: RefreshLibraryOnStart,
     private val requestFullScan: RequestFullScan,
     private val hideBook: HideBook,
-    private val deleteReadAlongTranscript: DeleteReadAlongTranscript,
     private val setBookState: SetBookState,
     private val sortAndFilterBooks: SortAndFilterBooks,
     private val prepareLegacyFolderMigration: PrepareLegacyFolderMigration,
@@ -452,10 +450,7 @@ class BooksListViewModel @Inject constructor(
 
     fun removeBook(book: Book) {
         if (selectedBook.value?.id == book.id) selectBook(null, null)
-        viewModelScope.launch {
-            deleteReadAlongTranscript(book.id)
-            hideBook(book.id)
-        }
+        viewModelScope.launch { hideBook(book.id) }
     }
 
     fun markBookAsError(book: Book) {

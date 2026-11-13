@@ -45,7 +45,6 @@ fun SettingsScreen(
 ) {
     val shouldPlayWhenAppIsClosed by viewModel.shouldPlayWhenAppIsClosed.collectAsState()
     val shouldOpenPlayerInStartup by viewModel.shouldOpenPlayerInStartup.collectAsState()
-    val readAlongEnabled by viewModel.readAlongEnabled.collectAsState()
     val showShowDeleteConfirmation by viewModel.showShowDeleteConfirmation.collectAsState()
     val showChangeFolderConfirmation by viewModel.showChangeFolderConfirmation.collectAsState()
 
@@ -104,26 +103,6 @@ fun SettingsScreen(
                     }
                 )
 
-                SettingItem(
-                    text = stringResource(R.string.read_along_settings),
-                    content = {
-                        Switch(
-                            checked = readAlongEnabled,
-                            onCheckedChange = viewModel::changeReadAlong,
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = MaterialTheme.colorScheme.tertiary,
-                                checkedTrackColor = MaterialTheme.colorScheme.tertiary
-                            )
-                        )
-                    }
-                )
-                Text(
-                    stringResource(R.string.read_along_settings_footer),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = FOOTER_ALPHA),
-                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 12.dp)
-                )
-
                 SectionHeader(R.string.settings_library)
                 SettingItem(
                     text = stringResource(R.string.change_folder),
@@ -173,6 +152,8 @@ fun SettingsScreen(
             item { ListeningSettings(viewModel) }
 
             item { AppearanceSettings(viewModel) }
+
+            item { ExperimentalSettings(viewModel) }
 
             item { AboutSettings(viewModel, openDiagnostics, openLicenses) }
         }
@@ -240,5 +221,3 @@ private fun AboutSettings(viewModel: SettingsViewModel, openDiagnostics: () -> U
         }
     }
 }
-
-private const val FOOTER_ALPHA = 0.7f

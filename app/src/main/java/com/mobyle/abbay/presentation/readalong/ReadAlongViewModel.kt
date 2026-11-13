@@ -1,177 +1,229 @@
 package com.mobyle.abbay.presentation.readalong
 
+import android.content.res.Resources
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.model.Book
+import com.model.BookFile
+import com.model.MultipleBooks
 import com.player.PlayerController
-import com.readalong.ReadAlongLanguage
-import com.settings.AppLanguage
-import com.settings.AppSettings
-import com.usecase.ClearReadAlong
+import com.readalong.ReadAlongLine
+import com.readalong.ReadAlongSession
+import com.readalong.ReadAlongSnapshot
+import com.readalong.ReadAlongState
+import com.readalong.ReadAlongSync
+import com.readalong.ReadAlongTranscriber
+import com.repository.ReadAlongRepository
 import com.usecase.GetAppLanguage
 import com.usecase.ObserveAppSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.Locale
 import javax.inject.Inject
 
-/** What the player's text pane draws, and whether it is up at all. */
-data class ReadAlongUi(
-    val snapshot: ReadAlongSnapshot = ReadAlongSnapshot(),
-    val isEnabled: Boolean = false,
-    val isShowingText: Boolean = false,
-    val isFullScreen: Boolean = false,
-) {
-    /** The pill and the pane only exist while the feature is on. */
-    val isAvailable: Boolean get() = isEnabled
-}
-
 /**
- * The player's read-along: holds the one session of the screen, follows playback while the text is on screen, and
- * remembers whether the text or the cover is showing.
+ * The player's read-along: one session for the player, kept here rather than in the cover square, which is rebuilt
+ * each time the Text pill flips or the window reflows (a session of its own would check the language and load the
+ * transcript again each time, flashing *Preparing text…*). The square and the full-screen text both show it, and
+ * count themselves in and out ([show], [hide]): the session runs while at least one is on screen, and only then.
  *
- * The session runs only while something shows the text. Both the square over the cover and the full screen
- * count ([acquire] and [release]), so a reflow that builds the new one before dropping the old one doesn't stop
- * the text it is showing.
+ * The shown time is the scrubber's while a finger drags it, else the player's, polled every [POLL_INTERVAL_MS] while
+ * the text shows. The text follows it moved by the book's [sync] adjustment, for when the two drift apart.
+ *
+ * Where the book has an EPUB beside its audio, the lines shown are its text, timed against the transcript
+ * ([com.readalong.ReadAlongAligner]); the transcript itself is still what is made and saved, so the EPUB can come and go.
  */
 @HiltViewModel
-@Suppress("TooManyFunctions")
 class ReadAlongViewModel @Inject constructor(
+    transcriber: ReadAlongTranscriber,
     private val playerController: PlayerController,
-    dependencies: ReadAlongDependencies,
+    private val repository: ReadAlongRepository,
     observeAppSettings: ObserveAppSettings,
     getAppLanguage: GetAppLanguage,
-    private val clearReadAlong: ClearReadAlong,
 ) : ViewModel() {
-    private val settings: StateFlow<AppSettings> = observeAppSettings()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
-    private val session = ReadAlongSession(dependencies, viewModelScope) {
-        ReadAlongLanguage.ofCode(
-            when (val language = getAppLanguage()) {
-                AppLanguage.SYSTEM -> Locale.getDefault().language
-                else -> language.tag
-            },
-        )
-    }
+    private val session = ReadAlongSession(
+        scope = viewModelScope,
+        transcriber = transcriber,
+        repository = repository,
+        preferredLanguages = { deviceLanguages() },
+        appLanguage = { getAppLanguage().tag.ifEmpty { Locale.getDefault().toLanguageTag() } },
+    )
 
-    private val mutableUi = MutableStateFlow(ReadAlongUi())
-    val ui: StateFlow<ReadAlongUi> = mutableUi.asStateFlow()
+    /** Cancelling the speech model's download, and asking for it again. */
+    val modelDownload = ReadAlongModelDownloadControls(onCancel = session::cancelModelDownload, onRetry = session::retryModelDownload)
 
-    private var book: Book? = null
-    private var onScreen = 0
-    private var ticker: Job? = null
+    /** The EPUB the shown book's text comes from: the one in its folder, or one picked for it. */
+    val bookText = ReadAlongBookTextSource(viewModelScope, repository)
+
+    /** What the text shows: the session's, with the book's own text wherever it matches the audio. */
+    val snapshot: StateFlow<ReadAlongSnapshot> = combine(session.snapshot, bookText.aligner, bookText.isLoading) {
+            shown,
+            bookAligner,
+            isLoading
+        ->
+        val transcript = shown.transcript
+        when {
+            transcript == null -> shown
+            // Until the book's EPUB is known, its text isn't shown as generated: it may be about to become the book's.
+            isLoading && shown.state == ReadAlongState.Ready -> shown.copy(state = ReadAlongState.Preparing, transcript = null)
+            bookAligner == null -> shown
+            else -> shown.copy(transcript = bookAligner.aligned(transcript))
+        }
+    }.conflate().flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.Eagerly, ReadAlongSnapshot())
+
+    /** The listener's correction of the text against the audio, for the book shown. */
+    val sync = ReadAlongSyncAdjustment(viewModelScope, repository)
+
+    private val mutableTimeMs = MutableStateFlow(0L)
+
+    /** The time the text follows: the scrubber's under a finger, else the player's. */
+    val timeMs: StateFlow<Long> = mutableTimeMs.asStateFlow()
+
+    /** The moment of the text shown: [timeMs] moved by the [sync] adjustment. */
+    val textTimeMs: StateFlow<Long> = combine(mutableTimeMs, sync.offsetMs, ReadAlongSync::textTime)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0L)
+
+    private val scrubTimeMs = MutableStateFlow<Long?>(null)
+
+    val isEnabled: StateFlow<Boolean> = observeAppSettings().map { it.readAlongEnabled }.distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /** The square's text or cover, and the explanation before each book's text first shows. */
+    val textToggle = ReadAlongTextToggle(
+        viewModelScope,
+        isIntroSeen = repository::isIntroSeen,
+        markIntroSeen = { bookId -> repository.setIntroSeen(bookId, true) },
+    )
+
+    private var shownBook: Book? = null
+    private var shownCount = 0
+    private var polling: Job? = null
+    private var filesSignature: List<String> = emptyList()
 
     init {
         viewModelScope.launch {
-            settings.collect { appSettings ->
-                val isEnabled = appSettings.readAlongEnabled
-                if (!isEnabled && mutableUi.value.isShowingText) stopShowing()
-                if (!isEnabled && mutableUi.value.isEnabled) {
-                    // Read-along was turned off: nothing it made stays behind.
-                    session.forget()
-                    clearReadAlong()
-                }
-                update { it.copy(isEnabled = isEnabled) }
-            }
+            isEnabled.collect { enabled -> if (!enabled) disable() }
         }
     }
 
-    /** The text or the cover, as the pill flips it. */
-    fun toggleText() {
-        if (!mutableUi.value.isAvailable) return
-        if (mutableUi.value.isShowingText) stopShowing() else startShowing()
+    /** A view showing [book]'s text appeared (or the same view now shows another book, or the app came back). */
+    fun show(book: Book) {
+        if (!isEnabled.value) return
+        shownCount += 1
+        follow(book)
     }
 
-    fun showCover() {
-        if (mutableUi.value.isShowingText) stopShowing()
+    /** [book] opened in the player, still on its cover: its EPUB is read now, so the text is the book's from the start. */
+    fun prepare(book: Book) {
+        if (isEnabled.value) bookText.load(book)
     }
 
-    fun setFullScreen(fullScreen: Boolean) = update { it.copy(isFullScreen = fullScreen && it.isShowingText) }
-
-    fun selectLanguage(language: ReadAlongLanguage) = session.setLanguage(language)
-
-    /** A tap on a line plays from its start, which the transcript keeps in book time. */
-    fun seekTo(startMs: Long) = playerController.seekToBookPosition(startMs)
-
-    /** The text is on screen: the session runs, from where the player is now. */
-    fun acquire(book: Book) {
-        this.book = book
-        onScreen++
-        session.setDuration(book.duration)
-        session.show(book.id, playerController.bookPositionMs())
-        startTicker()
-        publish(force = true)
+    /** The book shown changed while the text stays (another book loaded, or its files changed). */
+    fun follow(book: Book) {
+        if (shownCount == 0) return
+        val signature = filesOf(book)
+        val previous = shownBook
+        shownBook = book
+        if (previous?.id == book.id && signature != filesSignature) {
+            filesSignature = signature
+            session.downloadsChanged(book)
+            return
+        }
+        filesSignature = signature
+        if (previous?.id != book.id) {
+            sync.load(book.id)
+            bookText.load(book)
+        }
+        if (previous?.id != book.id || polling == null) {
+            mutableTimeMs.value = timeOf(book)
+            session.show(book, mutableTimeMs.value)
+            startPolling()
+        }
     }
 
-    /** The text left the screen. Nothing transcribes once nothing shows it. */
-    fun release() {
-        onScreen = (onScreen - 1).coerceAtLeast(0)
-        if (onScreen > 0) return
-        ticker?.cancel()
-        ticker = null
-        session.stop()
-        publish(force = true)
-    }
-
-    /** The player closed, or another book took over. */
-    fun playerClosed() {
-        stopShowing()
-    }
-
-    /** The pane composes next, and it is what starts the session (it knows the book). */
-    private fun startShowing() = update { it.copy(isShowingText = true) }
-
-    private fun stopShowing() {
-        update { it.copy(isShowingText = false, isFullScreen = false) }
-        onScreen = 0
-        ticker?.cancel()
-        ticker = null
+    /** A view showing the text left the screen; the session stops once none shows it. */
+    fun hide() {
+        shownCount = (shownCount - 1).coerceAtLeast(0)
+        if (shownCount > 0) return
+        polling?.cancel()
+        polling = null
         session.stop()
     }
 
-    private fun startTicker() {
-        if (ticker?.isActive == true) return
-        ticker = viewModelScope.launch {
+    /** The scrubber's finger is at [bookPositionMs], or lifted (null). */
+    fun scrub(bookPositionMs: Long?) {
+        scrubTimeMs.value = bookPositionMs
+        if (bookPositionMs != null && shownCount > 0) {
+            mutableTimeMs.value = bookPositionMs
+            session.timeChanged(bookPositionMs, scrubbing = true)
+        }
+    }
+
+    fun setLanguage(locale: String) = session.setLanguage(locale)
+
+    /** The listener says [line] is the one being read now. */
+    fun alignTo(line: ReadAlongLine) = sync.align(line, timeMs.value)
+
+    private fun startPolling() {
+        polling?.cancel()
+        polling = viewModelScope.launch {
             while (isActive) {
-                book?.let {
-                    session.timeChanged(playerController.bookPositionMs())
-                    publish()
-                }
-                delay(TICK_MS)
+                val book = shownBook ?: break
+                val scrubbed = scrubTimeMs.value
+                val time = scrubbed ?: timeOf(book)
+                mutableTimeMs.value = time
+                session.timeChanged(time, scrubbing = scrubbed != null)
+                delay(POLL_INTERVAL_MS)
             }
         }
     }
 
-    private fun update(transform: (ReadAlongUi) -> ReadAlongUi) {
-        mutableUi.value = transform(mutableUi.value)
+    private fun disable() {
+        polling?.cancel()
+        polling = null
+        shownBook = null
+        bookText.load(null)
+        textToggle.showCover()
+        session.disable()
     }
 
-    /**
-     * Publishes the session's snapshot when what the pane draws changed: the state, the language, the line or the
-     * word. Polling every tenth of a second must not re-render the rest of the player, and a whole book's lines
-     * must not be compared on every tick.
-     */
-    private fun publish(force: Boolean = false) {
-        val snapshot = session.snapshot()
-        val current = mutableUi.value.snapshot
-        val changed = force ||
-            current.state != snapshot.state ||
-            current.language != snapshot.language ||
-            current.display != snapshot.display ||
-            current.lines.size != snapshot.lines.size
-        if (!changed) return
-        update { it.copy(snapshot = snapshot.copy(lines = snapshot.lines.toList())) }
+    /** The player's position when it has this book loaded; the book's saved position otherwise. */
+    private fun timeOf(book: Book): Long =
+        if (playerController.state.value.bookId == book.id) playerController.bookPositionMs() else book.bookPositionMs
+
+    override fun onCleared() {
+        session.stop()
+        super.onCleared()
     }
 
     private companion object {
-        const val TICK_MS = 100L
+        const val POLL_INTERVAL_MS = 100L
     }
+}
+
+/** The book's files, to notice one finishing downloading (its uri turns local) while the text shows. */
+private fun filesOf(book: Book): List<String> = when (book) {
+    is MultipleBooks -> book.bookFileList.map { it.uri }
+    is BookFile -> listOf(book.uri)
+    else -> emptyList()
+}
+
+/** The device's languages, most preferred first, whatever language the app itself is set to. */
+private fun deviceLanguages(): List<String> {
+    val locales = Resources.getSystem().configuration.locales
+    return (0 until locales.size()).map { locales[it].toLanguageTag() }
 }
