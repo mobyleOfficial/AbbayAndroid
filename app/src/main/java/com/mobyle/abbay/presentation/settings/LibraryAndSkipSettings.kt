@@ -34,6 +34,7 @@ internal fun LibraryPreferenceSettings(settings: AppSettings, change: ((AppSetti
         )
         ChoiceSetting(
             label = stringResource(R.string.settings_rescan_on_start),
+            info = R.string.settings_info_rescan,
             options = RescanOnStart.entries,
             selected = settings.rescanOnStart,
             optionLabel = { stringResource(it.labelResource()) },
@@ -41,6 +42,7 @@ internal fun LibraryPreferenceSettings(settings: AppSettings, change: ((AppSetti
         )
         ChoiceSetting(
             label = stringResource(R.string.settings_missing_retention),
+            info = R.string.settings_info_missing_retention,
             options = RETENTION_DAYS,
             selected = settings.missingBookRetentionDays,
             optionLabel = { days -> pluralStringResource(R.plurals.settings_days, days, days) },
@@ -60,13 +62,13 @@ internal fun SkipAndSpeedSettings(settings: AppSettings, change: ((AppSettings) 
             optionLabel = { formatSpeed(it) },
             onSelect = { speed -> change { it.copy(defaultSpeed = speed) } },
         )
-        SecondsSetting(R.string.settings_small_back, SMALL_SKIP_SECONDS, settings.smallBackSeconds) { seconds ->
+        SecondsSetting(R.string.settings_small_back, SMALL_SKIP_SECONDS, settings.smallBackSeconds, info = R.string.settings_info_small_back) { seconds ->
             change { it.copy(smallBackSeconds = seconds) }
         }
         SecondsSetting(R.string.settings_small_forward, SMALL_SKIP_SECONDS, settings.smallForwardSeconds) { seconds ->
             change { it.copy(smallForwardSeconds = seconds) }
         }
-        MinutesSetting(R.string.settings_large_back, LARGE_SKIP_MINUTES, settings.largeBackSeconds / SECONDS_PER_MINUTE) { minutes ->
+        MinutesSetting(R.string.settings_large_back, LARGE_SKIP_MINUTES, settings.largeBackSeconds / SECONDS_PER_MINUTE, info = R.string.settings_info_large_back) { minutes ->
             change { it.copy(largeBackSeconds = minutes * SECONDS_PER_MINUTE) }
         }
         MinutesSetting(R.string.settings_large_forward, LARGE_SKIP_MINUTES, settings.largeForwardSeconds / SECONDS_PER_MINUTE) { minutes ->
@@ -74,6 +76,7 @@ internal fun SkipAndSpeedSettings(settings: AppSettings, change: ((AppSettings) 
         }
         ChoiceSetting(
             label = stringResource(R.string.settings_auto_stop),
+            info = R.string.settings_info_auto_stop,
             options = AUTO_STOP_MINUTES,
             selected = settings.autoStopAfterPauseMinutes,
             optionLabel = { minutes ->
@@ -83,6 +86,7 @@ internal fun SkipAndSpeedSettings(settings: AppSettings, change: ((AppSettings) 
         )
         ChoiceSetting(
             label = stringResource(R.string.settings_notification_buttons),
+            info = R.string.settings_info_notification_buttons,
             options = NotificationSkipButtons.entries,
             selected = settings.skipButtonsInNotification,
             optionLabel = { stringResource(it.labelResource()) },
@@ -104,24 +108,26 @@ internal fun QuickActionSettings(settings: AppSettings, change: ((AppSettings) -
 }
 
 @Composable
-private fun SecondsSetting(labelResource: Int, options: List<Int>, selected: Int, onSelect: (Int) -> Unit) {
+private fun SecondsSetting(labelResource: Int, options: List<Int>, selected: Int, info: Int? = null, onSelect: (Int) -> Unit) {
     ChoiceSetting(
         label = stringResource(labelResource),
         options = (options + selected).distinct().sorted(),
         selected = selected,
         optionLabel = { stringResource(R.string.settings_seconds, it) },
         onSelect = onSelect,
+        info = info,
     )
 }
 
 @Composable
-private fun MinutesSetting(labelResource: Int, options: List<Int>, selected: Int, onSelect: (Int) -> Unit) {
+private fun MinutesSetting(labelResource: Int, options: List<Int>, selected: Int, info: Int? = null, onSelect: (Int) -> Unit) {
     ChoiceSetting(
         label = stringResource(labelResource),
         options = (options + selected).distinct().sorted(),
         selected = selected,
         optionLabel = { stringResource(R.string.sleep_minutes, it) },
         onSelect = onSelect,
+        info = info,
     )
 }
 

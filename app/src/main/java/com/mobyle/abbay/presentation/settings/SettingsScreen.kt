@@ -78,6 +78,7 @@ fun SettingsScreen(
             item {
                 SettingItem(
                     text = stringResource(R.string.play_when_app_closed),
+                    info = stringResource(R.string.settings_info_play_when_closed),
                     content = {
                         Switch(
                             checked = shouldPlayWhenAppIsClosed,
@@ -91,6 +92,7 @@ fun SettingsScreen(
                 )
                 SettingItem(
                     text = stringResource(R.string.open_player_in_startup),
+                    info = stringResource(R.string.settings_info_open_player),
                     content = {
                         Switch(
                             checked = shouldOpenPlayerInStartup,
@@ -106,6 +108,7 @@ fun SettingsScreen(
                 SectionHeader(R.string.settings_library)
                 SettingItem(
                     text = stringResource(R.string.change_folder),
+                    info = stringResource(R.string.settings_info_change_folder),
                     onClick = {
                         viewModel.showChangeFolderConfirmation()
                     }
@@ -113,6 +116,7 @@ fun SettingsScreen(
 
                 SettingItem(
                     text = stringResource(R.string.delete_all_books),
+                    info = stringResource(R.string.settings_info_delete_all),
                     onClick = viewModel::showDeleteConfirmation
                 )
             }
@@ -142,7 +146,13 @@ fun SettingsScreen(
                     )
                 }
 
-                openConverter?.let { open -> item { SettingItem(text = stringResource(R.string.converter_title), onClick = open) } }
+                openConverter?.let { open -> item {
+                        SettingItem(
+                            text = stringResource(R.string.converter_title),
+                            onClick = open,
+                            info = stringResource(R.string.settings_info_converter),
+                        )
+                    } }
             }
 
             item { LibraryPreferenceSettings(settings, viewModel::changeListeningSettings) }
