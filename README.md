@@ -22,9 +22,9 @@ Abbay is an Android audiobook player app built with Jetpack Compose and ExoPlaye
 
 ## Screenshots
 
-| Library | Grid | Player | Audio effects |
-|---|---|---|---|
-| <img src="docs/screenshots/library.png" width="200" alt="Library list with the In progress tab and the mini player"/> | <img src="docs/screenshots/grid.png" width="200" alt="Library in grid layout"/> | <img src="docs/screenshots/player.png" width="200" alt="Player tinted with the cover's color"/> | <img src="docs/screenshots/effects.png" width="200" alt="Audio effects sheet over the player"/> |
+| Library | Grid | Player | Audio effects | Read-along |
+|---|---|---|---|---|
+| <img src="docs/screenshots/library.png" width="200" alt="Library list with the In progress tab and the mini player"/> | <img src="docs/screenshots/grid.png" width="200" alt="Library in grid layout"/> | <img src="docs/screenshots/player.png" width="200" alt="Player tinted with the cover's color"/> | <img src="docs/screenshots/effects.png" width="200" alt="Audio effects sheet over the player"/> | <img src="docs/screenshots/read-along.png" width="200" alt="The spoken text in the cover's square, the current word highlighted"/> |
 
 ## Getting Started
 
