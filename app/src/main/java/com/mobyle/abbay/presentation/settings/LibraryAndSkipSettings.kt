@@ -62,13 +62,23 @@ internal fun SkipAndSpeedSettings(settings: AppSettings, change: ((AppSettings) 
             optionLabel = { formatSpeed(it) },
             onSelect = { speed -> change { it.copy(defaultSpeed = speed) } },
         )
-        SecondsSetting(R.string.settings_small_back, SMALL_SKIP_SECONDS, settings.smallBackSeconds, info = R.string.settings_info_small_back) { seconds ->
+        SecondsSetting(
+            R.string.settings_small_back,
+            SMALL_SKIP_SECONDS,
+            settings.smallBackSeconds,
+            info = R.string.settings_info_small_back,
+        ) { seconds ->
             change { it.copy(smallBackSeconds = seconds) }
         }
         SecondsSetting(R.string.settings_small_forward, SMALL_SKIP_SECONDS, settings.smallForwardSeconds) { seconds ->
             change { it.copy(smallForwardSeconds = seconds) }
         }
-        MinutesSetting(R.string.settings_large_back, LARGE_SKIP_MINUTES, settings.largeBackSeconds / SECONDS_PER_MINUTE, info = R.string.settings_info_large_back) { minutes ->
+        MinutesSetting(
+            R.string.settings_large_back,
+            LARGE_SKIP_MINUTES,
+            settings.largeBackSeconds / SECONDS_PER_MINUTE,
+            info = R.string.settings_info_large_back,
+        ) { minutes ->
             change { it.copy(largeBackSeconds = minutes * SECONDS_PER_MINUTE) }
         }
         MinutesSetting(R.string.settings_large_forward, LARGE_SKIP_MINUTES, settings.largeForwardSeconds / SECONDS_PER_MINUTE) { minutes ->

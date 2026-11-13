@@ -55,7 +55,11 @@ fun ListeningSettings(viewModel: SettingsViewModel) {
             onSelect = { level -> change { it.copy(smartRewind = level) } },
         )
         SkipAndSpeedSettings(settings, change)
-        SwitchSetting(R.string.settings_continue_with_queue, settings.continueWithQueue, info = R.string.settings_info_continue_with_queue) { enabled ->
+        SwitchSetting(
+            R.string.settings_continue_with_queue,
+            settings.continueWithQueue,
+            info = R.string.settings_info_continue_with_queue,
+        ) { enabled ->
             change { it.copy(continueWithQueue = enabled) }
         }
         StatisticsSettings(settings.statisticsEnabled, change, onClear = viewModel::clearListeningStatistics)
@@ -70,7 +74,11 @@ fun ListeningSettings(viewModel: SettingsViewModel) {
 private fun StatisticsSettings(isEnabled: Boolean, change: ((AppSettings) -> AppSettings) -> Unit, onClear: () -> Unit) {
     var isConfirming by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    SwitchSetting(R.string.settings_statistics, isEnabled, info = R.string.settings_info_statistics) { enabled -> change { it.copy(statisticsEnabled = enabled) } }
+    SwitchSetting(
+        R.string.settings_statistics,
+        isEnabled,
+        info = R.string.settings_info_statistics,
+    ) { enabled -> change { it.copy(statisticsEnabled = enabled) } }
     SettingItem(text = stringResource(R.string.settings_clear_statistics), onClick = { isConfirming = true })
     if (isConfirming) {
         AbbayAlertDialog(
@@ -148,7 +156,11 @@ private fun SleepTimerSettings(settings: AppSettings, change: ((AppSettings) -> 
             optionLabel = { stringResource(R.string.settings_seconds, it) },
             onSelect = { seconds -> change { it.copy(sleepFadeSeconds = seconds) } },
         )
-        SwitchSetting(R.string.settings_shake_to_extend, settings.shakeToExtend, info = R.string.settings_info_shake_to_extend) { enabled -> change { it.copy(shakeToExtend = enabled) } }
+        SwitchSetting(
+            R.string.settings_shake_to_extend,
+            settings.shakeToExtend,
+            info = R.string.settings_info_shake_to_extend,
+        ) { enabled -> change { it.copy(shakeToExtend = enabled) } }
         if (settings.shakeToExtend) {
             ChoiceSetting(
                 label = stringResource(R.string.shake_sensitivity),
@@ -157,7 +169,11 @@ private fun SleepTimerSettings(settings: AppSettings, change: ((AppSettings) -> 
                 optionLabel = { stringResource(it.labelResource()) },
                 onSelect = { sensitivity -> change { it.copy(shakeSensitivity = sensitivity) } },
             )
-            SwitchSetting(R.string.settings_extend_only_during_fade, settings.extendOnlyDuringFade, info = R.string.settings_info_extend_only_during_fade) { enabled ->
+            SwitchSetting(
+                R.string.settings_extend_only_during_fade,
+                settings.extendOnlyDuringFade,
+                info = R.string.settings_info_extend_only_during_fade,
+            ) { enabled ->
                 change { it.copy(extendOnlyDuringFade = enabled) }
             }
         }
@@ -168,7 +184,11 @@ private fun SleepTimerSettings(settings: AppSettings, change: ((AppSettings) -> 
 @Composable
 private fun ChimeAndScheduleSettings(settings: AppSettings, change: ((AppSettings) -> AppSettings) -> Unit) {
     Column {
-        SwitchSetting(R.string.settings_sleep_chime, settings.sleepChime, info = R.string.settings_info_sleep_chime) { enabled -> change { it.copy(sleepChime = enabled) } }
+        SwitchSetting(
+            R.string.settings_sleep_chime,
+            settings.sleepChime,
+            info = R.string.settings_info_sleep_chime,
+        ) { enabled -> change { it.copy(sleepChime = enabled) } }
         if (settings.sleepChime) {
             ChoiceSetting(
                 label = stringResource(R.string.settings_sleep_chime_volume),
@@ -178,7 +198,11 @@ private fun ChimeAndScheduleSettings(settings: AppSettings, change: ((AppSetting
                 onSelect = { volume -> change { it.copy(sleepChimeVolumePercent = volume) } },
             )
         }
-        SwitchSetting(R.string.settings_auto_sleep, settings.autoSleepEnabled, info = R.string.settings_info_auto_sleep) { enabled -> change { it.copy(autoSleepEnabled = enabled) } }
+        SwitchSetting(
+            R.string.settings_auto_sleep,
+            settings.autoSleepEnabled,
+            info = R.string.settings_info_auto_sleep,
+        ) { enabled -> change { it.copy(autoSleepEnabled = enabled) } }
         if (settings.autoSleepEnabled) {
             TimeSetting(R.string.settings_auto_sleep_from, settings.autoSleepStartMinute) { minute ->
                 change { it.copy(autoSleepStartMinute = minute) }

@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -98,46 +99,49 @@ class MainActivity : ComponentActivity() {
         handleSharedImage(intent)
         if (savedInstanceState == null) handleLaunchAction(intent)
 
-        setContent {
-            val navController = rememberNavController()
-            val playerState = playerController.state.collectAsState()
-            val appSettings = remember { observeAppSettings() }.collectAsState(initial = settings)
-            val isWalkthroughDecided = booksViewModel.isWalkthroughDecided.collectAsState()
+        setContent { AbbayRoot() }
+    }
 
-            LaunchedEffect(playerState.value.isConnected) {
-                isPlayerReady = playerState.value.isConnected
-            }
+    @Composable
+    private fun AbbayRoot() {
+        val navController = rememberNavController()
+        val playerState = playerController.state.collectAsState()
+        val appSettings = remember { observeAppSettings() }.collectAsState(initial = settings)
+        val isWalkthroughDecided = booksViewModel.isWalkthroughDecided.collectAsState()
 
-            MyApplicationTheme(themeMode = appSettings.value.themeMode, dynamicColor = appSettings.value.dynamicColor) {
-                val statusBarColor = remember { StatusBarColor() }
-                CompositionLocalProvider(LocalStatusBarColor provides statusBarColor) {
-                    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.primary) {
-                        Column(modifier = Modifier.fillMaxSize()) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .windowInsetsTopHeight(WindowInsets.statusBars)
-                                    .statusBarBackground(statusBarColor)
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxWidth()
-                                    .consumeWindowInsets(WindowInsets.statusBars)
-                                    .windowInsetsPadding(
-                                        WindowInsets.systemBars.only(
-                                            WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
-                                        )
+        LaunchedEffect(playerState.value.isConnected) {
+            isPlayerReady = playerState.value.isConnected
+        }
+
+        MyApplicationTheme(themeMode = appSettings.value.themeMode, dynamicColor = appSettings.value.dynamicColor) {
+            val statusBarColor = remember { StatusBarColor() }
+            CompositionLocalProvider(LocalStatusBarColor provides statusBarColor) {
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.primary) {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .windowInsetsTopHeight(WindowInsets.statusBars)
+                                .statusBarBackground(statusBarColor)
+                        )
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .consumeWindowInsets(WindowInsets.statusBars)
+                                .windowInsetsPadding(
+                                    WindowInsets.systemBars.only(
+                                        WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
                                     )
-                            ) {
-                                // The tour is drawn in the same first frame as the library, covering it entirely.
-                                if (playerState.value.isConnected && isWalkthroughDecided.value) {
-                                    AbbayNavHost(
-                                        viewModel = booksViewModel,
-                                        navController = navController
-                                    )
-                                    WalkthroughOverlay(booksViewModel)
-                                }
+                                )
+                        ) {
+                            // The tour is drawn in the same first frame as the library, covering it entirely.
+                            if (playerState.value.isConnected && isWalkthroughDecided.value) {
+                                AbbayNavHost(
+                                    viewModel = booksViewModel,
+                                    navController = navController
+                                )
+                                WalkthroughOverlay(booksViewModel)
                             }
                         }
                     }

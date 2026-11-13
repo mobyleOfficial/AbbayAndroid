@@ -115,7 +115,11 @@ private fun DisplaySettings(settings: AppSettings, change: ((AppSettings) -> App
     SwitchSetting(R.string.settings_cover_on_lock_screen, settings.coverOnLockScreen) { enabled ->
         change { it.copy(coverOnLockScreen = enabled) }
     }
-    SwitchSetting(R.string.settings_keep_screen_on, settings.keepScreenOnWhileCharging, info = R.string.settings_info_keep_screen_on) { enabled ->
+    SwitchSetting(
+        R.string.settings_keep_screen_on,
+        settings.keepScreenOnWhileCharging,
+        info = R.string.settings_info_keep_screen_on,
+    ) { enabled ->
         change { it.copy(keepScreenOnWhileCharging = enabled) }
     }
     ChoiceSetting(

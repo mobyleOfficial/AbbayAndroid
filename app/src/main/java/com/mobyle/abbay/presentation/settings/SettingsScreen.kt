@@ -146,13 +146,15 @@ fun SettingsScreen(
                     )
                 }
 
-                openConverter?.let { open -> item {
+                openConverter?.let { open ->
+                    item {
                         SettingItem(
                             text = stringResource(R.string.converter_title),
                             onClick = open,
                             info = stringResource(R.string.settings_info_converter),
                         )
-                    } }
+                    }
+                }
             }
 
             item { LibraryPreferenceSettings(settings, viewModel::changeListeningSettings) }
