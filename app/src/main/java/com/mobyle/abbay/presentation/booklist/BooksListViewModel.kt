@@ -183,9 +183,11 @@ class BooksListViewModel @Inject constructor(
     private val _showReloadGuide = MutableStateFlow(false)
     val showReloadGuide: StateFlow<Boolean> get() = _showReloadGuide
 
-    // Decided once the saved settings and the library have loaded, so the tour never flashes over a library in use.
-    private val isWalkthroughDecided = MutableStateFlow(false)
-    val showWalkthrough: StateFlow<Boolean> = combine(isWalkthroughDecided, settings) { decided, appSettings ->
+    // Decided once the saved settings and the library have loaded. The splash stays up until then, so a new listener's
+    // first screen is the tour itself and everyone else lands on the library as before.
+    private val _isWalkthroughDecided = MutableStateFlow(false)
+    val isWalkthroughDecided: StateFlow<Boolean> get() = _isWalkthroughDecided
+    val showWalkthrough: StateFlow<Boolean> = combine(_isWalkthroughDecided, settings) { decided, appSettings ->
         decided && !appSettings.walkthroughShown
     }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
@@ -531,7 +533,7 @@ class BooksListViewModel @Inject constructor(
                 liveBooks.first().isNotEmpty()
             if (isExistingUser) updateAppSettings { it.copy(walkthroughShown = true) }
         }
-        isWalkthroughDecided.value = true
+        _isWalkthroughDecided.value = true
     }
 
     fun dismissWalkthrough() {

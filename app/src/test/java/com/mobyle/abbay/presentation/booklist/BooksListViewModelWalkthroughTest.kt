@@ -39,6 +39,7 @@ class BooksListViewModelWalkthroughTest {
         val factory = ViewModelFactory()
         val viewModel = factory.booksListViewModel()
 
+        assertTrue(viewModel.isWalkthroughDecided.value)
         assertTrue(viewModel.showWalkthrough.value)
 
         viewModel.dismissWalkthrough()
@@ -51,6 +52,7 @@ class BooksListViewModelWalkthroughTest {
         val factory = ViewModelFactory(libraryRepository = FakeLibraryRepository(listOf(SampleBooks.singleFileBook)))
         val viewModel = factory.booksListViewModel()
 
+        assertTrue(viewModel.isWalkthroughDecided.value)
         assertFalse(viewModel.showWalkthrough.value)
         assertTrue(factory.settingsRepository.settings.value.walkthroughShown)
     }

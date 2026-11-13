@@ -84,7 +84,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         lockPhonesToPortrait()
         splashScreen.setKeepOnScreenCondition {
-            !isPlayerReady
+            !isPlayerReady || !booksViewModel.isWalkthroughDecided.value
         }
 
         super.onCreate(savedInstanceState)
@@ -102,6 +102,7 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             val playerState = playerController.state.collectAsState()
             val appSettings = remember { observeAppSettings() }.collectAsState(initial = settings)
+            val isWalkthroughDecided = booksViewModel.isWalkthroughDecided.collectAsState()
 
             LaunchedEffect(playerState.value.isConnected) {
                 isPlayerReady = playerState.value.isConnected
@@ -129,7 +130,8 @@ class MainActivity : ComponentActivity() {
                                         )
                                     )
                             ) {
-                                if (playerState.value.isConnected) {
+                                // The tour is drawn in the same first frame as the library, covering it entirely.
+                                if (playerState.value.isConnected && isWalkthroughDecided.value) {
                                     AbbayNavHost(
                                         viewModel = booksViewModel,
                                         navController = navController

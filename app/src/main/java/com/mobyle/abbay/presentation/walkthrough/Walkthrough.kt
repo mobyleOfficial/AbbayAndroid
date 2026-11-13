@@ -139,12 +139,15 @@ private val pages = listOf(
     ),
 )
 
-/** Shown over the whole app while the library says the tour is due. */
+/**
+ * Shown over the whole app while the library says the tour is due. When it is due at launch it is already there in the
+ * first frame, with no entrance; replayed from Settings it fades in, and either way it fades out onto the library.
+ */
 @Composable
 fun WalkthroughOverlay(viewModel: BooksListViewModel) {
     val isShown by viewModel.showWalkthrough.collectAsState()
     val hasLibrary by viewModel.hasSelectedFolder.collectAsState()
-    if (isShown) {
+    AnimatedVisibility(visible = isShown, enter = fadeIn(tween(OVERLAY_FADE_MS)), exit = fadeOut(tween(OVERLAY_FADE_MS))) {
         Walkthrough(hasLibrary = hasLibrary, onFolderSelected = viewModel::addFolder, onFinish = viewModel::dismissWalkthrough)
     }
 }
@@ -406,3 +409,4 @@ private const val PULSE_MS = 2400
 private const val HIGHLIGHT_DELAY_MS = 150L
 private const val HIGHLIGHT_STAGGER_MS = 120L
 private const val HIGHLIGHT_ENTER_MS = 350
+private const val OVERLAY_FADE_MS = 300
