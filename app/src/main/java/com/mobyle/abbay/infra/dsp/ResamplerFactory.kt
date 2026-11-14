@@ -4,7 +4,6 @@ import com.converter.AudioResampler
 import com.converter.AudioResamplerFactory
 import javax.inject.Inject
 
-/** The app's windowed-sinc [Resampler] behind the domain interface the converter (`data`) uses. */
 class ResamplerFactory @Inject constructor() : AudioResamplerFactory {
     override fun create(inputRate: Int, outputRate: Int, channels: Int, passbandFraction: Double): AudioResampler {
         val resampler = Resampler(inputRate, outputRate, channels, passbandFraction)

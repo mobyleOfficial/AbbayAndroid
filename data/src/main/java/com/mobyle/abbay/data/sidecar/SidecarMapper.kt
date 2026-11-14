@@ -6,7 +6,6 @@ import com.mobyle.abbay.data.database.entity.CharacterNoteEntity
 import com.mobyle.abbay.data.database.entity.ListeningStateEntity
 import com.mobyle.abbay.data.library.BookProjection
 
-/** Database rows ↔ [SidecarBook]. Track positions travel as file names, so a reordered or renamed folder still matches. */
 internal object SidecarMapper {
     fun toSidecar(details: BookWithDetails, bookmarks: List<BookmarkEntity>, characters: List<CharacterNoteEntity>): SidecarBook {
         val book = details.book
@@ -41,10 +40,6 @@ internal object SidecarMapper {
         )
     }
 
-    /**
-     * The listening state stored in [sidecar], placed on the tracks of [details]. The track is found by file name (in
-     * the track order the sidecar asks for); when the file is gone, the book position is kept and the track is the first.
-     */
     fun toListeningState(sidecar: SidecarBook, details: BookWithDetails): ListeningStateEntity {
         val current = details.listeningState ?: ListeningStateEntity(bookId = details.book.id)
         val ordered = BookProjection.playableTracks(
@@ -90,7 +85,6 @@ internal object SidecarMapper {
         CharacterNoteEntity(bookId = bookId, name = it.name, description = it.description, firstPositionMs = it.firstPositionMs)
     }
 
-    /** Newer `updatedAt` wins; a book without saved state takes any sidecar. */
     fun isNewer(sidecar: SidecarBook, details: BookWithDetails): Boolean =
         details.listeningState?.let { sidecar.updatedAt > it.updatedAt } ?: true
 }

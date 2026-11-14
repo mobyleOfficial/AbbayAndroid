@@ -4,7 +4,6 @@ import com.repository.QueueRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
-/** In-memory queue. */
 class FakeQueueRepository : QueueRepository {
     val queue = MutableStateFlow(emptyList<String>())
 

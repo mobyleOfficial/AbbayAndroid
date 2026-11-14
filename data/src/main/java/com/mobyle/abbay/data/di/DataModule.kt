@@ -5,6 +5,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
+import com.mobyle.abbay.data.audiobookshelf.AudiobookshelfRepositoryImpl
+import com.mobyle.abbay.data.audiobookshelf.AudiobookshelfSession
 import com.mobyle.abbay.data.backup.BackupRepositoryImpl
 import com.mobyle.abbay.data.converter.ConverterRepositoryImpl
 import com.mobyle.abbay.data.effects.AudioEffectsRepositoryImpl
@@ -12,6 +14,9 @@ import com.mobyle.abbay.data.effects.PlaybackOptionsRepositoryImpl
 import com.mobyle.abbay.data.extras.CharacterRepositoryImpl
 import com.mobyle.abbay.data.extras.QueueRepositoryImpl
 import com.mobyle.abbay.data.extras.StatisticsRepositoryImpl
+import com.mobyle.abbay.data.librivox.LibriVoxRepositoryImpl
+import com.mobyle.abbay.data.readalong.ReadAlongRepositoryImpl
+import com.mobyle.abbay.data.readalong.VoskReadAlongTranscriber
 import com.mobyle.abbay.data.repository.LegacyMigrationRepositoryImpl
 import com.mobyle.abbay.data.repository.LibraryRepositoryImpl
 import com.mobyle.abbay.data.repository.ListeningRepositoryImpl
@@ -20,15 +25,20 @@ import com.mobyle.abbay.data.settings.legacyPreferencesMigration
 import com.mobyle.abbay.data.storage.DocumentTreeSource
 import com.mobyle.abbay.data.storage.SafDocumentTreeDataSource
 import com.mobyle.abbay.data.subtitles.SubtitleRepositoryImpl
+import com.readalong.ReadAlongTranscriber
 import com.repository.AudioEffectsRepository
+import com.repository.AudiobookshelfRepository
 import com.repository.BackupRepository
 import com.repository.CharacterRepository
 import com.repository.ConverterRepository
 import com.repository.LegacyMigrationRepository
 import com.repository.LibraryRepository
+import com.repository.LibriVoxRepository
 import com.repository.ListeningRepository
 import com.repository.PlaybackOptionsRepository
 import com.repository.QueueRepository
+import com.repository.ReadAlongRepository
+import com.repository.RemoteMediaAuth
 import com.repository.SettingsRepository
 import com.repository.StatisticsRepository
 import com.repository.SubtitleRepository
@@ -40,12 +50,27 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-@Suppress("TooManyFunctions") // One binding per repository.
+@Suppress("TooManyFunctions")
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class DataModule {
     @Binds
     abstract fun bindLibraryRepository(implementation: LibraryRepositoryImpl): LibraryRepository
+
+    @Binds
+    abstract fun bindReadAlongRepository(implementation: ReadAlongRepositoryImpl): ReadAlongRepository
+
+    @Binds
+    abstract fun bindReadAlongTranscriber(implementation: VoskReadAlongTranscriber): ReadAlongTranscriber
+
+    @Binds
+    abstract fun bindLibriVoxRepository(implementation: LibriVoxRepositoryImpl): LibriVoxRepository
+
+    @Binds
+    abstract fun bindAudiobookshelfRepository(implementation: AudiobookshelfRepositoryImpl): AudiobookshelfRepository
+
+    @Binds
+    abstract fun bindRemoteMediaAuth(implementation: AudiobookshelfSession): RemoteMediaAuth
 
     @Binds
     abstract fun bindListeningRepository(implementation: ListeningRepositoryImpl): ListeningRepository

@@ -8,6 +8,7 @@ import coil.ImageLoaderFactory
 import coil.decode.SvgDecoder
 import com.mobyle.abbay.infra.diagnostics.DiagnosticsCollection
 import com.mobyle.abbay.infra.language.AppLanguageStore
+import com.repository.RemoteMediaAuth
 import com.usecase.ObserveAppSettings
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import okhttp3.OkHttpClient
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -29,6 +31,9 @@ class AbbayApplication : Application(), ImageLoaderFactory, Configuration.Provid
 
     @Inject
     lateinit var observeAppSettings: ObserveAppSettings
+
+    @Inject
+    lateinit var remoteMediaAuth: RemoteMediaAuth
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
@@ -51,6 +56,17 @@ class AbbayApplication : Application(), ImageLoaderFactory, Configuration.Provid
         loader = ImageLoader.Builder(this)
             .components {
                 add(SvgDecoder.Factory())
+            }
+            // Covers on a signed-in Audiobookshelf server need its token.
+            .okHttpClient {
+                OkHttpClient.Builder()
+                    .addInterceptor { chain ->
+                        val request = chain.request()
+                        val headers = remoteMediaAuth.headersFor(request.url.toString())
+                        val authorized = request.newBuilder().apply { headers.forEach { (name, value) -> header(name, value) } }.build()
+                        chain.proceed(authorized)
+                    }
+                    .build()
             }
             .build()
     }

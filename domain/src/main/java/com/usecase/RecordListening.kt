@@ -6,7 +6,6 @@ import com.statistics.ListeningDay
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
-/** Adds listening time to the statistics, unless they are turned off. */
 class RecordListening @Inject constructor(
     private val repository: StatisticsRepository,
     private val settingsRepository: SettingsRepository,

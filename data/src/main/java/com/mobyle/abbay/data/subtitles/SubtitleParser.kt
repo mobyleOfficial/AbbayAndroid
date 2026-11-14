@@ -6,10 +6,6 @@ import java.nio.charset.CharacterCodingException
 import java.nio.charset.Charset
 import java.nio.charset.CodingErrorAction
 
-/**
- * `.srt` and `.lrc` parsing and the encoding rule. Pure Kotlin. Literal `]`
- * and `}` in the patterns are escaped: Android's ICU regex engine rejects them bare (the JVM accepts them).
- */
 object SubtitleParser {
     private val srtTime = Regex("""(\d{1,2}):(\d{2}):(\d{2})[,.](\d{1,3})\s*-->""")
     private val lrcTime = Regex("""\[(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?\]""")
@@ -19,7 +15,6 @@ object SubtitleParser {
     fun parse(fileName: String, text: String): List<SubtitleLine> =
         if (fileName.lowercase().endsWith(".lrc")) parseLrc(text) else parseSrt(text)
 
-    /** Blocks separated by blank lines: optional index, `start --> end`, then the text lines (tags removed). */
     fun parseSrt(text: String): List<SubtitleLine> {
         val lines = mutableListOf<SubtitleLine>()
         text.replace("\r\n", "\n").replace('\r', '\n').split(Regex("\n\\s*\n")).forEach { block ->
@@ -36,7 +31,6 @@ object SubtitleParser {
         return lines.sortedBy { it.startMs }
     }
 
-    /** `[mm:ss.xx] text` lines; one line may carry several times; `[offset:±ms]` shifts every time. */
     fun parseLrc(text: String): List<SubtitleLine> {
         var offsetMs = 0L
         val lines = mutableListOf<SubtitleLine>()
@@ -50,17 +44,12 @@ object SubtitleParser {
             times.forEach { match ->
                 val (minutes, seconds, fraction) = match.destructured
                 val startMs = (minutes.toLong() * SECONDS_PER_MINUTE + seconds.toLong()) * MS + millisOf(fraction)
-                // A positive offset makes the lyrics appear sooner.
                 lines += SubtitleLine((startMs - offsetMs).coerceAtLeast(0L), content)
             }
         }
         return lines.sortedBy { it.startMs }
     }
 
-    /**
-     * UTF-8 (with or without BOM), else UTF-16 with BOM, else [chosenCharset]; null when none of these applies, so the
-     * user has to choose.
-     */
     fun decode(bytes: ByteArray, chosenCharset: String?): String? = when {
         bytes.startsWith(UTF8_BOM) -> String(bytes, UTF8_BOM.size, bytes.size - UTF8_BOM.size, Charsets.UTF_8)
         bytes.startsWith(UTF16_LE_BOM) || bytes.startsWith(UTF16_BE_BOM) -> String(bytes, Charsets.UTF_16)

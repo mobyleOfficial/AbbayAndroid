@@ -1,4 +1,3 @@
-// JNI bridge to RNNoise for com.mobyle.abbay.infra.dsp.nativelib.RnnNoise.
 #include <jni.h>
 #include <stdint.h>
 #include "rnnoise.h"
@@ -18,7 +17,6 @@ Java_com_mobyle_abbay_infra_dsp_nativelib_RnnNoise_nativeFrameSize(JNIEnv *env, 
     return rnnoise_get_frame_size();
 }
 
-// Denoises one frame of 480 samples at 48 kHz, in the 16-bit scale RNNoise expects; returns the voice probability.
 JNIEXPORT jfloat JNICALL
 Java_com_mobyle_abbay_infra_dsp_nativelib_RnnNoise_nativeProcess(JNIEnv *env, jclass type, jlong handle, jfloatArray input,
                                                           jfloatArray output) {

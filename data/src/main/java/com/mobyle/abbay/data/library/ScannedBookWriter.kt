@@ -7,13 +7,7 @@ import com.mobyle.abbay.data.scanner.ScannedBook
 import java.util.UUID
 import javax.inject.Inject
 
-/**
- * Writes the structure of a [ScannedBook] into Room. A book keeps its row (and so its listening state) while its
- * relative path stays the same; tracks whose document, size and modification time did not change keep the tags read
- * before, so a rescan only reads new or changed files.
- */
 class ScannedBookWriter @Inject constructor(private val dao: LibraryDao) {
-    /** Returns the book id and whether its tags must be read again. */
     suspend fun write(location: BookLocation, scannedBook: ScannedBook, existingBook: BookEntity?, now: Long): WriteResult {
         val previousTracks = existingBook?.let { dao.getTracks(it.id) }.orEmpty().sortedBy { it.indexInBook }
         val newTracks = buildTracks(location, scannedBook, existingBook?.id ?: 0L, previousTracks)
@@ -100,7 +94,6 @@ class ScannedBookWriter @Inject constructor(private val dao: LibraryDao) {
     data class WriteResult(val bookId: Long, val needsMetadata: Boolean)
 
     companion object {
-        /** Title used until tags are read: the folder name (for a one-file book, the file name without extension). */
         fun provisionalTitle(scannedBook: ScannedBook): String = scannedBook.folderName
     }
 }

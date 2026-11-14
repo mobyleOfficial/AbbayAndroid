@@ -10,13 +10,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Custom typography with color customization
 @Composable
 fun AbbayTypography(
     primaryTextColor: Color = Color.White,
     secondaryTextColor: Color = Color.White.copy(alpha = 0.7f),
 ): Typography = Typography(
-    // Display styles - for large headlines
     displayLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
@@ -42,7 +40,6 @@ fun AbbayTypography(
         color = primaryTextColor
     ),
 
-    // Headline styles - for section headers
     headlineLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.SemiBold,
@@ -68,7 +65,6 @@ fun AbbayTypography(
         color = primaryTextColor
     ),
 
-    // Title styles - for card titles, dialog titles
     titleLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.SemiBold,
@@ -94,7 +90,6 @@ fun AbbayTypography(
         color = primaryTextColor
     ),
 
-    // Body styles - for main content text
     bodyLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
@@ -120,7 +115,6 @@ fun AbbayTypography(
         color = secondaryTextColor
     ),
 
-    // Label styles - for buttons, tabs, form labels
     labelLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Medium,
@@ -147,7 +141,6 @@ fun AbbayTypography(
     )
 )
 
-// Default typography for backwards compatibility
 val Typography = Typography(
     displayLarge = TextStyle(
         fontFamily = FontFamily.Default,
@@ -256,10 +249,8 @@ val Typography = Typography(
     )
 )
 
-// Custom typography variants for specific use cases in your app
 object AbbayTextStyles {
 
-    // Book title styles
     private val bookTitleLargeBase = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
@@ -276,7 +267,6 @@ object AbbayTextStyles {
         letterSpacing = 0.sp
     )
 
-    // Progress and time display
     private val progressTextBase = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Medium,
@@ -285,7 +275,6 @@ object AbbayTextStyles {
         letterSpacing = 0.5.sp
     )
 
-    // Chapter/file names
     private val chapterTitleBase = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Medium,
@@ -294,7 +283,6 @@ object AbbayTextStyles {
         letterSpacing = 0.1.sp
     )
 
-    // Button text
     private val buttonTextLargeBase = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.SemiBold,
@@ -311,7 +299,6 @@ object AbbayTextStyles {
         letterSpacing = 0.25.sp
     )
 
-    // Subtitle/secondary info
     private val subtitleTextBase = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
@@ -320,7 +307,6 @@ object AbbayTextStyles {
         letterSpacing = 0.4.sp
     )
 
-    // Colors come from the theme so the styles work in every theme.
     val bookTitleLarge: TextStyle
         @Composable @ReadOnlyComposable
         get() = bookTitleLargeBase.copy(color = MaterialTheme.colorScheme.onSurface)

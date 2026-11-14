@@ -10,7 +10,6 @@ import com.mobyle.abbay.data.database.entity.ListeningDayEntity
 import com.mobyle.abbay.data.database.entity.QueueEntryEntity
 import kotlinx.coroutines.flow.Flow
 
-/** Statistics, queue and characters. */
 @Dao
 interface ExtrasDao {
     @Query("SELECT * FROM listening_day")
@@ -25,7 +24,6 @@ interface ExtrasDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertDay(day: ListeningDayEntity)
 
-    /** Adds the times to the row of that book and date. */
     @Transaction
     suspend fun addToDay(day: ListeningDayEntity) {
         val current = getDay(day.bookId, day.date)
@@ -54,7 +52,6 @@ interface ExtrasDao {
     @Insert
     suspend fun insertQueue(entries: List<QueueEntryEntity>)
 
-    /** Rewrites the queue in the given order. */
     @Transaction
     suspend fun replaceQueue(bookIds: List<Long>) {
         clearQueue()
@@ -85,7 +82,6 @@ interface ExtrasDao {
     @Insert
     suspend fun insertCharacters(characters: List<CharacterNoteEntity>)
 
-    /** The characters of a book become [characters] (a newer sidecar or backup won). */
     @Transaction
     suspend fun replaceCharacters(bookId: Long, characters: List<CharacterNoteEntity>) {
         deleteCharactersOf(bookId)

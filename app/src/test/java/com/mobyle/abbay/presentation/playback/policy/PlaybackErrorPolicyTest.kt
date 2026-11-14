@@ -26,4 +26,9 @@ class PlaybackErrorPolicyTest {
     fun `storage errors stop playback instead of skipping`() {
         assertEquals(Decision.StopStorageUnavailable, PlaybackErrorPolicy.decide(ErrorKind.STORAGE, 0, 3, emptySet()))
     }
+
+    @Test
+    fun `a lost connection pauses on the same track instead of skipping`() {
+        assertEquals(Decision.PauseForNetwork, PlaybackErrorPolicy.decide(ErrorKind.NETWORK, 1, 3, setOf(0)))
+    }
 }

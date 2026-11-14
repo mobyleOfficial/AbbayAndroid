@@ -11,6 +11,7 @@ import com.model.BookFile
 import com.model.BookState
 import com.model.Bookmark
 import com.model.LibraryRoot
+import com.model.LibriVoxDownload
 import com.model.MultipleBooks
 import com.model.ScanStatus
 import com.player.PlaybackStatus
@@ -32,11 +33,13 @@ import com.usecase.ImportLegacyProgress
 import com.usecase.ObserveAppSettings
 import com.usecase.ObserveBooks
 import com.usecase.ObserveLibraryRoots
+import com.usecase.ObserveLibriVoxDownloads
 import com.usecase.ObserveScanStatus
 import com.usecase.OpenExternalFile
 import com.usecase.PrepareLegacyFolderMigration
 import com.usecase.RefreshLibrary
 import com.usecase.RefreshLibraryOnStart
+import com.usecase.RepairLibriVoxBook
 import com.usecase.RequestFullScan
 import com.usecase.SaveListeningState
 import com.usecase.SetBookState
@@ -63,6 +66,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
 @HiltViewModel
@@ -86,17 +90,18 @@ class BooksListViewModel @Inject constructor(
     private val updateBookmarkNote: UpdateBookmarkNote,
     private val getLastBook: GetLastBook,
     private val openExternalFile: OpenExternalFile,
-    observeBooks: ObserveBooks,
+    private val observeBooks: ObserveBooks,
     observeLibraryRoots: ObserveLibraryRoots,
     observeScanStatus: ObserveScanStatus,
     observeAppSettings: ObserveAppSettings,
     private val addToQueue: AddToQueue,
     private val getOpusEncoder: GetOpusEncoder,
+    observeLibriVoxDownloads: ObserveLibriVoxDownloads,
+    private val repairLibriVoxBook: RepairLibriVoxBook,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<BooksListUiState>(BooksListUiState.Loading)
     val uiState: StateFlow<BooksListUiState> get() = _uiState
 
-    /** Every visible book of the library, with the live progress of the selected book. */
     var booksList = listOf<Book>()
         private set
 
@@ -106,38 +111,32 @@ class BooksListViewModel @Inject constructor(
         .map { it.isPlaying }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
-    /** True between a play request that reloads the book and the moment the player is ready. */
     private val _isAwaitingPlayback = MutableStateFlow(false)
     val isAwaitingPlayback: StateFlow<Boolean> get() = _isAwaitingPlayback
 
-    /** Shortcuts, the Quick Settings tile and files opened from other apps open the full player. */
-    // Channels keep an event sent before the screen collects (a launch intent arrives before the first frame).
     private val _expandPlayerEvents = Channel<Unit>(Channel.CONFLATED)
     val expandPlayerEvents: Flow<Unit> = _expandPlayerEvents.receiveAsFlow()
 
-    /** A file from another app is playing: the screen offers "Add folder to library"; false when it could not be read. */
     private val _externalFileEvents = Channel<Boolean>(Channel.CONFLATED)
     val externalFileEvents: Flow<Boolean> = _externalFileEvents.receiveAsFlow()
 
     private val _collapsePlayerEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val collapsePlayerEvents: SharedFlow<Unit> get() = _collapsePlayerEvents.asSharedFlow()
 
-    /** File names of tracks that could not be played and were skipped. */
     private val _skippedTrackMessages = MutableSharedFlow<String>(extraBufferCapacity = 4)
     val skippedTrackMessages: SharedFlow<String> get() = _skippedTrackMessages.asSharedFlow()
 
-    /** A bookmark was added from the player; the screen offers to add a note. */
-    /** Books to play from another screen (search, folder view, queue); the library screen opens them. */
     private val _playRequests = Channel<Book>(Channel.CONFLATED)
     val playRequests: Flow<Book> = _playRequests.receiveAsFlow()
 
-    /** True for "Play next", false for "Add to queue": shown as a confirmation. */
     private val _queueAdded = MutableSharedFlow<Boolean>(extraBufferCapacity = 1)
     val queueAdded: SharedFlow<Boolean> = _queueAdded.asSharedFlow()
 
-    /** Noise reduction was too slow for the device and is now off. */
     private val _noiseReductionTurnedOff = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val noiseReductionTurnedOff: SharedFlow<Unit> = _noiseReductionTurnedOff.asSharedFlow()
+
+    private val _networkUnavailable = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val networkUnavailable: SharedFlow<Unit> = _networkUnavailable.asSharedFlow()
 
     private val _bookmarkAdded = MutableSharedFlow<Bookmark>(extraBufferCapacity = 1)
     val bookmarkAdded: SharedFlow<Bookmark> get() = _bookmarkAdded.asSharedFlow()
@@ -158,7 +157,6 @@ class BooksListViewModel @Inject constructor(
     private val settings: StateFlow<AppSettings> = observeAppSettings()
         .stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
 
-    /** Skip amounts and default speed used by the player screen. */
     val appSettings: StateFlow<AppSettings> get() = settings
 
     private val roots: StateFlow<List<LibraryRoot>> = observeLibraryRoots()
@@ -167,13 +165,16 @@ class BooksListViewModel @Inject constructor(
     private val scanStatus: StateFlow<ScanStatus> = observeScanStatus()
         .stateIn(viewModelScope, SharingStarted.Eagerly, ScanStatus())
 
+    val libriVoxDownloads: StateFlow<Map<String, LibriVoxDownload>> = observeLibriVoxDownloads()
+        .map { downloads -> downloads.filterValues { !it.isComplete } }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
+
     val hasSelectedFolder: StateFlow<Boolean> = roots.map { it.isNotEmpty() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     val isRefreshing: StateFlow<Boolean> = scanStatus.map { it.isScanning }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
-    /** Tab chosen in this session; null until the user picks one (then the setting or "auto" applies). */
     private val selectedTab = MutableStateFlow<LibraryTab?>(null)
 
     private val _libraryState = MutableStateFlow(LibraryUiState())
@@ -182,18 +183,23 @@ class BooksListViewModel @Inject constructor(
     private val _showReloadGuide = MutableStateFlow(false)
     val showReloadGuide: StateFlow<Boolean> get() = _showReloadGuide
 
+    // Decided once the saved settings and the library have loaded. The splash stays up until then, so a new listener's
+    // first screen is the tour itself and everyone else lands on the library as before.
+    private val _isWalkthroughDecided = MutableStateFlow(false)
+    val isWalkthroughDecided: StateFlow<Boolean> get() = _isWalkthroughDecided
+    val showWalkthrough: StateFlow<Boolean> = combine(_isWalkthroughDecided, settings) { decided, appSettings ->
+        decided && !appSettings.walkthroughShown
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     private val _showBookEndedDialog = MutableStateFlow(false)
     val showBookEndedDialog: StateFlow<Boolean> get() = _showBookEndedDialog
 
-    /** Books that failed to play in this session; the scanner marks missing files persistently. */
     private val failedBookIds = MutableStateFlow(emptySet<String>())
     private val legacyFolderToReselect = MutableStateFlow<String?>(null)
 
-    /** Id of the last played book, restored once both settings and books are loaded. */
     private var lastBookIdToRestore: String? = null
     private var hasLoadedSettings = false
 
-    /** Library books with the live state of this session; no initial value, so nothing is shown before Room answers. */
     private val liveBooks = combine(observeBooks(), failedBookIds, _selectedBook) { books, failedIds, selected ->
         books.map { book -> book.withLiveState(selected, failedIds) }
     }.shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
@@ -214,9 +220,12 @@ class BooksListViewModel @Inject constructor(
             selectedTab,
             combine(roots, scanStatus, legacyFolderToReselect) { roots, scan, legacyFolder -> Triple(roots, scan, legacyFolder) },
         ) { books, settings, tab, (roots, scan, legacyFolder) ->
-            val effectiveTab = tab ?: settings.libraryTab ?: sortAndFilterBooks.defaultTab(books)
+            val visibleTabs = settings.visibleLibraryTabs
+            val effectiveTab = listOfNotNull(tab, settings.libraryTab).firstOrNull { it in visibleTabs }
+                ?: sortAndFilterBooks.defaultTab(books, visibleTabs)
             _libraryState.value = LibraryUiState(
                 tab = effectiveTab,
+                tabs = visibleTabs,
                 sortOrder = settings.librarySortOrder,
                 sortAscending = settings.librarySortAscending,
                 layout = settings.libraryLayout,
@@ -234,7 +243,6 @@ class BooksListViewModel @Inject constructor(
             }
         }.onEach { _uiState.value = it }.launchIn(viewModelScope)
 
-        // The legacy import runs in the scan worker and may set the last book after startup.
         settings.onEach { appSettings ->
             if (hasLoadedSettings && _selectedBook.value == null && appSettings.lastBookId != null) {
                 lastBookIdToRestore = appSettings.lastBookId
@@ -248,7 +256,6 @@ class BooksListViewModel @Inject constructor(
             }
         }.launchIn(viewModelScope)
 
-        // The service can start another book by itself (the queue, Android Auto): the player follows it.
         playerController.state.map { it.bookId }.distinctUntilChanged().onEach { playingId ->
             val selected = _selectedBook.value
             if (playingId == null || playingId == selected?.id) return@onEach
@@ -261,10 +268,8 @@ class BooksListViewModel @Inject constructor(
             if (hasUpNext) _showBookEndedDialog.value = false
         }.launchIn(viewModelScope)
 
-        // The end of the book: unless the queue goes on with another book, the player closes.
         playerController.state.map { it.status == PlaybackStatus.ENDED }.distinctUntilChanged().onEach { hasEnded ->
             if (!hasEnded) return@onEach
-            // The queue's countdown reaches the app through the session a moment after the end.
             delay(QUEUE_DECISION_MS)
             val state = playerController.state.value
             if (state.status == PlaybackStatus.ENDED && state.upNext == null) closeFinishedBook()
@@ -275,16 +280,9 @@ class BooksListViewModel @Inject constructor(
             when (error) {
                 is PlayerError.TrackSkipped -> _skippedTrackMessages.tryEmit(error.fileName)
                 PlayerError.NoiseReductionTooSlow -> _noiseReductionTurnedOff.tryEmit(Unit)
-                PlayerError.BookUnplayable, PlayerError.StorageUnavailable -> {
-                    selectedBook.value?.let { book ->
-                        playerController.stop()
-                        markBookAsError(book)
-                    }
-                    updateIsScreenLocked(false)
-                    _collapsePlayerEvents.tryEmit(Unit)
-                    // A missing file or a revoked folder shows up as a missing book or the reconnect banner.
-                    if (error == PlayerError.StorageUnavailable) viewModelScope.launch { refreshLibrary() }
-                }
+                PlayerError.NetworkUnavailable -> _networkUnavailable.tryEmit(Unit)
+                PlayerError.BookUnplayable -> failPlayback(error)
+                PlayerError.StorageUnavailable -> viewModelScope.launch { streamMissingFilesOrFail() }
             }
         }.launchIn(viewModelScope)
 
@@ -295,22 +293,18 @@ class BooksListViewModel @Inject constructor(
             restoreLastBook()
             _shouldOpenPlayerInStartup.value = initialSettings.openPlayerOnStartup
             legacyFolderToReselect.value = prepareLegacyFolderMigration()
+            decideWalkthrough(initialSettings)
             refreshLibraryOnStart()
             importLegacyProgress()
         }
     }
 
-    /**
-     * Where a tapped book starts: a finished book starts over — its position goes back to the start and its
-     * state to New until it plays again, as with "Mark as new".
-     */
     fun startingPoint(book: Book): Book {
         if (book.state != BookState.FINISHED) return book
         viewModelScope.launch { setBookState(book.id, BookState.NEW) }
         return book.fromStart()
     }
 
-    /** The finished book leaves the player: the notice is shown and nothing is selected or restored at the next start. */
     private fun closeFinishedBook() {
         _showBookEndedDialog.value = true
         updateIsScreenLocked(false)
@@ -319,15 +313,52 @@ class BooksListViewModel @Inject constructor(
         _collapsePlayerEvents.tryEmit(Unit)
     }
 
-    /** Starts [book] from its saved track and position. */
+    private suspend fun streamMissingFilesOrFail() {
+        val book = selectedBook.value
+        val positionMs = if (playerController.state.value.trackCount > 0) playerController.bookPositionMs() else book?.bookPositionMs
+        val repaired = book != null && repairLibriVoxBook(book.id)
+        val streamable = if (repaired) observeBooks().first().firstOrNull { it.id == book?.id } else null
+        if (streamable == null || positionMs == null) {
+            failPlayback(PlayerError.StorageUnavailable)
+            return
+        }
+        playerController.openBook(streamable, playWhenReady = true)
+        playerController.seekToBookPosition(positionMs)
+    }
+
+    private fun failPlayback(error: PlayerError) {
+        selectedBook.value?.let { book ->
+            playerController.stop()
+            markBookAsError(book)
+        }
+        updateIsScreenLocked(false)
+        _collapsePlayerEvents.tryEmit(Unit)
+        if (error == PlayerError.StorageUnavailable) viewModelScope.launch { refreshLibrary() }
+    }
+
     fun openBook(book: Book) {
         playerController.openBook(book, playWhenReady = true)
     }
 
     /**
-     * Play/pause button: pauses; resumes when [book] is loaded and ready, so the service sees a plain resume and applies
-     * smart rewind; otherwise reloads the book at [progress] and plays it.
+     * A tap on [tapped] anywhere (library, search, queue, LibriVox): selects and plays it, from the start when it was
+     * finished, unless it already holds the player. Returns false when its file is gone; the caller shows why.
      */
+    fun startBook(tapped: Book): Boolean {
+        val book = if (tapped.hasError) tapped else startingPoint(tapped)
+        val selected = _selectedBook.value
+        if (book.hasError) {
+            if (selected?.id == book.id) selectBook(null, null)
+            return false
+        }
+        if (selected?.id != book.id || book !== tapped) {
+            setCurrentProgress(id = book.id, progress = book.progress, currentPosition = book.getBookPosition())
+            selectBook(book, book.getBookPosition())
+            openBook(book)
+        }
+        return true
+    }
+
     fun onPlayButtonClicked(book: Book, progress: Long) {
         val playerState = playerController.state.value
         when {
@@ -337,7 +368,6 @@ class BooksListViewModel @Inject constructor(
         }
     }
 
-    /** Tap on the cover: the same as the play button. */
     fun onCoverClicked(book: Book, progress: Long) = onPlayButtonClicked(book, progress)
 
     private fun PlayerState.isReadyWith(book: Book): Boolean = status == PlaybackStatus.READY && bookId == book.id
@@ -356,7 +386,6 @@ class BooksListViewModel @Inject constructor(
 
     fun seekToTrack(trackIndex: Int) = playerController.seekTo(trackIndex, 0L)
 
-    /** Book-time seeks; the shown position follows at once and is saved. */
     fun seekToBookPosition(bookPositionMs: Long) = afterSeek { playerController.seekToBookPosition(bookPositionMs) }
 
     fun seekBy(deltaMs: Long) = afterSeek { playerController.seekBy(deltaMs) }
@@ -371,21 +400,18 @@ class BooksListViewModel @Inject constructor(
         persistProgress()
     }
 
-    /** Copies the player's current track and position into the selected book. */
     fun syncPositionFromPlayer() {
         val book = selectedBook.value ?: return
         val trackIndex = if (book is MultipleBooks) playerController.currentTrackIndex() else null
         setCurrentProgress(id = book.id, progress = playerController.currentPositionMs(), currentPosition = trackIndex)
     }
 
-    /** "Set as default for new books" in the speed sheet. */
     fun setDefaultSpeed(speed: Float) = viewModelScope.launch { updateAppSettings { it.copy(defaultSpeed = speed) } }
 
     fun changeSpeed(speed: Float) = playerController.setSpeed(speed)
 
     fun stopPlayer() = playerController.stop()
 
-    /** Called every second while playing: copies the player's track and position into the selected book. */
     fun refreshCurrentProgress() {
         if (playerController.state.value.isPlaying) syncPositionFromPlayer()
     }
@@ -398,7 +424,6 @@ class BooksListViewModel @Inject constructor(
         selectBook(updatedBook, currentPosition)
     }
 
-    /** Saves the selected book's track, position and speed (every few seconds while playing, and on seeks). */
     fun persistProgress() {
         val book = _selectedBook.value ?: return
         viewModelScope.launch {
@@ -411,7 +436,6 @@ class BooksListViewModel @Inject constructor(
             is MultipleBooks -> position?.let { book.copy(currentBookPosition = it) } ?: book
             else -> book
         }
-        // A file opened from another app is not a library book, so it never becomes "the last book".
         if (book?.isExternal != true && book?.id != settings.value.lastBookId) {
             viewModelScope.launch { updateAppSettings { it.copy(lastBookId = book?.id) } }
         }
@@ -433,7 +457,6 @@ class BooksListViewModel @Inject constructor(
         persistProgress()
     }
 
-    /** Swipe-to-delete removes the book from the library (hides it); files are never deleted. */
     fun removeBook(book: Book) {
         if (selectedBook.value?.id == book.id) selectBook(null, null)
         viewModelScope.launch { hideBook(book.id) }
@@ -443,7 +466,6 @@ class BooksListViewModel @Inject constructor(
         failedBookIds.value = failedBookIds.value + book.id
     }
 
-    /** "Mark as new" moves the book back to its start, also when it is the one in the player. */
     fun markBook(book: Book, state: BookState) {
         if (state == BookState.NEW && book.id == selectedBook.value?.id) {
             if (playerController.state.value.trackCount > 0) playerController.seekToBookPosition(0L)
@@ -452,7 +474,6 @@ class BooksListViewModel @Inject constructor(
         viewModelScope.launch { setBookState(book.id, state) }
     }
 
-    /** Bookmark at the player's position. */
     fun addBookmarkAtCurrentPosition() {
         val book = selectedBook.value ?: return
         val position = if (playerController.state.value.trackCount > 0) playerController.bookPositionMs() else book.bookPositionMs
@@ -462,10 +483,12 @@ class BooksListViewModel @Inject constructor(
     fun saveBookmarkNote(bookmarkId: Long, note: String) = viewModelScope.launch { updateBookmarkNote(bookmarkId, note) }
 
     fun requestPlay(bookId: String) {
-        bookWithId(bookId)?.let { _playRequests.trySend(it) }
+        bookWithId(bookId)?.let { _playRequests.trySend(it) } ?: viewModelScope.launch {
+            val added = withTimeoutOrNull(NEW_BOOK_WAIT_MS) { liveBooks.first { books -> books.any { it.id == bookId } } }
+            added?.firstOrNull { it.id == bookId }?.let { _playRequests.trySend(it) }
+        }
     }
 
-    /** "Play next" puts the book first in the queue, "Add to queue" last. */
     fun queue(book: Book, playNext: Boolean) = viewModelScope.launch {
         addToQueue(book.id, playNext)
         _queueAdded.tryEmit(playNext)
@@ -473,8 +496,7 @@ class BooksListViewModel @Inject constructor(
 
     fun cancelUpNext() = playerController.cancelUpNext()
 
-    /** Non-null when the converter can be offered: the device has an Opus encoder. */
-    fun converterEntry(): String? = getOpusEncoder()
+    fun converterEntry(): String? = getOpusEncoder().takeIf { IS_CONVERTER_ENABLED }
 
     fun startSleepTimer(mode: SleepTimerMode) = playerController.startSleepTimer(mode)
 
@@ -488,22 +510,34 @@ class BooksListViewModel @Inject constructor(
 
     fun addFile(documentUri: String) = viewModelScope.launch { addSingleFileBook(documentUri) }
 
-    /** A root whose permission was lost was picked again from the reconnect banner. */
     fun reconnectFolder(treeUri: String) = viewModelScope.launch {
         addLibraryRoot(treeUri)
         refreshLibrary()
     }
 
-    /** One-time folder migration screen: [treeUri] is the folder picked again, or null when skipped. */
     fun completeLegacyMigration(treeUri: String?) = viewModelScope.launch {
         treeUri?.let { addLibraryRoot(it) }
         completeLegacyFolderMigration()
         legacyFolderToReselect.value = null
     }
 
-    /** Refresh button: the first time it explains what it does, afterwards it rescans the library. */
     fun onRefreshClicked() {
         if (settings.value.reloadGuideShown) requestFullScan() else _showReloadGuide.value = true
+    }
+
+    /** Someone who already used the app before the tour existed never gets it uninvited; it stays in Settings. */
+    private suspend fun decideWalkthrough(initialSettings: AppSettings) {
+        if (!initialSettings.walkthroughShown) {
+            val isExistingUser = initialSettings.lastBookId != null ||
+                legacyFolderToReselect.value != null ||
+                liveBooks.first().isNotEmpty()
+            if (isExistingUser) updateAppSettings { it.copy(walkthroughShown = true) }
+        }
+        _isWalkthroughDecided.value = true
+    }
+
+    fun dismissWalkthrough() {
+        viewModelScope.launch { updateAppSettings { it.copy(walkthroughShown = true) } }
     }
 
     fun dismissReloadGuide() {
@@ -523,7 +557,6 @@ class BooksListViewModel @Inject constructor(
         selectedTab.value = tab
     }
 
-    /** Picking the current sort order again flips the direction. */
     fun selectSortOrder(sortOrder: LibrarySortOrder) = viewModelScope.launch {
         updateAppSettings { current ->
             if (current.librarySortOrder == sortOrder) {
@@ -538,13 +571,8 @@ class BooksListViewModel @Inject constructor(
         updateAppSettings { it.copy(libraryLayout = layout) }
     }
 
-    /** A library book, or the external file being played. */
     private fun bookWithId(id: String): Book? = booksList.firstOrNull { it.id == id } ?: _selectedBook.value?.takeIf { it.id == id }
 
-    /**
-     * "Resume last book" (launcher shortcut): opens the player and plays the
-     * selected or last book; with [startSleepTimer] also starts the timer at its default length.
-     */
     fun resumeLastBook(startSleepTimer: Boolean = false) = viewModelScope.launch {
         playerController.state.first { it.isConnected }
         val book = _selectedBook.value?.takeUnless { it.isExternal } ?: getLastBook() ?: return@launch
@@ -559,7 +587,6 @@ class BooksListViewModel @Inject constructor(
         if (startSleepTimer) playerController.startSleepTimer(SleepTimerMode.Duration(settings.value.sleepDefaultMinutes))
     }
 
-    /** Long press on the Quick Settings tile: the player of the current or last book, without starting it. */
     fun openPlayer() = viewModelScope.launch {
         playerController.state.first { it.isConnected }
         val book = _selectedBook.value ?: getLastBook() ?: return@launch
@@ -567,7 +594,6 @@ class BooksListViewModel @Inject constructor(
         _expandPlayerEvents.trySend(Unit)
     }
 
-    /** A file opened from another app plays as a temporary book. */
     fun playExternalFile(documentUri: String) = viewModelScope.launch {
         playerController.state.first { it.isConnected }
         val book = openExternalFile(documentUri)
@@ -585,12 +611,10 @@ class BooksListViewModel @Inject constructor(
         if (!hasLoadedSettings || booksList.isEmpty() || _selectedBook.value != null) return
         val lastBookId = lastBookIdToRestore ?: return
         lastBookIdToRestore = null
-        // A finished book is not brought back into the player.
         booksList.firstOrNull { it.id == lastBookId && !it.hasError && it.state != BookState.FINISHED }
             ?.let { book -> _selectedBook.value = book }
     }
 
-    /** The selected book keeps its in-memory progress until it is saved; failed books show the error state. */
     private fun Book.withLiveState(selected: Book?, failedIds: Set<String>): Book {
         val base = if (selected != null && selected.id == id) selected.copyStructureFrom(this) else this
         return if (base.id in failedIds) base.withError() else base
@@ -635,12 +659,12 @@ class BooksListViewModel @Inject constructor(
 
         data object Loading : BooksListUiState()
 
-        /** One-time screen asking to pick the previous version's folder again. */
         data class LegacyFolderMigration(val legacyFolderUri: String) : BooksListUiState()
     }
 
     data class LibraryUiState(
         val tab: LibraryTab = LibraryTab.ALL,
+        val tabs: List<LibraryTab> = LibraryTab.entries,
         val sortOrder: LibrarySortOrder = LibrarySortOrder.RECENTLY_PLAYED,
         val sortAscending: Boolean = false,
         val layout: LibraryLayout = LibraryLayout.LIST,
@@ -649,5 +673,6 @@ class BooksListViewModel @Inject constructor(
     )
 }
 
-/** How long the app waits after the end of a book for the queue's countdown before closing the player. */
 private const val QUEUE_DECISION_MS = 1_500L
+private const val NEW_BOOK_WAIT_MS = 5_000L
+private const val IS_CONVERTER_ENABLED = false

@@ -13,6 +13,10 @@ import com.mobyle.abbay.data.library.BookLocation
 import com.mobyle.abbay.data.library.BookMetadataEnricher
 import com.mobyle.abbay.data.library.BookProjection
 import com.mobyle.abbay.data.library.ScannedBookWriter
+import com.mobyle.abbay.data.librivox.LibriVoxDownloadControl
+import com.mobyle.abbay.data.librivox.LibriVoxDownloadScheduler
+import com.mobyle.abbay.data.librivox.LibriVoxDownloadTracker
+import com.mobyle.abbay.data.librivox.LibriVoxFiles
 import com.mobyle.abbay.data.scanner.FileKinds
 import com.mobyle.abbay.data.scanner.LibraryScanner
 import com.mobyle.abbay.data.scanner.ScannedBook
@@ -64,7 +68,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Suppress("TooManyFunctions") // The repository contract plus the steps of a scan.
+@Suppress("TooManyFunctions")
 @Singleton
 class LibraryRepositoryImpl @Inject constructor(
     private val dao: LibraryDao,
@@ -79,16 +83,18 @@ class LibraryRepositoryImpl @Inject constructor(
     private val metadataSource: TrackMetadataDataSource,
     private val sidecarSync: SidecarSync,
     private val effectDefaults: EffectDefaults,
+    private val libriVoxFiles: LibriVoxFiles,
+    private val libriVoxDownloads: LibriVoxDownloadScheduler,
+    private val libriVoxTracker: LibriVoxDownloadTracker,
+    private val libriVoxControl: LibriVoxDownloadControl,
 ) : LibraryRepository {
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
     private val scanMutex = Mutex()
     private val listeningStateMutex = Mutex()
     private val scanStatus = MutableStateFlow(ScanStatus())
 
-    /** Tags are read for at most this many books at the same time. */
     private val metadataReaders = Semaphore(PARALLEL_METADATA_READERS)
 
-    /** Folder listings (one IPC each) run in parallel, at most this many at the same time. */
     private val listingPermits = Semaphore(PARALLEL_FOLDER_LISTINGS)
 
     override fun observeRoots(): Flow<List<LibraryRoot>> = dao.observeRoots().map { roots -> roots.map { it.toDomain() } }
@@ -191,14 +197,27 @@ class LibraryRepositoryImpl @Inject constructor(
     override suspend fun fullScan() = scan(force = true)
 
     override suspend fun hideBook(bookId: String) = withContext(ioDispatcher) {
-        bookId.toLongOrNull()?.let { dao.hideBook(it) } ?: Unit
+        val id = bookId.toLongOrNull() ?: return@withContext
+        val libriVoxBook = dao.getBook(id)?.takeIf { it.librivoxId != null }
+        if (libriVoxBook == null) {
+            dao.hideBook(id)
+            return@withContext
+        }
+        libriVoxDownloads.cancel(id)
+        libriVoxTracker.clear(id)
+        dao.deleteBooks(listOf(id))
+        libriVoxBook.librivoxId?.let(libriVoxFiles::delete)
+        contentSource.deleteCover(libriVoxBook.sidecarId)
     }
 
     override suspend fun clearLibrary() = withContext(ioDispatcher) {
         val roots = dao.getRoots()
+        libriVoxDownloads.cancelAll()
+        libriVoxTracker.clearAll()
         dao.getAllBooks().forEach { contentSource.deleteCover(it.sidecarId) }
         dao.getSingleFileBooks().forEach { contentSource.releasePersistablePermission(it.relativePath) }
         dao.clearLibrary()
+        libriVoxFiles.deleteAll()
         roots.forEach { contentSource.releasePersistablePermission(it.treeUri) }
     }
 
@@ -207,7 +226,6 @@ class LibraryRepositoryImpl @Inject constructor(
             listeningStateMutex.withLock { writeListeningState(bookId, trackIndex, positionInTrackMs, speed, pausedAt) }
         }
 
-    /** Read-modify-write of one row: saves from the service and the UI must not interleave. */
     private suspend fun writeListeningState(bookId: String, trackIndex: Int, positionInTrackMs: Long, speed: Float, pausedAt: Long?) {
         val id = bookId.toLongOrNull() ?: return
         val details = dao.getBookWithDetails(id) ?: return
@@ -266,7 +284,6 @@ class LibraryRepositoryImpl @Inject constructor(
         sidecarSync.onBookEdited(id)
     }
 
-    /** Switches the track order and keeps the listener on the same file. */
     override suspend fun setSortByTrackNumber(bookId: String, enabled: Boolean) = withContext(ioDispatcher) {
         val id = bookId.toLongOrNull() ?: return@withContext
         val details = dao.getBookWithDetails(id) ?: return@withContext
@@ -299,7 +316,6 @@ class LibraryRepositoryImpl @Inject constructor(
     override suspend fun companionDocuments(bookId: String): List<CompanionDocument> = withContext(ioDispatcher) {
         val id = bookId.toLongOrNull() ?: return@withContext emptyList()
         val details = dao.getBookWithDetails(id) ?: return@withContext emptyList()
-        // A one-file book shares its folder with other books, so the folder's documents are not its own.
         if (details.book.isSingleFile) return@withContext emptyList()
         val root = details.book.rootId?.let { rootId -> dao.getRoots().firstOrNull { it.id == rootId && it.isAccessible } }
             ?: return@withContext emptyList()
@@ -334,7 +350,6 @@ class LibraryRepositoryImpl @Inject constructor(
             val children = (tree.listChildren(it.treeUri, book.folderDocumentId) as? DataResult.Success)?.value.orEmpty()
             coverImageWriter.writeIntoBookFolder(it.treeUri, book.folderDocumentId, children, jpeg) as? DataResult.Success
         }?.value
-        // Read-only folders keep the cover in app storage.
         val coverUri = inFolder ?: when (val saved = contentSource.saveCover("user_${book.sidecarId}", jpeg)) {
             is DataResult.Failure -> return@withContext saved
             is DataResult.Success -> saved.value
@@ -351,11 +366,11 @@ class LibraryRepositoryImpl @Inject constructor(
             try {
                 dao.getRoots().filter { it.isAccessible }.forEach { root -> scanRoot(root, force) }
                 checkSingleFileBooks()
+                libriVoxControl.repairAll()
                 deleteBooksMissingForTooLong()
             } finally {
                 val processedBooks = scanStatus.value.processedBooks
                 scanStatus.value = ScanStatus()
-                // Counts and timing only: no file names or titles in logs.
                 val elapsedMs = SystemClock.elapsedRealtime() - startedAt
                 Log.i(LOG_TAG, "${if (force) "full" else "quick"} scan: $processedBooks books in $elapsedMs ms")
             }
@@ -425,10 +440,6 @@ class LibraryRepositoryImpl @Inject constructor(
         }
     }
 
-    /**
-     * Stores a scanned book. Its sidecar, when present, restores the newer state, and its id re-attaches a book whose
-     * folder was renamed or moved.
-     */
     private suspend fun ScanPass.store(scannedBook: ScannedBook) {
         val location = BookLocation(
             rootId = root.id,
@@ -444,7 +455,6 @@ class LibraryRepositoryImpl @Inject constructor(
         if (result.needsMetadata) booksNeedingMetadata += result.bookId to scannedBook else advanceProgress()
     }
 
-    /** The book with the sidecar's id, when its old folder is gone: the folder was renamed or moved. */
     private suspend fun reattachableBook(sidecar: SidecarCodec.Read): BookEntity? {
         val book = dao.getBookBySidecarId(sidecar.book.id)?.takeUnless { it.isSingleFile } ?: return null
         return book.takeIf { contentSource.describe(book.folderUri) is DataResult.Failure }
@@ -472,7 +482,6 @@ class LibraryRepositoryImpl @Inject constructor(
         }
     }
 
-    /** Missing books are kept for `missingBookRetentionDays` (30), then removed with their state. */
     private suspend fun deleteBooksMissingForTooLong() {
         val retentionDays = settingsSource.observeSettings().first().missingBookRetentionDays
         val limit = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(retentionDays.toLong())
@@ -503,7 +512,6 @@ class LibraryRepositoryImpl @Inject constructor(
 
     private fun LibraryRootEntity.toDomain() = LibraryRoot(id, treeUri, displayName, isAccessible)
 
-    /** State of one root's scan; folders are scanned concurrently, so its collections are thread-safe. */
     private class ScanPass(val root: LibraryRootEntity, val existingBooks: Map<String, BookEntity>, private val force: Boolean) {
         val seenPaths: MutableSet<String> = ConcurrentHashMap.newKeySet()
         val booksNeedingMetadata: MutableList<Pair<Long, ScannedBook>> = Collections.synchronizedList(mutableListOf())
@@ -512,7 +520,6 @@ class LibraryRepositoryImpl @Inject constructor(
             seenPaths += relativePath
         }
 
-        /** A quick scan skips a book whose folder modification time did not change and whose tags were read. */
         fun isUnchanged(existingBook: BookEntity?, lastModified: Long): Boolean =
             !force && existingBook != null && existingBook.metadataComplete && existingBook.folderLastModified == lastModified
     }

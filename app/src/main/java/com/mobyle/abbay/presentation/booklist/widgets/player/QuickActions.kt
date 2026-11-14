@@ -50,10 +50,6 @@ import com.player.RepeatMode
 import com.player.SleepTimerState
 import com.settings.QuickAction
 
-/**
- * Quick actions row of the player: Sleep timer, showing the time left while it
- * runs, Bookmark, Audio effects, Repeat and Skip intro/outro. Speed stays in the top bar.
- */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun QuickActionsRow(
@@ -88,7 +84,6 @@ fun QuickActionsRow(
     val sleepDescription = running?.let { stringResource(R.string.player_sleep_timer_running, formatCountdown(it.remainingMs)) }
         ?: stringResource(R.string.player_sleep_timer)
 
-    // From 150 % text the labels no longer fit five in a row: three per row, wrapping.
     val actionsPerRow = if (LocalDensity.current.fontScale >= LARGE_FONT_SCALE) ACTIONS_PER_ROW_WITH_LARGE_TEXT else Int.MAX_VALUE
     FlowRow(
         modifier = modifier.fillMaxWidth().padding(top = 4.dp),
@@ -172,7 +167,6 @@ private fun RowScope.SkipAction(options: PlaybackOptions, onSkip: () -> Unit) {
 
 @Composable
 private fun RowScope.QuickAction(icon: ImageVector, label: String, description: String, isActive: Boolean, onClick: () -> Unit) {
-    // The active state shows the time left as text, not only the accent color.
     val color = if (isActive) MaterialTheme.colorScheme.tertiary else AbbayColors.content
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,

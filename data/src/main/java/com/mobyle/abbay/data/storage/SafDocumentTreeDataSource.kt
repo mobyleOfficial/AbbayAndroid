@@ -11,7 +11,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.FileNotFoundException
 import javax.inject.Inject
 
-/** [DocumentTreeSource] over the Storage Access Framework. Maps every failure to [DataResult.Failure]. */
 class SafDocumentTreeDataSource @Inject constructor(@ApplicationContext private val context: Context) : DocumentTreeSource {
     override fun rootDocumentId(treeUri: String): String = DocumentsContract.getTreeDocumentId(Uri.parse(treeUri))
 
@@ -33,7 +32,6 @@ class SafDocumentTreeDataSource @Inject constructor(@ApplicationContext private 
     override fun documentUri(treeUri: String, documentId: String): String =
         DocumentsContract.buildDocumentUriUsingTree(Uri.parse(treeUri), documentId).toString()
 
-    /** Column order is the one of [PROJECTION]. */
     private fun Cursor.toEntry() = DocumentEntry(
         documentId = getString(COLUMN_DOCUMENT_ID),
         name = getString(COLUMN_DISPLAY_NAME).orEmpty(),
@@ -42,7 +40,6 @@ class SafDocumentTreeDataSource @Inject constructor(@ApplicationContext private 
         sizeBytes = if (isNull(COLUMN_SIZE)) 0L else getLong(COLUMN_SIZE),
     )
 
-    /** Data sources map every failure to a [DataResult]. */
     @Suppress("SwallowedException", "TooGenericExceptionCaught")
     private inline fun <T> guarded(block: () -> T): DataResult<T> = try {
         DataResult.Success(block())

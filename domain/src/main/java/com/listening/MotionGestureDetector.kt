@@ -2,12 +2,6 @@ package com.listening
 
 import kotlin.math.abs
 
-/**
- * Motion gestures, from raw sensor samples (timestamps in nanoseconds).
- * Face down: accelerometer z below −8 m/s² for 1 s. Face up again: z above 0 for 0.5 s after a face-down. Flip: an
- * angular speed above 4 rad/s around the long (y) axis, once per rotation and at most once a second. Pure logic,
- * tested with synthetic traces.
- */
 class MotionGestureDetector {
     enum class Gesture { FACE_DOWN, FACE_UP, FLIP }
 
@@ -17,21 +11,17 @@ class MotionGestureDetector {
     private var lastFlipNs: Long? = null
     private var isRotating = false
 
-    /** Accelerometer sample (m/s², gravity included); returns a face gesture when this sample completes one. */
     fun onAcceleration(timestampNs: Long, z: Float): Gesture? = if (isFaceDown) faceUp(timestampNs, z) else faceDown(timestampNs, z)
 
-    /** Playback resumed some other way: the next face-down counts again. */
     fun resetFace() {
         isFaceDown = false
         faceDownSinceNs = null
         faceUpSinceNs = null
     }
 
-    /** Gyroscope sample around the long axis (rad/s). */
     fun onRotation(timestampNs: Long, yRadiansPerSecond: Float): Gesture? {
         val wasRotating = isRotating
         isRotating = abs(yRadiansPerSecond) > FLIP_RADIANS_PER_SECOND
-        // One flip per rotation: the speed must drop below the threshold before the next one counts.
         val isCoolingDown = lastFlipNs?.let { timestampNs - it < FLIP_COOLDOWN_NS } == true
         if (!isRotating || wasRotating || isCoolingDown) return null
         lastFlipNs = timestampNs
@@ -70,7 +60,6 @@ class MotionGestureDetector {
         const val FACE_UP_HOLD_NS = 500_000_000L
         const val FLIP_COOLDOWN_NS = 1_000_000_000L
 
-        /** Face up within this time after a face-down pause resumes playback. */
         const val RESUME_WINDOW_MS = 10 * 60_000L
     }
 }

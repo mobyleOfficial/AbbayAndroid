@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** A book's notebook of characters. */
 @HiltViewModel
 class CharactersViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
@@ -24,14 +23,12 @@ class CharactersViewModel @Inject constructor(
 ) : ViewModel() {
     val bookId: String = checkNotNull(savedStateHandle[BOOK_ID_ARGUMENT])
 
-    /** Null until the database answers. */
     val characters: StateFlow<List<CharacterNote>?> = observeCharacters(bookId).stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     fun save(character: CharacterNote) = viewModelScope.launch { saveCharacter(character.copy(bookId = bookId)) }
 
     fun delete(character: CharacterNote) = viewModelScope.launch { deleteCharacter(character.id) }
 
-    /** Undo of a delete: the same character comes back as a new row. */
     fun restore(character: CharacterNote) = viewModelScope.launch { saveCharacter(character.copy(id = 0L, bookId = bookId)) }
 
     companion object {

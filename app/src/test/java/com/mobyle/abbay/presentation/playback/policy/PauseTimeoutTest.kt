@@ -7,7 +7,6 @@ import kotlinx.coroutines.test.runCurrent
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** The service stops itself after a long pause. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PauseTimeoutTest {
     private val scope = TestScope()

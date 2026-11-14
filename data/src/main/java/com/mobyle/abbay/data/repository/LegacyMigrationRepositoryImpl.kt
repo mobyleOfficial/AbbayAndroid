@@ -33,11 +33,6 @@ class LegacyMigrationRepositoryImpl @Inject constructor(
 
     override suspend fun markLegacyFolderMigrated() = settingsSource.markLegacyFolderMigrated()
 
-    /**
-     * Copies position, current track and speed of every legacy book that matches a scanned book which has not been
-     * played yet. Matched legacy rows are deleted, so the import is safe to run after every scan; the legacy tables
-     * end up empty once every old book was found again.
-     */
     override suspend fun importLegacyProgress(): Int = withContext(Dispatchers.IO) {
         importMutex.withLock {
             val legacyFiles = legacyDao.getBookFiles()

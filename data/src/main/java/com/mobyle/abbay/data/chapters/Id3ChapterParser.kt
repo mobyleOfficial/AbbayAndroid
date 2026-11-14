@@ -1,10 +1,6 @@
 package com.mobyle.abbay.data.chapters
 
-/**
- * ID3v2.3 / v2.4 chapter frames (ID3v2 Chapter Frame Addendum): `CHAP` frames with a
- * `TIT2` sub-frame, ordered by the top-level `CTOC` when there is one, otherwise by start time.
- */
-@Suppress("CyclomaticComplexMethod", "NestedBlockDepth", "TooManyFunctions") // Mirrors the format's structure.
+@Suppress("CyclomaticComplexMethod", "NestedBlockDepth", "TooManyFunctions")
 object Id3ChapterParser {
     private const val HEADER_SIZE = 10
     private const val FLAG_UNSYNCHRONISATION = 0x80
@@ -66,7 +62,6 @@ object Id3ChapterParser {
         return ChapterFrame(elementId, startMs, title)
     }
 
-    /** Returns the child element ids of a top-level table of contents, or null for any other `CTOC`. */
     private fun parseCtoc(body: ByteArray): List<String>? {
         val idEnd = body.indexOf(0)
         if (idEnd < 0 || idEnd + 2 >= body.size) return null
@@ -83,7 +78,6 @@ object Id3ChapterParser {
         }
     }
 
-    /** Text frame: encoding byte (0 ISO-8859-1, 1 UTF-16 with BOM, 2 UTF-16BE, 3 UTF-8) then the text. */
     private fun decodeTextFrame(frame: ByteArray): String {
         if (frame.isEmpty()) return ""
         val charset = when (Bytes.u8(frame, 0)) {
@@ -97,14 +91,12 @@ object Id3ChapterParser {
 
     private fun extendedHeaderSize(tag: ByteArray, majorVersion: Int): Int {
         if (tag.size < 4) return 0
-        // v2.4 counts the size field itself; v2.3 does not.
         return if (majorVersion == 4) syncSafe(tag, 0) else Bytes.u32(tag, 0).toInt() + 4
     }
 
     private fun syncSafe(data: ByteArray, offset: Int): Int =
         (0 until 4).fold(0) { size, index -> (size shl 7) or (Bytes.u8(data, offset + index) and 0x7F) }
 
-    /** Unsynchronisation inserts a 0x00 after every 0xFF; remove it (ID3v2.3 §5). */
     private fun removeUnsynchronisation(data: ByteArray): ByteArray {
         val output = java.io.ByteArrayOutputStream(data.size)
         var index = 0

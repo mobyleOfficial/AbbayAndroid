@@ -2,11 +2,6 @@ package com.listening
 
 import kotlin.math.sqrt
 
-/**
- * Shake detector of the sleep timer: gravity is removed with a 0.8 low-pass
- * filter, and a shake is at least three peaks of the remaining acceleration above the threshold within one second.
- * Pure logic fed with accelerometer samples, so it is tested with recorded synthetic traces.
- */
 class ShakeDetector(private val thresholdMetersPerSecondSquared: Float) {
     private val gravity = FloatArray(AXES)
     private var hasGravity = false
@@ -14,8 +9,7 @@ class ShakeDetector(private val thresholdMetersPerSecondSquared: Float) {
     private val peakTimesNs = ArrayDeque<Long>()
     private var lastShakeNs: Long? = null
 
-    /** Feeds one sample (m/s²); returns true when it completes a shake. */
-    @Suppress("ReturnCount") // Each early return is one stage of the detection pipeline.
+    @Suppress("ReturnCount")
     fun onSample(timestampNs: Long, x: Float, y: Float, z: Float): Boolean {
         val acceleration = floatArrayOf(x, y, z)
         if (!hasGravity) {
@@ -58,7 +52,6 @@ class ShakeDetector(private val thresholdMetersPerSecondSquared: Float) {
         const val PEAKS_PER_SHAKE = 3
         const val WINDOW_NS = 1_000_000_000L
 
-        /** One shake extends the timer once, even if the hand keeps moving. */
         const val COOLDOWN_NS = 1_500_000_000L
     }
 }

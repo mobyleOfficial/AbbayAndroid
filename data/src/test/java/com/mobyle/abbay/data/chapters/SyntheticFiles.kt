@@ -2,7 +2,6 @@ package com.mobyle.abbay.data.chapters
 
 import java.io.ByteArrayOutputStream
 
-/** Builders for tiny synthetic media files, assembled from the public format specifications. */
 object SyntheticFiles {
     fun u16(value: Int) = byteArrayOf((value shr 8).toByte(), value.toByte())
 
@@ -21,8 +20,6 @@ object SyntheticFiles {
         return u32Le(bytes.size) + bytes
     }
 
-    // ISO/IEC 14496-12 boxes
-
     fun box(type: String, vararg content: ByteArray): ByteArray {
         val body = concat(*content)
         return concat(u32(8L + body.size), type.toByteArray(), body)
@@ -38,10 +35,6 @@ object SyntheticFiles {
         return fullBox("chpl", 1, u32(0), byteArrayOf(chapters.size.toByte()), *entries.toTypedArray())
     }
 
-    /**
-     * An M4B whose audio track (id 1) references a text chapter track (id 2) through `tref/chap`. Samples are stored
-     * in an `mdat` placed before `moov`; offsets in `stco` are absolute.
-     */
     fun quickTimeChapterFile(chapters: List<Pair<String, Long>>, timescale: Long = 1_000): ByteArray {
         val samples = chapters.map { (title, _) ->
             val text = title.toByteArray()
@@ -64,8 +57,6 @@ object SyntheticFiles {
     }
 
     private fun trackHeader(trackId: Long) = fullBox("tkhd", 0, u32(0), u32(0), u32(trackId), u32(0), u32(0))
-
-    // ID3v2 (ID3v2.3 / ID3v2.4 and the chapter frame addendum)
 
     private fun syncSafe(value: Int) = byteArrayOf(
         ((value shr 21) and 0x7F).toByte(),
@@ -113,8 +104,6 @@ object SyntheticFiles {
         return concat("ID3".toByteArray(), byteArrayOf(version.toByte(), 0, 0), syncSafe(body.size), body)
     }
 
-    // Matroska / EBML
-
     private fun ebmlSize(size: Int): ByteArray = when {
         size < 0x7F -> byteArrayOf((0x80 or size).toByte())
         size < 0x3FFF -> byteArrayOf((0x40 or (size shr 8)).toByte(), size.toByte())
@@ -146,7 +135,6 @@ object SyntheticFiles {
         val chaptersElement = element(0x1043A770, element(0x45B9, *atoms.toTypedArray()))
         val info = element(0x1549A966, uintElement(0x2AD7B1, 1_000_000))
         val segmentBody = if (withSeekHead) {
-            // SeekHead first; Chapters after an Info element. Positions are relative to the segment data start.
             val seekHead = { position: Long ->
                 element(0x114D9B74, element(0x4DBB, element(0x53AB, idBytes(0x1043A770)), uintElement(0x53AC, position)))
             }
@@ -158,8 +146,6 @@ object SyntheticFiles {
         val ebmlHeader = element(0x1A45DFA3, element(0x4282, "matroska".toByteArray()))
         return concat(ebmlHeader, element(0x18538067, segmentBody))
     }
-
-    // Vorbis comments (Ogg Vorbis I, RFC 7845, FLAC format)
 
     fun commentBlock(comments: List<String>): ByteArray =
         concat(lengthPrefixed("Abbay"), u32Le(comments.size), *comments.map(::lengthPrefixed).toTypedArray())

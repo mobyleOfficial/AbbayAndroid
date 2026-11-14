@@ -8,13 +8,6 @@ import androidx.media3.common.util.UnstableApi
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-/**
- * Base of the project's processors: accepts 16-bit and float PCM, works in float,
- * outputs the input encoding. The processor stays configured for the whole stream, because Media3 decides which
- * processors run only when the format is configured; while its effect is off, [isBypassed] makes it copy the input
- * unchanged, bit for bit. The float buffer is allocated in [onConfigure] and only grows for unusually large
- * input buffers.
- */
 @OptIn(UnstableApi::class)
 abstract class FloatPcmProcessor : BaseAudioProcessor() {
     protected var channelCount = 0
@@ -39,13 +32,10 @@ abstract class FloatPcmProcessor : BaseAudioProcessor() {
         return inputAudioFormat
     }
 
-    /** The format is known: create the DSP objects. */
     protected abstract fun onFormat()
 
-    /** True when the effect does nothing now; the input is copied unchanged. */
     protected abstract fun isBypassed(): Boolean
 
-    /** Processes [frameCount] interleaved frames of [samples] in place. */
     protected abstract fun process(samples: FloatArray, frameCount: Int)
 
     override fun queueInput(inputBuffer: ByteBuffer) {
@@ -62,7 +52,6 @@ abstract class FloatPcmProcessor : BaseAudioProcessor() {
         output.flip()
     }
 
-    /** Reads the buffer into [samples]; returns the number of samples. */
     protected fun read(inputBuffer: ByteBuffer): Int {
         val buffer = inputBuffer.order(ByteOrder.nativeOrder())
         val sampleCount = if (encoding == C.ENCODING_PCM_FLOAT) buffer.remaining() / FLOAT_BYTES else buffer.remaining() / SHORT_BYTES
@@ -70,7 +59,6 @@ abstract class FloatPcmProcessor : BaseAudioProcessor() {
             samples = FloatArray(sampleCount)
             shorts = ShortArray(sampleCount)
         }
-        // Bulk transfers: element-by-element ByteBuffer access is several times slower.
         if (encoding == C.ENCODING_PCM_FLOAT) {
             buffer.asFloatBuffer().get(samples, 0, sampleCount)
         } else {

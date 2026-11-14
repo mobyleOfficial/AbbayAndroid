@@ -8,7 +8,6 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class PlaybackRulesTest {
-    // Three 60 s files; chapters at 0, 30, 60 and 120 s.
     private val rules = PlaybackRules(listOf(60_000L, 60_000L, 60_000L), listOf(0L, 30_000L, 60_000L, 120_000L))
 
     @Test
@@ -22,7 +21,6 @@ class PlaybackRulesTest {
     fun theLoopReturnsToAWhenPlaybackPassesB() {
         val options = PlaybackOptions(repeatMode = RepeatMode.AB, loopAMs = 70_000L, loopBMs = 80_000L)
         assertEquals(TrackPosition(1, 10_000L), rules.decide(options, at(1, 19_950L), at(1, 20_050L)))
-        // A seek beyond B is not a crossing, and B without A does nothing.
         assertNull(rules.decide(options, at(1, 30_000L), at(1, 30_200L)))
         assertNull(rules.decide(options.copy(loopAMs = null), at(1, 19_950L), at(1, 20_050L)))
     }

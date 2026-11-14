@@ -4,11 +4,6 @@ import com.statistics.ListeningDay
 import java.time.LocalDate
 import kotlin.math.roundToLong
 
-/**
- * Measures listening for the statistics: wall-clock time while audio plays, and
- * book time — wall time × speed, plus the silence the trimmer removed. Times come from a monotonic clock; [take] hands
- * over what was measured since the previous call. Pure logic, tested on the JVM.
- */
 class ListeningAccumulator {
     private var bookId: String? = null
     private var segmentStartMs: Long? = null
@@ -19,7 +14,6 @@ class ListeningAccumulator {
 
     val currentBookId: String? get() = bookId
 
-    /** Audio of [bookId] started (or kept) playing at [nowMs]. A different book must be [take]n first. */
     fun play(bookId: String, nowMs: Long, speed: Float) {
         if (this.bookId != bookId) reset(bookId)
         closeSegment(nowMs)
@@ -43,7 +37,6 @@ class ListeningAccumulator {
         if (bookId == this.bookId && savedMs > 0) silenceMs += savedMs
     }
 
-    /** What was heard since the last call, dated [date]; null when nothing was. Playback keeps being measured. */
     fun take(nowMs: Long, date: LocalDate): ListeningDay? {
         val id = bookId ?: return null
         val isPlaying = segmentStartMs != null

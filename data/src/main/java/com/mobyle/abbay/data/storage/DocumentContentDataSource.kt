@@ -11,14 +11,12 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import javax.inject.Inject
 
-/** Small document reads and writes: description files, extracted covers, persisted permissions. */
-@Suppress("TooManyFunctions") // One function per kind of document access.
+@Suppress("TooManyFunctions")
 class DocumentContentDataSource @Inject constructor(@ApplicationContext private val context: Context) {
     fun readText(documentUri: String, maxBytes: Int): DataResult<String> = guarded {
         String(readUpTo(documentUri, maxBytes), Charsets.UTF_8).trim()
     }
 
-    /** At most [maxBytes] of the document, undecoded (subtitles detect their own encoding). */
     fun readBytes(documentUri: String, maxBytes: Int): DataResult<ByteArray> = guarded { readUpTo(documentUri, maxBytes) }
 
     private fun readUpTo(documentUri: String, maxBytes: Int): ByteArray =
@@ -33,10 +31,6 @@ class DocumentContentDataSource @Inject constructor(@ApplicationContext private 
             bytes.copyOf(readCount)
         } ?: ByteArray(0)
 
-    /**
-     * Runs [block] with positional read access to a document (a file channel over its descriptor), or returns a
-     * failure when the document cannot be opened.
-     */
     fun <T> withByteSource(documentUri: String, block: (ByteSource) -> T): DataResult<T> = guarded {
         val descriptor = context.contentResolver.openFileDescriptor(Uri.parse(documentUri), "r") ?: error("No descriptor")
         descriptor.use {
@@ -57,7 +51,6 @@ class DocumentContentDataSource @Inject constructor(@ApplicationContext private 
         }
     }
 
-    /** Stores an embedded cover in app storage and returns its `file://` URI. */
     fun saveCover(fileName: String, bytes: ByteArray): DataResult<String> = guarded {
         val coversDirectory = File(context.filesDir, COVERS_DIRECTORY).apply { mkdirs() }
         val coverFile = File(coversDirectory, fileName)
@@ -69,7 +62,6 @@ class DocumentContentDataSource @Inject constructor(@ApplicationContext private 
         runCatching { File(File(context.filesDir, COVERS_DIRECTORY), fileName).delete() }
     }
 
-    /** Takes read and, when the provider allows it, write permission. */
     @Suppress("SwallowedException")
     fun takePersistablePermission(uri: String): DataResult<Unit> {
         val parsedUri = Uri.parse(uri)
@@ -92,7 +84,6 @@ class DocumentContentDataSource @Inject constructor(@ApplicationContext private 
     fun hasPersistedReadPermission(uri: String): Boolean =
         context.contentResolver.persistedUriPermissions.any { it.uri.toString() == uri && it.isReadPermission }
 
-    /** Display name and size of a single picked document. */
     fun describe(documentUri: String): DataResult<DocumentEntry> = guarded {
         context.contentResolver.query(Uri.parse(documentUri), null, null, null, null)?.use { cursor ->
             check(cursor.moveToFirst())
@@ -109,7 +100,6 @@ class DocumentContentDataSource @Inject constructor(@ApplicationContext private 
         } ?: error("No row for $documentUri")
     }
 
-    /** Data sources map every failure to a [DataResult]. */
     @Suppress("SwallowedException", "TooGenericExceptionCaught")
     private inline fun <T> guarded(block: () -> T): DataResult<T> = try {
         DataResult.Success(block())

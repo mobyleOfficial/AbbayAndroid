@@ -1,0 +1,32 @@
+package com.repository
+
+import com.model.DataResult
+import com.model.LibriVoxBook
+import com.model.LibriVoxDetails
+import com.model.LibriVoxDownload
+import com.model.NetworkStatus
+import kotlinx.coroutines.flow.Flow
+
+interface LibriVoxRepository {
+    suspend fun popular(): DataResult<List<LibriVoxBook>>
+
+    suspend fun search(query: String): DataResult<List<LibriVoxBook>>
+
+    fun details(book: LibriVoxBook): Flow<DataResult<LibriVoxDetails>>
+
+    fun observeLibraryBookIds(): Flow<Map<String, String>>
+
+    fun observeDownloads(): Flow<Map<String, LibriVoxDownload>>
+
+    suspend fun add(book: LibriVoxBook, allowsCellular: Boolean, download: Boolean = true): DataResult<String>
+
+    suspend fun startDownload(bookId: String, allowsCellular: Boolean)
+
+    suspend fun pauseDownload(bookId: String)
+
+    suspend fun removeDownload(bookId: String)
+
+    suspend fun repairMissingFiles(bookId: String): Boolean
+
+    fun networkStatus(): NetworkStatus
+}

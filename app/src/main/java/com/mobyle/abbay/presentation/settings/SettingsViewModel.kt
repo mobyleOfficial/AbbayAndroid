@@ -19,6 +19,7 @@ import com.usecase.ObserveLibraryRoots
 import com.usecase.RemoveLibraryRoot
 import com.usecase.ReplaceLibraryRoots
 import com.usecase.SetAppLanguage
+import com.usecase.SetReadAlongEnabled
 import com.usecase.UpdateAppSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -46,6 +47,7 @@ class SettingsViewModel @Inject constructor(
     observeLibraryRoots: ObserveLibraryRoots,
     getAppLanguage: GetAppLanguage,
     private val setAppLanguage: SetAppLanguage,
+    private val setReadAlongEnabled: SetReadAlongEnabled,
 ) : ViewModel() {
     private val settings: StateFlow<AppSettings> = observeAppSettings()
         .stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
@@ -54,10 +56,8 @@ class SettingsViewModel @Inject constructor(
     private val _backupResults = MutableSharedFlow<BackupResult>(extraBufferCapacity = 1)
     private val _language = MutableStateFlow(getAppLanguage())
 
-    /** Settings → Appearance → Language. */
     val language: StateFlow<AppLanguage> get() = _language
 
-    /** Outcome of the last export or import, shown once by the screen. */
     val backupResults: SharedFlow<BackupResult> get() = _backupResults.asSharedFlow()
 
     val shouldPlayWhenAppIsClosed: StateFlow<Boolean> = settings.mapState { it.playWhenAppIsClosed }
@@ -65,8 +65,8 @@ class SettingsViewModel @Inject constructor(
     val themeMode: StateFlow<ThemeMode> = settings.mapState { it.themeMode }
     val dynamicColor: StateFlow<Boolean> = settings.mapState { it.dynamicColor }
     val shareDiagnostics: StateFlow<Boolean> = settings.mapState { it.shareDiagnostics }
+    val readAlongEnabled: StateFlow<Boolean> = settings.mapState { it.readAlongEnabled }
 
-    /** Playback and sleep timer settings. */
     val listeningSettings: StateFlow<AppSettings> get() = settings
     val showShowDeleteConfirmation: StateFlow<Boolean> get() = _showShowDeleteConfirmation
     val showChangeFolderConfirmation: StateFlow<Boolean> get() = _showChangeFolderConfirmation
@@ -81,6 +81,9 @@ class SettingsViewModel @Inject constructor(
         updateAppSettings { it.copy(openPlayerOnStartup = shouldOpenPlayerInStartUp) }
     }
 
+    /** The library shows the tour again as soon as this lands. */
+    fun replayWalkthrough() = viewModelScope.launch { updateAppSettings { it.copy(walkthroughShown = false) } }
+
     fun changeThemeMode(themeMode: ThemeMode) = viewModelScope.launch { updateAppSettings { it.copy(themeMode = themeMode) } }
 
     fun changeDynamicColor(isEnabled: Boolean) = viewModelScope.launch { updateAppSettings { it.copy(dynamicColor = isEnabled) } }
@@ -91,9 +94,11 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { updateAppSettings { it.copy(language = language) } }
     }
 
+    /** Off deletes every transcript and speech model read-along made. */
+    fun changeReadAlongEnabled(isEnabled: Boolean) = viewModelScope.launch { setReadAlongEnabled(isEnabled) }
+
     fun changeShareDiagnostics(isEnabled: Boolean) = viewModelScope.launch { updateAppSettings { it.copy(shareDiagnostics = isEnabled) } }
 
-    /** Every playback and sleep timer setting is a field of [AppSettings]; the screen passes the change. */
     fun changeListeningSettings(transform: (AppSettings) -> AppSettings) {
         viewModelScope.launch { updateAppSettings(transform) }
     }
@@ -106,7 +111,6 @@ class SettingsViewModel @Inject constructor(
         _backupResults.tryEmit(BackupResult.of(isExport = false, result = importBackup(documentUri)))
     }
 
-    /** "Change folder" replaces the library root. */
     fun changeFolder(treeUri: String) = viewModelScope.launch { replaceLibraryRoots(treeUri) }
 
     fun addFolder(treeUri: String) = viewModelScope.launch { addLibraryRoot(treeUri) }
@@ -115,7 +119,6 @@ class SettingsViewModel @Inject constructor(
 
     fun clearBooks() = viewModelScope.launch { clearLibrary() }
 
-    /** "Clear statistics"; turning them off keeps the data. */
     fun clearListeningStatistics() = viewModelScope.launch { clearStatistics() }
 
     fun dismissDeleteConfirmation() {
@@ -138,7 +141,6 @@ class SettingsViewModel @Inject constructor(
         map(transform).stateIn(viewModelScope, SharingStarted.Eagerly, transform(value))
 }
 
-/** What the screen says after a backup export or import. */
 sealed interface BackupResult {
     data class Exported(val books: Int) : BackupResult
 

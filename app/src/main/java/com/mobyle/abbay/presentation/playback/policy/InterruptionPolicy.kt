@@ -16,12 +16,6 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.settings.AppSettings
 import com.settings.ShortInterruptionBehavior
 
-/**
- * Audio focus and interruptions. Media3 pauses on a permanent loss and pauses
- * or ducks on a transient one; this adds the user options: lower the volume instead of pausing, no automatic resume
- * after interruptions of 5 min or more or after a call when "Resume after calls" is off, and resume when headphones
- * connect.
- */
 @OptIn(UnstableApi::class)
 class InterruptionPolicy(
     context: Context,
@@ -37,7 +31,6 @@ class InterruptionPolicy(
 
     private val deviceCallback = object : AudioDeviceCallback() {
         override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>) {
-            // Registration reports the devices already connected; only later additions count.
             if (clock() - registeredAt < REGISTRATION_GRACE_MS) return
             if (!settings().resumeOnHeadsetConnect || player.mediaItemCount == 0 || player.playWhenReady) return
             if (addedDevices.any { it.isSink && it.type in HEADPHONE_TYPES }) player.play()
@@ -48,7 +41,6 @@ class InterruptionPolicy(
         audioManager?.registerAudioDeviceCallback(deviceCallback, Handler(Looper.getMainLooper()))
     }
 
-    /** Speech content makes Media3 pause on a "may duck" loss; music content makes it lower the volume. */
     fun applySettings() {
         val behavior = settings().shortInterruptions
         if (behavior == appliedBehavior) return

@@ -86,7 +86,6 @@ class ListeningRepositoryImplTest {
     @After
     fun tearDown() = database.close()
 
-    /** The test books have no root, so nothing is written to disk. */
     private fun sidecarSync(): SidecarSync {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val contentSource = DocumentContentDataSource(context)

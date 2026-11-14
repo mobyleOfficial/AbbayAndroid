@@ -13,14 +13,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** The queue of books to play next. */
 @HiltViewModel
 class QueueViewModel @Inject constructor(
     observeQueue: ObserveQueue,
     private val removeFromQueue: RemoveFromQueue,
     private val moveInQueue: MoveInQueue,
 ) : ViewModel() {
-    /** Null until the database answers. */
     val queue: StateFlow<List<Book>?> = observeQueue().stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     fun remove(book: Book) = viewModelScope.launch { removeFromQueue(book.id) }

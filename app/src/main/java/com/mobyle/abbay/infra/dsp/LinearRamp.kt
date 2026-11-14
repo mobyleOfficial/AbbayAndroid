@@ -1,9 +1,5 @@
 package com.mobyle.abbay.infra.dsp
 
-/**
- * A value that moves to its target in a straight line over [rampFrames] frames, so a parameter change never jumps
- *.
- */
 class LinearRamp(initial: Float, private val rampFrames: Int) {
     var current: Float = initial
         private set
@@ -21,14 +17,12 @@ class LinearRamp(initial: Float, private val rampFrames: Int) {
         step = (target - current) / remainingFrames
     }
 
-    /** Jumps without a ramp (stream start, after a flush). */
     fun snapTo(value: Float) {
         target = value
         current = value
         remainingFrames = 0
     }
 
-    /** The value for the next frame. */
     fun next(): Float {
         if (remainingFrames > 0) {
             remainingFrames--
@@ -38,7 +32,6 @@ class LinearRamp(initial: Float, private val rampFrames: Int) {
     }
 
     companion object {
-        /** 20 ms, the shortest ramp the spec allows. */
         fun framesFor(sampleRate: Int, milliseconds: Int = 20): Int = sampleRate * milliseconds / 1_000
     }
 }

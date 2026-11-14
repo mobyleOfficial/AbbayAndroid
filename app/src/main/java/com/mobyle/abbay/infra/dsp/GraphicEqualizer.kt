@@ -3,18 +3,11 @@ package com.mobyle.abbay.infra.dsp
 import kotlin.math.abs
 import kotlin.math.max
 
-/**
- * The 10-band graphic equalizer: ISO octave centers, peaking biquads with
- * Q = 1.41, −12…+12 dB, and an automatic preamp of −max(positive gains). Bands at or above Nyquist are skipped. A gain
- * change moves each band in small steps over 20 ms (coefficients recomputed every [UPDATE_FRAMES] frames), so it never
- * clicks. Interleaved float samples, processed in place.
- */
 class GraphicEqualizer(private val sampleRate: Int, private val channelCount: Int) {
     private val bands = CENTERS_HZ.filter { it < sampleRate / 2.0 * NYQUIST_MARGIN }
     private val filters = Array(bands.size) { PeakingBiquad(channelCount) }
     private val bandIndices = IntArray(bands.size) { CENTERS_HZ.indexOf(bands[it]) }
 
-    /** Filters whose band is at 0 dB and not moving are unity: they are skipped (an array, so no iterator per sample). */
     private var activeFilters = arrayOf<PeakingBiquad>()
     private val currentGains = FloatArray(BAND_COUNT)
     private val targetGains = FloatArray(BAND_COUNT)
@@ -27,10 +20,8 @@ class GraphicEqualizer(private val sampleRate: Int, private val channelCount: In
         updateCoefficients()
     }
 
-    /** True when every band is at 0 dB and nothing is moving: the processor can be bypassed. */
     val isFlat: Boolean get() = stepsLeft == 0 && targetGains.all { it == 0f } && currentGains.all { it == 0f }
 
-    /** Gains of the 10 bands in dB (clamped to ±12). */
     fun setGains(gainsDb: FloatArray, immediately: Boolean = false) {
         for (band in 0 until BAND_COUNT) targetGains[band] = gainsDb.getOrElse(band) { 0f }.coerceIn(-MAXIMUM_DB, MAXIMUM_DB)
         val preampGain = Decibels.toGain(-max(0f, targetGains.max()))
@@ -94,7 +85,6 @@ class GraphicEqualizer(private val sampleRate: Int, private val channelCount: In
         private const val UPDATE_FRAMES = 32
         private const val EPSILON_DB = 0.001f
 
-        /** A peak right at Nyquist is degenerate; bands must be clearly below it. */
         private const val NYQUIST_MARGIN = 0.95
     }
 }

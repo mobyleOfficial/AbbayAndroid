@@ -8,7 +8,6 @@ import org.junit.runner.RunWith
 import kotlin.math.sqrt
 import kotlin.random.Random
 
-/** The native library loads on the device and lowers steady noise. */
 @RunWith(AndroidJUnit4::class)
 class RnnNoiseTest {
     @Test
@@ -24,7 +23,6 @@ class RnnNoiseTest {
             repeat(300) { frame ->
                 for (index in input.indices) input[index] = (random.nextFloat() * 2 - 1) * 0.1f
                 denoiser.process(input, output)
-                // After 1 s the noise estimate has settled.
                 if (frame >= 100) {
                     inputEnergy += input.sumOf { it * it.toDouble() }
                     outputEnergy += output.sumOf { it * it.toDouble() }
@@ -32,7 +30,6 @@ class RnnNoiseTest {
             }
         }
         val attenuationDb = 10 * kotlin.math.log10(outputEnergy / inputEnergy)
-        // RNNoise v0.1 lowers full-band white noise by about 3 dB (measured on the emulator); speech noise far more.
         assertTrue("noise changed by $attenuationDb dB", attenuationDb < -2)
         assertTrue(sqrt(outputEnergy).isFinite())
     }

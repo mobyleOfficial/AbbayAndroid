@@ -11,12 +11,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
-/** History of one book, newest first. */
 @HiltViewModel
 class HistoryViewModel @Inject constructor(savedStateHandle: SavedStateHandle, observeHistory: ObserveHistory) : ViewModel() {
     private val bookId: String = checkNotNull(savedStateHandle[BOOK_ID_ARGUMENT])
 
-    /** Null until the database answers. */
     val events: StateFlow<List<HistoryEvent>?> = observeHistory(bookId).stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     companion object {

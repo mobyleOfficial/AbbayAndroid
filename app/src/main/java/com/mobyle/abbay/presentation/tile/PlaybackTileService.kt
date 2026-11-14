@@ -19,10 +19,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
-/**
- * Quick Settings tile: play/pause of the last book; long press opens the player
- * (`QS_TILE_PREFERENCES` on MainActivity). The tile shows "active" while a book plays.
- */
 @AndroidEntryPoint
 class PlaybackTileService : TileService() {
     @Inject
@@ -50,7 +46,6 @@ class PlaybackTileService : TileService() {
         listening = null
     }
 
-    /** The system unbinds the tile right after a click, so the work runs in [clickScope], which outlives this service. */
     override fun onClick() {
         clickScope.launch {
             playerController.connect()

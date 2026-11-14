@@ -37,10 +37,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * [PlayerController] backed by a Media3 [MediaController] connected to [PlaybackService].
- * Every call must happen on the main thread, as required by [MediaController].
- */
 @OptIn(UnstableApi::class)
 @Singleton
 class PlayerControllerImpl @Inject constructor(@ApplicationContext private val context: Context) : PlayerController {
@@ -61,7 +57,6 @@ class PlayerControllerImpl @Inject constructor(@ApplicationContext private val c
         }
     }
 
-    /** Problems are decided by the service (it already skipped or stopped) and sent as a session event. */
     private val controllerListener = object : MediaController.Listener {
         override fun onCustomCommand(controller: MediaController, command: SessionCommand, args: Bundle): ListenableFuture<SessionResult> {
             if (command.customAction == PlaybackCommands.EVENT_PLAYBACK_PROBLEM) {
@@ -70,6 +65,7 @@ class PlayerControllerImpl @Inject constructor(@ApplicationContext private val c
                         PlayerError.TrackSkipped(args.getString(PlaybackCommands.EXTRA_FILE_NAME).orEmpty())
                     PlaybackService.PROBLEM_BOOK_UNPLAYABLE -> PlayerError.BookUnplayable
                     PlaybackService.PROBLEM_NOISE_REDUCTION_TOO_SLOW -> PlayerError.NoiseReductionTooSlow
+                    PlaybackService.PROBLEM_NETWORK_UNAVAILABLE -> PlayerError.NetworkUnavailable
                     else -> PlayerError.StorageUnavailable
                 }
                 mutableErrors.tryEmit(error)
@@ -77,7 +73,6 @@ class PlayerControllerImpl @Inject constructor(@ApplicationContext private val c
             return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
         }
 
-        /** The service sends the sleep timer state and the queue countdown as session extras. */
         override fun onExtrasChanged(controller: MediaController, extras: Bundle) {
             sleepTimerState = SleepTimerBundle.stateOf(extras)
             upNext = UpNextBundle.upNextOf(extras)
@@ -141,8 +136,6 @@ class PlayerControllerImpl @Inject constructor(@ApplicationContext private val c
         mediaController?.let { if (it.isPlaying) it.pause() else it.play() }
     }
 
-    // Book-time commands run here with the same handler the service uses for the notification and media keys, so the
-    // controller's position updates immediately.
     override fun seekBy(deltaMs: Long) {
         commands()?.seekBy(deltaMs)
     }

@@ -40,12 +40,10 @@ class ResamplerTest {
         assertEquals(-0.25, output[48_001].toDouble(), 1e-3)
     }
 
-    /** Level of everything but the expected tone, relative to the tone, after the filter settled. */
     private fun spuriousDb(frequencyHz: Double, inputRate: Int, outputRate: Int): Double {
         val output = run(Resampler(inputRate, outputRate, 1), Signals.sine(frequencyHz, 1.0, 0.5f, rate = inputRate), chunk = 777)
         val from = outputRate / 10
         val to = output.size - outputRate / 10
-        // Least-squares fit of a sine and a cosine at the tone's frequency; what is left is spurious.
         var sinSin = 0.0
         var cosCos = 0.0
         var sinCos = 0.0

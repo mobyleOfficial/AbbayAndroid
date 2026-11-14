@@ -6,7 +6,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
-/** Headerless VBR MP3 durations come from a full read. */
 class Mp3DurationTest {
     private fun fixture(name: String) = File(requireNotNull(javaClass.classLoader?.getResource(name)).toURI())
 
@@ -15,7 +14,6 @@ class Mp3DurationTest {
         val file = fixture("vbr_no_xing.mp3")
 
         assertTrue(Mp3Duration.needsFullScan(file.readBytes().copyOf(4_096)))
-        // The platform reader extrapolates 268 s for this 60 s file.
         assertEquals(60_000.0, file.inputStream().use { Mp3Duration.scan(it.buffered(), file.length()) }!!.toDouble(), 100.0)
     }
 
@@ -34,7 +32,6 @@ class Mp3DurationTest {
 
         assertEquals(10 + 300 + 2_048, Mp3Duration.headBytesNeeded(id3Header))
         assertFalse(Mp3Duration.needsFullScan(id3Header + id3Body + frame))
-        // A "Xing" inside the ID3 tag (for example in a comment) does not count.
         assertTrue(Mp3Duration.needsFullScan(id3Header + "Xing".toByteArray() + ByteArray(296) + ByteArray(200)))
     }
 

@@ -56,8 +56,6 @@ private fun <T> rememberFlowWithLifecycle(
     )
 }
 
-// To understand its use read the following article:
-// https://euryperez.dev/consuming-flows-safely-in-non-composable-scopes-in-jetpack-compose-d0154565bd68
 @Composable
 fun <T> LaunchedEffectAndCollect(
     flow: Flow<T?>,

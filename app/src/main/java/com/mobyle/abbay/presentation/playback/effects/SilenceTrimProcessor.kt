@@ -7,11 +7,6 @@ import com.mobyle.abbay.infra.dsp.SilenceTrimmer
 import java.nio.ByteBuffer
 import kotlin.math.abs
 
-/**
- * Silence trimming, first in the chain so its input is exactly the buffer the sink
- * received, whose track time [EffectsState.currentBufferTrackTimeUs] gives. Dropped frames are counted in
- * [skippedFrames], which the chain reports to the sink, so the media position keeps advancing in book time.
- */
 @OptIn(UnstableApi::class)
 class SilenceTrimProcessor(private val state: EffectsState) : FloatPcmProcessor() {
     private var trimmer: SilenceTrimmer? = null
@@ -19,7 +14,6 @@ class SilenceTrimProcessor(private val state: EffectsState) : FloatPcmProcessor(
     private var output = FloatArray(0)
     private var savedAtLastCheck = 0L
 
-    /** Frames dropped since the processor was created (cumulative, as Media3 expects). */
     @Volatile
     var skippedFrames = 0L
         private set
@@ -72,15 +66,10 @@ class SilenceTrimProcessor(private val state: EffectsState) : FloatPcmProcessor(
     }
 
     override fun onFlush() {
-        // A seek: held-back silence belongs to the old position and is dropped with the rest of the pipeline.
         trimmer?.reset(state.currentBufferTrackTimeUs * sampleRate / MICROSECONDS_PER_SECOND)
         trimmer?.let { savedAtLastCheck = it.savedFrames }
     }
 
-    /**
-     * Applies a level change at a buffer boundary: what the old trimmer held back is written out first (returned as
-     * frames already in [output]), then the new level starts.
-     */
     private fun followSettings(startFrame: Long): Int {
         val wanted = state.current.silenceTrim
         if (wanted == level) return 0
@@ -100,7 +89,6 @@ class SilenceTrimProcessor(private val state: EffectsState) : FloatPcmProcessor(
         return drained
     }
 
-    /** A new track (gapless) or a jump: the trimmer's frame count follows the track time again. */
     private fun resyncIfMoved(activeTrimmer: SilenceTrimmer, startFrame: Long) {
         if (abs(activeTrimmer.nextInputFrame - startFrame) > sampleRate / RESYNC_FRACTION) activeTrimmer.rebase(startFrame)
     }
@@ -125,7 +113,6 @@ class SilenceTrimProcessor(private val state: EffectsState) : FloatPcmProcessor(
     private companion object {
         const val MICROSECONDS_PER_SECOND = 1_000_000L
 
-        /** A gap of more than 100 ms between counted and reported track time means the stream moved. */
         const val RESYNC_FRACTION = 10
     }
 }

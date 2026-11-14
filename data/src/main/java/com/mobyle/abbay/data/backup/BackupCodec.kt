@@ -12,10 +12,6 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
 import java.time.Instant
 
-/**
- * The backup file: every book in the sidecar shape, plus where it is (relative
- * path, so tracks are found again on another device) and its history. Pure Kotlin, tested on the JVM.
- */
 object BackupCodec {
     const val FORMAT = "abbay-backup"
     const val VERSION = 1
@@ -38,7 +34,6 @@ object BackupCodec {
         ),
     )
 
-    /** The entries of a backup file, or null when [text] is not one. */
     fun read(text: String): List<Entry>? {
         val root = runCatching { Json.parseToJsonElement(text) }.getOrNull() as? JsonObject ?: return null
         if ((root["format"] as? JsonPrimitive)?.contentOrNull != FORMAT) return null

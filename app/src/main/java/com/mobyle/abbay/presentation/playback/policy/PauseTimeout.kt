@@ -5,7 +5,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/** Stops the service after a long pause. */
 class PauseTimeout(
     private val scope: CoroutineScope,
     private val timeoutMinutes: () -> Int,
@@ -13,7 +12,6 @@ class PauseTimeout(
 ) {
     private var job: Job? = null
 
-    /** Starts (or restarts) the countdown; a timeout of 0 minutes means "never". */
     fun onPaused() {
         job?.cancel()
         val minutes = timeoutMinutes()

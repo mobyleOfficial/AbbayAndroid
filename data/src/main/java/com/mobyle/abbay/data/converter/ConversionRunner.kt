@@ -25,13 +25,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.abs
 
-/**
- * Converts the MP3 files of a scope, one at a time: `<name>.opus.part` is written,
- * verified (re-opened, duration within ±0.5 s of the decoded source), renamed to `<name>.opus`, and only then the
- * MP3 is moved to `.abbay/originals/` or deleted. A run that stops leaves at most a `.part` file, deleted by the next
- * run, which starts at the first MP3 still there. The library is rescanned at the end: books keep their rows, so the
- * listening state keeps its track index and position (the durations are equal).
- */
 @Singleton
 class ConversionRunner @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -45,7 +38,6 @@ class ConversionRunner @Inject constructor(
 
     private class Job(val book: BookEntity, val treeUri: String, val track: TrackEntity)
 
-    /** The MP3 files of [scope] that can be converted: books in a library folder of their own. */
     suspend fun jobsOf(scope: ConversionScope): List<Pair<BookEntity, TrackEntity>> {
         val books = when (scope) {
             is ConversionScope.Book -> listOfNotNull(scope.bookId.toLongOrNull()?.let { dao.getBook(it) })
@@ -88,8 +80,7 @@ class ConversionRunner @Inject constructor(
         else -> null
     }
 
-    /** Converts one file and records the outcome; returns CANCELLED when the stop came in the middle of it. */
-    @Suppress("LongParameterList") // The run's state, passed down to one file.
+    @Suppress("LongParameterList")
     private suspend fun convertAndRecord(
         index: Int,
         job: Job,
@@ -116,8 +107,7 @@ class ConversionRunner @Inject constructor(
         return null
     }
 
-    /** Returns the bytes saved; throws when the file could not be converted (the MP3 is left untouched). */
-    @Suppress("TooGenericExceptionCaught") // Any failure removes the partial file, then propagates unchanged.
+    @Suppress("TooGenericExceptionCaught")
     private fun convert(
         job: Job,
         options: ConverterOptions,
@@ -155,8 +145,6 @@ class ConversionRunner @Inject constructor(
             }
             return saved
         } catch (failure: Throwable) {
-            // Back to the state before: no partial file, and no .opus next to an MP3 that is still there (a failed
-            // move), which would play the chapter twice.
             runCatching { android.provider.DocumentsContract.deleteDocument(context.contentResolver, renamed ?: part) }
             throw failure
         }
@@ -175,11 +163,10 @@ class ConversionRunner @Inject constructor(
         return OpusTags(comments, picture?.takeIf { it.isNotEmpty() }?.let { OpusTags.Cover(mimeOf(it), it) })
     }
 
-    @Suppress("MagicNumber") // PNG and JPEG signatures.
+    @Suppress("MagicNumber")
     private fun mimeOf(image: ByteArray): String =
         if (image.size > 3 && image[0] == 0x89.toByte() && image[1] == 'P'.code.toByte()) "image/png" else "image/jpeg"
 
-    /** "Battery not low (and above a user-set minimum, default 50 %) or charging". */
     private suspend fun hasEnoughBattery(): Boolean {
         val battery = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) ?: return true
         val status = battery.getIntExtra(BatteryManager.EXTRA_STATUS, -1)

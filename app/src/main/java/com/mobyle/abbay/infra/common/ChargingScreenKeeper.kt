@@ -11,10 +11,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 
-/**
- * "Keep the screen on while charging": while the activity is started, the setting is on and
- * the device is plugged in, the window keeps the screen on.
- */
 class ChargingScreenKeeper(private val activity: Activity) : DefaultLifecycleObserver {
     private var isEnabled = false
     private var isCharging = false
@@ -33,7 +29,6 @@ class ChargingScreenKeeper(private val activity: Activity) : DefaultLifecycleObs
     }
 
     override fun onStart(owner: LifecycleOwner) {
-        // ACTION_BATTERY_CHANGED is sticky: registering delivers the current state at once.
         ContextCompat.registerReceiver(
             activity,
             batteryReceiver,

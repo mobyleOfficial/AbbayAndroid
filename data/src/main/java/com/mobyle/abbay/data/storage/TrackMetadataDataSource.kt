@@ -9,12 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.FileInputStream
 import javax.inject.Inject
 
-/**
- * Tag and duration reader. Uses the platform `MediaMetadataRetriever`, which reads containers without decoding
- * audio.
- */
 class TrackMetadataDataSource @Inject constructor(@ApplicationContext private val context: Context) {
-    /** Platform reader first; ExoPlayer's extractors when it finds no audio (see [ExtractorAudioProbe]). */
     fun read(documentUri: String): DataResult<TrackMetadata> {
         val platformResult = readWithRetriever(documentUri)
         val platformMetadata = (platformResult as? DataResult.Success)?.value
@@ -37,7 +32,6 @@ class TrackMetadataDataSource @Inject constructor(@ApplicationContext private va
         }
     }
 
-    /** Platform tags win; the extractors fill what the platform left empty. ID3-style frame ids (Media3 maps MP4 tags to them). */
     private fun TrackMetadata?.mergedWith(probe: ExtractorAudioProbe.Result) = TrackMetadata(
         durationMs = this?.durationMs?.takeIf { it > 0 } ?: probe.durationMs,
         hasAudio = true,
@@ -63,10 +57,6 @@ class TrackMetadataDataSource @Inject constructor(@ApplicationContext private va
         )
     }
 
-    /**
-     * Exact duration of an MP3 file that has no Xing/Info/VBRI header, or null when the header-based duration can be
-     * trusted. Reads the whole file only in that case.
-     */
     fun readExactMp3Duration(documentUri: String): DataResult<Long?> = guardedIo {
         val uri = Uri.parse(documentUri)
         val firstBytes = context.contentResolver.openInputStream(uri)?.use { readUpTo(it, ID3_PROBE_BYTES) } ?: ByteArray(0)
@@ -81,7 +71,6 @@ class TrackMetadataDataSource @Inject constructor(@ApplicationContext private va
     fun readEmbeddedPicture(documentUri: String): DataResult<ByteArray?> =
         withRetriever(documentUri) { retriever -> retriever.embeddedPicture }
 
-    /** `InputStream.readNBytes` needs API 33; minSdk is 29. */
     private fun readUpTo(stream: java.io.InputStream, count: Int): ByteArray {
         val buffer = ByteArray(count)
         var filled = 0
@@ -93,7 +82,6 @@ class TrackMetadataDataSource @Inject constructor(@ApplicationContext private va
         return buffer.copyOf(filled)
     }
 
-    /** Data sources map every failure to a [DataResult]. */
     @Suppress("SwallowedException", "TooGenericExceptionCaught")
     private inline fun <T> guardedIo(block: () -> T): DataResult<T> = try {
         DataResult.Success(block())
@@ -105,7 +93,6 @@ class TrackMetadataDataSource @Inject constructor(@ApplicationContext private va
 
     private fun MediaMetadataRetriever.value(key: Int): String? = extractMetadata(key)?.trim()?.takeIf { it.isNotEmpty() }
 
-    /** Data sources map every failure to a [DataResult]. */
     @Suppress("SwallowedException", "TooGenericExceptionCaught")
     private inline fun <T> withRetriever(documentUri: String, block: (MediaMetadataRetriever) -> T): DataResult<T> {
         val retriever = MediaMetadataRetriever()

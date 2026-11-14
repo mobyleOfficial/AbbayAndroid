@@ -1,6 +1,5 @@
 package com.library
 
-/** Library sort options. */
 enum class LibrarySortOrder {
     TITLE,
     AUTHOR,

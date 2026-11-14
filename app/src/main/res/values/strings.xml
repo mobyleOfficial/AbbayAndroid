@@ -2,12 +2,10 @@
     <string name="app_name">Abbay</string>
     <string name="book_list_top_bar_title">Your Audiobooks</string>
     <string name="book_list_top_bar_folder_button_description">Add folder</string>
-    <string name="book_list_top_bar_file_button_description">Add file</string>
     <string name="no_book_selected_primary_button_title">Add a File</string>
     <string name="no_book_selected_secondary_button_title">Add a Folder</string>
     <string name="no_book_selected_or">or</string>
     
-    <!-- Dialog strings -->
     <string name="cancel">Cancel</string>
     <string name="ok">OK</string>
     <string name="delete">Delete</string>
@@ -17,7 +15,6 @@
     <string name="book_ended_dialog_title">Book Finished</string>
     <string name="book_ended_dialog_body">The audiobook has finished playing.</string>
     
-    <!-- Settings strings -->
     <string name="settings">Settings</string>
     <string name="play_when_app_closed">Play when app is closed</string>
     <string name="open_player_in_startup">Open player on startup</string>
@@ -28,8 +25,6 @@
     <string name="change_folder_dialog_title">Change Books Folder</string>
     <string name="change_folder_dialog_body">Are you sure you want to change the books folder? This will replace all current books with the ones from the new folder.</string>
     
-    <!-- Book list strings -->
-    <string name="refresh_content_description">Refresh</string>
     <string name="add_content_description">Add</string>
     <string name="add_folder">Add Folder</string>
     <string name="add_file">Add File</string>
@@ -42,7 +37,6 @@
     <string name="file_not_found_body">The audio file for this book could not be found.</string>
     <string name="file_might_be_moved">The file may have been moved or deleted.</string>
     
-    <!-- Player strings -->
     <string name="unknown_file">Unknown File</string>
     <string name="show_chapters">Show Chapters</string>
     <string name="hide_chapters">Hide Chapters</string>
@@ -51,30 +45,23 @@
     <string name="screen_locked_message">Double click anywhere on the screen to unlock</string>
     <string name="screen_locked_subtitle">This prevents accidental touches while listening</string>
     
-    <!-- Book item strings -->
     <string name="error_playing_file">Error Playing File</string>
     <string name="book_icon">Book Icon</string>
     <string name="clock_icon">Clock Icon</string>
     
-    <!-- Speed options -->
     <string name="speed_half">0.5x</string>
     <string name="speed_normal">1.0x</string>
     <string name="speed_one_twenty_five">1.25x</string>
     <string name="speed_one_fifty">1.5x</string>
     <string name="speed_double">2.0x</string>
     
-    <!-- Content descriptions -->
     <string name="empty_content_description"></string>
     
-    <!-- Additional strings found in code -->
     <string name="delete_content_description_short">Delete</string>
     <string name="change_speed_content_description">Change speed</string>
     
-    <!-- Version strings -->
     <string name="app_version">Version %1$s</string>
 
-
-    <!-- Library -->
     <string name="library_tab_in_progress">In progress</string>
     <string name="library_tab_new">New</string>
     <string name="library_tab_finished">Finished</string>
@@ -109,7 +96,6 @@
     <string name="settings_remove_library_folder">Remove %1$s</string>
     <string name="playback_track_skipped">Couldn’t play %1$s — skipped</string>
 
-    <!-- Player -->
     <string name="player_chapter_of">Chapter %1$d of %2$d</string>
     <string name="player_chapter_untitled">Chapter %1$d</string>
     <string name="player_chapters">Chapters</string>
@@ -124,6 +110,8 @@
     <string name="player_play">Play</string>
     <string name="player_pause">Pause</string>
     <string name="player_collapse">Collapse player</string>
+    <string name="player_close">Close player</string>
+    <string name="player_expand">Open player</string>
     <string name="player_lock">Lock screen</string>
     <string name="player_unlock">Unlock screen</string>
     <string name="player_more">More options</string>
@@ -138,14 +126,12 @@
     <string name="speed_decrease">Decrease speed</string>
     <string name="speed_increase">Increase speed</string>
 
-    <!-- Book details -->
     <string name="details_title">Book details</string>
     <string name="details_cover">Book cover, tap to change</string>
     <string name="details_title_field">Title</string>
     <string name="details_author">Author</string>
     <string name="details_narrator">Narrator</string>
     <string name="details_description">Description</string>
-    <string name="details_save">Save</string>
     <string name="details_duration">Duration</string>
     <string name="details_files">Files</string>
     <string name="details_location">Folder</string>
@@ -162,7 +148,6 @@
     <string name="details_cover_updated">Cover updated</string>
     <string name="details_cover_not_updated">Could not use this image as a cover</string>
 
-    <!-- Appearance and privacy -->
     <string name="settings_appearance">Appearance</string>
     <string name="settings_theme">Theme</string>
     <string name="theme_system">System</string>
@@ -432,8 +417,8 @@
     <string name="text_go_to_line">Go to this line</string>
     <string name="text_choose_charset">%1$s is not UTF-8. Choose its character set:</string>
     <string name="player_text">Text</string>
-    <string name="settings_face_down_to_pause">Face down to pause (face up within 10 min resumes)</string>
-    <string name="settings_flip_to_rewind">Quick flip to rewind 30 s</string>
+    <string name="settings_face_down_to_pause">Face down to pause</string>
+    <string name="settings_flip_to_rewind">Quick flip rewinds 30 s</string>
     <string name="diagnostics_title">Diagnostics</string>
     <string name="diagnostics_share">Share diagnostics</string>
     <string name="diagnostics_include_file_names">Include file names</string>
@@ -486,10 +471,12 @@
     <string name="settings_show_cast_button">Show the Cast button in the player</string>
     <string name="effects_not_on_cast">While casting, the receiver plays the original files: speed applies, other effects do not.</string>
 
-    <!-- Settings tree completed -->
     <string name="settings_library">Library</string>
     <string name="settings_default_tab">Tab when the app opens</string>
     <string name="settings_tab_automatic">Automatic</string>
+    <string name="settings_library_tabs">Library tabs</string>
+    <string name="settings_tab_move_up">Move %1$s up</string>
+    <string name="settings_tab_move_down">Move %1$s down</string>
     <string name="settings_library_layout">Library layout</string>
     <string name="settings_rescan_on_start">Rescan when the app opens</string>
     <string name="rescan_off">Off</string>
@@ -518,7 +505,6 @@
         <item quantity="other">%1$d days</item>
     </plurals>
 
-    <!-- Language and About -->
     <string name="settings_language">Language</string>
     <string name="language_system">System default</string>
     <string name="settings_licenses">Open-source licenses</string>
@@ -528,22 +514,17 @@
     <string name="licenses_assets">Assets</string>
     <string name="licenses_libraries">Libraries</string>
     <string name="licenses_open_license">Open the license of %1$s</string>
-    <!-- Language names are written in their own language; the source code address is not translated. -->
     <string name="language_english" translatable="false">English</string>
     <string name="language_portuguese" translatable="false">Português (Brasil)</string>
     <string name="language_spanish" translatable="false">Español</string>
     <string name="source_code_url" translatable="false">https://github.com/mobyleOfficial/AbbayAndroid</string>
 
-    <!-- Accessibility pass -->
     <string name="close">Close</string>
 
-    <!-- Seek bar accessibility -->
     <string name="player_seek_state">%1$s of %2$s</string>
 
-    <!-- Cast with audio effects -->
     <string name="settings_cast_processed_audio">Apply audio effects when casting</string>
 
-    <!-- Empty states of the library tabs -->
     <string name="library_empty_in_progress_title">No books in progress</string>
     <string name="library_empty_in_progress_body">Start listening to a book and it shows up here, right where you stopped.</string>
     <string name="library_empty_new_title">No new books</string>
@@ -557,7 +538,6 @@
     <string name="library_scanning_title">Looking for books…</string>
     <string name="library_scanning_body">Books show up here as they are found.</string>
 
-    <!-- Playback service, notification and Android Auto -->
     <string name="playback_skip_back">Back %1$d seconds</string>
     <string name="playback_previous_chapter">Previous chapter</string>
     <string name="playback_next_chapter">Next chapter</string>
@@ -577,7 +557,6 @@
     <string name="auto_chapter_number">Chapter %1$d</string>
     <string name="playback_speed_cycle">Speed %1$s</string>
 
-    <!-- Home screen widgets -->
     <string name="widget_mini_description">Play and pause the last book</string>
     <string name="widget_standard_description">Book, chapter and playback buttons</string>
     <string name="widget_large_description">Player with chapter progress, sleep timer and bookmark</string>
@@ -589,4 +568,222 @@
     <string name="widget_add_bookmark">Add bookmark</string>
     <string name="widget_sleep_timer_on">Start sleep timer</string>
     <string name="widget_sleep_timer_off">Turn off sleep timer</string>
+
+    <string name="book_status_new">New</string>
+    <string name="book_status_finished">Finished ✓</string>
+    <string name="book_status_chapter">Ch %1$d/%2$d</string>
+    <string name="book_now_playing">Now playing</string>
+    <string name="player_close_chapters">Close chapters</string>
+    <string name="player_chapter_current">Current chapter</string>
+    <string name="player_chapter_finished">Finished</string>
+    <string name="librivox_title">LibriVox</string>
+    <string name="librivox_search_hint">Search free audiobooks</string>
+    <string name="librivox_popular">Popular on LibriVox</string>
+    <string name="librivox_offline_title">You\'re offline</string>
+    <string name="librivox_offline_body">Connect to the internet to browse LibriVox.</string>
+    <string name="librivox_failed_title">LibriVox didn\'t answer</string>
+    <string name="librivox_failed_body">Try again in a moment.</string>
+    <string name="librivox_no_results_title">No audiobooks found</string>
+    <string name="librivox_no_results_body">Try the author\'s last name or fewer words.</string>
+    <string name="librivox_retry">Try again</string>
+    <string name="librivox_get">Get</string>
+    <string name="librivox_in_library">In library</string>
+    <string name="librivox_download">Download</string>
+    <string name="librivox_listen">Listen</string>
+    <string name="librivox_more">More</string>
+    <string name="librivox_less">Less</string>
+    <string name="librivox_chapters_heading">Chapters</string>
+    <string name="librivox_chapter_waiting">Waiting</string>
+    <string name="librivox_chapter_failed">Failed</string>
+    <string name="librivox_chapter_downloaded">Downloaded</string>
+    <string name="librivox_chapter_downloading">Downloading, %1$d%%</string>
+    <string name="librivox_downloading">Downloading · %1$d%%</string>
+    <string name="librivox_download_failed">Some chapters failed to download</string>
+    <string name="librivox_downloaded">Downloaded · available offline</string>
+    <string name="librivox_listen_while_downloading">You can start listening while it downloads.</string>
+    <string name="librivox_credit">Public-domain recordings by LibriVox volunteers, hosted by the Internet Archive.</string>
+    <string name="librivox_details_failed">Couldn\'t load this book.</string>
+    <string name="librivox_add_failed">Couldn\'t add the book. Try again.</string>
+    <string name="librivox_cellular_title">Large download</string>
+    <string name="librivox_cellular_body">This book is %1$s. Download it now on mobile data, or wait for Wi‑Fi?</string>
+    <string name="librivox_cellular_continue">Use mobile data</string>
+    <string name="librivox_cellular_wait">Wait for Wi‑Fi</string>
+    <string name="librivox_add_menu">Free audiobooks (LibriVox)</string>
+    <string name="librivox_empty_library_button">Explore free audiobooks</string>
+    <string name="librivox_search_in">Search “%1$s” on LibriVox</string>
+    <string name="librivox_playback_offline">No connection. This chapter isn\'t downloaded yet.</string>
+    <string name="librivox_loading">Loading</string>
+    <string name="librivox_book_status_downloading">Downloading %1$d%%</string>
+    <plurals name="librivox_chapter_count">
+        <item quantity="one">%1$d chapter</item>
+        <item quantity="other">%1$d chapters</item>
+    </plurals>
+    <string name="librivox_pause">Pause</string>
+    <string name="librivox_resume">Resume</string>
+    <string name="librivox_paused">Download paused · %1$d%%</string>
+    <string name="librivox_streaming_only">Not downloaded · plays over the internet</string>
+    <string name="librivox_book_status_paused">Download paused</string>
+    <string name="librivox_more_options">More options</string>
+    <string name="librivox_cancel_download">Cancel download</string>
+    <string name="librivox_remove_download">Remove download</string>
+    <string name="librivox_remove_download_title">Remove the download?</string>
+    <string name="librivox_remove_download_body">The downloaded chapters are deleted. The book stays in your library and plays over the internet.</string>
+    <string name="librivox_remove_download_confirm">Remove</string>
+    <string name="librivox_listen_without_download">Listen without downloading</string>
+    <string name="librivox_streaming_only_badge">Streaming only</string>
+    <string name="audiobookshelf_title" translatable="false">Audiobookshelf</string>
+    <string name="audiobookshelf_add_menu">My Audiobookshelf server</string>
+    <string name="audiobookshelf_sign_in_title">Connect to your server</string>
+    <string name="audiobookshelf_sign_in_body">Listen to the books on your own Audiobookshelf server, over the internet or downloaded.</string>
+    <string name="audiobookshelf_session_ended">Your session on this server ended. Sign in again.</string>
+    <string name="audiobookshelf_server">Server address</string>
+    <string name="audiobookshelf_server_hint">audiobooks.example.com</string>
+    <string name="audiobookshelf_username">Username</string>
+    <string name="audiobookshelf_password">Password</string>
+    <string name="audiobookshelf_show_password">Show password</string>
+    <string name="audiobookshelf_hide_password">Hide password</string>
+    <string name="audiobookshelf_sign_in">Connect</string>
+    <string name="audiobookshelf_error_address">Check the server address and the username.</string>
+    <string name="audiobookshelf_error_unreachable">Couldn\'t reach the server. Check the address and your connection.</string>
+    <string name="audiobookshelf_error_not_server">No Audiobookshelf server answered at this address.</string>
+    <string name="audiobookshelf_error_credentials">Wrong username or password.</string>
+    <string name="audiobookshelf_signed_in_as">%1$s on %2$s</string>
+    <string name="audiobookshelf_sign_out">Sign out</string>
+    <string name="audiobookshelf_search_hint">Search this library</string>
+    <string name="audiobookshelf_recent">Recently added</string>
+    <string name="audiobookshelf_all">All</string>
+    <string name="audiobookshelf_sort_label">Sort by</string>
+    <string name="audiobookshelf_sort_title">Title</string>
+    <string name="audiobookshelf_sort_author">Author</string>
+    <string name="audiobookshelf_offline_body">Connect to the internet to browse your server.</string>
+    <string name="audiobookshelf_failed_title">The server didn\'t answer</string>
+    <string name="audiobookshelf_no_libraries_title">No audiobook libraries</string>
+    <string name="audiobookshelf_no_libraries_body">This server has no book library you can open.</string>
+    <string name="audiobookshelf_empty_library_title">No audiobooks here yet</string>
+    <string name="audiobookshelf_empty_library_body">Books added to this library on the server show up here.</string>
+    <string name="audiobookshelf_no_results_body">Try the title, the author or fewer words.</string>
+    <string name="audiobookshelf_credit">From your Audiobookshelf server, %1$s.</string>
+    <string name="audiobookshelf_series">Series</string>
+    <string name="audiobookshelf_series_sequence">Book %1$s</string>
+    <string name="catalog_series_book">%1$s · Book %2$s</string>
+    <string name="catalog_open_series">open the series</string>
+    <string name="audiobookshelf_no_series_title">No series here</string>
+    <string name="audiobookshelf_no_series_body">Books grouped into series on the server show up here.</string>
+    <string name="audiobookshelf_empty_series_title">No books in this series</string>
+    <string name="audiobookshelf_empty_series_body">Its books may have moved or been removed on the server.</string>
+    <plurals name="audiobookshelf_series_book_count">
+        <item quantity="one">%d book</item>
+        <item quantity="other">%d books</item>
+    </plurals>
+
+    <!-- Read-along -->
+    <string name="settings_experimental">Experimental</string>
+    <string name="read_along_toggle">Read-along</string>
+    <string name="read_along_footer">Shows the audiobook\'s text as it plays, highlighting the words being read. With the book\'s EPUB in the audiobook\'s folder, or one picked for it, the text shown is the book\'s own; without one, AI generates it from the audio on this device, so it can get words wrong, especially names. Nothing is sent anywhere and the microphone is never used. The first time a language is used, its speech model (30–50 MB) is downloaded once.</string>
+    <string name="read_along_pill">Text</string>
+    <string name="read_along_cover_pill">Cover</string>
+    <string name="read_along_show_cover">Show cover</string>
+    <string name="read_along_preparing">Preparing text…</string>
+    <string name="read_along_downloading_model">Downloading the %1$s speech model…</string>
+    <string name="read_along_cancel_model_download">Cancel download</string>
+    <string name="read_along_model_download_cancelled">The %1$s speech model wasn\'t downloaded.</string>
+    <string name="read_along_retry_model_download">Download again</string>
+    <string name="read_along_unsupported">Text isn\'t available in %1$s.</string>
+    <string name="read_along_needs_download">The audio must be downloaded first to show its text.</string>
+    <string name="read_along_file_missing">The audio file must be on this device to show its text.</string>
+    <string name="read_along_no_speech">No speech here.</string>
+    <string name="read_along_failed">Couldn\'t make the text.</string>
+    <string name="read_along_language">Text language</string>
+    <string name="read_along_line_hint">Play from this line</string>
+    <string name="read_along_full_screen">Full screen</string>
+    <string name="read_along_exit_full_screen">Exit full screen</string>
+    <string name="read_along_sync">Text sync</string>
+    <string name="read_along_sync_in_sync">In sync</string>
+    <string name="read_along_sync_ahead">Text %1$s s ahead</string>
+    <string name="read_along_sync_behind">Text %1$s s behind</string>
+    <string name="read_along_sync_earlier">Move text earlier</string>
+    <string name="read_along_sync_later">Move text later</string>
+    <string name="read_along_sync_reset">Reset</string>
+    <string name="read_along_sync_tip">Text out of step with the audio? Use − and +, or touch and hold the line being read to line the text up with it.</string>
+    <string name="read_along_line_sync_hint">Line up the text with this line</string>
+    <string name="read_along_intro_title">Text along with the audio</string>
+    <string name="read_along_intro_epub">To see the book\'s own text, put its EPUB file in the same folder as the audiobook. Or pick an EPUB from anywhere: with the text showing, tap the language in its bottom-left corner, then “Use text from an EPUB…”. The text follows the audio, highlighting the word being read.</string>
+    <string name="read_along_intro_generated">Without an EPUB, the text is generated by AI from the audio, on this device. It can get words wrong, especially names, and has no punctuation.</string>
+    <string name="read_along_intro_confirm">Show text</string>
+    <string name="read_along_intro_dismiss">Not now</string>
+    <string name="read_along_generated_notice">AI-generated text · may contain mistakes</string>
+    <string name="read_along_epub_in_use">EPUB: %1$s</string>
+    <string name="read_along_epub_choose">Use text from an EPUB…</string>
+    <string name="read_along_epub_change">Use another EPUB…</string>
+    <string name="read_along_epub_remove">Stop using this EPUB</string>
+    <string name="read_along_epub_rejected">That file couldn\'t be read as an EPUB.</string>
+    <string name="settings_rate_app">Rate Abbay</string>
+    <string name="settings_share_app">Share Abbay</string>
+    <string name="settings_share_app_message">I listen to my audiobooks with Abbay: free, no account, works offline. %1$s</string>
+    <string name="settings_walkthrough">Show the app tour</string>
+    <string name="walkthrough_skip">Skip</string>
+    <string name="walkthrough_next">Next</string>
+    <string name="walkthrough_get_started">Get started</string>
+    <string name="walkthrough_choose_folder">Choose my audiobooks folder</string>
+    <string name="walkthrough_later">Maybe later</string>
+    <string name="walkthrough_welcome_title">Welcome to Abbay</string>
+    <string name="walkthrough_welcome_body">An audiobook player for the books you already have.</string>
+    <string name="walkthrough_welcome_no_account">No account, no ads</string>
+    <string name="walkthrough_welcome_offline">Your files stay on your phone and play offline</string>
+    <string name="walkthrough_library_title">Bring your library</string>
+    <string name="walkthrough_library_body">Point Abbay at a folder and every subfolder becomes a book, chapters included. You can also add single files.</string>
+    <string name="walkthrough_library_folders">Use several folders, on the phone or an SD card</string>
+    <string name="walkthrough_library_catalogs">Find free public-domain books on LibriVox, or stream from Audiobookshelf</string>
+    <string name="walkthrough_listen_title">Listen your way</string>
+    <string name="walkthrough_listen_body">Every book remembers where you stopped, its speed and its settings.</string>
+    <string name="walkthrough_listen_sleep">Sleep timer: shake the phone to get more time</string>
+    <string name="walkthrough_listen_bookmarks">Bookmarks with notes</string>
+    <string name="walkthrough_listen_effects">Trim silences, boost quiet voices, reduce noise</string>
+    <string name="walkthrough_more_title">And there is more</string>
+    <string name="walkthrough_more_body">Abbay keeps going wherever you listen.</string>
+    <string name="walkthrough_more_read_along">Read along with the text while you listen</string>
+    <string name="walkthrough_more_statistics">See how much you listened each day</string>
+    <string name="walkthrough_more_car">Android Auto, Cast, widgets and quick settings</string>
+    <string name="walkthrough_start_title">Ready to start?</string>
+    <string name="walkthrough_start_body">Choose the folder where your audiobooks are. You can add more folders or change it later in Settings.</string>
+    <string name="settings_info_description">Learn more: %1$s</string>
+    <string name="settings_info_play_when_closed">If you close Abbay (by swiping it away from your open apps), the book keeps playing.</string>
+    <string name="settings_info_open_player">When you open the app, the book you were listening to is already open in the player.</string>
+    <string name="settings_info_change_folder">Changes the folder where Abbay looks for your books. The books you have now leave the list and the ones in the new folder come in.</string>
+    <string name="settings_info_delete_all">Removes every book and folder from Abbay, along with the progress saved in the app. Your audio files stay on your phone.</string>
+    <string name="settings_info_converter">Makes MP3 books 3 to 5 times smaller, so they take less space on your phone, and they sound almost the same.</string>
+    <string name="settings_info_rescan">Every time you open the app, Abbay looks in your folders for books you added or removed. Quick only looks for what changed; Full reads every file again and takes longer.</string>
+    <string name="settings_info_missing_retention">If a book\'s files disappear (for example, you took out the memory card), Abbay remembers where you stopped for this long. If the book comes back in time, you carry on from the same spot.</string>
+    <string name="settings_info_save_progress_in_folders">Abbay keeps a small file inside each book\'s folder with where you stopped and your bookmarks. If you change phones or reinstall the app, your progress comes back with the book.</string>
+    <string name="settings_info_export_backup">Creates a file with your progress in every book. Keep it somewhere safe and use Import backup to bring it all back later, even on another phone.</string>
+    <string name="settings_info_smart_rewind">When you press play after a pause, the book goes back a few seconds so you remember where you were. The longer the pause, the more it goes back.</string>
+    <string name="settings_info_small_back">The player has buttons that jump a little and buttons that jump a lot. This is how many seconds the small back button jumps.</string>
+    <string name="settings_info_large_back">How many minutes the big back button jumps. Handy when you dozed off and missed a part.</string>
+    <string name="settings_info_auto_stop">If the book stays paused this long, Abbay closes the player and leaves the notification. The spot where you stopped is saved.</string>
+    <string name="settings_info_notification_buttons">The buttons next to play in the notification and on the lock screen. They can jump a few seconds or change chapter.</string>
+    <string name="settings_info_continue_with_queue">When a book ends, the next book in your queue starts playing on its own.</string>
+    <string name="settings_info_statistics">Abbay writes down how long you listen, to show it in your statistics. These notes stay only on your phone.</string>
+    <string name="settings_info_silence_trim">Cuts out the little silences between words, so the book ends sooner without the voice sounding fast. It applies to books you haven\'t opened yet; each book can change it in the player\'s audio effects.</string>
+    <string name="settings_info_boost">Makes the voice louder. Helps with books recorded quietly or when it\'s noisy around you. It applies to books you haven\'t opened yet; each book can change it in the player\'s audio effects.</string>
+    <string name="settings_info_equalizer">Changes how the sound feels, making low or high sounds stronger so the voice is clearer. It applies to books you haven\'t opened yet; each book can change it in the player\'s audio effects.</string>
+    <string name="settings_info_noise_reduction">Removes hiss and background noise from the recording. It applies to books you haven\'t opened yet; each book can change it in the player\'s audio effects.</string>
+    <string name="settings_info_sleep_default">How many minutes the sleep timer lasts when you turn it on. When it ends, the book stops.</string>
+    <string name="settings_info_sleep_fade">At the end of the timer, the volume goes down slowly until it stops, instead of cutting off all at once. Choose how many seconds that takes.</string>
+    <string name="settings_info_shake_to_extend">If the timer is ending and you\'re still awake, shake the phone and the timer starts again.</string>
+    <string name="settings_info_extend_only_during_fade">Shaking only works when the volume is already going down, at the very end of the timer. That way, moving the phone by accident doesn\'t restart it.</string>
+    <string name="settings_info_sleep_chime">Plays a little bell when the volume starts going down, to tell you the timer is about to end.</string>
+    <string name="settings_info_auto_sleep">Between the times you choose, the sleep timer turns on by itself when you press play. Good for falling asleep while listening.</string>
+    <string name="settings_info_short_interruptions">When another app talks for a moment, like a GPS giving directions, the book can pause or just get quieter and keep going.</string>
+    <string name="settings_info_resume_after_calls">When a phone call ends, the book starts playing again on its own.</string>
+    <string name="settings_info_resume_on_headset">When you connect headphones, the paused book starts playing on its own.</string>
+    <string name="settings_info_headset_next">What happens when you press the headphone button twice, or the Next button on your headphones or car.</string>
+    <string name="settings_info_headset_previous">What happens when you press the headphone button three times, or the Previous button on your headphones or car.</string>
+    <string name="settings_info_headset_long_press">What happens when you hold the headphone button down.</string>
+    <string name="settings_info_sleep_in_car">Shows the sleep timer button on the car screen, and lets the timer turn on by itself while the phone is connected to the car.</string>
+    <string name="settings_info_face_down">Turn the phone screen-down and the book pauses. Turn it back up within 10 minutes and it plays again.</string>
+    <string name="settings_info_flip_to_rewind">Twist the phone quickly, like turning your wrist, and the book goes back 30 seconds.</string>
+    <string name="settings_info_cast_button">Cast sends the sound to a TV or speaker on the same Wi-Fi. This shows its button in the player.</string>
+    <string name="settings_info_cast_processed_audio">When you send the book to a TV or speaker, your audio effects (shorter silences, louder voice, equalizer) go with it.</string>
+    <string name="settings_info_keep_screen_on">While the phone is charging and Abbay is open, the screen doesn\'t turn off by itself.</string>
+    <string name="settings_info_progress_labels">Choose what shows under the book\'s bar: how much is left, or how long the whole book is.</string>
 </resources>

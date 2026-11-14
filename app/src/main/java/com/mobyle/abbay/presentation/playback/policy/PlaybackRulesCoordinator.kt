@@ -20,12 +20,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-/**
- * Applies the book's repeat and skip options in the playback service: Media3's
- * repeat modes for track and book, [PlaybackRules] sampled every [TICK_MS] while playing for chapter repeat, the A–B
- * loop and the outro, and the intro when a file starts. Jumps made here are not user moves, so [withoutMoves] keeps them
- * out of the history.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlaybackRulesCoordinator(
     private val player: Player,
@@ -62,7 +56,6 @@ class PlaybackRulesCoordinator(
 
     override fun onIsPlayingChanged(isPlaying: Boolean) = updateTicker()
 
-    /** A user seek starts a new sample sequence, so no rule fires for the jump itself. */
     override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
         if (reason == Player.DISCONTINUITY_REASON_SEEK) lastSample = null
     }
@@ -95,7 +88,6 @@ class PlaybackRulesCoordinator(
     private fun rules() = PlaybackRules(playlist.trackDurationsMs, playlist.chapterStartsMs)
 
     private companion object {
-        /** 100 ms: an A–B loop overshoots B by at most this much. */
         const val TICK_MS = 100L
     }
 }

@@ -4,33 +4,24 @@ import kotlin.math.abs
 import kotlin.math.exp
 import kotlin.math.max
 
-/**
- * Look-ahead peak limiter: 3 ms look-ahead, −1 dBFS ceiling, channels linked.
- * The gain for a delayed sample is the moving average of the sliding minimum of the required gains over the
- * look-ahead window, so it has reached the needed reduction when the peak arrives and never overshoots the ceiling;
- * recovery takes [RELEASE_MS]. Below the ceiling it is a pure delay. Interleaved float samples, in place.
- */
 class PeakLimiter(private val channelCount: Int, sampleRate: Int, ceilingDb: Float = CEILING_DB) {
     private val ceiling = Decibels.toGain(ceilingDb)
     private val lookAhead = max(1, sampleRate * LOOK_AHEAD_MS / 1_000)
     private val delay = FloatArray(lookAhead * channelCount)
     private var delayIndex = 0
 
-    /** Monotonic deque (frame index, required gain) for the minimum over the last lookAhead + 1 frames. */
     private val queueFrames = LongArray(lookAhead + 1)
     private val queueGains = FloatArray(lookAhead + 1)
     private var queueHead = 0
     private var queueSize = 0
     private var frameIndex = 0L
 
-    /** Moving average of the sliding minimum. */
     private val minimumHistory = FloatArray(lookAhead)
     private var historyIndex = 0
     private var historySum = lookAhead.toDouble()
     private var releasedGain = 1f
     private val releaseCoefficient = exp(-1.0 / (RELEASE_MS / 1_000.0 * sampleRate)).toFloat()
 
-    /** Frames of delay added to the signal. */
     val latencyFrames: Int get() = lookAhead
 
     init {
@@ -72,7 +63,6 @@ class PeakLimiter(private val channelCount: Int, sampleRate: Int, ceilingDb: Flo
         }
     }
 
-    /** Adds this frame's required gain and returns the minimum over the last lookAhead + 1 frames. */
     private fun pushRequired(gain: Float): Float {
         val capacity = queueFrames.size
         val oldestAllowed = frameIndex - lookAhead

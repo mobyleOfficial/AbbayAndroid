@@ -1,11 +1,6 @@
 package com.mobyle.abbay.data.chapters
 
-/**
- * MP4 / M4B chapters (ISO/IEC 14496-12 box structure): the QuickTime chapter text track
- * referenced by `tref/chap`, otherwise the Nero `udta/chpl` box. Boxes are read by position, so the large sample
- * tables of the audio track are never loaded.
- */
-@Suppress("CyclomaticComplexMethod", "NestedBlockDepth", "TooManyFunctions") // Mirrors the format's structure.
+@Suppress("CyclomaticComplexMethod", "NestedBlockDepth", "TooManyFunctions")
 object Mp4ChapterParser {
     private const val BOX_HEADER = 8
     private const val NERO_UNITS_PER_MS = 10_000L
@@ -54,7 +49,6 @@ object Mp4ChapterParser {
     private fun content(source: ByteSource, box: Box): ByteArray =
         if (box.size - box.headerSize > MAX_LEAF_BOX) ByteArray(0) else source.read(box.contentStart, (box.size - box.headerSize).toInt())
 
-    /** Nero `chpl`: FullBox, a reserved 32-bit field (version 1), a chapter count, then 100 ns start + Pascal title. */
     private fun neroChapters(source: ByteSource, moov: Box): List<ParsedChapter> {
         val chpl = child(source, moov, "udta", "chpl") ?: return emptyList()
         val data = content(source, chpl)
@@ -75,7 +69,6 @@ object Mp4ChapterParser {
         }
     }
 
-    /** The text track named by an audio track's `tref/chap`: one sample per chapter, durations from `stts`. */
     private fun quickTimeChapters(source: ByteSource, tracks: List<Box>): List<ParsedChapter> {
         val chapterTrackIds = tracks.mapNotNull { child(source, it, "tref", "chap") }
             .flatMap { chap -> content(source, chap).let { data -> (0 until data.size / 4).map { Bytes.u32(data, it * 4) } } }
@@ -154,7 +147,6 @@ object Mp4ChapterParser {
             .map { if (isLarge) Bytes.u64(data, 8 + it * 8) else Bytes.u32(data, 8 + it * 4) }
     }
 
-    /** Expands `stsc` runs (first chunk, samples per chunk) to one value per chunk. */
     private fun samplesPerChunk(data: ByteArray, chunkCount: Int): List<Int> {
         val entries = Bytes.u32(data, 4).toInt()
         val runs = (0 until entries).filter { 8 + it * 12 + 12 <= data.size }
@@ -164,7 +156,6 @@ object Mp4ChapterParser {
         }
     }
 
-    /** QuickTime text samples are UTF-8, or UTF-16 when they start with a byte-order mark. */
     private fun decodeText(data: ByteArray, offset: Int, length: Int): String {
         val first = if (length >= 2) Bytes.u8(data, offset) else 0
         val second = if (length >= 2) Bytes.u8(data, offset + 1) else 0

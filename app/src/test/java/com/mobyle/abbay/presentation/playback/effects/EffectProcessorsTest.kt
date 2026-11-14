@@ -33,7 +33,6 @@ class EffectProcessorsTest {
         val processor = LoudnessProcessor(state)
         assertArrayEquals(input, run(processor, input))
 
-        // Raising a band brings in the limiter mid-stream; the 3 ms delay arrives through a crossfade, not a jump.
         val output = runSwitchingHalfway(processor, input) {
             state.current =
                 AudioEffects(equalizerGains = listOf(0, 0, 0, 0, 0, 3, 0, 0, 0, 0))
@@ -45,7 +44,6 @@ class EffectProcessorsTest {
     @Test
     fun silenceTrimReportsDroppedFramesForTheMediaPosition() {
         val state = EffectsState().apply { current = AudioEffects(silenceTrim = SilenceTrimLevel.MODERATE) }
-        // 1 s tone, 2 s silence, 1 s tone, far from any protected edge.
         state.trackBoundaries = EffectsState.TrackBoundaries(durationUs = 600_000_000L, chapterEdgesUs = emptyList())
         state.currentBufferTrackTimeUs = 60_000_000L
         val input = tone(1.0) + ShortArray(2 * rate * 2) + tone(1.0)
@@ -90,7 +88,6 @@ class EffectProcessorsTest {
         return output.toShortArray()
     }
 
-    /** Largest step between successive samples of the left channel. */
     private fun maximumStep(
         samples: ShortArray
     ): Int = (2 until samples.size step 2).maxOf { kotlin.math.abs(samples[it] - samples[it - 2]) }

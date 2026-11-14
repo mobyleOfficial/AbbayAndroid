@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
-/** Instant search on title, author and narrator. */
 @HiltViewModel
 class SearchViewModel @Inject constructor(observeBooks: ObserveBooks, searchBooks: SearchBooks) : ViewModel() {
     private val mutableQuery = MutableStateFlow("")

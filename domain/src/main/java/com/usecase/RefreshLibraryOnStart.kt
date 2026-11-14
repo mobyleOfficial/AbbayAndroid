@@ -6,7 +6,6 @@ import com.settings.RescanOnStart
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
-/** App start: validates folder permissions, then scans as Settings → Library → "Rescan on start" says. */
 class RefreshLibraryOnStart @Inject constructor(
     private val repository: LibraryRepository,
     private val settings: SettingsRepository,

@@ -24,7 +24,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** Cover gestures and long-press repeat. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [30], application = Application::class)
 class PlayerGesturesTest {
@@ -85,7 +84,6 @@ class PlayerGesturesTest {
         }
         val button = composeTestRule.onNodeWithContentDescription("Forward")
         button.performTouchInput { down(center) }
-        // Long-press timeout (400 ms in tests) fires once, then every 500 ms: 400, 900, 1400.
         composeTestRule.mainClock.advanceTimeBy(1_600L)
         button.performTouchInput { up() }
         composeTestRule.mainClock.advanceTimeBy(1_000L)

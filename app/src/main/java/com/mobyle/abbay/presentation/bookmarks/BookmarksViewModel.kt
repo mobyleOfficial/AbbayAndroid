@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** Bookmarks of one book. Jumping is done by the player's ViewModel. */
 @HiltViewModel
 class BookmarksViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
@@ -29,7 +28,6 @@ class BookmarksViewModel @Inject constructor(
 ) : ViewModel() {
     private val bookId: String = checkNotNull(savedStateHandle[BOOK_ID_ARGUMENT])
 
-    /** Null until the database answers. */
     val bookmarks: StateFlow<List<Bookmark>?> = observeBookmarks(bookId).stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val details: StateFlow<BookDetails?> = observeBookDetails(bookId).stateIn(viewModelScope, SharingStarted.Eagerly, null)

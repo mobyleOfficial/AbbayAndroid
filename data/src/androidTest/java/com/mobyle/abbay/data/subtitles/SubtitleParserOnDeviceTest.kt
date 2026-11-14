@@ -5,7 +5,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** The parser's patterns compile with Android's ICU regex engine, which is stricter than the JVM's. */
 @RunWith(AndroidJUnit4::class)
 class SubtitleParserOnDeviceTest {
     @Test

@@ -4,7 +4,6 @@ import com.effects.AudioEffects
 import com.repository.AudioEffectsRepository
 import javax.inject.Inject
 
-/** Stores a book's effects, clamped to the ranges. */
 class UpdateAudioEffects @Inject constructor(private val repository: AudioEffectsRepository) {
     suspend operator fun invoke(bookId: String, effects: AudioEffects) = repository.updateEffects(
         bookId,

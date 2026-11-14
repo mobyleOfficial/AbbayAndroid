@@ -13,11 +13,6 @@ import com.listening.MotionGestureDetector.Gesture
 import com.mobyle.abbay.presentation.playback.sleep.TonePlayer
 import com.settings.AppSettings
 
-/**
- * Face-down to pause and flip to rewind (off by default). Sensors are on only
- * while a gesture is enabled and audio plays, or for 10 min after a face-down pause (to resume on face up). Gestures
- * act only while the app is in the foreground or the screen is off; each one plays a short tone.
- */
 class MotionGestures(
     context: Context,
     private val player: Player,
@@ -36,7 +31,6 @@ class MotionGestures(
     private var isListening = false
     private var pausedFaceDownAt: Long? = null
 
-    /** playWhenReady, not isPlaying: a seek's buffering must not switch the sensors off and on. */
     override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
         if (playWhenReady) {
             pausedFaceDownAt = null
@@ -45,7 +39,6 @@ class MotionGestures(
         update()
     }
 
-    /** Settings changed: start or stop the sensors. */
     fun update() {
         val current = settings()
         val isResumeWindowOpen = pausedFaceDownAt?.let { clock() - it < MotionGestureDetector.RESUME_WINDOW_MS } == true &&
@@ -109,7 +102,6 @@ class MotionGestures(
 
     private fun confirm() = tones.playConfirmation(TONE_VOLUME)
 
-    /** "While the player is in the foreground or the screen is off". */
     private fun isAllowed(): Boolean {
         if (powerManager?.isInteractive == false) return true
         val state = ActivityManager.RunningAppProcessInfo().also(ActivityManager::getMyMemoryState)

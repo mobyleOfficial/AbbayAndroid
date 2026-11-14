@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** Audio effects of the book in the player, for the audio sheet. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class AudioEffectsViewModel @Inject constructor(
@@ -34,7 +33,6 @@ class AudioEffectsViewModel @Inject constructor(
 ) : ViewModel() {
     private val bookId = MutableStateFlow<String?>(null)
 
-    /** Null while no book is loaded. */
     val effects: StateFlow<AudioEffects?> = bookId
         .flatMapLatest { id -> id?.let { observeAudioEffects(it) } ?: flowOf(null) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)

@@ -16,10 +16,6 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Finds `<track base name>.srt` or `.lrc` in the folder of the track (the book folder or one of its disc folders) and
- * parses it. Files are read once per book, track and charset.
- */
 @Singleton
 class SubtitleRepositoryImpl @Inject constructor(
     private val dao: LibraryDao,
@@ -57,7 +53,6 @@ class SubtitleRepositoryImpl @Inject constructor(
         }
             ?: TrackSubtitles(fileName, emptyList(), charset = null, needsCharset = true)
 
-    /** The tree of the book's root and the subtitle file next to its playable track [trackIndex]. */
     private suspend fun findFile(bookId: Long, trackIndex: Int): Pair<String, DocumentEntry>? {
         val details = dao.getBookWithDetails(bookId) ?: return null
         val track = BookProjection.playableTracks(details).getOrNull(trackIndex)
@@ -68,7 +63,6 @@ class SubtitleRepositoryImpl @Inject constructor(
             ?.let { root.treeUri to it }
     }
 
-    /** The listing of the folder that holds the track: the book folder, or a sub-folder (multi-disc books). */
     private fun siblingsOf(treeUri: String, bookFolderId: String, trackUri: String): List<DocumentEntry>? {
         val top = (tree.listChildren(treeUri, bookFolderId) as? DataResult.Success)?.value ?: return null
         if (top.any { tree.documentUri(treeUri, it.documentId) == trackUri }) return top

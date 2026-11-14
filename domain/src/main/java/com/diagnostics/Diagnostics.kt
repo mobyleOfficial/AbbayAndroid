@@ -1,12 +1,7 @@
 package com.diagnostics
 
-/**
- * One line of the playback service's log. A file name is kept apart from the message, so a shared report leaves it
- * out unless the user asks for it.
- */
 data class LogLine(val atMs: Long, val message: String, val fileName: String? = null)
 
-/** Keeps the last [capacity] lines in memory; thread-safe. */
 class LogRingBuffer(private val capacity: Int = CAPACITY) {
     private val lines = ArrayDeque<LogLine>()
 
@@ -24,21 +19,17 @@ class LogRingBuffer(private val capacity: Int = CAPACITY) {
     }
 }
 
-/** The Diagnostics screen. */
 data class DiagnosticsReport(
     val androidVersion: String,
     val device: String,
     val appVersion: String,
-    /** Decoder names per supported audio MIME type; an empty list means no decoder. */
     val decoders: Map<String, List<String>>,
-    /** The platform Opus encoder, or null when the device has none (the converter is then hidden). */
     val opusEncoder: String?,
     val outputSampleRate: Int?,
     val outputFramesPerBuffer: Int?,
     val log: List<LogLine>,
 )
 
-/** The report as plain text for "Share diagnostics". Pure function. */
 object DiagnosticsText {
     const val HIDDEN_FILE_NAME = "<file>"
 

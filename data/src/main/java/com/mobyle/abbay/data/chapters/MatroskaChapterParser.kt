@@ -1,10 +1,6 @@
 package com.mobyle.abbay.data.chapters
 
-/**
- * Matroska / WebM chapters (`Chapters/EditionEntry/ChapterAtom`). The `Chapters` element
- * is located through the `SeekHead`, or by walking the segment's top-level elements until the first cluster.
- */
-@Suppress("CyclomaticComplexMethod", "NestedBlockDepth", "TooManyFunctions") // Mirrors the format's structure.
+@Suppress("CyclomaticComplexMethod", "NestedBlockDepth", "TooManyFunctions")
 object MatroskaChapterParser {
     private const val ID_EBML = 0x1A45DFA3L
     private const val ID_SEGMENT = 0x18538067L
@@ -110,7 +106,6 @@ object MatroskaChapterParser {
         return elements
     }
 
-    /** EBML variable-length integer; returns the value (-1 for "unknown size") and its length in bytes. */
     private fun vint(data: ByteArray, offset: Int, keepMarker: Boolean): Pair<Long, Int>? {
         if (offset >= data.size) return null
         val first = Bytes.u8(data, offset)

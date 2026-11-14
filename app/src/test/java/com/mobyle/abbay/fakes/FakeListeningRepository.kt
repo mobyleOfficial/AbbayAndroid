@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 
-/** In-memory bookmarks and history. */
 class FakeListeningRepository : ListeningRepository {
     val bookmarks = MutableStateFlow(emptyList<Bookmark>())
     val history = MutableStateFlow(emptyList<HistoryEvent>())

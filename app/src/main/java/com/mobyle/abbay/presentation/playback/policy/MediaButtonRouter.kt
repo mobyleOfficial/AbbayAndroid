@@ -8,10 +8,6 @@ import com.settings.HeadsetLongPressAction
 import com.settings.HeadsetSkipAction
 import kotlinx.coroutines.CoroutineScope
 
-/**
- * Headset and Bluetooth buttons with the mapping chosen in Settings → Controls.
- * Play/pause goes through [sessionPlayer], so smart rewind applies; bookmark and sleep timer go to [onLongPressAction].
- */
 class MediaButtonRouter(
     scope: CoroutineScope,
     private val sessionPlayer: Player,
@@ -30,7 +26,6 @@ class MediaButtonRouter(
         }
     }
 
-    /** Returns true when the key was handled here; other keys stay with Media3. */
     fun handle(event: KeyEvent): Boolean {
         val isFirstDown = event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0
         when (event.keyCode) {

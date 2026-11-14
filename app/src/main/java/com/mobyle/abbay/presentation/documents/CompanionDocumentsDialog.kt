@@ -32,7 +32,6 @@ import com.mobyle.abbay.presentation.common.widgets.AbbayAlertDialog
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
 import com.model.CompanionDocument
 
-/** Lists the book's text files; the chosen one opens in another app with a read grant. */
 @Composable
 fun CompanionDocumentsDialog(viewModel: CompanionDocumentsViewModel) {
     val bookId by viewModel.bookId.collectAsState()
@@ -79,7 +78,6 @@ private fun DocumentRow(document: CompanionDocument, onClick: () -> Unit) {
     }
 }
 
-/** ACTION_VIEW with a read grant; false when no app can show the file. */
 private fun open(context: Context, document: CompanionDocument): Boolean {
     val intent = Intent(Intent.ACTION_VIEW)
         .setDataAndType(Uri.parse(document.uri), mimeTypeOf(document.name))

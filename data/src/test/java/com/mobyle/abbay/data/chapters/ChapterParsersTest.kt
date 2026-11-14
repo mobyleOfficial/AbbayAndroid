@@ -7,7 +7,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Every chapter source, on files built byte by byte in the test. */
 class ChapterParsersTest {
     private val expected = listOf(ParsedChapter("Prologue", 0), ParsedChapter("The Storm", 61_500), ParsedChapter("Épilogue", 3_600_250))
 

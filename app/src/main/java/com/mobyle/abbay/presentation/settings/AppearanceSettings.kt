@@ -20,16 +20,20 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.widgets.AbbayDropdownMenu
 import com.mobyle.abbay.presentation.common.widgets.AbbayMenuItem
+import com.mobyle.abbay.presentation.readalong.rememberIsTouchExplorationOn
 import com.settings.AppLanguage
 import com.settings.AppSettings
 import com.settings.ProgressLabels
 import com.settings.ThemeMode
 
-/** Appearance. */
 @Composable
 fun AppearanceSettings(viewModel: SettingsViewModel) {
     val themeMode by viewModel.themeMode.collectAsState()
@@ -56,14 +60,11 @@ fun AppearanceSettings(viewModel: SettingsViewModel) {
             onSelect = { chosen ->
                 if (chosen != language) {
                     viewModel.changeLanguage(chosen)
-                    // Android 13+ recreates the activity itself; before, the app applies the language.
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) isRecreationPending = true
                 }
             },
         )
         if (isRecreationPending) {
-            // After the menu's popup has left the composition: recreating while its window closes left the activity
-            // without a focused window (ANR on the Android 12 emulator).
             LaunchedEffect(Unit) {
                 withFrameNanos { }
                 activity?.recreate()
@@ -72,7 +73,6 @@ fun AppearanceSettings(viewModel: SettingsViewModel) {
     }
 }
 
-/** "Send crash reports and usage statistics" and what is sent. */
 @Composable
 fun PrivacySettings(viewModel: SettingsViewModel) {
     val shareDiagnostics by viewModel.shareDiagnostics.collectAsState()
@@ -89,16 +89,42 @@ fun PrivacySettings(viewModel: SettingsViewModel) {
     }
 }
 
+/**
+ * Features still being tried out: Read-along. Not drawn while TalkBack runs (as on iOS, where the owner chose not to
+ * offer the experimental switch to screen-reader users); the stored setting is left as it is. Turning it off deletes
+ * every transcript and speech model it made.
+ */
+@Composable
+fun ExperimentalSettings(viewModel: SettingsViewModel) {
+    if (rememberIsTouchExplorationOn()) return
+    val isEnabled by viewModel.readAlongEnabled.collectAsState()
+    Column {
+        SectionHeader(R.string.settings_experimental)
+        SwitchSetting(R.string.read_along_toggle, isEnabled, onChange = viewModel::changeReadAlongEnabled)
+        Text(
+            text = stringResource(R.string.read_along_footer),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        )
+    }
+}
+
 @Composable
 private fun DisplaySettings(settings: AppSettings, change: ((AppSettings) -> AppSettings) -> Unit) {
     SwitchSetting(R.string.settings_cover_on_lock_screen, settings.coverOnLockScreen) { enabled ->
         change { it.copy(coverOnLockScreen = enabled) }
     }
-    SwitchSetting(R.string.settings_keep_screen_on, settings.keepScreenOnWhileCharging) { enabled ->
+    SwitchSetting(
+        R.string.settings_keep_screen_on,
+        settings.keepScreenOnWhileCharging,
+        info = R.string.settings_info_keep_screen_on,
+    ) { enabled ->
         change { it.copy(keepScreenOnWhileCharging = enabled) }
     }
     ChoiceSetting(
         label = stringResource(R.string.settings_progress_labels),
+        info = R.string.settings_info_progress_labels,
         options = ProgressLabels.entries,
         selected = settings.progressLabels,
         optionLabel = { labels ->
@@ -141,10 +167,11 @@ private fun ThemeSetting(themeMode: ThemeMode, onChange: (ThemeMode) -> Unit) {
 }
 
 @Composable
-internal fun SettingSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+internal fun SettingSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, enabled: Boolean = true) {
     Switch(
         checked = checked,
         onCheckedChange = onCheckedChange,
+        enabled = enabled,
         colors = SwitchDefaults.colors(
             checkedThumbColor = MaterialTheme.colorScheme.tertiary,
             checkedTrackColor = MaterialTheme.colorScheme.tertiary,
@@ -155,10 +182,12 @@ internal fun SettingSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit)
 @Composable
 internal fun SectionHeader(labelResource: Int) {
     Text(
-        text = stringResource(labelResource),
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp),
+        text = stringResource(labelResource).uppercase(),
+        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECTION_HEADER_ALPHA),
+        modifier = Modifier
+            .padding(start = 16.dp, top = 24.dp, bottom = 6.dp)
+            .semantics { heading() },
     )
 }
 
@@ -175,3 +204,5 @@ private fun ThemeMode.labelResource(): Int = when (this) {
     ThemeMode.DARK -> R.string.theme_dark
     ThemeMode.BLACK -> R.string.theme_black
 }
+
+private const val SECTION_HEADER_ALPHA = 0.7f

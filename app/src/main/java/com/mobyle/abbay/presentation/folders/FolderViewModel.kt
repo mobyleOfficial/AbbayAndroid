@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
-/** Folder view of the library; opened at a book's folder by "Show in folder view". */
 @HiltViewModel
 class FolderViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
@@ -30,7 +29,6 @@ class FolderViewModel @Inject constructor(
 
     val roots: StateFlow<List<LibraryRoot>> = observeLibraryRoots().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    /** Null until the database answers. */
     val level: StateFlow<FolderLevel?> = combine(roots, observeBooks(), mutableLocation) { roots, books, location ->
         FolderTree.level(roots, books, location)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
@@ -39,7 +37,6 @@ class FolderViewModel @Inject constructor(
         mutableLocation.value = location
     }
 
-    /** Back goes one folder up; false at the top, where the screen closes. */
     fun goUp(): Boolean {
         val current = mutableLocation.value
         mutableLocation.value = when {

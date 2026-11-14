@@ -8,19 +8,13 @@ import com.mobyle.abbay.infra.dsp.SilenceTrimmer
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
-/**
- * Shared between the service (main thread) and the audio processors (playback thread) without locks
- *: the service publishes immutable values; processors read them at the next buffer.
- */
 class EffectsState {
     private val effects = AtomicReference(AudioEffects())
     private val boundaries = AtomicReference(TrackBoundaries.NONE)
 
-    /** Track time (µs) of the buffer the sink is handing to the processors now. */
     private val bufferTrackTimeUs = AtomicLong(0L)
     private val savedSilenceUs = AtomicLong(0L)
 
-    /** Set by the noise reduction processor while it runs; the underrun watchdog reads it. */
     @Volatile
     var isNoiseReductionRunning = false
 
@@ -40,7 +34,6 @@ class EffectsState {
         savedSilenceUs.addAndGet(microseconds)
     }
 
-    /** Silence saved since the last call, in milliseconds (the service adds it to the book's total). */
     fun takeSavedSilenceMs(): Long {
         val microseconds = savedSilenceUs.get()
         val whole = microseconds / MICROSECONDS_PER_MILLISECOND
@@ -48,7 +41,6 @@ class EffectsState {
         return whole
     }
 
-    /** Where silence must not be dropped in the current track: its first and last second and around chapter edges. */
     data class TrackBoundaries(val durationUs: Long, val chapterEdgesUs: List<Long>) {
         fun isProtected(startUs: Long, endUs: Long): Boolean {
             if (startUs < PROTECTION_US) return true
@@ -59,7 +51,6 @@ class EffectsState {
         companion object {
             val NONE = TrackBoundaries(0L, emptyList())
 
-            /** No audio is dropped within 1.0 s of a boundary. */
             const val PROTECTION_US = 1_000_000L
         }
     }
@@ -74,7 +65,6 @@ class EffectsState {
             SilenceTrimLevel.STRONG -> SilenceTrimmer.STRONG
         }
 
-        /** The boost table. */
         fun boostSettingsOf(level: BoostLevel): LoudnessCompressor.Settings = when (level) {
             BoostLevel.OFF -> LoudnessCompressor.Settings.OFF
             BoostLevel.LOW -> LoudnessCompressor.Settings(thresholdDb = -24f, ratio = 2f, makeUpDb = 4f)

@@ -39,10 +39,6 @@ import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.CharacterNote
 import kotlinx.coroutines.launch
 
-/**
- * Characters of the loaded book, by first appearance. Tap edits, the play
- * button jumps to the first appearance, delete can be undone.
- */
 @Composable
 fun CharactersScreen(
     viewModel: CharactersViewModel = hiltViewModel(),

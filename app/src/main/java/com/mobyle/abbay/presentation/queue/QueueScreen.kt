@@ -39,10 +39,6 @@ import com.mobyle.abbay.presentation.common.widgets.SimpleBookRow
 import com.model.Book
 import kotlin.math.roundToInt
 
-/**
- * The queue. Rows are reordered by dragging the handle after a long press;
- * screen readers get Move up / Move down actions instead. Tapping a book plays it now.
- */
 @Composable
 fun QueueScreen(viewModel: QueueViewModel = hiltViewModel(), onPlay: (Book) -> Unit, close: () -> Unit) {
     val queue by viewModel.queue.collectAsState()
@@ -110,7 +106,6 @@ private fun ReorderableQueue(books: List<Book>, onPlay: (Book) -> Unit, onMove: 
     }
 }
 
-/** The handle of a row: a long press starts the drag; [onEnd] gets true when the drag was canceled. */
 @Composable
 private fun DragHandle(key: String, onStart: () -> Unit, onDrag: (Float) -> Unit, onEnd: (Boolean) -> Unit) {
     Box(

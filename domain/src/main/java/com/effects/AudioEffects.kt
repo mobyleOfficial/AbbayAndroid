@@ -1,10 +1,8 @@
 package com.effects
 
-/** Silence trimming levels. */
 enum class SilenceTrimLevel { OFF, GENTLE, MODERATE, STRONG }
 
-/** Noise reduction strength: the share of denoised signal in the mix. */
-@Suppress("MagicNumber") // The three noise reduction strengths.
+@Suppress("MagicNumber")
 enum class NoiseReductionLevel(val wet: Float) {
     OFF(0f),
     LOW(0.5f),
@@ -12,13 +10,8 @@ enum class NoiseReductionLevel(val wet: Float) {
     HIGH(1f)
 }
 
-/** Loudness boost levels. */
 enum class BoostLevel { OFF, LOW, MEDIUM, HIGH }
 
-/**
- * The audio effects of one book. [equalizerGains] holds the 10 band gains in dB
- * (−12…+12); [silenceSavedMs] is the time silence trimming has saved in this book so far.
- */
 data class AudioEffects(
     val silenceTrim: SilenceTrimLevel = SilenceTrimLevel.OFF,
     val boost: BoostLevel = BoostLevel.OFF,
@@ -38,7 +31,6 @@ data class AudioEffects(
         const val PITCH_STEP = 0.5f
         val FLAT: List<Int> = List(BAND_COUNT) { 0 }
 
-        /** `pitch = 2^(semitones / 12)`. */
         fun pitchFactor(semitones: Float): Float = Math.pow(2.0, semitones / SEMITONES_PER_OCTAVE).toFloat()
 
         private const val SEMITONES_PER_OCTAVE = 12.0

@@ -7,7 +7,6 @@ import com.mobyle.abbay.data.database.entity.EqualizerPresetEntity
 import com.mobyle.abbay.data.database.entity.ListeningStateEntity
 import kotlinx.coroutines.flow.Flow
 
-/** Effect columns of `listening_state` and the user equalizer presets. */
 @Dao
 interface AudioEffectsDao {
     @Query("SELECT * FROM listening_state WHERE book_id = :bookId")

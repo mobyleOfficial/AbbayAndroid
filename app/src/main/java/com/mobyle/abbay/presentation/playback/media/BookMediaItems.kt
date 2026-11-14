@@ -9,10 +9,6 @@ import com.model.Book
 import com.model.BookFile
 import com.model.MultipleBooks
 
-/**
- * A book as a Media3 playlist: one [MediaItem] per track with metadata for the notification and lock screen, and
- * the book id and track duration in the extras.
- */
 object BookMediaItems {
     private const val EXTRA_BOOK_ID = "bookId"
     private const val EXTRA_TRACK_DURATION_MS = "trackDurationMs"
@@ -22,7 +18,6 @@ object BookMediaItems {
     private const val EXTRA_CHAPTER_TITLES = "chapterTitles"
     private const val EXTRA_SAVED_BOOK_POSITION_MS = "savedBookPositionMs"
 
-    /** The playlist of [book] and the index of the track to start from. */
     fun of(book: Book): Pair<List<MediaItem>, Int> {
         val (tracks, startIndex) = when (book) {
             is MultipleBooks -> book.bookFileList to book.currentBookPosition
@@ -73,7 +68,6 @@ object BookMediaItems {
 
     fun chapterStartsOf(item: MediaItem): List<Long> = item.mediaMetadata.extras?.getLongArray(EXTRA_CHAPTER_STARTS_MS)?.toList().orEmpty()
 
-    /** The book's last pause as stored when it was loaded (smart rewind after a restart). */
     fun storedPauseOf(item: MediaItem?): PauseRecord? {
         val extras = item?.mediaMetadata?.extras ?: return null
         val bookId = extras.getString(EXTRA_BOOK_ID) ?: return null

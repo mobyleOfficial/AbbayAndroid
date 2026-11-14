@@ -5,7 +5,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Every command that the service handles in Phase 2. */
 class PlaybackCommandHandlerTest {
     private class FakePlaylistPlayer(
         override var currentPosition: TrackPosition,
@@ -50,7 +49,6 @@ class PlaybackCommandHandlerTest {
         assertTrue(handler.execute(PlaybackCommands.SEEK_TO_BOOK_POSITION, deltaMs = 0L, positionMs = 170_000L))
         assertEquals(TrackPosition(2, 80_000L), player.currentPosition)
 
-        // 170 s - 100 s = 70 s of book time: 10 s into the second track.
         assertTrue(handler.execute(PlaybackCommands.SEEK_BY, deltaMs = -100_000L, positionMs = 0L))
         assertEquals(TrackPosition(1, 10_000L), player.currentPosition)
 

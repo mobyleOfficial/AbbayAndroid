@@ -3,11 +3,6 @@ package com.mobyle.abbay.presentation.playback.auto
 import com.model.Book
 import java.text.Normalizer
 
-/**
- * Voice search of Android Auto: a fuzzy match on title and author. Words are
- * compared without case or accents; a book scores for every query word found in its title (more) or author (less), and
- * a word that differs by one letter still counts, since speech recognition misspells names.
- */
 object BookSearch {
     fun search(books: List<Book>, query: String): List<Book> {
         val queryWords = words(query)
@@ -38,7 +33,6 @@ object BookSearch {
         .split(NON_LETTERS)
         .filter { it.length > 1 }
 
-    /** True when [first] becomes [second] with one insertion, deletion or substitution (words of 4+ letters). */
     private fun isOneEditAway(first: String, second: String): Boolean {
         if (minOf(first.length, second.length) < MINIMUM_FUZZY_LENGTH || kotlin.math.abs(first.length - second.length) > 1) return false
         var firstIndex = 0

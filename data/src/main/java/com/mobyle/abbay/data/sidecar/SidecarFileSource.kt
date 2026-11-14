@@ -11,16 +11,11 @@ import com.model.DataResult
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-/**
- * `<book folder>/.abbay/book.json` through the Storage Access Framework. Writes go to
- * `book.json.tmp` first and are renamed over the old file; providers without rename get the file written in place.
- */
 class SidecarFileSource @Inject constructor(
     @ApplicationContext private val context: Context,
     private val tree: DocumentTreeSource,
     private val contentSource: DocumentContentDataSource,
 ) {
-    /** The sidecar text, or null when the `.abbay` folder holds none. */
     fun read(treeUri: String, sidecarFolderDocumentId: String): DataResult<String?> =
         when (val listing = tree.listChildren(treeUri, sidecarFolderDocumentId)) {
             is DataResult.Failure -> listing
@@ -37,11 +32,9 @@ class SidecarFileSource @Inject constructor(
             }
         }
 
-    /** Document id of the `.abbay` folder inside [bookFolderDocumentId], or null. */
     fun sidecarFolderOf(treeUri: String, bookFolderDocumentId: String): String? =
         childNamed(treeUri, bookFolderDocumentId, FOLDER_NAME, isDirectory = true)?.documentId
 
-    /** Writes [text] as the sidecar of the book folder [bookFolderDocumentId], creating `.abbay` when needed. */
     fun write(treeUri: String, bookFolderDocumentId: String, text: String): DataResult<Unit> = guarded {
         val resolver = context.contentResolver
         val sidecarFolder = childNamed(treeUri, bookFolderDocumentId, FOLDER_NAME, isDirectory = true)
@@ -56,7 +49,6 @@ class SidecarFileSource @Inject constructor(
         val sidecarFolderId = DocumentsContract.getDocumentId(sidecarFolder)
         val bytes = text.toByteArray(Charsets.UTF_8)
 
-        // The temporary name has no .json extension, so the provider does not add one.
         val temporary = childNamed(treeUri, sidecarFolderId, TEMPORARY_NAME, isDirectory = false)?.let { uriOf(treeUri, it.documentId) }
             ?: DocumentsContract.createDocument(resolver, sidecarFolder, BINARY_MIME_TYPE, TEMPORARY_NAME)
             ?: error("Cannot create $TEMPORARY_NAME")
@@ -85,7 +77,6 @@ class SidecarFileSource @Inject constructor(
 
     private fun uriOf(treeUri: String, documentId: String): Uri = Uri.parse(tree.documentUri(treeUri, documentId))
 
-    /** Data sources map every failure to a [DataResult]. */
     @Suppress("SwallowedException", "TooGenericExceptionCaught")
     private inline fun guarded(block: () -> Unit): DataResult<Unit> = try {
         block()

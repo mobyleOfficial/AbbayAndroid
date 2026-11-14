@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 
-/** In-memory listening days. */
 class FakeStatisticsRepository : StatisticsRepository {
     val days = MutableStateFlow(emptyList<ListeningDay>())
 

@@ -8,7 +8,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Statistics, queue and characters tables; deleting a book removes its rows (FEAT-07…FEAT-09). */
 @RunWith(AndroidJUnit4::class)
 class Migration5To6Test {
     @get:Rule

@@ -5,12 +5,6 @@ package com.mobyle.abbay.data.database
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-/**
- * Version 1 (AbbayAndroid book list) → version 2, per
- * The version 1 tables are kept, renamed, until the legacy progress
- * import has matched them to scanned books; the new library tables start empty and are filled by the first scan.
- * The CREATE statements are the ones Room exported in `schemas/.../2.json`.
- */
 object Migration1To2 : Migration(1, 2) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE `BookFileEntity` RENAME TO `legacy_book_file`")

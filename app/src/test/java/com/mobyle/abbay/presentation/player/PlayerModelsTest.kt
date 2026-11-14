@@ -19,7 +19,6 @@ class PlayerModelsTest {
 
     @Test
     fun sliderHasOneStopPerFiveHundredths() {
-        // 0.5, 0.55, …, 3.5 is 61 values: the two ends plus 59 steps.
         assertEquals(59, SpeedSteps.SLIDER_STEPS)
     }
 

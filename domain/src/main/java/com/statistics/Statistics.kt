@@ -3,39 +3,29 @@ package com.statistics
 import java.time.LocalDate
 import java.time.YearMonth
 
-/** One bar of a chart: a day or a month and its wall-clock listening time. */
 data class PeriodTotal(val start: LocalDate, val wallTimeMs: Long)
 
 data class BookTotal(val bookId: String, val wallTimeMs: Long)
 
-/** The global statistics screen. */
 data class GlobalStatistics(
     val totalWallTimeMs: Long,
     val totalBookTimeMs: Long,
-    /** 7 and 30 bars of one day each, oldest first, ending today. */
     val last7Days: List<PeriodTotal>,
     val last30Days: List<PeriodTotal>,
-    /** The last 365 days as 12 monthly bars (a bar per day would be too thin), oldest first. */
     val last12Months: List<PeriodTotal>,
-    /** Consecutive days with at least 5 min, ending today (or yesterday, while today is still short). */
     val streakDays: Int,
     val topBooks: List<BookTotal>,
     val savedBySpeedMs: Long,
     val savedBySilenceMs: Long,
 )
 
-/** The statistics of one book. */
 data class BookStatistics(
-    /** Days with listening; a day is one session. */
     val sessions: Int,
     val totalWallTimeMs: Long,
-    /** Book time over wall time; 1 when nothing was heard yet. */
     val averageSpeed: Float,
-    /** At the pace of the last 14 days; null when the book was not heard in that time or is finished. */
     val estimatedFinish: LocalDate?,
 )
 
-/** Turns listening days into the screens' numbers. Pure logic, tested on the JVM. */
 object StatisticsAggregator {
     const val STREAK_MINIMUM_MS = 5 * 60_000L
     const val PACE_DAYS = 14L
@@ -59,7 +49,6 @@ object StatisticsAggregator {
         )
     }
 
-    /** [remainingBookTimeMs]: what is left of the book in book time. */
     fun book(days: List<ListeningDay>, remainingBookTimeMs: Long, today: LocalDate): BookStatistics {
         val wall = days.sumOf { it.wallTimeMs }
         val bookTime = days.sumOf { it.bookTimeMs }

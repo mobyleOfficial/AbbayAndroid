@@ -6,10 +6,6 @@ import java.text.Normalizer
 import java.util.Locale
 import javax.inject.Inject
 
-/**
- * Library search on title, author and narrator: every word of the query must start a word of
- * one of those fields, ignoring case and accents. Books whose title matches come first. Pure function.
- */
 class SearchBooks @Inject constructor() {
     private val naturalOrder = NaturalOrderComparator()
 

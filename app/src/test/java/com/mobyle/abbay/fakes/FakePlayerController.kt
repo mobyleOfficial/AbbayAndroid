@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-/** Records every command; tests drive [mutableState] and [mutableErrors] to simulate the engine. */
 class FakePlayerController : PlayerController {
     val mutableState = MutableStateFlow(PlayerState(isConnected = true))
     override val state: StateFlow<PlayerState> = mutableState

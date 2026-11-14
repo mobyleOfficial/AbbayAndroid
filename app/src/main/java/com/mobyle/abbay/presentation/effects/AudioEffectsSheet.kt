@@ -37,10 +37,6 @@ import com.effects.SilenceTrimLevel
 import com.mobyle.abbay.R
 import kotlin.math.roundToInt
 
-/**
- * Audio sheet: silence trim, boost, equalizer, mono/balance and pitch. Noise reduction joins
- * with FX-07. Every change is saved for the book and heard at once.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AudioEffectsSheet(panel: AudioEffectsPanel, onDismiss: () -> Unit) {
@@ -65,7 +61,6 @@ fun AudioEffectsSheet(panel: AudioEffectsPanel, onDismiss: () -> Unit) {
     }
 }
 
-/** First in the sheet, as it is first in the processing chain. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun NoiseSection(effects: AudioEffects, onSelect: (NoiseReductionLevel) -> Unit) {

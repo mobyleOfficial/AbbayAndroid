@@ -25,16 +25,6 @@ import java.net.InetAddress
 import java.net.NetworkInterface
 import javax.inject.Inject
 
-/**
- * Cast. Two modes, chosen by "Apply audio effects when casting":
- * - **Phase 1**: the book's files are served from [LocalMediaServer] and played by Media3's [CastPlayer]
- *   from the local position and speed; the playback service hands its session to it. Effects are not applied.
- * - **Phase 2**: local playback goes on with every effect, but its sound becomes a live WAV stream
- *   ([ProcessedAudioStream]) that the receiver plays; the session, notification, sleep timer, history and statistics
- *   stay with the local player. Every seek or speed change starts a new generation of the stream, which is loaded on
- *   the receiver, and the receiver's position is reported back so the local position follows what is heard.
- * When the session ends, local playback continues at the receiver's position. Does nothing without Google Play services.
- */
 @OptIn(UnstableApi::class)
 class CastBridge @Inject constructor(@ApplicationContext private val context: Context) : RemotePlaybackBridge, SessionAvailabilityListener {
     private var host: RemotePlaybackHost? = null
@@ -57,7 +47,6 @@ class CastBridge @Inject constructor(@ApplicationContext private val context: Co
     }
     private var pollCount = 0
 
-    /** Phase 2 state: the stream, whether the local player wants the receiver playing, the book's title. */
     private var stream: ProcessedAudioStream? = null
     private var isStreamPlaying = false
     private var streamMetadata: MediaMetadata = MediaMetadata.EMPTY
@@ -161,7 +150,6 @@ class CastBridge @Inject constructor(@ApplicationContext private val context: Co
             .build()
         isStreamPlaying = snapshot.playWhenReady
         stream = processed
-        // Called on the playback thread; the Cast player lives on the main thread.
         processed.listener = object : ProcessedAudioStream.Listener {
             override fun onPlay() = runOnMain { setStreamPlaying(player, true) }
 
@@ -181,7 +169,6 @@ class CastBridge @Inject constructor(@ApplicationContext private val context: Co
         if (stream != null) player.playWhenReady = isPlaying
     }
 
-    /** The receiver drops what it buffered and plays the new generation from its start. */
     private fun loadGeneration(player: CastPlayer, liveServer: LocalMediaServer, generation: Int) {
         if (stream?.generation != generation) return
         val item = MediaItem.Builder()
@@ -201,7 +188,6 @@ class CastBridge @Inject constructor(@ApplicationContext private val context: Co
 
     private fun liveMediaId(generation: Int): String = "$LIVE_MEDIA_ID_PREFIX$generation"
 
-    /** The receiver gets the file through the local server, with the item's texts; content:// artwork it cannot read. */
     private fun remoteItem(item: MediaItem, url: String): MediaItem = MediaItem.Builder()
         .setMediaId(item.mediaId)
         .setUri(url)
@@ -226,7 +212,6 @@ class CastBridge @Inject constructor(@ApplicationContext private val context: Co
         )
     }
 
-    /** The first site-local IPv4 address (Wi-Fi or Ethernet), which a receiver on the same network can reach. */
     private fun localAddress(): InetAddress? = runCatching {
         NetworkInterface.getNetworkInterfaces().toList()
             .filter { it.isUp && !it.isLoopback }

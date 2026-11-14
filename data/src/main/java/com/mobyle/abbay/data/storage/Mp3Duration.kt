@@ -15,11 +15,6 @@ import androidx.media3.extractor.TrackOutput
 import androidx.media3.extractor.mp3.Mp3Extractor
 import java.io.InputStream
 
-/**
- * VBR MP3 files without a Xing/Info/VBRI header have no reliable duration in their headers; platform readers
- * extrapolate from the first frames and can be off by minutes. Their duration is computed by reading every frame
- * once. Pure logic over streams, unit-tested on the JVM.
- */
 @OptIn(UnstableApi::class)
 object Mp3Duration {
     private val headerMarkers = listOf("Xing", "Info", "VBRI").map { it.toByteArray(Charsets.US_ASCII) }
@@ -30,7 +25,6 @@ object Mp3Duration {
     private const val SYNCHSAFE_MASK = 0x7F
     private const val FIRST_FRAME_SEARCH_BYTES = 2_048
 
-    /** True when [head] (the first bytes of the file) shows no duration header after the ID3v2 tag. */
     fun needsFullScan(head: ByteArray): Boolean {
         val frameStart = id3TagSize(head)
         if (frameStart >= head.size) return true
@@ -38,10 +32,8 @@ object Mp3Duration {
         return headerMarkers.none { marker -> indexOf(head, marker, frameStart, searchEnd) >= 0 }
     }
 
-    /** Bytes of the file start needed by [needsFullScan], including a large ID3v2 tag. */
     fun headBytesNeeded(firstTenBytes: ByteArray): Int = id3TagSize(firstTenBytes) + FIRST_FRAME_SEARCH_BYTES
 
-    /** Exact duration in milliseconds, reading the whole stream; null when it is not a readable MP3. */
     fun scan(stream: InputStream, lengthBytes: Long): Long? {
         val output = DurationOutput()
         val extractor = Mp3Extractor(Mp3Extractor.FLAG_ENABLE_INDEX_SEEKING)
@@ -62,7 +54,6 @@ object Mp3Duration {
     private fun id3TagSize(head: ByteArray): Int {
         val hasId3 = head.size >= ID3_HEADER_SIZE && head.copyOf(ID3_MAGIC.size).contentEquals(ID3_MAGIC)
         if (!hasId3) return 0
-        // ID3v2 size: 4 "synchsafe" bytes of 7 bits each (ID3v2.4 §3.1).
         val syncSafeSize = ID3_SIZE_BYTES.fold(0) { size, index -> (size shl SYNCHSAFE_BITS) or (head[index].toInt() and SYNCHSAFE_MASK) }
         return ID3_HEADER_SIZE + syncSafeSize
     }

@@ -3,7 +3,6 @@ package com.mobyle.abbay.presentation.playback.extras
 import android.os.Bundle
 import com.player.UpNext
 
-/** The queue countdown as session extras, next to the sleep timer's. */
 object UpNextBundle {
     private const val KEY_BOOK_ID = "upNextBookId"
     private const val KEY_TITLE = "upNextTitle"

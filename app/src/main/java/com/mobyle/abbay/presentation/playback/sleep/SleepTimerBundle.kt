@@ -4,7 +4,6 @@ import android.os.Bundle
 import com.player.SleepTimerMode
 import com.player.SleepTimerState
 
-/** The sleep timer state as session extras, sent by the service and read by the controller. */
 object SleepTimerBundle {
     private const val KEY_MODE = "sleepTimerMode"
     private const val KEY_MINUTES = "sleepTimerMinutes"

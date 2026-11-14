@@ -4,11 +4,6 @@ import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 
-/**
- * "If the device cannot keep up (buffer underruns detected), disable the effect and show a one-time message"
- *: [UNDERRUNS] audio underruns within [WINDOW_MS] while noise reduction runs
- * turn it off for the book.
- */
 @OptIn(UnstableApi::class)
 class NoiseReductionWatchdog(
     private val state: EffectsState,

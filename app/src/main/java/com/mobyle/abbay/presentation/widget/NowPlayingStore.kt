@@ -3,7 +3,6 @@ package com.mobyle.abbay.presentation.widget
 import android.content.Context
 import com.player.NowPlaying
 
-/** The last published [NowPlaying], kept on disk so the widgets can draw it while the app is not running. */
 internal class NowPlayingStore(context: Context) {
     private val preferences = context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE)
 

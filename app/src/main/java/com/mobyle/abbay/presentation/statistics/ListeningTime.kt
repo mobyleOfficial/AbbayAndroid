@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.mobyle.abbay.R
 
-/** "3 h 20 min" or "45 min". */
 @Composable
 fun listeningTime(durationMs: Long): String {
     val totalMinutes = (durationMs / MS_PER_MINUTE).coerceAtLeast(0L)

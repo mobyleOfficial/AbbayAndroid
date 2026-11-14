@@ -5,7 +5,6 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 
-/** [date] is the local date as yyyy-MM-dd. */
 @Entity(
     tableName = "listening_day",
     primaryKeys = ["book_id", "date"],

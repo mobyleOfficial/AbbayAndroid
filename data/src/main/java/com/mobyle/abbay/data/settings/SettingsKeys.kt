@@ -7,11 +7,11 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 
-/** DataStore keys. Names where the spec defines them. */
 internal object SettingsKeys {
     val playWhenAppIsClosed = booleanPreferencesKey("playWhenAppIsClosed")
     val openPlayerOnStartup = booleanPreferencesKey("openPlayerOnStartup")
     val reloadGuideShown = booleanPreferencesKey("reloadGuideShown")
+    val walkthroughShown = booleanPreferencesKey("walkthroughShown")
     val lastBookId = stringPreferencesKey("lastBookId")
     val librarySortOrder = stringPreferencesKey("librarySortOrder")
     val librarySortAscending = booleanPreferencesKey("librarySortAscending")
@@ -67,11 +67,31 @@ internal object SettingsKeys {
     val hiddenQuickActions = stringSetPreferencesKey("hiddenQuickActions")
     val language = stringPreferencesKey("language")
     val castProcessedAudio = booleanPreferencesKey("castProcessedAudio")
+    val readAlongEnabled = booleanPreferencesKey("readAlong")
 
-    /** One key per book: subtitle charsets are rare, so they do not get a column. */
+    val libraryTabOrder = stringPreferencesKey("libraryTabOrder")
+    val hiddenLibraryTabs = stringSetPreferencesKey("hiddenLibraryTabs")
+
     fun subtitleCharset(bookId: Long) = stringPreferencesKey("subtitleCharset.$bookId")
 
-    // Values carried over from the previous app version, consumed by the legacy migration.
+    fun readAlongLanguage(bookId: String) = stringPreferencesKey("readAlongLanguage.$bookId")
+
+    const val READ_ALONG_LANGUAGE_PREFIX = "readAlongLanguage."
+
+    fun readAlongSyncOffset(bookId: String) = longPreferencesKey("readAlongSyncOffset.$bookId")
+
+    const val READ_ALONG_SYNC_OFFSET_PREFIX = "readAlongSyncOffset."
+
+    /** The EPUB chosen for a book's read-along text, when its folder has none. */
+    fun readAlongEpub(bookId: String) = stringPreferencesKey("$READ_ALONG_EPUB_PREFIX$bookId")
+
+    const val READ_ALONG_EPUB_PREFIX = "readAlongEpub."
+
+    /** A book's first tap on Text explained where its text comes from. */
+    fun readAlongIntroSeen(bookId: String) = booleanPreferencesKey("$READ_ALONG_INTRO_SEEN_PREFIX$bookId")
+
+    const val READ_ALONG_INTRO_SEEN_PREFIX = "readAlongIntroSeen."
+
     val legacyFolderUri = stringPreferencesKey("legacyFolderUri")
     val legacyFolderMigrated = booleanPreferencesKey("legacyFolderMigrated")
     val legacySelectedMediaId = stringPreferencesKey("legacySelectedMediaId")

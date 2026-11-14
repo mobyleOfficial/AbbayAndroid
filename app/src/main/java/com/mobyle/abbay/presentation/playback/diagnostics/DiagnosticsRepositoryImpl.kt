@@ -12,7 +12,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-/** Device facts for the Diagnostics screen, read when it opens. */
 class DiagnosticsRepositoryImpl @Inject constructor(@ApplicationContext private val context: Context) : DiagnosticsRepository {
     override suspend fun report(): DiagnosticsReport = withContext(Dispatchers.Default) {
         val codecs = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos
@@ -34,7 +33,6 @@ class DiagnosticsRepositoryImpl @Inject constructor(@ApplicationContext private 
     }
 
     private companion object {
-        /** The formats. */
         val MIME_TYPES = listOf(
             "audio/mpeg",
             "audio/mp4a-latm",

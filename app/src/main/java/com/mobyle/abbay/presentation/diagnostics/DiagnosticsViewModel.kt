@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** About → Diagnostics. */
 @HiltViewModel
 class DiagnosticsViewModel @Inject constructor(private val getDiagnostics: GetDiagnostics) : ViewModel() {
     private val mutableReport = MutableStateFlow<DiagnosticsReport?>(null)

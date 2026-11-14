@@ -1,9 +1,5 @@
 package com.mobyle.abbay.data.sidecar
 
-/**
- * The state of one book as stored in `<book folder>/.abbay/book.json` and in a backup
- * file. Times are epoch milliseconds here and ISO-8601 in the JSON.
- */
 data class SidecarBook(
     val id: String,
     val updatedAt: Long,
@@ -32,7 +28,6 @@ data class SidecarBook(
         val mono: Boolean = false,
         val balance: Float = 0f,
         val noiseReduction: String = "OFF",
-        /** The equalizer gains as stored in the database (a JSON array), or null for flat. */
         val equalizerJson: String? = null,
     )
 

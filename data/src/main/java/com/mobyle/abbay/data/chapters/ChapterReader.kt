@@ -1,6 +1,5 @@
 package com.mobyle.abbay.data.chapters
 
-/** Picks the embedded-chapter parser for a file by its extension (source 2). */
 object ChapterReader {
     fun embeddedChapters(fileName: String, source: ByteSource): List<ParsedChapter> =
         when (fileName.substringAfterLast('.', "").lowercase()) {

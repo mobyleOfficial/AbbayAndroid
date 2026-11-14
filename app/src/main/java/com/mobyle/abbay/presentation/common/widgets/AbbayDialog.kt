@@ -15,10 +15,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.window.DialogProperties
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
 
-/**
- * The app's dialog: the theme's surface with the content color for icon, title and text, like the menus.
- * Material's defaults do not fit the Abbay roles, where `primary` is the background color.
- */
 @Composable
 fun AbbayAlertDialog(
     onDismissRequest: () -> Unit,
@@ -44,10 +40,6 @@ fun AbbayAlertDialog(
     properties = properties,
 )
 
-/**
- * A text button in the accent color (Material's default is `primary`, the app's background color). The app's
- * typography carries a text color, which would win over the button's content color, so it is cleared for the label.
- */
 @Composable
 fun AbbayTextButton(
     onClick: () -> Unit,
@@ -66,7 +58,6 @@ fun AbbayTextButton(
     CompositionLocalProvider(LocalTextStyle provides LocalTextStyle.current.copy(color = Color.Unspecified)) { content() }
 }
 
-/** Accent text; [isDestructive] uses the error color, for actions such as Delete. */
 @Composable
 fun abbayTextButtonColors(isDestructive: Boolean = false): ButtonColors = ButtonDefaults.textButtonColors(
     contentColor = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.tertiary,

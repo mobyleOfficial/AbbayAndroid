@@ -33,11 +33,6 @@ import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.theme.AbbayColors
 import com.statistics.PeriodTotal
 
-/**
- * Listening time per day or month: one series, so one accent color and no legend. Bars have rounded tops on a
- * recessive baseline with a gap between them; tapping a bar shows its value, and screen readers get every value as
- * text (the chart's table view).
- */
 @Composable
 fun ListeningBarChart(bars: List<PeriodTotal>, labelOf: (PeriodTotal) -> String, modifier: Modifier = Modifier) {
     var selected by remember(bars) { mutableStateOf<Int?>(null) }
@@ -111,7 +106,6 @@ private fun DrawScope.drawBars(bars: List<PeriodTotal>, maximum: Long, selected:
     }
 }
 
-/** First, middle and last labels: enough to place the bars without crowding. */
 @Composable
 private fun AxisLabels(labels: List<String>) {
     if (labels.isEmpty()) return

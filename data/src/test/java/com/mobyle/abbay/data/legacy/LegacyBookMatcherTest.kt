@@ -7,7 +7,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-/** Legacy books are matched by file names. */
 class LegacyBookMatcherTest {
     private val candidates = listOf(
         Candidate(1, "Stories of the Sea", listOf("01.mp3", "02.mp3", "03.mp3")),

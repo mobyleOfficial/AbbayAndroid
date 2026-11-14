@@ -5,7 +5,6 @@ import com.model.BookDetails
 import com.model.BookOverrides
 import com.model.UnplayableFile
 
-/** Library tables → [BookDetails]. */
 internal object BookDetailsMapper {
     private const val UNSUPPORTED_EXTENSION = ".wma"
 

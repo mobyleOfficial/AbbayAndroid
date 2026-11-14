@@ -17,7 +17,6 @@ import androidx.compose.ui.unit.dp
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
 
-/** "Folder access lost — reconnect". Icon plus text, never color alone. */
 @Composable
 fun ReconnectBanner(folderName: String, onReconnect: () -> Unit) {
     Row(

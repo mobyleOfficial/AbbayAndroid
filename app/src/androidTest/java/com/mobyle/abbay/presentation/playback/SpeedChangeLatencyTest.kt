@@ -18,10 +18,6 @@ import org.junit.runner.RunWith
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-/**
- * Phase 3 acceptance: a speed change applies within 100 ms. The player's position follows the
- * audio actually leaving the AudioTrack, so the moment its slope changes is the moment the new speed is heard.
- */
 @RunWith(AndroidJUnit4::class)
 class SpeedChangeLatencyTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -29,16 +25,12 @@ class SpeedChangeLatencyTest {
 
     @Test
     fun speedChangesAreHeardWithinOneHundredMilliseconds() {
-        // The emulator's virtual audio device corrects its timestamps ("device stall"), so its positions are not a
-        // measure of real output; the criterion is checked on real hardware.
         assumeFalse("needs real audio hardware", Build.HARDWARE in EMULATOR_HARDWARE)
-        // Both directions, plus the ends of the 0.5–3.5 range.
         val latencies = SPEED_CHANGES.map { (from, to) -> measureOnce(from, to) }
         Log.i(TAG, "speed change latencies (ms): $latencies")
         assertTrue("latencies $latencies", latencies.max() <= LIMIT_MS)
     }
 
-    /** Plays at [from], switches to [to], returns ms until the position advances at the new rate. */
     private fun measureOnce(from: Float, to: Float): Long {
         val samples = mutableListOf<Pair<Long, Long>>()
         var switchedAt = 0L
@@ -54,7 +46,6 @@ class SpeedChangeLatencyTest {
             player.addListener(object : Player.Listener {
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
                     if (!isPlaying) return
-                    // Let output settle, then switch and sample every 5 ms.
                     mainHandler.postDelayed({
                         switchedAt = SystemClock.elapsedRealtime()
                         player.setPlaybackSpeed(to)
@@ -85,10 +76,6 @@ class SpeedChangeLatencyTest {
         }
     }
 
-    /**
-     * First moment the position rate, over 50 ms windows, crosses halfway from [from] to [to] and stays there for two
-     * windows. ExoPlayer later smooths its position estimate, so the start of the change is what tracks the audio.
-     */
     private fun switchTime(samples: List<Pair<Long, Long>>, switchedAt: Long, from: Float, to: Float): Long {
         val midpoint = (from + to) / 2
         val rates = samples.windowed(RATE_WINDOW_SAMPLES).map { window ->

@@ -10,15 +10,9 @@ import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastState
 import com.google.android.gms.cast.framework.CastStateListener
 
-/**
- * The Cast route button, a platform view, shown only while a Cast device is on the network and tinted with the
- * app's content color. Its dialogs need an AppCompat theme, which the Compose activity does not have, so the view
- * gets one.
- */
 object CastRouteButton {
     fun create(context: Context, tint: Int): View? = runCatching {
         val castContext = CastContext.getSharedInstance(context.applicationContext)
-        // A dark AppCompat theme draws a light icon and the other way round: follow the app's content color.
         val theme = if (ColorUtils.calculateLuminance(tint) > HALF) {
             androidx.appcompat.R.style.Theme_AppCompat_NoActionBar
         } else {

@@ -30,7 +30,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** The MP3 → Opus converter for one book, or for a library folder chosen on the screen. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class ConverterViewModel @Inject constructor(
@@ -63,7 +62,6 @@ class ConverterViewModel @Inject constructor(
     val totalSaved: StateFlow<Long> = observeConversion.totalSaved().stateIn(viewModelScope, SharingStarted.Eagerly, 0L)
     val settings: StateFlow<AppSettings> = observeAppSettings().stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
 
-    /** Null while counting, or when no scope is chosen. */
     val plan: StateFlow<ConversionPlan?> = combine(mutableScope, mutableOptions) { scope, options -> scope to options }
         .flatMapLatest { (scope, options) ->
             flow {
@@ -74,7 +72,6 @@ class ConverterViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     init {
-        // One library folder: nothing to choose.
         viewModelScope.launch {
             roots.collect { list ->
                 if (mutableScope.value == null &&

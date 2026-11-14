@@ -4,10 +4,6 @@ import android.content.Context
 import androidx.datastore.migrations.SharedPreferencesMigration
 import androidx.datastore.preferences.core.Preferences
 
-/**
- * Moves the previous version's SharedPreferences ("Prefs") into DataStore, keeping every value
- *. The old file is deleted by DataStore afterwards.
- */
 internal fun legacyPreferencesMigration(context: Context) = SharedPreferencesMigration<Preferences>(
     context = context,
     sharedPreferencesName = LEGACY_PREFERENCES_NAME,
@@ -32,7 +28,6 @@ private const val RELOAD_GUIDE = "RELOAD_GUIDE"
 private const val BOOK_FOLDER_PATH = "BOOK_FOLDER_PATH"
 private const val LAST_SELECTED_BOOK_ID = "LAST_SELECTED_BOOK_ID"
 
-// APP_LIFE_STATUS and BOOK_POSITION are no longer used and are dropped with the old file.
 private val LEGACY_KEYS = setOf(
     PLAY_WHEN_APP_IS_CLOSED,
     OPEN_PLAYER_IN_STARTUP,

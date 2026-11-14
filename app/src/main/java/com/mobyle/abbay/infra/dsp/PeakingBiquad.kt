@@ -5,10 +5,6 @@ import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.sin
 
-/**
- * Peaking EQ biquad from the RBJ *Audio EQ Cookbook*, Direct Form II transposed, one state per channel. Coefficients
- * are computed in double precision.
- */
 class PeakingBiquad(private val channelCount: Int) {
     private var b0 = 1.0
     private var b1 = 0.0

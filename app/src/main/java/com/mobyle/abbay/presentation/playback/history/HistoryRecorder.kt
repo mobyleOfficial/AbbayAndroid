@@ -8,10 +8,6 @@ import com.mobyle.abbay.presentation.playback.command.TrackPosition
 import com.mobyle.abbay.presentation.playback.media.BookMediaItems
 import com.model.HistoryEventType
 
-/**
- * Turns player events into history entries: Play, Pause, Seek and
- * ChapterJump. Sleep-timer, bookmark and finished events are recorded where they happen.
- */
 @OptIn(UnstableApi::class)
 class HistoryRecorder(
     private val player: Player,
@@ -21,7 +17,6 @@ class HistoryRecorder(
     private var isRecordingMoves = true
     private var nextPauseType: HistoryEventType? = null
 
-    /** Runs a seek made by the app itself (smart rewind) without logging it as a user move. */
     fun withoutMoves(seek: () -> Unit) {
         isRecordingMoves = false
         try {
@@ -31,7 +26,6 @@ class HistoryRecorder(
         }
     }
 
-    /** The next pause is logged as [type] instead of Pause (the sleep timer stopping playback). */
     fun markNextPauseAs(type: HistoryEventType) {
         nextPauseType = type
     }

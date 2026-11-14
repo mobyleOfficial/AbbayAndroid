@@ -22,13 +22,10 @@ import androidx.compose.ui.unit.dp
 import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.widgets.AbbayAlertDialog
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
+import com.mobyle.abbay.presentation.common.widgets.abbayTextFieldColors
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.CharacterNote
 
-/**
- * Adds or edits a character. "First appears here" stores the player's position; a new character has it checked, so
- * adding one while listening is a name and one tap.
- */
 @Composable
 fun CharacterDialog(character: CharacterNote, currentPositionMs: Long?, onSave: (CharacterNote) -> Unit, onDismiss: () -> Unit) {
     val isNew = character.id == 0L
@@ -47,11 +44,13 @@ fun CharacterDialog(character: CharacterNote, currentPositionMs: Long?, onSave: 
                     onValueChange = { name = it.take(CharacterNote.MAX_NAME_LENGTH) },
                     label = { Text(stringResource(R.string.characters_name)) },
                     singleLine = true,
+                    colors = abbayTextFieldColors(),
                 )
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it.take(CharacterNote.MAX_DESCRIPTION_LENGTH) },
                     label = { Text(stringResource(R.string.characters_description)) },
+                    colors = abbayTextFieldColors(),
                     modifier = Modifier.heightIn(min = 96.dp),
                 )
                 position?.let { positionMs ->

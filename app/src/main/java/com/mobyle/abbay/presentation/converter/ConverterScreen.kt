@@ -52,7 +52,6 @@ import com.mobyle.abbay.presentation.common.widgets.AbbayScreen
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
 import com.mobyle.abbay.presentation.settings.SettingSwitch
 
-/** Options, estimate, progress and total savings of the converter. */
 @Composable
 fun ConverterScreen(viewModel: ConverterViewModel = hiltViewModel(), close: () -> Unit) {
     AbbayScreen(title = stringResource(R.string.converter_title), onClose = close) {
@@ -104,7 +103,6 @@ private fun Setup(viewModel: ConverterViewModel, lastRun: ConversionProgress) {
             color = AbbayColors.content,
         )
     }
-    // The app's backgrounds are the primary color, so buttons use the secondary pair (as the empty library does).
     Button(
         onClick = viewModel::start,
         enabled = scope != null && (plan?.fileCount ?: 0) > 0,
@@ -132,7 +130,6 @@ private fun Setup(viewModel: ConverterViewModel, lastRun: ConversionProgress) {
     }
 }
 
-/** Bitrate, channels, cover, what happens to the MP3s, and the battery minimum. */
 @Composable
 private fun OptionSections(viewModel: ConverterViewModel, onAskDelete: () -> Unit) {
     val options by viewModel.options.collectAsState()

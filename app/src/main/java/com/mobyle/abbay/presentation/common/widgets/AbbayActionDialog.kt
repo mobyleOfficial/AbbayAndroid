@@ -10,11 +10,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.mobyle.abbay.R
 
-/**
- * A question or a notice with one action. [isDestructive] (the default, for deletions) paints the icon and the
- * action in the error color and offers Cancel; a notice (`isDestructive = false`, [showCancel] false) uses the
- * accent color and only its action.
- */
 @Composable
 fun AbbayActionDialog(
     title: String,

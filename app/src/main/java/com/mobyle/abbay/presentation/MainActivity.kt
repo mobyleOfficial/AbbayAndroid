@@ -2,7 +2,9 @@ package com.mobyle.abbay.presentation
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.service.quicksettings.TileService
 import android.widget.Toast
@@ -10,7 +12,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -26,6 +27,8 @@ import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
@@ -39,7 +42,11 @@ import com.mobyle.abbay.infra.common.ChargingScreenKeeper
 import com.mobyle.abbay.infra.language.AppLanguageStore
 import com.mobyle.abbay.infra.navigation.AbbayNavHost
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel
+import com.mobyle.abbay.presentation.common.theme.LocalStatusBarColor
 import com.mobyle.abbay.presentation.common.theme.MyApplicationTheme
+import com.mobyle.abbay.presentation.common.theme.StatusBarColor
+import com.mobyle.abbay.presentation.common.theme.statusBarBackground
+import com.mobyle.abbay.presentation.walkthrough.WalkthroughOverlay
 import com.model.DataResult
 import com.player.PlayerController
 import com.settings.AppSettings
@@ -63,14 +70,12 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var applySharedCover: ApplySharedCover
 
-    /** The same instance the navigation host uses (both are scoped to this activity). */
     private val booksViewModel: BooksListViewModel by viewModels()
 
     private var isPlayerReady = false
     private var settings = AppSettings()
     private val chargingScreenKeeper = ChargingScreenKeeper(this)
 
-    /** Android 10–12: the language chosen in Settings (Android 13+ applies it by itself). */
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(AppLanguageStore.wrap(newBase))
     }
@@ -78,9 +83,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         enableEdgeToEdge()
-        // Keep splash screen visible until player is ready
+        lockPhonesToPortrait()
         splashScreen.setKeepOnScreenCondition {
-            !isPlayerReady
+            !isPlayerReady || !booksViewModel.isWalkthroughDecided.value
         }
 
         super.onCreate(savedInstanceState)
@@ -94,40 +99,49 @@ class MainActivity : ComponentActivity() {
         handleSharedImage(intent)
         if (savedInstanceState == null) handleLaunchAction(intent)
 
-        setContent {
-            val navController = rememberNavController()
-            val playerState = playerController.state.collectAsState()
-            val appSettings = remember { observeAppSettings() }.collectAsState(initial = settings)
+        setContent { AbbayRoot() }
+    }
 
-            LaunchedEffect(playerState.value.isConnected) {
-                isPlayerReady = playerState.value.isConnected
-            }
+    @Composable
+    private fun AbbayRoot() {
+        val navController = rememberNavController()
+        val playerState = playerController.state.collectAsState()
+        val appSettings = remember { observeAppSettings() }.collectAsState(initial = settings)
+        val isWalkthroughDecided = booksViewModel.isWalkthroughDecided.collectAsState()
 
-            MyApplicationTheme(themeMode = appSettings.value.themeMode, dynamicColor = appSettings.value.dynamicColor) {
-                // The app draws behind the system bars: Android 15+ ignores window.statusBarColor, and the window
-                // background behind the bars follows the system's dark mode, not the app's theme. The status bar
-                // gets the app bars' color (surface), the navigation bar the app's background; only the content is inset.
+        LaunchedEffect(playerState.value.isConnected) {
+            isPlayerReady = playerState.value.isConnected
+        }
+
+        MyApplicationTheme(themeMode = appSettings.value.themeMode, dynamicColor = appSettings.value.dynamicColor) {
+            val statusBarColor = remember { StatusBarColor() }
+            CompositionLocalProvider(LocalStatusBarColor provides statusBarColor) {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.primary) {
                     Column(modifier = Modifier.fillMaxSize()) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .windowInsetsTopHeight(WindowInsets.statusBars)
-                                .background(MaterialTheme.colorScheme.surface)
+                                .statusBarBackground(statusBarColor)
                         )
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxWidth()
-                                // The status bar space is above; app bars must not add it again.
                                 .consumeWindowInsets(WindowInsets.statusBars)
-                                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
+                                .windowInsetsPadding(
+                                    WindowInsets.systemBars.only(
+                                        WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
+                                    )
+                                )
                         ) {
-                            if (playerState.value.isConnected) {
+                            // The tour is drawn in the same first frame as the library, covering it entirely.
+                            if (playerState.value.isConnected && isWalkthroughDecided.value) {
                                 AbbayNavHost(
                                     viewModel = booksViewModel,
                                     navController = navController
                                 )
+                                WalkthroughOverlay(booksViewModel)
                             }
                         }
                     }
@@ -142,7 +156,6 @@ class MainActivity : ComponentActivity() {
         handleLaunchAction(intent)
     }
 
-    /** Launcher shortcuts, the Quick Settings tile and audio files opened from other apps. */
     private fun handleLaunchAction(intent: Intent?) {
         when (intent?.action) {
             ACTION_RESUME_LAST_BOOK -> booksViewModel.resumeLastBook()
@@ -166,12 +179,32 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Phones (and a folded foldable) stay in portrait; a tablet or an unfolded foldable follows how it is held, and
+     * Android 16 ignores a lock on large screens anyway. Decided from the display, not the window, so a small window
+     * on a tablet is not reshaped; a fold recreates the activity and decides again.
+     */
+    private fun lockPhonesToPortrait() {
+        requestedOrientation = if (displaySmallestWidthDp() < LARGE_SCREEN_MIN_WIDTH_DP) {
+            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+    }
+
+    private fun displaySmallestWidthDp(): Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        val bounds = windowManager.maximumWindowMetrics.bounds
+        (minOf(bounds.width(), bounds.height()) / resources.displayMetrics.density).toInt()
+    } else {
+        resources.configuration.smallestScreenWidthDp
+    }
+
     companion object {
+        private const val LARGE_SCREEN_MIN_WIDTH_DP = 600
         const val ACTION_RESUME_LAST_BOOK = "com.mobyle.abbay.action.RESUME_LAST_BOOK"
         const val ACTION_START_SLEEP_TIMER = "com.mobyle.abbay.action.START_SLEEP_TIMER"
     }
 
-    /** Leaving the app with "Play when app is closed" off stops playback; rotations do not. */
     override fun onDestroy() {
         super.onDestroy()
 

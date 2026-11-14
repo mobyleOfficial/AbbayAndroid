@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android 12+ cloud backup and device transfer: the library database and
-     the settings; covers and other caches are rebuilt by a scan. -->
 <data-extraction-rules>
     <cloud-backup>
         <include domain="database" path="Abbay" />

@@ -20,13 +20,8 @@ import com.usecase.ObserveBookmarks
 import com.usecase.ObserveBooks
 import kotlinx.coroutines.flow.first
 
-/**
- * The Android Auto browse tree: Continue listening (last 10 played) · In
- * progress · New · Finished · Bookmarks of the current book. Books are playable and list their chapters; chapters and
- * bookmarks start the book at their position. Media ids are resolved back into the book's playlist in [resolve].
- */
 @OptIn(UnstableApi::class)
-@Suppress("TooManyFunctions") // One function per level of the browse tree.
+@Suppress("TooManyFunctions")
 class AutoLibrary(
     private val context: Context,
     private val observeBooks: ObserveBooks,
@@ -59,11 +54,7 @@ class AutoLibrary(
     suspend fun search(query: String, browserPackage: String): List<MediaItem> =
         BookSearch.search(observeBooks().first().filterNot { it.hasError }, query).map { bookItem(it, browserPackage) }
 
-    /**
-     * The playlist for what the car asked to play: a book, a chapter, a bookmark, a spoken search, or — with nothing
-     * named — the last book ("Play").
-     */
-    @Suppress("ReturnCount") // No book, no target, or a target: three outcomes.
+    @Suppress("ReturnCount")
     suspend fun resolve(requested: MediaItem): MediaSession.MediaItemsWithStartPosition? {
         val books = observeBooks().first().filterNot { it.hasError }
         val query = requested.requestMetadata.searchQuery

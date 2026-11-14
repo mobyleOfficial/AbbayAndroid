@@ -6,11 +6,6 @@ import android.content.Intent
 import android.view.KeyEvent
 import com.player.PlaybackIntents
 
-/**
- * What the widget buttons send: media keys to the playback service, which also
- * work with the app closed (playback resumption loads the last book). The names are in [PlaybackIntents], because
- * `:widget` depends only on `:domain`.
- */
 object WidgetCommands {
     const val ACTION_ADD_BOOKMARK = PlaybackIntents.ACTION_ADD_BOOKMARK
     const val ACTION_TOGGLE_SLEEP_TIMER = PlaybackIntents.ACTION_TOGGLE_SLEEP_TIMER

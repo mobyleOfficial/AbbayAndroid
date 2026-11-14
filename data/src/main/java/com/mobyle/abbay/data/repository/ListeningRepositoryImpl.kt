@@ -29,7 +29,6 @@ class ListeningRepositoryImpl @Inject constructor(
 ) : ListeningRepository {
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 
-    /** Read-then-write of the merge rule must not interleave between two events of the same moment. */
     private val historyMutex = Mutex()
 
     override fun observeBookmarks(bookId: String): Flow<List<Bookmark>> {
@@ -100,7 +99,6 @@ class ListeningRepositoryImpl @Inject constructor(
 
     private fun BookmarkEntity.toDomain() = Bookmark(id, bookId.toString(), bookPositionMs, chapterTitle, note, createdAt)
 
-    /** Rows of an unknown type (written by a newer version) are skipped. */
     private fun HistoryEventEntity.toDomain(): HistoryEvent? {
         val eventType = HistoryEventType.entries.firstOrNull { it.name == type } ?: return null
         return HistoryEvent(id, bookId.toString(), eventType, at, positionMs, extraMs)

@@ -5,50 +5,58 @@ import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.ResolvingDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.extractor.DefaultExtractorsFactory
-import androidx.media3.extractor.mp3.Mp3Extractor
 import com.mobyle.abbay.presentation.playback.effects.AudiobookAudioChain
 import com.mobyle.abbay.presentation.playback.effects.EffectsState
 import com.mobyle.abbay.presentation.playback.effects.TrackTimeAudioSink
 import com.mobyle.abbay.presentation.playback.remote.AudioRoute
 import com.mobyle.abbay.presentation.playback.remote.RoutingAudioSink
 import com.mobyle.abbay.presentation.playback.remote.StreamingAudioSink
+import com.repository.RemoteMediaAuth
 
-/**
- * The service's player: exact VBR seeking, speech attributes, noisy handling, wake
- * lock, and the project's audio effects chain.
- */
 @OptIn(UnstableApi::class)
 object AudiobookExoPlayer {
-    /** [route] chooses where the processed audio goes: the device, or a Cast receiver. */
-    fun build(context: Context, effects: EffectsState, route: AudioRoute = AudioRoute()): ExoPlayer {
-        val extractorsFactory = DefaultExtractorsFactory()
-            .setConstantBitrateSeekingEnabled(true)
-            .setMp3ExtractorFlags(Mp3Extractor.FLAG_ENABLE_INDEX_SEEKING)
+    fun build(
+        context: Context,
+        effects: EffectsState,
+        route: AudioRoute = AudioRoute(),
+        remoteMediaAuth: RemoteMediaAuth = RemoteMediaAuth { emptyMap() },
+    ): ExoPlayer {
+        // No MP3 index seeking (D-022): it ignores the file's Xing/VBRI seek table and reads the whole file up to
+        // the saved position before the first sound, which takes seconds deep into a long single-file book.
+        val extractorsFactory = DefaultExtractorsFactory().setConstantBitrateSeekingEnabled(true)
         val audioAttributes = AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)
             .setContentType(C.AUDIO_CONTENT_TYPE_SPEECH)
             .build()
 
-        // Speed goes to the AudioTrack (the platform's Sonic time-stretch), so it also applies to audio already
-        // buffered: ~10 ms instead of the ~750 ms buffer delay of in-app processing.
         val renderersFactory = EffectsRenderersFactory(context, effects, route).setEnableAudioTrackPlaybackParams(true)
 
         return ExoPlayer.Builder(context, renderersFactory)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(context, extractorsFactory))
+            .setMediaSourceFactory(DefaultMediaSourceFactory(authorizedDataSource(context, remoteMediaAuth), extractorsFactory))
             .setAudioAttributes(audioAttributes, true)
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
     }
+
+    /** Streams from a signed-in server (Audiobookshelf) carry its token; files and other urls are left as they are. */
+    private fun authorizedDataSource(context: Context, auth: RemoteMediaAuth): DataSource.Factory =
+        ResolvingDataSource.Factory(DefaultDataSource.Factory(context)) { dataSpec ->
+            val scheme = dataSpec.uri.scheme
+            val headers = if (scheme == "http" || scheme == "https") auth.headersFor(dataSpec.uri.toString()) else emptyMap()
+            if (headers.isEmpty()) dataSpec else dataSpec.withAdditionalHeaders(headers)
+        }
 }
 
-/** Builds the audio sink with the effects chain. */
 @OptIn(UnstableApi::class)
 private class EffectsRenderersFactory(
     context: Context,
@@ -61,7 +69,6 @@ private class EffectsRenderersFactory(
             .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
             .setAudioProcessorChain(AudiobookAudioChain(effects))
             .build()
-        // Cast phase 2: the same effects, with their own processor instances, ahead of a live stream to the receiver.
         val streaming = StreamingAudioSink(AudiobookAudioChain(effects).audioProcessors.toList(), route)
         return TrackTimeAudioSink(RoutingAudioSink(sink, streaming, route), effects)
     }

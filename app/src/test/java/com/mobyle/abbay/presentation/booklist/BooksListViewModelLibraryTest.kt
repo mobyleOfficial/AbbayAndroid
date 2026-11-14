@@ -26,7 +26,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** Library flows of the book list (Phase 1: LIB-01). */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [30], application = Application::class)
@@ -68,6 +67,23 @@ class BooksListViewModelLibraryTest {
 
         assertEquals(LibraryTab.IN_PROGRESS, viewModel.libraryState.value.tab)
         assertEquals(listOf(inProgressBook.id), (viewModel.uiState.value as BooksListUiState.BookListSuccess).audiobookList.map { it.id })
+    }
+
+    @Test
+    fun `hidden tabs are left out and never selected`() {
+        val viewModel = factory(
+            AppSettings(
+                libraryTab = LibraryTab.IN_PROGRESS,
+                libraryTabOrder = listOf(LibraryTab.ALL, LibraryTab.NEW, LibraryTab.FINISHED, LibraryTab.IN_PROGRESS),
+                hiddenLibraryTabs = setOf(LibraryTab.IN_PROGRESS, LibraryTab.FINISHED),
+            ),
+        ).booksListViewModel()
+
+        assertEquals(listOf(LibraryTab.ALL, LibraryTab.NEW), viewModel.libraryState.value.tabs)
+        assertEquals(LibraryTab.ALL, viewModel.libraryState.value.tab)
+
+        viewModel.selectTab(LibraryTab.FINISHED)
+        assertEquals(LibraryTab.ALL, viewModel.libraryState.value.tab)
     }
 
     @Test

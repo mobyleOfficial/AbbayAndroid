@@ -7,19 +7,12 @@ import com.mobyle.abbay.infra.dsp.FrameDenoiser
 import com.mobyle.abbay.infra.dsp.NoiseReducer
 import com.mobyle.abbay.infra.dsp.nativelib.RnnNoise
 
-/**
- * RNNoise in the chain, first, before silence trimming. The reducer delays the
- * audio by about 20 ms ([NoiseReducer.latencyFrames]); output frames equal input frames, so the media position stays
- * right. Turning it on or off crossfades over 20 ms between the direct and the reduced signal; while it is off the
- * reducer does not run and the input passes bit for bit.
- */
 @OptIn(UnstableApi::class)
 class NoiseReductionProcessor(private val state: EffectsState) : FloatPcmProcessor() {
     private var reducer: NoiseReducer? = null
     private var direct = FloatArray(0)
     private var isReducing = false
 
-    /** Frames left in the current crossfade; positive while fading in, negative while fading out. */
     private var fadeFramesLeft = 0
     private var fadeFrames = 0
 
@@ -59,7 +52,6 @@ class NoiseReductionProcessor(private val state: EffectsState) : FloatPcmProcess
         if (fadeFramesLeft != 0) crossfade(samples, frameCount)
     }
 
-    /** Per frame, weight 1 is the reduced signal, 0 the direct one. */
     private fun crossfade(samples: FloatArray, frameCount: Int) {
         for (frame in 0 until frameCount) {
             val reducedWeight = when {
@@ -86,7 +78,6 @@ class NoiseReductionProcessor(private val state: EffectsState) : FloatPcmProcess
         state.isNoiseReductionRunning = false
     }
 
-    /** One RNNoise state per channel. */
     private class RnnNoiseDenoiser : FrameDenoiser {
         private val rnnNoise = RnnNoise()
         override val frameSize: Int = RnnNoise.FRAME_SIZE

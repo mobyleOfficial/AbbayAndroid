@@ -1,10 +1,6 @@
 package com.mobyle.abbay.data.chapters
 
-/**
- * `CHAPTERxxx=HH:MM:SS.mmm` / `CHAPTERxxxNAME=` Vorbis comments in Ogg Vorbis,
- * Ogg Opus (`OpusTags`, RFC 7845 §5.2) and FLAC (`VORBIS_COMMENT` metadata block).
- */
-@Suppress("CyclomaticComplexMethod", "NestedBlockDepth", "TooManyFunctions") // Mirrors the format's structure.
+@Suppress("CyclomaticComplexMethod", "NestedBlockDepth", "TooManyFunctions")
 object VorbisCommentChapterParser {
     private const val HEAD_BYTES = 1024 * 1024
     private const val FLAC_VORBIS_COMMENT = 4
@@ -49,7 +45,6 @@ object VorbisCommentChapterParser {
         return null
     }
 
-    /** Reassembles the second Ogg packet (the comment header) of the first logical stream. */
     private fun oggComments(head: ByteArray): List<String>? {
         val packets = mutableListOf<ByteArray>()
         val current = java.io.ByteArrayOutputStream()
@@ -81,7 +76,6 @@ object VorbisCommentChapterParser {
         }
     }
 
-    /** vendor length + vendor, comment count, then length-prefixed UTF-8 `KEY=value` strings (little-endian). */
     private fun commentList(data: ByteArray, start: Int): List<String>? {
         if (start + 4 > data.size) return null
         var offset = start + 4 + Bytes.u32Le(data, start).toInt()

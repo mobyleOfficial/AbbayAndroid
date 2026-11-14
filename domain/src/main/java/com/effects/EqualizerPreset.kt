@@ -1,9 +1,7 @@
 package com.effects
 
-/** A named set of 10 band gains. Built-in presets have negative ids and cannot be deleted. */
 data class EqualizerPreset(val id: Long, val name: String, val gains: List<Int>, val isBuiltIn: Boolean) {
     companion object {
-        /** The original presets; the UI shows their names from resources. */
         val FLAT = EqualizerPreset(-1, "flat", AudioEffects.FLAT, isBuiltIn = true)
         val VOICE_CLARITY = EqualizerPreset(-2, "voiceClarity", listOf(-6, -4, -2, 0, 0, 0, 3, 3, 0, 0), isBuiltIn = true)
         val REDUCE_HISS = EqualizerPreset(-3, "reduceHiss", listOf(0, 0, 0, 0, 0, 0, 0, 0, -4, -8), isBuiltIn = true)

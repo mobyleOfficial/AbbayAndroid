@@ -10,7 +10,6 @@ import com.mobyle.abbay.data.database.entity.BookmarkEntity
 import com.mobyle.abbay.data.database.entity.HistoryEventEntity
 import kotlinx.coroutines.flow.Flow
 
-/** Bookmarks and history. */
 @Dao
 interface ListeningDao {
     @Query("SELECT * FROM bookmark WHERE book_id = :bookId ORDER BY book_position_ms, created_at")
@@ -31,7 +30,6 @@ interface ListeningDao {
     @Insert
     suspend fun insertBookmarks(bookmarks: List<BookmarkEntity>)
 
-    /** The bookmarks of a book become [bookmarks] (a newer sidecar or backup won). */
     @Transaction
     suspend fun replaceBookmarks(bookId: Long, bookmarks: List<BookmarkEntity>) {
         deleteBookmarksOf(bookId)

@@ -25,7 +25,6 @@ import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.common.theme.AbbayTextStyles
 import com.mobyle.abbay.presentation.common.widgets.AbbayTextButton
 
-/** One-time screen after the update from the storage-permission version. */
 @Composable
 fun LegacyFolderMigrationContent(onChooseFolder: () -> Unit, onSkip: () -> Unit) {
     Column(

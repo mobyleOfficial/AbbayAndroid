@@ -7,6 +7,7 @@ import com.mobyle.abbay.fakes.ViewModelFactory
 import com.player.PlayerError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -17,6 +18,7 @@ import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -24,7 +26,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** The book list ViewModel sends every playback action through PlayerController. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [30], application = Application::class)
@@ -55,6 +56,27 @@ class BooksListViewModelPlayerTest {
 
         assertEquals(listOf("openBook(201, progress=120000, playWhenReady=true)"), player.commands)
         assertEquals(multipleFilesBook, player.openedBook)
+    }
+
+    @Test
+    fun `starting a book selects and plays it, and a second tap leaves the playing book alone`() {
+        val viewModel = factory.booksListViewModel()
+
+        assertTrue(viewModel.startBook(multipleFilesBook))
+        assertTrue(viewModel.startBook(multipleFilesBook))
+
+        assertEquals(multipleFilesBook.id, viewModel.selectedBook.value?.id)
+        assertEquals(listOf("openBook(201, progress=120000, playWhenReady=true)"), player.commands)
+    }
+
+    @Test
+    fun `a book whose file is gone is not started`() {
+        val viewModel = factory.booksListViewModel()
+
+        assertFalse(viewModel.startBook(singleFileBook.copy(hasError = true)))
+
+        assertNull(viewModel.selectedBook.value)
+        assertTrue(player.commands.isEmpty())
     }
 
     @Test
@@ -90,7 +112,6 @@ class BooksListViewModelPlayerTest {
         viewModel.onPlayButtonClicked(singleFileBook, progress = 42_000L)
         viewModel.onCoverClicked(singleFileBook, progress = 42_000L)
 
-        // A seek here would make the service treat the resume as a move and skip smart rewind.
         assertEquals(listOf("play", "play"), player.commands)
     }
 
@@ -155,6 +176,35 @@ class BooksListViewModelPlayerTest {
 
         assertTrue(player.commands.contains("stop"))
         assertEquals(listOf("validateRoots", "quickScan"), factory.libraryRepository.calls)
+    }
+
+    @Test
+    fun `playing a book that was just added waits for it to reach the library`() = runTest(testDispatcher) {
+        val viewModel = factory.booksListViewModel()
+        val requested = async { viewModel.playRequests.first() }
+
+        viewModel.requestPlay(multipleFilesBook.id.replace("201", "301"))
+        val added = multipleFilesBook.copy(id = "301")
+        factory.libraryRepository.books.value = factory.libraryRepository.books.value + added
+
+        assertEquals("301", withTimeout(1_000L) { requested.await() }.id)
+    }
+
+    @Test
+    fun `a LibriVox chapter whose file is gone streams from the same position instead of failing`() = runTest(testDispatcher) {
+        val viewModel = factory.booksListViewModel()
+        viewModel.selectBook(multipleFilesBook, null)
+        factory.libriVoxRepository.repairs += multipleFilesBook.id
+        player.mutableState.value = player.mutableState.value.copy(trackCount = 2)
+        player.positionMs = 754_000L
+        player.commands.clear()
+        factory.libraryRepository.calls.clear()
+
+        player.mutableErrors.emit(PlayerError.StorageUnavailable)
+
+        assertEquals(listOf("openBook(201, progress=120000, playWhenReady=true)", "seekToBookPosition(754000)"), player.commands)
+        assertFalse(viewModel.uiState.value.toString().contains("hasError=true"))
+        assertEquals(emptyList<String>(), factory.libraryRepository.calls)
     }
 
     @Test

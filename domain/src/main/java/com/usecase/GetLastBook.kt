@@ -6,7 +6,6 @@ import com.repository.SettingsRepository
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
-/** The book played last, when it is still in the library and playable ("Resume last book"). */
 class GetLastBook @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val libraryRepository: LibraryRepository,

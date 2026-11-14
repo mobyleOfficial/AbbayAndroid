@@ -13,12 +13,8 @@ import com.mobyle.abbay.R
 import com.mobyle.abbay.presentation.playback.command.PlaybackCommands
 import com.settings.AppSettings
 
-/**
- * Android Auto's playing screen: Back · Forward · Speed (cycles) · Bookmark, plus
- * the sleep timer when "Sleep timer in car" is on. Tracks which connected controllers are cars.
- */
 @OptIn(UnstableApi::class)
-@Suppress("LongParameterList") // The service parts the car buttons use.
+@Suppress("LongParameterList")
 class CarControls(
     private val context: Context,
     private val player: Player,
@@ -29,10 +25,8 @@ class CarControls(
 ) {
     private val controllers = mutableSetOf<MediaSession.ControllerInfo>()
 
-    /** True while a car is connected (the sleep-timer schedule skips it unless "Sleep timer in car" is on). */
     val isConnected: Boolean get() = controllers.isNotEmpty()
 
-    /** Returns true when [controller] is a car; it then gets [buttons]. */
     fun onConnected(session: MediaSession, controller: MediaSession.ControllerInfo): Boolean {
         val isCar = session.isAutoCompanionController(controller) || session.isAutomotiveController(controller)
         if (isCar) controllers += controller
@@ -55,7 +49,6 @@ class CarControls(
         return ImmutableList.copyOf(listOf(back, forward, speed, bookmark) + listOfNotNull(phone[SLEEP].takeIf { settings().sleepInCar }))
     }
 
-    /** 1.0 → 1.25 → 1.5 → 1.75 → 2.0 → 1.0. */
     fun cycleSpeed() {
         val current = player.playbackParameters.speed
         val next = SPEEDS.firstOrNull { it > current + SPEED_TOLERANCE } ?: SPEEDS.first()
@@ -68,7 +61,6 @@ class CarControls(
     private fun formatSpeed(speed: Float): String = "%.2f".format(speed).trimEnd('0').trimEnd('.', ',') + "×"
 
     private companion object {
-        /** Positions in the phone notification's layout: Back · Forward · Bookmark · Sleep timer. */
         const val BACK = 0
         const val FORWARD = 1
         const val BOOKMARK = 2

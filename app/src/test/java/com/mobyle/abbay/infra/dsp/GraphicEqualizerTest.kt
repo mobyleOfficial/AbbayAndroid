@@ -5,14 +5,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.math.abs
 
-/** Equalizer rows. */
 class GraphicEqualizerTest {
     @Test
     fun eachBandGivesSixDecibelsAtItsCenterAndLittleTwoOctavesAway() {
         val centers = GraphicEqualizer.CENTERS_HZ
         centers.forEachIndexed { band, center ->
             val gains = FloatArray(GraphicEqualizer.BAND_COUNT).also { it[band] = 6f }
-            // The automatic preamp takes 6 dB away from everything; the band response is measured relative to it.
             val preampDb = -6.0
             assertEquals("band $center Hz", 6.0, gainDb(gains, center) - preampDb, 0.5)
             listOf(center / 4, center * 4).filter { it in 20.0..20_000.0 }.forEach { far ->
@@ -45,7 +43,6 @@ class GraphicEqualizerTest {
         assertTrue(Signals.maximumStep(output) <= 2 * Signals.maximumStep(input))
     }
 
-    /** Steady-state gain at [frequency] in dB, after the filters settle. */
     private fun gainDb(gains: FloatArray, frequency: Double): Double {
         val equalizer = GraphicEqualizer(Signals.RATE, 1)
         equalizer.setGains(gains, immediately = true)

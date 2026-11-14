@@ -9,7 +9,6 @@ import com.repository.LibraryRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
-/** Full library scan, followed by the one-shot legacy progress import. */
 @HiltWorker
 class LibraryScanWorker @AssistedInject constructor(
     @Assisted context: Context,

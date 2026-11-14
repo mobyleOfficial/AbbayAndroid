@@ -29,7 +29,6 @@ import com.mobyle.abbay.presentation.common.widgets.AbbayScreen
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** About → Open-source licenses, from the `licenses.json` asset the build generates. */
 @Composable
 fun LicensesScreen(close: () -> Unit) {
     val context = LocalContext.current
@@ -90,11 +89,9 @@ private fun openUrl(context: Context, url: String) {
     try {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     } catch (_: ActivityNotFoundException) {
-        // No browser: the license name stays readable on screen.
     }
 }
 
-/** One line of the screen: a library, an asset or bundled code, with its license. */
 data class LicenseNotice(val name: String, val details: String, val url: String?)
 
 data class LicenseNotices(

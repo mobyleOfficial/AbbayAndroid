@@ -6,7 +6,6 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-/** [extraMs] is the position after a seek or chapter jump. */
 @Entity(
     tableName = "history_event",
     foreignKeys = [
