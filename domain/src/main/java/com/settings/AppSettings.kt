@@ -13,6 +13,7 @@ data class AppSettings(
     val playWhenAppIsClosed: Boolean = false,
     val openPlayerOnStartup: Boolean = false,
     val reloadGuideShown: Boolean = false,
+    val walkthroughShown: Boolean = false,
     val lastBookId: String? = null,
     val librarySortOrder: LibrarySortOrder = LibrarySortOrder.RECENTLY_PLAYED,
     val librarySortAscending: Boolean = false,

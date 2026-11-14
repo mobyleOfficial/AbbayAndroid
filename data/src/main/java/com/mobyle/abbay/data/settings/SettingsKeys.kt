@@ -11,6 +11,7 @@ internal object SettingsKeys {
     val playWhenAppIsClosed = booleanPreferencesKey("playWhenAppIsClosed")
     val openPlayerOnStartup = booleanPreferencesKey("openPlayerOnStartup")
     val reloadGuideShown = booleanPreferencesKey("reloadGuideShown")
+    val walkthroughShown = booleanPreferencesKey("walkthroughShown")
     val lastBookId = stringPreferencesKey("lastBookId")
     val librarySortOrder = stringPreferencesKey("librarySortOrder")
     val librarySortAscending = booleanPreferencesKey("librarySortAscending")

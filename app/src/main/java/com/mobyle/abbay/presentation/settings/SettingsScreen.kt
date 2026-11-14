@@ -78,6 +78,7 @@ fun SettingsScreen(
             item {
                 SettingItem(
                     text = stringResource(R.string.play_when_app_closed),
+                    info = stringResource(R.string.settings_info_play_when_closed),
                     content = {
                         Switch(
                             checked = shouldPlayWhenAppIsClosed,
@@ -91,6 +92,7 @@ fun SettingsScreen(
                 )
                 SettingItem(
                     text = stringResource(R.string.open_player_in_startup),
+                    info = stringResource(R.string.settings_info_open_player),
                     content = {
                         Switch(
                             checked = shouldOpenPlayerInStartup,
@@ -106,6 +108,7 @@ fun SettingsScreen(
                 SectionHeader(R.string.settings_library)
                 SettingItem(
                     text = stringResource(R.string.change_folder),
+                    info = stringResource(R.string.settings_info_change_folder),
                     onClick = {
                         viewModel.showChangeFolderConfirmation()
                     }
@@ -113,6 +116,7 @@ fun SettingsScreen(
 
                 SettingItem(
                     text = stringResource(R.string.delete_all_books),
+                    info = stringResource(R.string.settings_info_delete_all),
                     onClick = viewModel::showDeleteConfirmation
                 )
             }
@@ -142,7 +146,15 @@ fun SettingsScreen(
                     )
                 }
 
-                openConverter?.let { open -> item { SettingItem(text = stringResource(R.string.converter_title), onClick = open) } }
+                openConverter?.let { open ->
+                    item {
+                        SettingItem(
+                            text = stringResource(R.string.converter_title),
+                            onClick = open,
+                            info = stringResource(R.string.settings_info_converter),
+                        )
+                    }
+                }
             }
 
             item { LibraryPreferenceSettings(settings, viewModel::changeListeningSettings) }
@@ -155,7 +167,17 @@ fun SettingsScreen(
 
             item { ExperimentalSettings(viewModel) }
 
-            item { AboutSettings(viewModel, openDiagnostics, openLicenses) }
+            item {
+                AboutSettings(
+                    viewModel = viewModel,
+                    openDiagnostics = openDiagnostics,
+                    openLicenses = openLicenses,
+                    replayWalkthrough = {
+                        viewModel.replayWalkthrough()
+                        close()
+                    },
+                )
+            }
         }
 
         if (showShowDeleteConfirmation) {
@@ -188,22 +210,52 @@ fun SettingsScreen(
     }
 }
 
-private fun openSourceCode(context: Context, url: String) {
+private fun openUrl(context: Context, url: String): Boolean = try {
+    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    true
+} catch (_: ActivityNotFoundException) {
+    false
+}
+
+/** Straight to the Play Store app's page for Abbay, or the store's web page on a device without it. */
+private fun openStoreListing(context: Context) {
+    val packageName = context.packageName
+    if (!openUrl(context, "market://details?id=$packageName")) {
+        openUrl(context, playStoreUrl(packageName))
+    }
+}
+
+private fun shareApp(context: Context) {
+    val message = context.getString(R.string.settings_share_app_message, playStoreUrl(context.packageName))
+    val send = Intent(Intent.ACTION_SEND)
+        .setType("text/plain")
+        .putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.app_name))
+        .putExtra(Intent.EXTRA_TEXT, message)
     try {
-        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        context.startActivity(Intent.createChooser(send, context.getString(R.string.settings_share_app)))
     } catch (_: ActivityNotFoundException) {
     }
 }
 
+private fun playStoreUrl(packageName: String) = "https://play.google.com/store/apps/details?id=$packageName"
+
 @Composable
-private fun AboutSettings(viewModel: SettingsViewModel, openDiagnostics: () -> Unit, openLicenses: () -> Unit) {
+private fun AboutSettings(
+    viewModel: SettingsViewModel,
+    openDiagnostics: () -> Unit,
+    openLicenses: () -> Unit,
+    replayWalkthrough: () -> Unit,
+) {
     val context = LocalContext.current
     val sourceCodeUrl = stringResource(R.string.source_code_url)
     Column {
         SectionHeader(R.string.settings_about)
+        SettingItem(text = stringResource(R.string.settings_rate_app), onClick = { openStoreListing(context) })
+        SettingItem(text = stringResource(R.string.settings_share_app), onClick = { shareApp(context) })
+        SettingItem(text = stringResource(R.string.settings_walkthrough), onClick = replayWalkthrough)
         SettingItem(text = stringResource(R.string.diagnostics_title), onClick = openDiagnostics)
         SettingItem(text = stringResource(R.string.settings_licenses), onClick = openLicenses)
-        SettingItem(text = stringResource(R.string.settings_source_code), onClick = { openSourceCode(context, sourceCodeUrl) })
+        SettingItem(text = stringResource(R.string.settings_source_code), onClick = { openUrl(context, sourceCodeUrl) })
         SectionHeader(R.string.settings_privacy)
         PrivacySettings(viewModel)
         Box(

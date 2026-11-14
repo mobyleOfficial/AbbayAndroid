@@ -100,7 +100,7 @@ fun ExperimentalSettings(viewModel: SettingsViewModel) {
     val isEnabled by viewModel.readAlongEnabled.collectAsState()
     Column {
         SectionHeader(R.string.settings_experimental)
-        SwitchSetting(R.string.read_along_toggle, isEnabled, viewModel::changeReadAlongEnabled)
+        SwitchSetting(R.string.read_along_toggle, isEnabled, onChange = viewModel::changeReadAlongEnabled)
         Text(
             text = stringResource(R.string.read_along_footer),
             style = MaterialTheme.typography.bodySmall,
@@ -115,11 +115,16 @@ private fun DisplaySettings(settings: AppSettings, change: ((AppSettings) -> App
     SwitchSetting(R.string.settings_cover_on_lock_screen, settings.coverOnLockScreen) { enabled ->
         change { it.copy(coverOnLockScreen = enabled) }
     }
-    SwitchSetting(R.string.settings_keep_screen_on, settings.keepScreenOnWhileCharging) { enabled ->
+    SwitchSetting(
+        R.string.settings_keep_screen_on,
+        settings.keepScreenOnWhileCharging,
+        info = R.string.settings_info_keep_screen_on,
+    ) { enabled ->
         change { it.copy(keepScreenOnWhileCharging = enabled) }
     }
     ChoiceSetting(
         label = stringResource(R.string.settings_progress_labels),
+        info = R.string.settings_info_progress_labels,
         options = ProgressLabels.entries,
         selected = settings.progressLabels,
         optionLabel = { labels ->

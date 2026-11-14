@@ -48,13 +48,18 @@ fun ListeningSettings(viewModel: SettingsViewModel) {
         SectionHeader(R.string.settings_playback)
         ChoiceSetting(
             label = stringResource(R.string.settings_smart_rewind),
+            info = R.string.settings_info_smart_rewind,
             options = SmartRewindLevel.entries,
             selected = settings.smartRewind,
             optionLabel = { stringResource(it.labelResource()) },
             onSelect = { level -> change { it.copy(smartRewind = level) } },
         )
         SkipAndSpeedSettings(settings, change)
-        SwitchSetting(R.string.settings_continue_with_queue, settings.continueWithQueue) { enabled ->
+        SwitchSetting(
+            R.string.settings_continue_with_queue,
+            settings.continueWithQueue,
+            info = R.string.settings_info_continue_with_queue,
+        ) { enabled ->
             change { it.copy(continueWithQueue = enabled) }
         }
         StatisticsSettings(settings.statisticsEnabled, change, onClear = viewModel::clearListeningStatistics)
@@ -69,7 +74,11 @@ fun ListeningSettings(viewModel: SettingsViewModel) {
 private fun StatisticsSettings(isEnabled: Boolean, change: ((AppSettings) -> AppSettings) -> Unit, onClear: () -> Unit) {
     var isConfirming by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    SwitchSetting(R.string.settings_statistics, isEnabled) { enabled -> change { it.copy(statisticsEnabled = enabled) } }
+    SwitchSetting(
+        R.string.settings_statistics,
+        isEnabled,
+        info = R.string.settings_info_statistics,
+    ) { enabled -> change { it.copy(statisticsEnabled = enabled) } }
     SettingItem(text = stringResource(R.string.settings_clear_statistics), onClick = { isConfirming = true })
     if (isConfirming) {
         AbbayAlertDialog(
@@ -94,6 +103,7 @@ private fun AudioDefaultSettings(settings: AppSettings, change: ((AppSettings) -
         SectionHeader(R.string.settings_audio)
         ChoiceSetting(
             label = stringResource(R.string.settings_default_silence_trim),
+            info = R.string.settings_info_silence_trim,
             options = SilenceTrimLevel.entries,
             selected = settings.defaultSilenceTrim,
             optionLabel = { stringResource(it.labelResource()) },
@@ -101,6 +111,7 @@ private fun AudioDefaultSettings(settings: AppSettings, change: ((AppSettings) -
         )
         ChoiceSetting(
             label = stringResource(R.string.settings_default_boost),
+            info = R.string.settings_info_boost,
             options = BoostLevel.entries,
             selected = settings.defaultBoost,
             optionLabel = { stringResource(it.labelResource()) },
@@ -108,6 +119,7 @@ private fun AudioDefaultSettings(settings: AppSettings, change: ((AppSettings) -
         )
         ChoiceSetting(
             label = stringResource(R.string.settings_default_equalizer),
+            info = R.string.settings_info_equalizer,
             options = EqualizerPreset.BUILT_IN,
             selected = EqualizerPreset.BUILT_IN.firstOrNull { it.id == settings.defaultEqualizerPresetId } ?: EqualizerPreset.FLAT,
             optionLabel = { presetName(it) },
@@ -115,6 +127,7 @@ private fun AudioDefaultSettings(settings: AppSettings, change: ((AppSettings) -
         )
         ChoiceSetting(
             label = stringResource(R.string.settings_default_noise_reduction),
+            info = R.string.settings_info_noise_reduction,
             options = NoiseReductionLevel.entries,
             selected = settings.defaultNoiseReduction,
             optionLabel = { stringResource(it.labelResource()) },
@@ -129,6 +142,7 @@ private fun SleepTimerSettings(settings: AppSettings, change: ((AppSettings) -> 
         SectionHeader(R.string.settings_sleep_timer)
         ChoiceSetting(
             label = stringResource(R.string.settings_sleep_default),
+            info = R.string.settings_info_sleep_default,
             options = SleepTimer.PRESET_MINUTES,
             selected = settings.sleepDefaultMinutes,
             optionLabel = { stringResource(R.string.sleep_minutes, it) },
@@ -136,12 +150,17 @@ private fun SleepTimerSettings(settings: AppSettings, change: ((AppSettings) -> 
         )
         ChoiceSetting(
             label = stringResource(R.string.settings_sleep_fade),
+            info = R.string.settings_info_sleep_fade,
             options = FADE_SECONDS,
             selected = settings.sleepFadeSeconds,
             optionLabel = { stringResource(R.string.settings_seconds, it) },
             onSelect = { seconds -> change { it.copy(sleepFadeSeconds = seconds) } },
         )
-        SwitchSetting(R.string.settings_shake_to_extend, settings.shakeToExtend) { enabled -> change { it.copy(shakeToExtend = enabled) } }
+        SwitchSetting(
+            R.string.settings_shake_to_extend,
+            settings.shakeToExtend,
+            info = R.string.settings_info_shake_to_extend,
+        ) { enabled -> change { it.copy(shakeToExtend = enabled) } }
         if (settings.shakeToExtend) {
             ChoiceSetting(
                 label = stringResource(R.string.shake_sensitivity),
@@ -150,7 +169,11 @@ private fun SleepTimerSettings(settings: AppSettings, change: ((AppSettings) -> 
                 optionLabel = { stringResource(it.labelResource()) },
                 onSelect = { sensitivity -> change { it.copy(shakeSensitivity = sensitivity) } },
             )
-            SwitchSetting(R.string.settings_extend_only_during_fade, settings.extendOnlyDuringFade) { enabled ->
+            SwitchSetting(
+                R.string.settings_extend_only_during_fade,
+                settings.extendOnlyDuringFade,
+                info = R.string.settings_info_extend_only_during_fade,
+            ) { enabled ->
                 change { it.copy(extendOnlyDuringFade = enabled) }
             }
         }
@@ -161,7 +184,11 @@ private fun SleepTimerSettings(settings: AppSettings, change: ((AppSettings) -> 
 @Composable
 private fun ChimeAndScheduleSettings(settings: AppSettings, change: ((AppSettings) -> AppSettings) -> Unit) {
     Column {
-        SwitchSetting(R.string.settings_sleep_chime, settings.sleepChime) { enabled -> change { it.copy(sleepChime = enabled) } }
+        SwitchSetting(
+            R.string.settings_sleep_chime,
+            settings.sleepChime,
+            info = R.string.settings_info_sleep_chime,
+        ) { enabled -> change { it.copy(sleepChime = enabled) } }
         if (settings.sleepChime) {
             ChoiceSetting(
                 label = stringResource(R.string.settings_sleep_chime_volume),
@@ -171,7 +198,11 @@ private fun ChimeAndScheduleSettings(settings: AppSettings, change: ((AppSetting
                 onSelect = { volume -> change { it.copy(sleepChimeVolumePercent = volume) } },
             )
         }
-        SwitchSetting(R.string.settings_auto_sleep, settings.autoSleepEnabled) { enabled -> change { it.copy(autoSleepEnabled = enabled) } }
+        SwitchSetting(
+            R.string.settings_auto_sleep,
+            settings.autoSleepEnabled,
+            info = R.string.settings_info_auto_sleep,
+        ) { enabled -> change { it.copy(autoSleepEnabled = enabled) } }
         if (settings.autoSleepEnabled) {
             TimeSetting(R.string.settings_auto_sleep_from, settings.autoSleepStartMinute) { minute ->
                 change { it.copy(autoSleepStartMinute = minute) }
@@ -184,8 +215,8 @@ private fun ChimeAndScheduleSettings(settings: AppSettings, change: ((AppSetting
 }
 
 @Composable
-internal fun SwitchSetting(labelResource: Int, checked: Boolean, onChange: (Boolean) -> Unit) {
-    SettingItem(text = stringResource(labelResource)) { SettingSwitch(checked, onChange) }
+internal fun SwitchSetting(labelResource: Int, checked: Boolean, info: Int? = null, onChange: (Boolean) -> Unit) {
+    SettingItem(text = stringResource(labelResource), info = info?.let { stringResource(it) }) { SettingSwitch(checked, onChange) }
 }
 
 @Composable
@@ -194,11 +225,14 @@ internal fun <T> ChoiceSetting(
     options: List<T>,
     selected: T,
     optionLabel: @Composable (T) -> String,
-    onSelect: (T) -> Unit
+    onSelect: (T) -> Unit,
+    info: Int? = null,
 ) {
     var isMenuOpen by remember { mutableStateOf(false) }
     Box {
-        SettingItem(text = label, onClick = { isMenuOpen = true }) { SettingValue(optionLabel(selected)) }
+        SettingItem(text = label, onClick = { isMenuOpen = true }, info = info?.let { stringResource(it) }) {
+            SettingValue(optionLabel(selected))
+        }
         AbbayDropdownMenu(expanded = isMenuOpen, onDismissRequest = { isMenuOpen = false }) {
             options.forEach { option ->
                 AbbayMenuItem(
