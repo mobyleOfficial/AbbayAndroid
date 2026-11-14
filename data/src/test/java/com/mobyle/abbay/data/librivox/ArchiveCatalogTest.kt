@@ -85,6 +85,24 @@ class ArchiveCatalogTest {
         assertEquals("A \"tale\"\nof &lt; two", CatalogText.stripHtml("<p>A &quot;tale&quot;<br/>of &amp;lt; two</p>"))
     }
 
+    @Test
+    fun entitiesInTitlesAreDecoded() {
+        assertEquals("El celoso extremeño", CatalogText.decodeEntities("El celoso extreme&ntilde;o"))
+        assertEquals("Às Ávores, ça & ü", CatalogText.decodeEntities("&Agrave;s &Aacute;vores, &ccedil;a &amp; &uuml;"))
+        assertEquals("¿Qué? — «sí»", CatalogText.decodeEntities("&iquest;Qu&#233;? &mdash; &laquo;s&#xED;&raquo;"))
+        assertEquals("&lt; stays, &bogus; too", CatalogText.decodeEntities("&amp;lt; stays, &bogus; too"))
+    }
+
+    @Test
+    fun chapterTitlesFromTheFeedAreDecoded() {
+        val sections = ArchiveCatalog.sections(
+            listOf(LibriVoxFeedSection("01 - El casamiento enga&ntilde;oso", "https://archive.org/download/x/a.mp3", "60")),
+            lengths = emptyMap(),
+            sizes = emptyMap(),
+        )
+        assertEquals("01 - El casamiento engañoso", sections?.single()?.title)
+    }
+
     private fun file(name: String, track: String?, format: String = ArchiveCatalog.CHAPTER_FORMAT, title: String? = null) =
         ArchiveFile(name = name, format = format, size = "1000", length = "10:40", title = title, track = track)
 

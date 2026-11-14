@@ -138,12 +138,12 @@ class BooksListViewModelLibraryTest {
         val factory = factory()
         val viewModel = factory.booksListViewModel()
 
-        viewModel.onRefreshClicked()
+        assertFalse(viewModel.onRefreshClicked())
         assertTrue(viewModel.showReloadGuide.value)
         assertFalse(factory.libraryRepository.calls.contains("requestFullScan"))
 
         viewModel.dismissReloadGuide()
-        viewModel.onRefreshClicked()
+        assertTrue(viewModel.onRefreshClicked())
         assertTrue(factory.libraryRepository.calls.contains("requestFullScan"))
     }
 

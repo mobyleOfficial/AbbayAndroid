@@ -521,8 +521,14 @@ class BooksListViewModel @Inject constructor(
         legacyFolderToReselect.value = null
     }
 
-    fun onRefreshClicked() {
-        if (settings.value.reloadGuideShown) requestFullScan() else _showReloadGuide.value = true
+    /** Returns whether a scan was requested; the first time only the reload guide shows. */
+    fun onRefreshClicked(): Boolean {
+        if (!settings.value.reloadGuideShown) {
+            _showReloadGuide.value = true
+            return false
+        }
+        requestFullScan()
+        return true
     }
 
     /** Someone who already used the app before the tour existed never gets it uninvited; it stays in Settings. */
