@@ -423,7 +423,7 @@ fun BooksListScreen(
 
                                     LibraryPullToRefresh(
                                         isRefreshing = isRefreshing,
-                                        onRefresh = { if (hasSelectedFolder) viewModel.onRefreshClicked() },
+                                        onRefresh = { hasSelectedFolder && viewModel.onRefreshClicked() },
                                         modifier = Modifier.weight(1f),
                                     ) {
                                         val progressLabelOf: (Book) -> String = { book ->
@@ -731,14 +731,19 @@ private const val SECONDARY_BUTTON_ALPHA = 0.12f
 @Composable
 private fun LibraryPullToRefresh(
     isRefreshing: Boolean,
-    onRefresh: () -> Unit,
+    onRefresh: () -> Boolean,
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
+    val scope = rememberCoroutineScope()
     PullToRefreshBox(
         isRefreshing = isRefreshing,
-        onRefresh = onRefresh,
+        onRefresh = {
+            // A pull doesn't always start a scan (the one-time reload guide shows instead, or no folder is chosen).
+            // The box only lets go of its indicator when isRefreshing flips, so without a scan it would stay stuck.
+            if (!onRefresh()) scope.launch { pullToRefreshState.animateToHidden() }
+        },
         state = pullToRefreshState,
         modifier = modifier,
         indicator = {

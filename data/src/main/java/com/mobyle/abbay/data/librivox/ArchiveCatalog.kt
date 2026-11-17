@@ -40,7 +40,7 @@ object ArchiveCatalog {
     fun fallbackSection(file: ArchiveFile, identifier: String): LibriVoxSection? {
         val name = file.name?.takeIf(String::isNotEmpty) ?: return null
         return LibriVoxSection(
-            title = file.title?.trim()?.takeIf(String::isNotEmpty) ?: name.substringBeforeLast('.'),
+            title = file.title?.let(CatalogText::decodeEntities)?.trim()?.takeIf(String::isNotEmpty) ?: name.substringBeforeLast('.'),
             durationMs = millis(file.length) ?: 0L,
             listenUrl = "$DOWNLOAD_ENDPOINT$identifier/$name",
             sizeBytes = file.size?.toLongOrNull() ?: 0L,
@@ -90,7 +90,7 @@ object ArchiveCatalog {
             val fileName = url.substringAfterLast('/')
             val playtime = section.playtime?.toDoubleOrNull()?.takeIf { it > 0 }?.let { (it * MILLIS_PER_SECOND).toLong() }
             LibriVoxSection(
-                title = section.title?.takeIf(String::isNotEmpty) ?: "${index + 1}",
+                title = section.title?.let(CatalogText::decodeEntities)?.trim()?.takeIf(String::isNotEmpty) ?: "${index + 1}",
                 durationMs = playtime ?: lengths[fileName] ?: 0L,
                 listenUrl = url,
                 sizeBytes = sizes[fileName] ?: 0L,
