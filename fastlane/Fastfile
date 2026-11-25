@@ -4,21 +4,13 @@ default_platform(:android)
 ROOT = File.expand_path("..", Dir.pwd)
 APP_GRADLE = File.join(ROOT, "app", "build.gradle")
 
-# Abbay has no product flavors: dev and prod builds are the same app
-# (com.mobyle.abbay) and go to the same Firebase app. They are told apart by the
-# tester group and by the "-dev" suffix on the versionName. Create the groups in
-# the Firebase console (App Distribution > Testers & Groups) with these aliases.
+# Create the group in the Firebase console (App Distribution > Testers & Groups)
+# with this alias.
 TESTER_GROUPS = {
-  "dev" => "abbay-dev",
   "prod" => "abbay-prod"
 }.freeze
 
 platform :android do
-  desc "Build the signed release APK (versionName -dev) and send it to Firebase App Distribution"
-  lane :distribute_dev_build do
-    distribute(channel: "dev", artifact_type: "APK", gradle_tasks: [":app:assembleRelease"], version_name_suffix: "-dev")
-  end
-
   desc "Build the signed release AAB (plus an APK for GitHub) and send the AAB to Firebase App Distribution"
   lane :distribute_release_build do
     distribute(channel: "prod", artifact_type: "AAB", gradle_tasks: [":app:bundleRelease", ":app:assembleRelease"])
@@ -38,8 +30,7 @@ platform :android do
     )
     latest_build = latest_release ? latest_release[:buildVersion].to_i : 0
     version_code = [latest_build + 1, gradle_value("versionCode").to_i].max
-    suffix = options[:version_name_suffix].to_s
-    version_name = gradle_value("versionName") + suffix
+    version_name = gradle_value("versionName")
     UI.message("Building #{channel} #{version_name} (#{version_code})")
 
     # The release signing config falls back to the debug key when the keystore is
@@ -48,7 +39,6 @@ platform :android do
     UI.user_error!("Missing #{keystore_properties} - the workflow writes it from the ANDROID_KEYSTORE_* secrets") unless File.exist?(keystore_properties)
 
     gradle_args = ["-PversionCode=#{version_code}"]
-    gradle_args << "-PversionNameSuffix=#{suffix}" unless suffix.empty?
     # Crashlytics uploads the R8 mapping file as part of the minified release build.
     sh("cd #{ROOT.shellescape} && ./gradlew #{options[:gradle_tasks].join(' ')} #{gradle_args.join(' ')} --stacktrace")
 
