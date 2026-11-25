@@ -1,7 +1,13 @@
 package com.mobyle.abbay.presentation.widget
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.player.NowPlaying
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 internal class NowPlayingStore(context: Context) {
     private val preferences = context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE)
@@ -17,6 +23,17 @@ internal class NowPlayingStore(context: Context) {
             isSleepTimerRunning = preferences.getBoolean(KEY_SLEEP, false),
         )
     }
+
+    /**
+     * Emits whenever the stored state changes. A running Glance session keeps its composition between updates, so the
+     * widgets observe this instead of reading the store once.
+     */
+    fun changes(): Flow<NowPlaying?> = callbackFlow {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ -> trySend(read()) }
+        preferences.registerOnSharedPreferenceChangeListener(listener)
+        trySend(read())
+        awaitClose { preferences.unregisterOnSharedPreferenceChangeListener(listener) }
+    }.conflate().distinctUntilChanged()
 
     fun write(nowPlaying: NowPlaying?) {
         preferences.edit().apply {

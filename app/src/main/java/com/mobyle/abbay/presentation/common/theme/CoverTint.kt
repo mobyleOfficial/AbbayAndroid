@@ -54,7 +54,7 @@ object CoverTint {
         average?.also { averages.put(thumbnail, it.toArgb()) }
     }
 
-    private fun averageOf(bitmap: Bitmap): Color? {
+    internal fun averageOf(bitmap: Bitmap): Color? {
         val pixels = IntArray(bitmap.width * bitmap.height)
         bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
         var red = 0L

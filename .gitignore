@@ -32,3 +32,13 @@ re-workspace/
 
 # Kotlin compiler cache
 .kotlin/
+
+# Signing material never goes in the repository.
+*.jks
+*.keystore
+keystore.properties
+
+# Fastlane / Ruby
+fastlane/report.xml
+fastlane/README.md
+vendor/bundle/
