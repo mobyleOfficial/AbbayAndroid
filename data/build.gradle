@@ -9,7 +9,7 @@ plugins {
 
 android {
     namespace 'com.mobyle.abbay.data'
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         minSdk 29
@@ -31,7 +31,7 @@ room {
 }
 
 android.testOptions {
-    targetSdk 35
+    targetSdk 36
 }
 
 android.sourceSets {

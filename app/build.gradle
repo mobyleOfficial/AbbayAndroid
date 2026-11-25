@@ -17,16 +17,29 @@ if (localPropertiesFile.exists()) {
     localProperties.load(new FileInputStream(localPropertiesFile))
 }
 
+// CI writes keystore.properties (git-ignored) from GitHub Secrets; see keystore.properties.example.
+// Without it, the local keystore path and the KEYSTORE_* entries of local.properties are used.
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+def releaseKeystore = keystoreProperties["storeFile"]
+    ? rootProject.file(keystoreProperties["storeFile"])
+    : file("C:\\Users\\Abe\\Documents\\Keystore\\keystore.jks")
+
 android {
     namespace 'com.mobyle.abbay'
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         applicationId "com.mobyle.abbay"
         minSdk 29
-        targetSdk 35
-        versionCode 6
-        versionName "1.1.0"
+        targetSdk 36
+        // Bumped by one for every Play upload. The deploy workflows pass -PversionCode with the next number after the
+        // latest Firebase App Distribution release, never lower than this default.
+        versionCode project.findProperty("versionCode")?.toString()?.toInteger() ?: 7
+        versionName "1.1.0" + (project.findProperty("versionNameSuffix") ?: "")
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -36,10 +49,10 @@ android {
 
     signingConfigs {
         release {
-            storeFile file("C:\\Users\\Abe\\Documents\\Keystore\\keystore.jks")
-            storePassword localProperties["KEYSTORE_PASSWORD"]
-            keyAlias localProperties["KEY_ALIAS"]
-            keyPassword localProperties["KEY_PASSWORD"]
+            storeFile releaseKeystore
+            storePassword keystoreProperties["storePassword"] ?: localProperties["KEYSTORE_PASSWORD"]
+            keyAlias keystoreProperties["keyAlias"] ?: localProperties["KEY_ALIAS"]
+            keyPassword keystoreProperties["keyPassword"] ?: localProperties["KEY_PASSWORD"]
         }
     }
 
