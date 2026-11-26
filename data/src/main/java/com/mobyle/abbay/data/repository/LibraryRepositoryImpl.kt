@@ -12,6 +12,7 @@ import com.mobyle.abbay.data.library.BookDetailsMapper
 import com.mobyle.abbay.data.library.BookLocation
 import com.mobyle.abbay.data.library.BookMetadataEnricher
 import com.mobyle.abbay.data.library.BookProjection
+import com.mobyle.abbay.data.library.MissingBookRetention
 import com.mobyle.abbay.data.library.ScannedBookWriter
 import com.mobyle.abbay.data.librivox.LibriVoxDownloadControl
 import com.mobyle.abbay.data.librivox.LibriVoxDownloadScheduler
@@ -64,7 +65,6 @@ import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -484,11 +484,19 @@ class LibraryRepositoryImpl @Inject constructor(
 
     private suspend fun deleteBooksMissingForTooLong() {
         val retentionDays = settingsSource.observeSettings().first().missingBookRetentionDays
-        val limit = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(retentionDays.toLong())
-        val expiredBooks = dao.getBooksMissingSince(limit)
+        val removesAtOnce = MissingBookRetention.removesAtOnce(retentionDays)
+        val expiredBooks = dao.getBooksMissingSince(MissingBookRetention.cutoff(retentionDays, System.currentTimeMillis()))
+            // With no time to come back, a folder that failed to list once must not cost the book: it goes only
+            // when its files are really gone.
+            .filter { book -> !removesAtOnce || hasNoFilesLeft(book) }
         expiredBooks.forEach { contentSource.deleteCover(it.sidecarId) }
         if (expiredBooks.isNotEmpty()) dao.deleteBooks(expiredBooks.map { it.id })
     }
+
+    /** Its folder is gone, or it is still there with none of the book's audio in it (the files went to the trash). */
+    private suspend fun hasNoFilesLeft(book: BookEntity): Boolean =
+        contentSource.describe(book.folderUri) is DataResult.Failure ||
+            dao.getTracks(book.id).none { track -> contentSource.describe(track.documentUri) is DataResult.Success }
 
     private fun advanceProgress() {
         scanStatus.update { status ->

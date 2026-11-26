@@ -45,7 +45,13 @@ internal fun LibraryPreferenceSettings(settings: AppSettings, change: ((AppSetti
             info = R.string.settings_info_missing_retention,
             options = RETENTION_DAYS,
             selected = settings.missingBookRetentionDays,
-            optionLabel = { days -> pluralStringResource(R.plurals.settings_days, days, days) },
+            optionLabel = { days ->
+                if (days == 0) {
+                    stringResource(R.string.settings_missing_retention_none)
+                } else {
+                    pluralStringResource(R.plurals.settings_days, days, days)
+                }
+            },
             onSelect = { days -> change { it.copy(missingBookRetentionDays = days) } },
         )
         LibraryTabSettings(settings, change)
@@ -160,7 +166,8 @@ private fun QuickAction.labelResource(): Int = when (this) {
     QuickAction.SKIP_INTRO_OUTRO -> R.string.skip_title
 }
 
-private val RETENTION_DAYS = listOf(7, 30, 90, 365)
+/** 0 removes a missing book at the next scan instead of keeping it marked. */
+private val RETENTION_DAYS = listOf(0, 7, 30, 90, 365)
 private val SMALL_SKIP_SECONDS = listOf(5, 10, 15, 20, 30, 45, 60)
 private val LARGE_SKIP_MINUTES = listOf(1, 2, 5, 10, 15)
 private val AUTO_STOP_MINUTES = listOf(10, 15, 30, 60, 0)

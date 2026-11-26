@@ -483,6 +483,7 @@
     <string name="rescan_quick">Quick</string>
     <string name="rescan_full">Full</string>
     <string name="settings_missing_retention">Keep missing books for</string>
+    <string name="settings_missing_retention_none">Don\'t keep (remove now)</string>
     <string name="settings_default_speed">Speed of new books</string>
     <string name="settings_small_back">Small skip back</string>
     <string name="settings_small_forward">Small skip forward</string>
@@ -753,7 +754,7 @@
     <string name="settings_info_delete_all">Removes every book and folder from Abbay, along with the progress saved in the app. Your audio files stay on your phone.</string>
     <string name="settings_info_converter">Makes MP3 books 3 to 5 times smaller, so they take less space on your phone, and they sound almost the same.</string>
     <string name="settings_info_rescan">Every time you open the app, Abbay looks in your folders for books you added or removed. Quick only looks for what changed; Full reads every file again and takes longer.</string>
-    <string name="settings_info_missing_retention">If a book\'s files disappear (for example, you took out the memory card), Abbay remembers where you stopped for this long. If the book comes back in time, you carry on from the same spot.</string>
+    <string name="settings_info_missing_retention">If a book\'s files disappear (for example, you took out the memory card), Abbay remembers where you stopped for this long, and the book shows as missing. If it comes back in time, you carry on from the same spot. With Don\'t keep, the book leaves the library at the next scan instead.</string>
     <string name="settings_info_save_progress_in_folders">Abbay keeps a small file inside each book\'s folder with where you stopped and your bookmarks. If you change phones or reinstall the app, your progress comes back with the book.</string>
     <string name="settings_info_export_backup">Creates a file with your progress in every book. Keep it somewhere safe and use Import backup to bring it all back later, even on another phone.</string>
     <string name="settings_info_smart_rewind">When you press play after a pause, the book goes back a few seconds so you remember where you were. The longer the pause, the more it goes back.</string>
