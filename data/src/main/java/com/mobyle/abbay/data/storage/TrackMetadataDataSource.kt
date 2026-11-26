@@ -59,10 +59,8 @@ class TrackMetadataDataSource @Inject constructor(@ApplicationContext private va
 
     fun readExactMp3Duration(documentUri: String): DataResult<Long?> = guardedIo {
         val uri = Uri.parse(documentUri)
-        val firstBytes = context.contentResolver.openInputStream(uri)?.use { readUpTo(it, ID3_PROBE_BYTES) } ?: ByteArray(0)
-        val head = context.contentResolver.openInputStream(uri)?.use { readUpTo(it, Mp3Duration.headBytesNeeded(firstBytes)) }
-            ?: ByteArray(0)
-        if (!Mp3Duration.needsFullScan(head)) return@guardedIo null
+        val needsFullScan = context.contentResolver.openInputStream(uri)?.use(Mp3Duration::needsFullScan) ?: return@guardedIo null
+        if (!needsFullScan) return@guardedIo null
 
         val length = context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length } ?: -1L
         context.contentResolver.openInputStream(uri)?.use { stream -> Mp3Duration.scan(stream.buffered(), length) }
@@ -70,17 +68,6 @@ class TrackMetadataDataSource @Inject constructor(@ApplicationContext private va
 
     fun readEmbeddedPicture(documentUri: String): DataResult<ByteArray?> =
         withRetriever(documentUri) { retriever -> retriever.embeddedPicture }
-
-    private fun readUpTo(stream: java.io.InputStream, count: Int): ByteArray {
-        val buffer = ByteArray(count)
-        var filled = 0
-        while (filled < count) {
-            val read = stream.read(buffer, filled, count - filled)
-            if (read < 0) break
-            filled += read
-        }
-        return buffer.copyOf(filled)
-    }
 
     @Suppress("SwallowedException", "TooGenericExceptionCaught")
     private inline fun <T> guardedIo(block: () -> T): DataResult<T> = try {
@@ -106,9 +93,5 @@ class TrackMetadataDataSource @Inject constructor(@ApplicationContext private va
         } finally {
             runCatching { retriever.release() }
         }
-    }
-
-    private companion object {
-        const val ID3_PROBE_BYTES = 10
     }
 }
