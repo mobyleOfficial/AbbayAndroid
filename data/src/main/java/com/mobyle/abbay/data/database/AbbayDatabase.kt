@@ -37,7 +37,7 @@ import com.mobyle.abbay.data.database.entity.TrackEntity
         QueueEntryEntity::class,
         CharacterNoteEntity::class,
     ],
-    version = 7,
+    version = 8,
 )
 abstract class AbbayDatabase : RoomDatabase() {
     abstract fun libraryDao(): LibraryDao

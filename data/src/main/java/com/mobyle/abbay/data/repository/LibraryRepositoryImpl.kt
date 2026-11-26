@@ -32,6 +32,7 @@ import com.mobyle.abbay.data.work.ScanWorkScheduler
 import com.model.Book
 import com.model.BookDetails
 import com.model.BookFile
+import com.model.BookNameSource
 import com.model.BookOverrides
 import com.model.BookState
 import com.model.BookType
@@ -102,12 +103,17 @@ class LibraryRepositoryImpl @Inject constructor(
     override fun observeBooks(): Flow<List<Book>> = combine(
         dao.observeVisibleBooks(),
         dao.observeRoots(),
-        settingsSource.observeSettings().map { it.defaultSpeed }.distinctUntilChanged(),
-    ) { books, roots, defaultSpeed ->
+        settingsSource.observeSettings().map { it.defaultSpeed to it.bookNameFromFolder }.distinctUntilChanged(),
+    ) { books, roots, (defaultSpeed, nameFromFolder) ->
         val accessibleRootIds = roots.filter { it.isAccessible }.map { it.id }.toSet()
         books.mapNotNull { details ->
             val rootId = details.book.rootId
-            BookProjection.toBook(details, isRootAccessible = rootId == null || rootId in accessibleRootIds, defaultSpeed = defaultSpeed)
+            BookProjection.toBook(
+                details,
+                isRootAccessible = rootId == null || rootId in accessibleRootIds,
+                defaultSpeed = defaultSpeed,
+                nameFromFolder = nameFromFolder,
+            )
         }
     }
 
@@ -269,7 +275,9 @@ class LibraryRepositoryImpl @Inject constructor(
 
     override fun observeBookDetails(bookId: String): Flow<BookDetails?> {
         val id = bookId.toLongOrNull() ?: return flowOf(null)
-        return dao.observeBookWithDetails(id).map { details -> details?.let(BookDetailsMapper::toDetails) }
+        return combine(dao.observeBookWithDetails(id), observeNameFromFolder()) { details, nameFromFolder ->
+            details?.let { BookDetailsMapper.toDetails(it, nameFromFolder) }
+        }
     }
 
     override suspend fun updateOverrides(bookId: String, overrides: BookOverrides) = withContext(ioDispatcher) {
@@ -294,6 +302,15 @@ class LibraryRepositoryImpl @Inject constructor(
         dao.upsertListeningState(current.copy(sortByTrackTag = enabled, trackIndex = newIndex, updatedAt = System.currentTimeMillis()))
         sidecarSync.onBookEdited(id)
     }
+
+    override suspend fun setBookNameSource(bookId: String, source: BookNameSource) = withContext(ioDispatcher) {
+        val id = bookId.toLongOrNull() ?: return@withContext
+        dao.updateNameSource(id, source.name.takeUnless { source == BookNameSource.APP_DEFAULT })
+        sidecarSync.onBookEdited(id)
+    }
+
+    private fun observeNameFromFolder(): Flow<Boolean> =
+        settingsSource.observeSettings().map { it.bookNameFromFolder }.distinctUntilChanged()
 
     override suspend fun coverCandidates(bookId: String): List<CoverCandidate> = withContext(ioDispatcher) {
         val id = bookId.toLongOrNull() ?: return@withContext emptyList()

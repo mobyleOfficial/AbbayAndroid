@@ -13,6 +13,9 @@ data class BookDetails(
     val chapters: List<Chapter>,
     val unplayableFiles: List<UnplayableFile>,
     val sortByTrackNumber: Boolean,
+    /** The folder name a title can come from, or null when the book's title always comes from its file. */
+    val folderName: String?,
+    val nameSource: BookNameSource,
     val overrides: BookOverrides,
 )
 

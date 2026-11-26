@@ -244,6 +244,20 @@ class PlaybackService : MediaLibraryService() {
             listeningFeatures.handleCommand(command, Bundle.EMPTY)
         }
         createSession(sessionPlayer)
+        observeLoadedBookInfo()
+    }
+
+    /** Keeps the notification, lock screen, car and widget in step when the loaded book is renamed or its cover changes. */
+    private fun observeLoadedBookInfo() {
+        observeBooks().onEach { books ->
+            val loadedId = BookMediaItems.bookIdOf(exoPlayer.currentMediaItem) ?: return@onEach
+            val book = books.firstOrNull { it.id == loadedId } ?: return@onEach
+            for (index in 0 until exoPlayer.mediaItemCount) {
+                val item = exoPlayer.getMediaItemAt(index)
+                if (BookMediaItems.bookIdOf(item) != loadedId) continue
+                BookMediaItems.withBookInfo(item, book)?.let { exoPlayer.replaceMediaItem(index, it) }
+            }
+        }.launchIn(serviceScope)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

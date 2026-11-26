@@ -2,6 +2,7 @@ package com.repository
 
 import com.model.Book
 import com.model.BookDetails
+import com.model.BookNameSource
 import com.model.BookOverrides
 import com.model.BookState
 import com.model.CompanionDocument
@@ -48,6 +49,8 @@ interface LibraryRepository {
     suspend fun updateOverrides(bookId: String, overrides: BookOverrides)
 
     suspend fun setSortByTrackNumber(bookId: String, enabled: Boolean)
+
+    suspend fun setBookNameSource(bookId: String, source: BookNameSource)
 
     suspend fun coverCandidates(bookId: String): List<CoverCandidate>
 

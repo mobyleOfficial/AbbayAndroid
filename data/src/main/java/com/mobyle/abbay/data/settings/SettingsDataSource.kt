@@ -226,6 +226,7 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
         preferences[SettingsKeys.language] = updated.language.name
         preferences[SettingsKeys.castProcessedAudio] = updated.castProcessedAudio
         preferences[SettingsKeys.readAlongEnabled] = updated.readAlongEnabled
+        preferences[SettingsKeys.bookNameFromFolder] = updated.bookNameFromFolder
         preferences[SettingsKeys.libraryTabOrder] = updated.libraryTabOrder.joinToString(TAB_SEPARATOR) { it.name }
         preferences[SettingsKeys.hiddenLibraryTabs] = updated.hiddenLibraryTabs.mapTo(mutableSetOf()) { it.name }
     }
@@ -242,6 +243,7 @@ class SettingsDataSource @Inject constructor(private val dataStore: DataStore<Pr
         language = enumOrDefault(preferences[SettingsKeys.language], language),
         castProcessedAudio = preferences.valueOr(SettingsKeys.castProcessedAudio, castProcessedAudio),
         readAlongEnabled = preferences.valueOr(SettingsKeys.readAlongEnabled, readAlongEnabled),
+        bookNameFromFolder = preferences.valueOr(SettingsKeys.bookNameFromFolder, bookNameFromFolder),
         libraryTabOrder = preferences[SettingsKeys.libraryTabOrder]?.split(TAB_SEPARATOR)
             ?.mapNotNull { name -> LibraryTab.entries.firstOrNull { it.name == name } }
             ?: libraryTabOrder,

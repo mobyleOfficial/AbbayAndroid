@@ -51,6 +51,7 @@ object SidecarCodec {
                     author = overrides?.string("author"),
                     narrator = overrides?.string("narrator"),
                     description = overrides?.string("description"),
+                    nameSource = overrides?.string("nameSource"),
                 )
             },
         )
@@ -89,6 +90,7 @@ object SidecarCodec {
             "author" to text(book.overrides.author),
             "narrator" to text(book.overrides.narrator),
             "description" to text(book.overrides.description),
+            "nameSource" to text(book.overrides.nameSource),
         )
         return JsonObject(fields)
     }
