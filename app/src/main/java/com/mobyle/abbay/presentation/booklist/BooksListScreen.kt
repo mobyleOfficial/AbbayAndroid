@@ -336,7 +336,9 @@ fun BooksListScreen(
                 },
                 sheetGesturesEnabled = !isScreenLocked && !isSplit,
                 sheetPeekHeight = if (hasBookSelected && !isSplit) MINI_PLAYER_HEIGHT else 0.dp,
-            ) {
+            ) { sheetPadding ->
+                // The body runs under the collapsed sheet, so the lists end above the mini player instead of behind it.
+                val miniPlayerClearance = sheetPadding.calculateBottomPadding()
                 Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary)) {
                     Scaffold(
                         topBar = {
@@ -437,10 +439,12 @@ fun BooksListScreen(
                                                 visibleTabs = libraryState.tabs,
                                                 isScanning = libraryState.scanStatus.isScanning,
                                                 onShowTab = viewModel::selectTab,
+                                                modifier = Modifier.padding(bottom = miniPlayerClearance),
                                             )
                                         } else {
                                             when (libraryState.layout) {
                                                 LibraryLayout.LIST -> LazyColumn(
+                                                    contentPadding = PaddingValues(bottom = miniPlayerClearance),
                                                     modifier = Modifier
                                                         .fillMaxSize()
                                                         .background(MaterialTheme.colorScheme.primary)
@@ -465,7 +469,11 @@ fun BooksListScreen(
 
                                                 LibraryLayout.GRID -> LazyVerticalGrid(
                                                     columns = GridCells.Adaptive(minSize = GRID_CELL_MIN_WIDTH),
-                                                    contentPadding = PaddingValues(horizontal = 10.dp),
+                                                    contentPadding = PaddingValues(
+                                                        start = 10.dp,
+                                                        end = 10.dp,
+                                                        bottom = miniPlayerClearance,
+                                                    ),
                                                     modifier = Modifier.fillMaxSize()
                                                 ) {
                                                     items(items = state.audiobookList, key = { book -> book.id }) { book ->
@@ -479,7 +487,10 @@ fun BooksListScreen(
                                                     }
                                                 }
 
-                                                LibraryLayout.COMPACT -> LazyColumn(modifier = Modifier.fillMaxSize()) {
+                                                LibraryLayout.COMPACT -> LazyColumn(
+                                                    contentPadding = PaddingValues(bottom = miniPlayerClearance),
+                                                    modifier = Modifier.fillMaxSize(),
+                                                ) {
                                                     items(items = state.audiobookList, key = { book -> book.id }) { book ->
                                                         BookCompactItem(
                                                             book = book,

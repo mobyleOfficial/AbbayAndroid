@@ -491,6 +491,7 @@
     <string name="rescan_quick">Rápida</string>
     <string name="rescan_full">Completa</string>
     <string name="settings_missing_retention">Conservar libros ausentes durante</string>
+    <string name="settings_missing_retention_none">No conservar (quitar ya)</string>
     <string name="settings_default_speed">Velocidad de libros nuevos</string>
     <string name="settings_small_back">Retroceso corto</string>
     <string name="settings_small_forward">Avance corto</string>
@@ -757,7 +758,7 @@
     <string name="settings_info_converter">Hace los libros en MP3 de 3 a 5 veces más pequeños, para que ocupen menos espacio en tu móvil, y suenan casi igual.</string>
     <string name="settings_info_rescan">Cada vez que abres la app, Abbay mira tus carpetas para encontrar libros que añadiste o quitaste. Rápida solo busca lo que cambió; Completa vuelve a leer todos los archivos y tarda más.</string>
     <string name="settings_info_book_name_from_folder">Cuando un libro está dentro de su propia carpeta, usa el nombre de la carpeta como título en vez del título guardado en los archivos de audio. Los libros puestos directamente en una carpeta de la biblioteca siempre usan el archivo. Puedes cambiarlo para un solo libro en sus detalles.</string>
-    <string name="settings_info_missing_retention">Si los archivos de un libro desaparecen (por ejemplo, quitaste la tarjeta de memoria), Abbay recuerda dónde te quedaste durante este tiempo. Si el libro vuelve antes, sigues desde el mismo punto.</string>
+    <string name="settings_info_missing_retention">Si los archivos de un libro desaparecen (por ejemplo, quitaste la tarjeta de memoria), Abbay recuerda dónde te quedaste durante este tiempo y el libro aparece como ausente. Si vuelve antes, sigues desde el mismo punto. Con No conservar, el libro sale de la biblioteca en el próximo escaneo.</string>
     <string name="settings_info_save_progress_in_folders">Abbay guarda un archivito dentro de la carpeta de cada libro con dónde te quedaste y tus marcadores. Si cambias de móvil o reinstalas la app, el progreso vuelve con el libro.</string>
     <string name="settings_info_export_backup">Crea un archivo con tu progreso en todos los libros. Guárdalo en un lugar seguro y usa Importar copia de seguridad para recuperarlo todo después, incluso en otro móvil.</string>
     <string name="settings_info_smart_rewind">Cuando le das a reproducir después de pausar, el libro retrocede unos segundos para que recuerdes dónde estabas. Cuanto más larga la pausa, más retrocede.</string>
