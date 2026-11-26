@@ -40,5 +40,6 @@ data class SidecarBook(
         val author: String? = null,
         val narrator: String? = null,
         val description: String? = null,
+        val nameSource: String? = null,
     )
 }

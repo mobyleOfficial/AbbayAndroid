@@ -5,21 +5,22 @@ import com.mobyle.abbay.data.database.entity.BookEntity
 import com.mobyle.abbay.data.database.entity.TrackEntity
 import com.model.Book
 import com.model.BookFile
+import com.model.BookNameSource
 import com.model.BookState
 import com.model.BookType
 import com.model.Chapter
 import com.model.MultipleBooks
 
 internal object BookProjection {
-    fun toBook(details: BookWithDetails, isRootAccessible: Boolean, defaultSpeed: Float = 1f): Book? {
+    fun toBook(details: BookWithDetails, isRootAccessible: Boolean, defaultSpeed: Float = 1f, nameFromFolder: Boolean = false): Book? {
         val book = details.book
+        val title = book.displayTitle(nameFromFolder)
         val tracks = playableTracks(details)
         if (tracks.isEmpty()) return null
 
         val listeningState = details.listeningState
         val trackIndex = (listeningState?.trackIndex ?: 0).coerceIn(0, tracks.lastIndex)
         val state = stateOf(listeningState?.state)
-        val type = if (book.rootId == null || book.isSingleFile) BookType.FILE else BookType.FOLDER
         val hasError = book.missingSince != null || !isRootAccessible
         val speed = listeningState?.speed ?: defaultSpeed
         val positionInTrack = listeningState?.positionInTrackMs ?: 0L
@@ -29,13 +30,13 @@ internal object BookProjection {
             val track = tracks.single()
             BookFile(
                 id = book.id.toString(),
-                name = book.displayTitle,
+                name = title,
                 thumbnail = book.coverUri,
                 progress = positionInTrack,
                 duration = track.durationMs,
                 speed = speed,
                 hasError = hasError,
-                type = type,
+                type = typeOf(book),
                 fileName = track.fileName,
                 uri = track.documentUri,
                 author = book.displayAuthor,
@@ -51,14 +52,14 @@ internal object BookProjection {
         } else {
             MultipleBooks(
                 id = book.id.toString(),
-                name = book.displayTitle,
+                name = title,
                 thumbnail = book.coverUri,
                 progress = positionInTrack,
                 duration = tracks.sumOf { it.durationMs },
                 speed = speed,
                 hasError = hasError,
-                type = type,
-                bookFileList = tracks.map { track -> trackAsBookFile(details, track, speed, hasError, type) },
+                type = typeOf(book),
+                bookFileList = tracks.map { track -> trackAsBookFile(book, title, track, speed, hasError) },
                 currentBookPosition = trackIndex,
                 author = book.displayAuthor,
                 state = state,
@@ -92,16 +93,18 @@ internal object BookProjection {
         }
     }
 
-    private fun trackAsBookFile(details: BookWithDetails, track: TrackEntity, speed: Float, hasError: Boolean, type: BookType) =
+    private fun typeOf(book: BookEntity): BookType = if (book.rootId == null || book.isSingleFile) BookType.FILE else BookType.FOLDER
+
+    private fun trackAsBookFile(book: BookEntity, title: String, track: TrackEntity, speed: Float, hasError: Boolean) =
         BookFile(
-            id = "${details.book.id}/${track.id}",
-            name = details.book.displayTitle,
-            thumbnail = details.book.coverUri,
+            id = "${book.id}/${track.id}",
+            name = title,
+            thumbnail = book.coverUri,
             progress = 0L,
             duration = track.durationMs,
             speed = speed,
             hasError = hasError,
-            type = type,
+            type = typeOf(book),
             fileName = track.fileName,
             uri = track.documentUri,
         )
@@ -116,7 +119,29 @@ internal object BookProjection {
     }
 }
 
-internal val BookEntity.displayTitle: String get() = titleOverride ?: title
+/**
+ * The title shown for a book: the user's own title first, then the folder name or the tagged title, as the book's
+ * [BookNameSource] (or the app-wide [nameFromFolder] it follows) asks for.
+ */
+internal fun BookEntity.displayTitle(nameFromFolder: Boolean): String {
+    titleOverride?.let { return it }
+    val useFolder = when (nameSourceOf(nameSource)) {
+        BookNameSource.APP_DEFAULT -> nameFromFolder
+        BookNameSource.FOLDER -> true
+        BookNameSource.METADATA -> false
+    }
+    return folderName?.takeIf { useFolder } ?: title
+}
+
+/**
+ * The name of the folder holding the book, or null for a book whose title always comes from its file: one sitting
+ * directly in a library folder, a single file added on its own, or a LibriVox download.
+ */
+internal val BookEntity.folderName: String?
+    get() = relativePath.substringAfterLast('/').takeIf { rootId != null && !isSingleFile && it.isNotBlank() }
+
+internal fun nameSourceOf(name: String?): BookNameSource =
+    BookNameSource.entries.firstOrNull { it.name == name } ?: BookNameSource.APP_DEFAULT
 internal val BookEntity.displayAuthor: String? get() = authorOverride ?: author
 
 internal val BookEntity.displayNarrator: String? get() = narratorOverride ?: narrator

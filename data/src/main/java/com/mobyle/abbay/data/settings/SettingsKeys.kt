@@ -68,6 +68,7 @@ internal object SettingsKeys {
     val language = stringPreferencesKey("language")
     val castProcessedAudio = booleanPreferencesKey("castProcessedAudio")
     val readAlongEnabled = booleanPreferencesKey("readAlong")
+    val bookNameFromFolder = booleanPreferencesKey("bookNameFromFolder")
 
     val libraryTabOrder = stringPreferencesKey("libraryTabOrder")
     val hiddenLibraryTabs = stringSetPreferencesKey("hiddenLibraryTabs")

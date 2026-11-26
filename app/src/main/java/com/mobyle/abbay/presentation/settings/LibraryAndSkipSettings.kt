@@ -32,6 +32,11 @@ internal fun LibraryPreferenceSettings(settings: AppSettings, change: ((AppSetti
             optionLabel = { stringResource(it.labelResource()) },
             onSelect = { layout -> change { it.copy(libraryLayout = layout) } },
         )
+        SwitchSetting(
+            R.string.settings_book_name_from_folder,
+            settings.bookNameFromFolder,
+            info = R.string.settings_info_book_name_from_folder,
+        ) { isEnabled -> change { it.copy(bookNameFromFolder = isEnabled) } }
         ChoiceSetting(
             label = stringResource(R.string.settings_rescan_on_start),
             info = R.string.settings_info_rescan,

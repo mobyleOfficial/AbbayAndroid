@@ -137,6 +137,12 @@
     <string name="details_files">Archivos</string>
     <string name="details_location">Carpeta</string>
     <string name="details_sort_by_track_number">Ordenar por número de pista</string>
+    <string name="details_name_source">Nombre del libro desde</string>
+    <string name="details_name_source_folder">Carpeta: %1$s</string>
+    <string name="details_name_source_own_title">Se usa el título que escribiste arriba. Bórralo para usar esta opción.</string>
+    <string name="name_source_app_default">Ajuste de la app</string>
+    <string name="name_source_folder">Nombre de la carpeta</string>
+    <string name="name_source_metadata">Metadatos del archivo</string>
     <string name="details_chapters">Capítulos</string>
     <string name="details_unplayable">Archivos que no se reproducen</string>
     <string name="details_unsupported_format">Formato no compatible — conviértelo a MP3, M4B u Opus</string>
@@ -479,6 +485,7 @@
     <string name="settings_tab_move_up">Mover %1$s hacia arriba</string>
     <string name="settings_tab_move_down">Mover %1$s hacia abajo</string>
     <string name="settings_library_layout">Vista de la biblioteca</string>
+    <string name="settings_book_name_from_folder">Usar el nombre de la carpeta como nombre del libro</string>
     <string name="settings_rescan_on_start">Revisar la biblioteca al abrir la app</string>
     <string name="rescan_off">Desactivado</string>
     <string name="rescan_quick">Rápida</string>
@@ -750,6 +757,7 @@
     <string name="settings_info_delete_all">Quita todos los libros y carpetas de Abbay, junto con el progreso guardado en la app. Tus archivos de audio siguen en tu móvil.</string>
     <string name="settings_info_converter">Hace los libros en MP3 de 3 a 5 veces más pequeños, para que ocupen menos espacio en tu móvil, y suenan casi igual.</string>
     <string name="settings_info_rescan">Cada vez que abres la app, Abbay mira tus carpetas para encontrar libros que añadiste o quitaste. Rápida solo busca lo que cambió; Completa vuelve a leer todos los archivos y tarda más.</string>
+    <string name="settings_info_book_name_from_folder">Cuando un libro está dentro de su propia carpeta, usa el nombre de la carpeta como título en vez del título guardado en los archivos de audio. Los libros puestos directamente en una carpeta de la biblioteca siempre usan el archivo. Puedes cambiarlo para un solo libro en sus detalles.</string>
     <string name="settings_info_missing_retention">Si los archivos de un libro desaparecen (por ejemplo, quitaste la tarjeta de memoria), Abbay recuerda dónde te quedaste durante este tiempo y el libro aparece como ausente. Si vuelve antes, sigues desde el mismo punto. Con No conservar, el libro sale de la biblioteca en el próximo escaneo.</string>
     <string name="settings_info_save_progress_in_folders">Abbay guarda un archivito dentro de la carpeta de cada libro con dónde te quedaste y tus marcadores. Si cambias de móvil o reinstalas la app, el progreso vuelve con el libro.</string>
     <string name="settings_info_export_backup">Crea un archivo con tu progreso en todos los libros. Guárdalo en un lugar seguro y usa Importar copia de seguridad para recuperarlo todo después, incluso en otro móvil.</string>

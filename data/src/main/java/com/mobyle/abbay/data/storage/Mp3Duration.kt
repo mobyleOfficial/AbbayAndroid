@@ -14,6 +14,7 @@ import androidx.media3.extractor.SeekMap
 import androidx.media3.extractor.TrackOutput
 import androidx.media3.extractor.mp3.Mp3Extractor
 import java.io.InputStream
+import java.io.SequenceInputStream
 
 @OptIn(UnstableApi::class)
 object Mp3Duration {
@@ -25,23 +26,27 @@ object Mp3Duration {
     private const val SYNCHSAFE_MASK = 0x7F
     private const val FIRST_FRAME_SEARCH_BYTES = 2_048
 
-    fun needsFullScan(head: ByteArray): Boolean {
-        val frameStart = id3TagSize(head)
-        if (frameStart >= head.size) return true
-        val searchEnd = minOf(head.size, frameStart + FIRST_FRAME_SEARCH_BYTES)
-        return headerMarkers.none { marker -> indexOf(head, marker, frameStart, searchEnd) >= 0 }
+    fun needsFullScan(stream: InputStream): Boolean {
+        val header = stream.readUpTo(ID3_HEADER_SIZE)
+        val tagSize = id3TagSize(header)
+        val frameRegion = if (tagSize > 0) {
+            if (!stream.skipFully(tagSize.toLong() - header.size)) return true
+            stream.readUpTo(FIRST_FRAME_SEARCH_BYTES)
+        } else {
+            header + stream.readUpTo(FIRST_FRAME_SEARCH_BYTES - header.size)
+        }
+        return headerMarkers.none { marker -> indexOf(frameRegion, marker, 0, frameRegion.size) >= 0 }
     }
 
-    fun headBytesNeeded(firstTenBytes: ByteArray): Int = id3TagSize(firstTenBytes) + FIRST_FRAME_SEARCH_BYTES
-
     fun scan(stream: InputStream, lengthBytes: Long): Long? {
+        val audio = skipId3Tag(stream, lengthBytes) ?: return null
         val output = DurationOutput()
         val extractor = Mp3Extractor(Mp3Extractor.FLAG_ENABLE_INDEX_SEEKING)
         val reader = DataReader { buffer, offset, length ->
-            val read = stream.read(buffer, offset, length)
+            val read = audio.stream.read(buffer, offset, length)
             if (read < 0) C.RESULT_END_OF_INPUT else read
         }
-        val input = DefaultExtractorInput(reader, 0, if (lengthBytes > 0) lengthBytes else C.LENGTH_UNSET.toLong())
+        val input = DefaultExtractorInput(reader, 0, audio.length)
         extractor.init(output)
         val positionHolder = PositionHolder()
         while (extractor.read(input, positionHolder) != Extractor.RESULT_END_OF_INPUT) Unit
@@ -50,6 +55,24 @@ object Mp3Duration {
         val durationUs = output.seekMap?.durationUs?.takeIf { it != C.TIME_UNSET } ?: return null
         return durationUs / MICROSECONDS_PER_MILLISECOND
     }
+
+    /**
+     * Mp3Extractor buffers the whole ID3 tag in memory, which runs out of heap on files with
+     * large embedded covers or padding, so the extractor is handed the stream after the tag.
+     */
+    private fun skipId3Tag(stream: InputStream, lengthBytes: Long): AudioStream? {
+        val header = stream.readUpTo(ID3_HEADER_SIZE)
+        val tagSize = id3TagSize(header)
+        val audioLength = if (lengthBytes > 0) lengthBytes - tagSize else C.LENGTH_UNSET.toLong()
+        return when {
+            tagSize == 0 -> AudioStream(SequenceInputStream(header.inputStream(), stream), audioLength)
+            lengthBytes > 0 && audioLength <= 0 -> null
+            stream.skipFully(tagSize.toLong() - header.size) -> AudioStream(stream, audioLength)
+            else -> null
+        }
+    }
+
+    private class AudioStream(val stream: InputStream, val length: Long)
 
     private fun id3TagSize(head: ByteArray): Int {
         val hasId3 = head.size >= ID3_HEADER_SIZE && head.copyOf(ID3_MAGIC.size).contentEquals(ID3_MAGIC)
@@ -63,6 +86,31 @@ object Mp3Duration {
             if (marker.indices.all { data[position + it] == marker[it] }) return position
         }
         return -1
+    }
+
+    private fun InputStream.readUpTo(count: Int): ByteArray {
+        val buffer = ByteArray(count)
+        var filled = 0
+        while (filled < count) {
+            val read = read(buffer, filled, count - filled)
+            if (read < 0) break
+            filled += read
+        }
+        return buffer.copyOf(filled)
+    }
+
+    private fun InputStream.skipFully(count: Long): Boolean {
+        var remaining = count
+        while (remaining > 0) {
+            val skipped = skip(remaining)
+            if (skipped > 0) {
+                remaining -= skipped
+            } else {
+                if (read() < 0) return false
+                remaining--
+            }
+        }
+        return true
     }
 
     private class DurationOutput : ExtractorOutput, TrackOutput {

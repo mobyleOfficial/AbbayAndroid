@@ -8,13 +8,13 @@ import com.model.UnplayableFile
 internal object BookDetailsMapper {
     private const val UNSUPPORTED_EXTENSION = ".wma"
 
-    fun toDetails(details: BookWithDetails): BookDetails {
+    fun toDetails(details: BookWithDetails, nameFromFolder: Boolean = false): BookDetails {
         val book = details.book
         val playableTracks = BookProjection.playableTracks(details)
         val chapters = BookProjection.toBook(details, isRootAccessible = true)?.chapters.orEmpty()
         return BookDetails(
             id = book.id.toString(),
-            title = book.displayTitle,
+            title = book.displayTitle(nameFromFolder),
             author = book.displayAuthor,
             narrator = book.narratorOverride ?: book.narrator,
             description = book.descriptionOverride ?: book.description,
@@ -27,6 +27,8 @@ internal object BookDetailsMapper {
                 UnplayableFile(it.fileName, isUnsupportedFormat = it.fileName.endsWith(UNSUPPORTED_EXTENSION, ignoreCase = true))
             },
             sortByTrackNumber = details.listeningState?.sortByTrackTag == true,
+            folderName = book.folderName,
+            nameSource = nameSourceOf(book.nameSource),
             overrides = BookOverrides(book.titleOverride, book.authorOverride, book.narratorOverride, book.descriptionOverride),
         )
     }
