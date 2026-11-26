@@ -4,6 +4,7 @@ import com.mobyle.abbay.data.database.dao.BookWithDetails
 import com.mobyle.abbay.data.database.entity.BookEntity
 import com.mobyle.abbay.data.database.entity.ListeningStateEntity
 import com.mobyle.abbay.data.database.entity.TrackEntity
+import com.model.BookNameSource
 import com.model.MultipleBooks
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -54,6 +55,45 @@ class BookDetailsMapperTest {
         val projected = BookProjection.toBook(sorted, isRootAccessible = true) as MultipleBooks
         assertEquals("c.mp3", projected.bookFileList.first().fileName)
         assertEquals(true, BookDetailsMapper.toDetails(sorted).sortByTrackNumber)
+    }
+
+    @Test
+    fun folderBooksFollowTheAppSettingUnlessTheBookChoosesItsOwnSource() {
+        val details = BookWithDetails(book, tracks, null)
+
+        assertEquals("Scanned", BookProjection.toBook(details, isRootAccessible = true, nameFromFolder = false)?.name)
+        assertEquals("Sea", BookProjection.toBook(details, isRootAccessible = true, nameFromFolder = true)?.name)
+        assertEquals("Sea", BookDetailsMapper.toDetails(details, nameFromFolder = true).title)
+
+        val folderBook = BookWithDetails(book.copy(nameSource = BookNameSource.FOLDER.name), tracks, null)
+        assertEquals("Sea", BookProjection.toBook(folderBook, isRootAccessible = true, nameFromFolder = false)?.name)
+
+        val metadataBook = BookWithDetails(book.copy(nameSource = BookNameSource.METADATA.name), tracks, null)
+        assertEquals("Scanned", BookProjection.toBook(metadataBook, isRootAccessible = true, nameFromFolder = true)?.name)
+    }
+
+    @Test
+    fun theUsersOwnTitleWinsOverTheFolderName() {
+        val details = BookWithDetails(book.copy(titleOverride = "Mine", nameSource = BookNameSource.FOLDER.name), tracks, null)
+
+        assertEquals("Mine", BookProjection.toBook(details, isRootAccessible = true, nameFromFolder = true)?.name)
+    }
+
+    @Test
+    fun booksDirectlyInTheLibraryFolderAlwaysUseTheirFile() {
+        val looseFile = book.copy(relativePath = "Sea.mp3", isSingleFile = true, nameSource = BookNameSource.FOLDER.name)
+        val details = BookWithDetails(looseFile, tracks.take(1), null)
+
+        assertEquals("Scanned", BookProjection.toBook(details, isRootAccessible = true, nameFromFolder = true)?.name)
+        assertNull(BookDetailsMapper.toDetails(details, nameFromFolder = true).folderName)
+    }
+
+    @Test
+    fun aBookFolderAtTheTopOfTheLibraryIsNamedAfterItself() {
+        val details = BookWithDetails(book.copy(relativePath = "Sea"), tracks, null)
+
+        assertEquals("Sea", BookDetailsMapper.toDetails(details, nameFromFolder = true).folderName)
+        assertEquals(BookNameSource.APP_DEFAULT, BookDetailsMapper.toDetails(details).nameSource)
     }
 
     private fun track(index: Int, name: String, trackNumber: Int?, unplayable: Boolean = false) = TrackEntity(

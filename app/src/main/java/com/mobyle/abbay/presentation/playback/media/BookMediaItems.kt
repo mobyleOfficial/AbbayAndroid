@@ -26,20 +26,14 @@ object BookMediaItems {
         }
         val chapterStarts = book.chapters.map { it.startMs }.toLongArray()
         val chapterTitles = book.chapters.map { it.title }.toTypedArray()
-        val subtitle = listOfNotNull(book.name, book.author?.takeIf(String::isNotBlank)).joinToString(" — ")
 
         val items = tracks.mapIndexed { index, track ->
-            val trackTitle = if (tracks.size == 1) book.name else track.fileName.substringBeforeLast('.')
             MediaItem.Builder()
                 .setMediaId(track.id)
                 .setUri(Uri.parse(track.uri))
                 .setMediaMetadata(
                     MediaMetadata.Builder()
-                        .setTitle(trackTitle)
-                        .setArtist(subtitle)
-                        .setAlbumTitle(book.name)
-                        .setAlbumArtist(book.author)
-                        .setArtworkUri(book.thumbnail?.let(Uri::parse))
+                        .withBookInfo(book, trackTitle(book, track.fileName, tracks.size))
                         .setTrackNumber(index + 1)
                         .setTotalTrackCount(tracks.size)
                         .setIsPlayable(true)
@@ -61,6 +55,27 @@ object BookMediaItems {
         }
         return items to startIndex.coerceIn(0, (items.size - 1).coerceAtLeast(0))
     }
+
+    /**
+     * [item] with [book]'s current title, author and cover, or null when it already shows them. Only the displayed
+     * metadata changes, so the player can swap it in without reloading the track.
+     */
+    fun withBookInfo(item: MediaItem, book: Book): MediaItem? {
+        val metadata = item.mediaMetadata
+        val trackCount = metadata.totalTrackCount ?: 1
+        val updated = metadata.buildUpon().withBookInfo(book, trackTitle(book, fileNameOf(item), trackCount)).build()
+        return if (updated == metadata) null else item.buildUpon().setMediaMetadata(updated).build()
+    }
+
+    private fun MediaMetadata.Builder.withBookInfo(book: Book, trackTitle: String): MediaMetadata.Builder =
+        setTitle(trackTitle)
+            .setArtist(listOfNotNull(book.name, book.author?.takeIf(String::isNotBlank)).joinToString(" — "))
+            .setAlbumTitle(book.name)
+            .setAlbumArtist(book.author)
+            .setArtworkUri(book.thumbnail?.let(Uri::parse))
+
+    private fun trackTitle(book: Book, fileName: String, trackCount: Int): String =
+        if (trackCount == 1) book.name else fileName.substringBeforeLast('.')
 
     fun bookIdOf(item: MediaItem?): String? = item?.mediaMetadata?.extras?.getString(EXTRA_BOOK_ID)
 

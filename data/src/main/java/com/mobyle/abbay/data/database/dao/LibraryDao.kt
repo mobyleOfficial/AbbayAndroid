@@ -71,6 +71,9 @@ interface LibraryDao {
     )
     suspend fun updateOverrides(bookId: Long, title: String?, author: String?, narrator: String?, description: String?)
 
+    @Query("UPDATE book SET name_source = :nameSource WHERE id = :bookId")
+    suspend fun updateNameSource(bookId: Long, nameSource: String?)
+
     @Query("UPDATE book SET cover_uri = :coverUri, cover_source = :coverSource WHERE id = :bookId")
     suspend fun updateCover(bookId: Long, coverUri: String?, coverSource: String?)
 
