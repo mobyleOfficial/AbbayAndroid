@@ -38,6 +38,10 @@ interface LibraryDao {
     @Query("SELECT * FROM book WHERE hidden = 0")
     fun observeVisibleBooks(): Flow<List<BookWithDetails>>
 
+    @Transaction
+    @Query("SELECT * FROM book WHERE hidden = 1")
+    fun observeHiddenBooks(): Flow<List<BookWithDetails>>
+
     @Query("SELECT * FROM book WHERE root_id = :rootId")
     suspend fun getBooksOfRoot(rootId: Long): List<BookEntity>
 
@@ -98,6 +102,9 @@ interface LibraryDao {
 
     @Query("UPDATE book SET hidden = 1 WHERE id = :bookId")
     suspend fun hideBook(bookId: Long)
+
+    @Query("UPDATE book SET hidden = 0 WHERE id = :bookId")
+    suspend fun restoreBook(bookId: Long)
 
     @Query("UPDATE book SET missing_since = :missingSince WHERE id = :bookId")
     suspend fun setMissingSince(bookId: Long, missingSince: Long?)

@@ -3,6 +3,7 @@ package com.mobyle.abbay.data.repository
 import android.os.SystemClock
 import android.util.Log
 import com.library.NaturalOrderComparator
+import com.mobyle.abbay.data.database.dao.BookWithDetails
 import com.mobyle.abbay.data.database.dao.LibraryDao
 import com.mobyle.abbay.data.database.entity.BookEntity
 import com.mobyle.abbay.data.database.entity.LibraryRootEntity
@@ -100,8 +101,12 @@ class LibraryRepositoryImpl @Inject constructor(
 
     override fun observeRoots(): Flow<List<LibraryRoot>> = dao.observeRoots().map { roots -> roots.map { it.toDomain() } }
 
-    override fun observeBooks(): Flow<List<Book>> = combine(
-        dao.observeVisibleBooks(),
+    override fun observeBooks(): Flow<List<Book>> = projectBooks(dao.observeVisibleBooks())
+
+    override fun observeHiddenBooks(): Flow<List<Book>> = projectBooks(dao.observeHiddenBooks())
+
+    private fun projectBooks(booksFlow: Flow<List<BookWithDetails>>): Flow<List<Book>> = combine(
+        booksFlow,
         dao.observeRoots(),
         settingsSource.observeSettings().map { it.defaultSpeed to it.bookNameFromFolder }.distinctUntilChanged(),
     ) { books, roots, (defaultSpeed, nameFromFolder) ->
@@ -214,6 +219,10 @@ class LibraryRepositoryImpl @Inject constructor(
         dao.deleteBooks(listOf(id))
         libriVoxBook.librivoxId?.let(libriVoxFiles::delete)
         contentSource.deleteCover(libriVoxBook.sidecarId)
+    }
+
+    override suspend fun restoreBook(bookId: String) = withContext(ioDispatcher) {
+        bookId.toLongOrNull()?.let { dao.restoreBook(it) } ?: Unit
     }
 
     override suspend fun clearLibrary() = withContext(ioDispatcher) {

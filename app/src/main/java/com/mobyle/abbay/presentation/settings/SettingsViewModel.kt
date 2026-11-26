@@ -3,6 +3,7 @@ package com.mobyle.abbay.presentation.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.model.BackupSummary
+import com.model.Book
 import com.model.DataResult
 import com.model.LibraryRoot
 import com.settings.AppLanguage
@@ -15,9 +16,11 @@ import com.usecase.ExportBackup
 import com.usecase.GetAppLanguage
 import com.usecase.ImportBackup
 import com.usecase.ObserveAppSettings
+import com.usecase.ObserveHiddenBooks
 import com.usecase.ObserveLibraryRoots
 import com.usecase.RemoveLibraryRoot
 import com.usecase.ReplaceLibraryRoots
+import com.usecase.RestoreBook
 import com.usecase.SetAppLanguage
 import com.usecase.SetReadAlongEnabled
 import com.usecase.UpdateAppSettings
@@ -48,6 +51,8 @@ class SettingsViewModel @Inject constructor(
     getAppLanguage: GetAppLanguage,
     private val setAppLanguage: SetAppLanguage,
     private val setReadAlongEnabled: SetReadAlongEnabled,
+    observeHiddenBooks: ObserveHiddenBooks,
+    private val restoreBook: RestoreBook,
 ) : ViewModel() {
     private val settings: StateFlow<AppSettings> = observeAppSettings()
         .stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
@@ -71,6 +76,9 @@ class SettingsViewModel @Inject constructor(
     val showShowDeleteConfirmation: StateFlow<Boolean> get() = _showShowDeleteConfirmation
     val showChangeFolderConfirmation: StateFlow<Boolean> get() = _showChangeFolderConfirmation
     val libraryRoots: StateFlow<List<LibraryRoot>> = observeLibraryRoots()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val removedBooks: StateFlow<List<Book>> = observeHiddenBooks()
+        .map { books -> books.sortedBy { it.name.lowercase() } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     fun changePlayWhenAppIsClosed(shouldPlayWhenAppIsClosed: Boolean) = viewModelScope.launch {
@@ -118,6 +126,8 @@ class SettingsViewModel @Inject constructor(
     fun removeFolder(rootId: Long) = viewModelScope.launch { removeLibraryRoot(rootId) }
 
     fun clearBooks() = viewModelScope.launch { clearLibrary() }
+
+    fun restoreRemovedBook(bookId: String) = viewModelScope.launch { restoreBook(bookId) }
 
     fun clearListeningStatistics() = viewModelScope.launch { clearStatistics() }
 

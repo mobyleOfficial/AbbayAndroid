@@ -92,6 +92,8 @@
     <string name="legacy_migration_skip">Not now</string>
     <string name="settings_library_folders">Library folders</string>
     <string name="settings_add_library_folder">Add another folder</string>
+    <string name="settings_removed_books">Deleted books (%1$d)</string>
+    <string name="settings_restore_removed_book">Put %1$s back in the library</string>
     <string name="settings_library_folder_access_lost">%1$s (access lost)</string>
     <string name="settings_remove_library_folder">Remove %1$s</string>
     <string name="playback_track_skipped">Couldn’t play %1$s — skipped</string>
@@ -757,6 +759,7 @@
     <string name="settings_info_description">Learn more: %1$s</string>
     <string name="settings_info_play_when_closed">If you close Abbay (by swiping it away from your open apps), the book keeps playing.</string>
     <string name="settings_info_open_player">When you open the app, the book you were listening to is already open in the player.</string>
+    <string name="settings_info_removed_books">Books you deleted from the library. Only the list entry went away: Abbay did not touch their files, but a scan does not bring them back. Put one back here.</string>
     <string name="settings_info_change_folder">Changes the folder where Abbay looks for your books. The books you have now leave the list and the ones in the new folder come in.</string>
     <string name="settings_info_delete_all">Removes every book and folder from Abbay, along with the progress saved in the app. Your audio files stay on your phone.</string>
     <string name="settings_info_converter">Makes MP3 books 3 to 5 times smaller, so they take less space on your phone, and they sound almost the same.</string>
