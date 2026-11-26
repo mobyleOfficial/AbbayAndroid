@@ -39,7 +39,7 @@ android {
         // Bumped by one for every Play upload. The deploy workflows pass -PversionCode with the next number after the
         // latest Firebase App Distribution release, never lower than this default.
         versionCode project.findProperty("versionCode")?.toString()?.toInteger() ?: 7
-        versionName "1.2.0" + (project.findProperty("versionNameSuffix") ?: "")
+        versionName "1.3.0" + (project.findProperty("versionNameSuffix") ?: "")
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
