@@ -19,6 +19,7 @@ import com.usecase.ImportBackup
 import com.usecase.ImportLegacyProgress
 import com.usecase.ObserveAppSettings
 import com.usecase.ObserveBooks
+import com.usecase.ObserveHiddenBooks
 import com.usecase.ObserveLibraryRoots
 import com.usecase.ObserveLibriVoxDownloads
 import com.usecase.ObserveScanStatus
@@ -30,6 +31,7 @@ import com.usecase.RemoveLibraryRoot
 import com.usecase.RepairLibriVoxBook
 import com.usecase.ReplaceLibraryRoots
 import com.usecase.RequestFullScan
+import com.usecase.RestoreBook
 import com.usecase.SaveListeningState
 import com.usecase.SetAppLanguage
 import com.usecase.SetBookState
@@ -96,5 +98,7 @@ class ViewModelFactory(
         getAppLanguage = GetAppLanguage(languageRepository),
         setAppLanguage = SetAppLanguage(languageRepository),
         setReadAlongEnabled = SetReadAlongEnabled(settingsRepository, readAlongRepository),
+        observeHiddenBooks = ObserveHiddenBooks(libraryRepository),
+        restoreBook = RestoreBook(libraryRepository),
     )
 }

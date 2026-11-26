@@ -20,6 +20,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -49,6 +52,8 @@ fun SettingsScreen(
     val showChangeFolderConfirmation by viewModel.showChangeFolderConfirmation.collectAsState()
 
     val libraryRoots by viewModel.libraryRoots.collectAsState()
+    val removedBooks by viewModel.removedBooks.collectAsState()
+    var showRemovedBooks by remember { mutableStateOf(false) }
     val settings by viewModel.listeningSettings.collectAsState()
 
     val openFolderSelector = rememberLauncherForActivityResult(
@@ -119,6 +124,14 @@ fun SettingsScreen(
                     info = stringResource(R.string.settings_info_delete_all),
                     onClick = viewModel::showDeleteConfirmation
                 )
+
+                if (removedBooks.isNotEmpty()) {
+                    SettingItem(
+                        text = stringResource(R.string.settings_removed_books, removedBooks.size),
+                        info = stringResource(R.string.settings_info_removed_books),
+                        onClick = { showRemovedBooks = true }
+                    )
+                }
             }
 
             if (libraryRoots.isNotEmpty()) {
@@ -192,6 +205,14 @@ fun SettingsScreen(
                     viewModel.clearBooks()
                     viewModel.dismissDeleteConfirmation()
                 },
+            )
+        }
+
+        if (showRemovedBooks && removedBooks.isNotEmpty()) {
+            RemovedBooksSheet(
+                books = removedBooks,
+                onRestore = viewModel::restoreRemovedBook,
+                onDismiss = { showRemovedBooks = false },
             )
         }
 

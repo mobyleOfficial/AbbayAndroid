@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 class FakeLibraryRepository(initialBooks: List<Book> = emptyList()) : LibraryRepository {
     val books = MutableStateFlow(initialBooks)
+    val hiddenBooks = MutableStateFlow(emptyList<Book>())
     val roots = MutableStateFlow(emptyList<LibraryRoot>())
     val scanStatus = MutableStateFlow(ScanStatus())
     val calls = mutableListOf<String>()
@@ -23,6 +24,8 @@ class FakeLibraryRepository(initialBooks: List<Book> = emptyList()) : LibraryRep
     override fun observeRoots(): Flow<List<LibraryRoot>> = roots
 
     override fun observeBooks(): Flow<List<Book>> = books
+
+    override fun observeHiddenBooks(): Flow<List<Book>> = hiddenBooks
 
     override fun observeScanStatus(): Flow<ScanStatus> = scanStatus
 
@@ -63,7 +66,14 @@ class FakeLibraryRepository(initialBooks: List<Book> = emptyList()) : LibraryRep
 
     override suspend fun hideBook(bookId: String) {
         calls += "hideBook($bookId)"
+        hiddenBooks.value = hiddenBooks.value + books.value.filter { it.id == bookId }
         books.value = books.value.filterNot { it.id == bookId }
+    }
+
+    override suspend fun restoreBook(bookId: String) {
+        calls += "restoreBook($bookId)"
+        books.value = books.value + hiddenBooks.value.filter { it.id == bookId }
+        hiddenBooks.value = hiddenBooks.value.filterNot { it.id == bookId }
     }
 
     override suspend fun clearLibrary() {

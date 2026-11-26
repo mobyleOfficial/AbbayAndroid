@@ -18,6 +18,9 @@ interface LibraryRepository {
 
     fun observeBooks(): Flow<List<Book>>
 
+    /** Books the person removed from the library; their files are untouched and a scan does not bring them back. */
+    fun observeHiddenBooks(): Flow<List<Book>>
+
     fun observeScanStatus(): Flow<ScanStatus>
 
     suspend fun addRoot(treeUri: String): DataResult<LibraryRoot>
@@ -37,6 +40,9 @@ interface LibraryRepository {
     suspend fun fullScan()
 
     suspend fun hideBook(bookId: String)
+
+    /** Puts a removed book back in the library. */
+    suspend fun restoreBook(bookId: String)
 
     suspend fun clearLibrary()
 
