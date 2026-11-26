@@ -46,4 +46,6 @@ data class BookEntity(
     @ColumnInfo(name = "description_override") val descriptionOverride: String? = null,
     @ColumnInfo(name = "librivox_id") val librivoxId: String? = null,
     @ColumnInfo(name = "librivox_download") val librivoxDownload: String? = null,
+    /** A [com.model.BookNameSource] name; null follows the app-wide setting. */
+    @ColumnInfo(name = "name_source") val nameSource: String? = null,
 )

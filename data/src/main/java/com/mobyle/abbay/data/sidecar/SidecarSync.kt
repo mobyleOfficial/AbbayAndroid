@@ -89,7 +89,10 @@ class SidecarSync @Inject constructor(
         dao.upsertListeningState(SidecarMapper.toListeningState(sidecar, details))
         listeningDao.replaceBookmarks(bookId, SidecarMapper.toBookmarks(sidecar, bookId))
         extrasDao.replaceCharacters(bookId, SidecarMapper.toCharacters(sidecar, bookId))
-        with(sidecar.overrides) { dao.updateOverrides(bookId, title, author, narrator, description) }
+        with(sidecar.overrides) {
+            dao.updateOverrides(bookId, title, author, narrator, description)
+            dao.updateNameSource(bookId, nameSource)
+        }
         return true
     }
 

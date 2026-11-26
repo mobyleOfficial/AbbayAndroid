@@ -7,10 +7,12 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.model.BookDetails
+import com.model.BookNameSource
 import com.model.BookOverrides
 import com.model.CoverCandidate
 import com.usecase.GetCoverCandidates
 import com.usecase.ObserveBookDetails
+import com.usecase.SetBookNameSource
 import com.usecase.SetSortByTrackNumber
 import com.usecase.SetUserCover
 import com.usecase.UpdateAppSettings
@@ -21,7 +23,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -32,6 +33,7 @@ class BookDetailsViewModel @Inject constructor(
     observeBookDetails: ObserveBookDetails,
     private val updateBookOverrides: UpdateBookOverrides,
     private val setSortByTrackNumber: SetSortByTrackNumber,
+    private val setBookNameSource: SetBookNameSource,
     private val getCoverCandidates: GetCoverCandidates,
     private val setUserCover: SetUserCover,
     private val updateAppSettings: UpdateAppSettings,
@@ -47,7 +49,19 @@ class BookDetailsViewModel @Inject constructor(
         private set
 
     init {
-        viewModelScope.launch { draft = details.filterNotNull().first().toOverrides() }
+        viewModelScope.launch {
+            var shownTitle: String? = null
+            details.filterNotNull().collect { current ->
+                val edited = draft
+                draft = when {
+                    edited == null -> current.toOverrides()
+                    // The title changed under an untouched field (e.g. the name source was switched): show the new one.
+                    edited.title == shownTitle -> edited.copy(title = current.title)
+                    else -> edited
+                }
+                shownTitle = current.title
+            }
+        }
     }
 
     fun editDraft(edited: BookOverrides) {
@@ -55,19 +69,33 @@ class BookDetailsViewModel @Inject constructor(
     }
 
     fun saveChanges() {
-        val edited = draft ?: return
+        val edited = draft?.normalized() ?: return
         val current = details.value ?: return
-        if (edited.normalized() == current.toOverrides().normalized()) return
-        viewModelScope.launch(NonCancellable) { updateBookOverrides(bookId, edited) }
+        val shown = current.toOverrides().normalized()
+        val stored = current.overrides.normalized()
+        // A field left as shown keeps its stored override, so an untouched title keeps following the name source
+        // instead of being frozen as the user's own title.
+        val overrides = BookOverrides(
+            title = keptOrEdited(edited.title, shown.title, stored.title),
+            author = keptOrEdited(edited.author, shown.author, stored.author),
+            narrator = keptOrEdited(edited.narrator, shown.narrator, stored.narrator),
+            description = keptOrEdited(edited.description, shown.description, stored.description),
+        )
+        if (overrides == stored) return
+        viewModelScope.launch(NonCancellable) { updateBookOverrides(bookId, overrides) }
     }
 
     fun changeSortByTrackNumber(enabled: Boolean) = viewModelScope.launch { setSortByTrackNumber(bookId, enabled) }
+
+    fun changeNameSource(source: BookNameSource) = viewModelScope.launch { setBookNameSource(bookId, source) }
 
     fun loadCoverCandidates() = viewModelScope.launch { _coverCandidates.value = getCoverCandidates(bookId) }
 
     fun chooseCover(imageUri: String) = viewModelScope.launch { setUserCover(bookId, imageUri) }
 
     fun prepareWebCoverSearch() = viewModelScope.launch { updateAppSettings { it.copy(pendingCoverBookId = bookId) } }
+
+    private fun keptOrEdited(edited: String?, shown: String?, stored: String?): String? = if (edited == shown) stored else edited
 
     private fun BookDetails.toOverrides() = BookOverrides(title, author.orEmpty(), narrator.orEmpty(), description.orEmpty())
 

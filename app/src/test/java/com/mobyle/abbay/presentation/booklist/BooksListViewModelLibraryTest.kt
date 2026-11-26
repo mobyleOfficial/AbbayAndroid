@@ -10,6 +10,7 @@ import com.mobyle.abbay.fakes.SampleBooks
 import com.mobyle.abbay.fakes.ViewModelFactory
 import com.mobyle.abbay.presentation.booklist.BooksListViewModel.BooksListUiState
 import com.model.BookState
+import com.model.MultipleBooks
 import com.settings.AppSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -106,6 +107,19 @@ class BooksListViewModelLibraryTest {
         viewModel.selectSortOrder(LibrarySortOrder.TITLE)
         assertEquals(LibrarySortOrder.TITLE, factory.settingsRepository.settings.value.librarySortOrder)
         assertTrue(factory.settingsRepository.settings.value.librarySortAscending)
+    }
+
+    @Test
+    fun `a renamed book is renamed in the player too, keeping its playback position`() {
+        val factory = factory()
+        val viewModel = factory.booksListViewModel()
+        viewModel.selectBook(inProgressBook, 1)
+
+        factory.libraryRepository.books.value = listOf(newBook, inProgressBook.copy(name = "Renamed"))
+
+        val selected = viewModel.selectedBook.value as MultipleBooks
+        assertEquals("Renamed", selected.name)
+        assertEquals(1, selected.currentBookPosition)
     }
 
     @Test

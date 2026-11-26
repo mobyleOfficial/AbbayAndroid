@@ -137,6 +137,12 @@
     <string name="details_files">Arquivos</string>
     <string name="details_location">Pasta</string>
     <string name="details_sort_by_track_number">Ordenar pelo número da faixa</string>
+    <string name="details_name_source">Nome do livro vem de</string>
+    <string name="details_name_source_folder">Pasta: %1$s</string>
+    <string name="details_name_source_own_title">O título que você digitou acima é usado. Apague-o para usar esta opção.</string>
+    <string name="name_source_app_default">Configuração do app</string>
+    <string name="name_source_folder">Nome da pasta</string>
+    <string name="name_source_metadata">Metadados do arquivo</string>
     <string name="details_chapters">Capítulos</string>
     <string name="details_unplayable">Arquivos que não tocam</string>
     <string name="details_unsupported_format">Formato não suportado — converta para MP3, M4B ou Opus</string>
@@ -479,11 +485,13 @@
     <string name="settings_tab_move_up">Mover %1$s para cima</string>
     <string name="settings_tab_move_down">Mover %1$s para baixo</string>
     <string name="settings_library_layout">Exibição da biblioteca</string>
+    <string name="settings_book_name_from_folder">Usar o nome da pasta como nome do livro</string>
     <string name="settings_rescan_on_start">Verificar a biblioteca ao abrir o app</string>
     <string name="rescan_off">Desligado</string>
     <string name="rescan_quick">Rápida</string>
     <string name="rescan_full">Completa</string>
     <string name="settings_missing_retention">Manter livros ausentes por</string>
+    <string name="settings_missing_retention_none">Não manter (remover na hora)</string>
     <string name="settings_default_speed">Velocidade de livros novos</string>
     <string name="settings_small_back">Retrocesso curto</string>
     <string name="settings_small_forward">Avanço curto</string>
@@ -749,7 +757,8 @@
     <string name="settings_info_delete_all">Tira todos os livros e pastas do Abbay, junto com o progresso salvo no app. Os arquivos de áudio continuam no seu celular.</string>
     <string name="settings_info_converter">Deixa livros em MP3 de 3 a 5 vezes menores, ocupando menos espaço no celular, e o som fica quase igual.</string>
     <string name="settings_info_rescan">Toda vez que você abre o app, o Abbay olha suas pastas para achar livros que você colocou ou tirou. Rápida só procura o que mudou; Completa lê todos os arquivos de novo e demora mais.</string>
-    <string name="settings_info_missing_retention">Se os arquivos de um livro somem (por exemplo, você tirou o cartão de memória), o Abbay lembra onde você parou por esse tempo. Se o livro voltar antes, você continua do mesmo ponto.</string>
+    <string name="settings_info_book_name_from_folder">Quando um livro está dentro da própria pasta, usa o nome da pasta como título em vez do título salvo nos arquivos de áudio. Livros colocados direto numa pasta da biblioteca sempre usam o arquivo. Você pode mudar isso para um livro só nos detalhes dele.</string>
+    <string name="settings_info_missing_retention">Se os arquivos de um livro somem (por exemplo, você tirou o cartão de memória), o Abbay lembra onde você parou por esse tempo e o livro aparece como ausente. Se ele voltar antes, você continua do mesmo ponto. Com Não manter, o livro sai da biblioteca na próxima varredura.</string>
     <string name="settings_info_save_progress_in_folders">O Abbay guarda um arquivinho dentro da pasta de cada livro com onde você parou e seus marcadores. Se você trocar de celular ou reinstalar o app, o progresso volta junto com o livro.</string>
     <string name="settings_info_export_backup">Cria um arquivo com o seu progresso em todos os livros. Guarde ele num lugar seguro e use Importar backup para trazer tudo de volta depois, até em outro celular.</string>
     <string name="settings_info_smart_rewind">Quando você dá play depois de pausar, o livro volta alguns segundos para você lembrar onde estava. Quanto mais tempo pausado, mais ele volta.</string>

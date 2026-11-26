@@ -51,6 +51,7 @@ import com.mobyle.abbay.presentation.common.widgets.BookThumbnail
 import com.mobyle.abbay.presentation.common.widgets.abbayTextFieldColors
 import com.mobyle.abbay.presentation.utils.toHHMMSS
 import com.model.BookDetails
+import com.model.BookNameSource
 import com.model.BookOverrides
 import com.model.CoverCandidate
 
@@ -69,6 +70,7 @@ fun BookDetailsScreen(viewModel: BookDetailsViewModel = hiltViewModel(), onConve
                 coverCandidates = candidates,
                 onEdit = viewModel::editDraft,
                 onSortByTrackNumber = viewModel::changeSortByTrackNumber,
+                onNameSource = viewModel::changeNameSource,
                 onOpenCoverChooser = viewModel::loadCoverCandidates,
                 onChooseCover = viewModel::chooseCover,
                 onSearchWeb = viewModel::prepareWebCoverSearch,
@@ -85,6 +87,7 @@ fun BookDetailsContent(
     coverCandidates: List<CoverCandidate>,
     onEdit: (BookOverrides) -> Unit,
     onSortByTrackNumber: (Boolean) -> Unit,
+    onNameSource: (BookNameSource) -> Unit,
     onOpenCoverChooser: () -> Unit,
     onChooseCover: (String) -> Unit,
     onSearchWeb: () -> Unit,
@@ -100,6 +103,9 @@ fun BookDetailsContent(
             }
         }
         draft?.let { editedOverrides -> item { MetadataEditor(editedOverrides, onEdit) } }
+        details.folderName?.let { folderName ->
+            item { NameSourceRow(details.nameSource, folderName, hasOwnTitle = details.overrides.title != null, onNameSource) }
+        }
         onConvert?.let { convert -> item { AbbayTextButton(onClick = convert) { Text(stringResource(R.string.details_convert)) } } }
         fileSections(details, onSortByTrackNumber)
     }

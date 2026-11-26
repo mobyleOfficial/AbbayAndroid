@@ -36,7 +36,13 @@ internal object SidecarMapper {
             sortByTrackTag = state.sortByTrackTag,
             bookmarks = bookmarks.map { SidecarBook.Bookmark(it.bookPositionMs, it.chapterTitle, it.note, it.createdAt) },
             characters = characters.map { SidecarBook.Character(it.name, it.description, it.firstPositionMs) },
-            overrides = SidecarBook.Overrides(book.titleOverride, book.authorOverride, book.narratorOverride, book.descriptionOverride),
+            overrides = SidecarBook.Overrides(
+                title = book.titleOverride,
+                author = book.authorOverride,
+                narrator = book.narratorOverride,
+                description = book.descriptionOverride,
+                nameSource = book.nameSource,
+            ),
         )
     }
 

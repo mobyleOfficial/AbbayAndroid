@@ -2,6 +2,7 @@ package com.mobyle.abbay.fakes
 
 import com.model.Book
 import com.model.BookDetails
+import com.model.BookNameSource
 import com.model.BookOverrides
 import com.model.BookState
 import com.model.CompanionDocument
@@ -90,6 +91,10 @@ class FakeLibraryRepository(initialBooks: List<Book> = emptyList()) : LibraryRep
 
     override suspend fun setSortByTrackNumber(bookId: String, enabled: Boolean) {
         calls += "setSortByTrackNumber($bookId, $enabled)"
+    }
+
+    override suspend fun setBookNameSource(bookId: String, source: BookNameSource) {
+        calls += "setBookNameSource($bookId, $source)"
     }
 
     override suspend fun coverCandidates(bookId: String): List<CoverCandidate> = coverCandidates

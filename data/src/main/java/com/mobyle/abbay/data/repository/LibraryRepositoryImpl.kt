@@ -12,6 +12,7 @@ import com.mobyle.abbay.data.library.BookDetailsMapper
 import com.mobyle.abbay.data.library.BookLocation
 import com.mobyle.abbay.data.library.BookMetadataEnricher
 import com.mobyle.abbay.data.library.BookProjection
+import com.mobyle.abbay.data.library.MissingBookRetention
 import com.mobyle.abbay.data.library.ScannedBookWriter
 import com.mobyle.abbay.data.librivox.LibriVoxDownloadControl
 import com.mobyle.abbay.data.librivox.LibriVoxDownloadScheduler
@@ -32,6 +33,7 @@ import com.mobyle.abbay.data.work.ScanWorkScheduler
 import com.model.Book
 import com.model.BookDetails
 import com.model.BookFile
+import com.model.BookNameSource
 import com.model.BookOverrides
 import com.model.BookState
 import com.model.BookType
@@ -64,7 +66,6 @@ import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -102,12 +103,17 @@ class LibraryRepositoryImpl @Inject constructor(
     override fun observeBooks(): Flow<List<Book>> = combine(
         dao.observeVisibleBooks(),
         dao.observeRoots(),
-        settingsSource.observeSettings().map { it.defaultSpeed }.distinctUntilChanged(),
-    ) { books, roots, defaultSpeed ->
+        settingsSource.observeSettings().map { it.defaultSpeed to it.bookNameFromFolder }.distinctUntilChanged(),
+    ) { books, roots, (defaultSpeed, nameFromFolder) ->
         val accessibleRootIds = roots.filter { it.isAccessible }.map { it.id }.toSet()
         books.mapNotNull { details ->
             val rootId = details.book.rootId
-            BookProjection.toBook(details, isRootAccessible = rootId == null || rootId in accessibleRootIds, defaultSpeed = defaultSpeed)
+            BookProjection.toBook(
+                details,
+                isRootAccessible = rootId == null || rootId in accessibleRootIds,
+                defaultSpeed = defaultSpeed,
+                nameFromFolder = nameFromFolder,
+            )
         }
     }
 
@@ -269,7 +275,9 @@ class LibraryRepositoryImpl @Inject constructor(
 
     override fun observeBookDetails(bookId: String): Flow<BookDetails?> {
         val id = bookId.toLongOrNull() ?: return flowOf(null)
-        return dao.observeBookWithDetails(id).map { details -> details?.let(BookDetailsMapper::toDetails) }
+        return combine(dao.observeBookWithDetails(id), observeNameFromFolder()) { details, nameFromFolder ->
+            details?.let { BookDetailsMapper.toDetails(it, nameFromFolder) }
+        }
     }
 
     override suspend fun updateOverrides(bookId: String, overrides: BookOverrides) = withContext(ioDispatcher) {
@@ -294,6 +302,15 @@ class LibraryRepositoryImpl @Inject constructor(
         dao.upsertListeningState(current.copy(sortByTrackTag = enabled, trackIndex = newIndex, updatedAt = System.currentTimeMillis()))
         sidecarSync.onBookEdited(id)
     }
+
+    override suspend fun setBookNameSource(bookId: String, source: BookNameSource) = withContext(ioDispatcher) {
+        val id = bookId.toLongOrNull() ?: return@withContext
+        dao.updateNameSource(id, source.name.takeUnless { source == BookNameSource.APP_DEFAULT })
+        sidecarSync.onBookEdited(id)
+    }
+
+    private fun observeNameFromFolder(): Flow<Boolean> =
+        settingsSource.observeSettings().map { it.bookNameFromFolder }.distinctUntilChanged()
 
     override suspend fun coverCandidates(bookId: String): List<CoverCandidate> = withContext(ioDispatcher) {
         val id = bookId.toLongOrNull() ?: return@withContext emptyList()
@@ -484,11 +501,19 @@ class LibraryRepositoryImpl @Inject constructor(
 
     private suspend fun deleteBooksMissingForTooLong() {
         val retentionDays = settingsSource.observeSettings().first().missingBookRetentionDays
-        val limit = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(retentionDays.toLong())
-        val expiredBooks = dao.getBooksMissingSince(limit)
+        val removesAtOnce = MissingBookRetention.removesAtOnce(retentionDays)
+        val expiredBooks = dao.getBooksMissingSince(MissingBookRetention.cutoff(retentionDays, System.currentTimeMillis()))
+            // With no time to come back, a folder that failed to list once must not cost the book: it goes only
+            // when its files are really gone.
+            .filter { book -> !removesAtOnce || hasNoFilesLeft(book) }
         expiredBooks.forEach { contentSource.deleteCover(it.sidecarId) }
         if (expiredBooks.isNotEmpty()) dao.deleteBooks(expiredBooks.map { it.id })
     }
+
+    /** Its folder is gone, or it is still there with none of the book's audio in it (the files went to the trash). */
+    private suspend fun hasNoFilesLeft(book: BookEntity): Boolean =
+        contentSource.describe(book.folderUri) is DataResult.Failure ||
+            dao.getTracks(book.id).none { track -> contentSource.describe(track.documentUri) is DataResult.Success }
 
     private fun advanceProgress() {
         scanStatus.update { status ->

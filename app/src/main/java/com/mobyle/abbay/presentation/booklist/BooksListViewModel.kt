@@ -208,8 +208,11 @@ class BooksListViewModel @Inject constructor(
         liveBooks.onEach { books ->
             booksList = books
             val selected = _selectedBook.value
-            if (selected != null && !selected.isExternal && books.none { it.id == selected.id }) {
-                _selectedBook.value = null
+            if (selected != null && !selected.isExternal) {
+                val stored = books.firstOrNull { it.id == selected.id }
+                // Keep the player's book in step with edits made elsewhere (title, author, cover...), keeping only
+                // its live playback state.
+                _selectedBook.value = stored?.let { selected.copyStructureFrom(it) }
             }
             restoreLastBook()
         }.launchIn(viewModelScope)

@@ -5,6 +5,7 @@ import com.mobyle.abbay.data.database.dao.ListeningDao
 import com.mobyle.abbay.data.database.entity.BookEntity
 import com.mobyle.abbay.data.database.entity.HistoryEventEntity
 import com.mobyle.abbay.data.library.displayTitle
+import com.mobyle.abbay.data.settings.SettingsDataSource
 import com.mobyle.abbay.data.sidecar.SidecarSync
 import com.model.BackupSummary
 import com.model.DataError
@@ -12,6 +13,7 @@ import com.model.DataResult
 import com.model.HistoryEvent
 import com.repository.BackupRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -22,12 +24,14 @@ class BackupRepositoryImpl @Inject constructor(
     private val listeningDao: ListeningDao,
     private val sidecarSync: SidecarSync,
     private val files: BackupFileSource,
+    private val settingsSource: SettingsDataSource,
 ) : BackupRepository {
     override suspend fun export(destinationUri: String): DataResult<BackupSummary> = withContext(Dispatchers.IO) {
+        val nameFromFolder = settingsSource.observeSettings().first().bookNameFromFolder
         val entries = dao.getAllBooks().filterNot { it.hidden }.mapNotNull { book ->
             val sidecar = sidecarSync.snapshot(book.id) ?: return@mapNotNull null
             val history = listeningDao.getHistory(book.id).map { BackupCodec.HistoryItem(it.type, it.at, it.positionMs, it.extraMs) }
-            BackupCodec.Entry(sidecar, book.relativePath, book.displayTitle, history)
+            BackupCodec.Entry(sidecar, book.relativePath, book.displayTitle(nameFromFolder), history)
         }
         when (val written = files.write(destinationUri, BackupCodec.write(entries, System.currentTimeMillis()))) {
             is DataResult.Success -> DataResult.Success(BackupSummary(books = entries.size))

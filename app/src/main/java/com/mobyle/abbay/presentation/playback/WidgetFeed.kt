@@ -21,7 +21,13 @@ class WidgetFeed(
     private var ticker: Job? = null
 
     override fun onEvents(player: Player, events: Player.Events) {
-        if (events.containsAny(Player.EVENT_MEDIA_ITEM_TRANSITION, Player.EVENT_IS_PLAYING_CHANGED, Player.EVENT_POSITION_DISCONTINUITY)) {
+        if (events.containsAny(
+                Player.EVENT_MEDIA_ITEM_TRANSITION,
+                Player.EVENT_IS_PLAYING_CHANGED,
+                Player.EVENT_POSITION_DISCONTINUITY,
+                Player.EVENT_MEDIA_METADATA_CHANGED,
+            )
+        ) {
             publish()
         }
         if (events.contains(Player.EVENT_IS_PLAYING_CHANGED)) {

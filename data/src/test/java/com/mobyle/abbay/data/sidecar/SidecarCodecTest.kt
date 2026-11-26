@@ -47,7 +47,7 @@ class SidecarCodecTest {
             sortByTrackTag = true,
             bookmarks = listOf(SidecarBook.Bookmark(10L, "Opening", "note", 1_600_000_000_000L)),
             characters = listOf(SidecarBook.Character("Mira", "Cartographer", 300_000L), SidecarBook.Character("Tom", "", null)),
-            overrides = SidecarBook.Overrides(title = "Title", narrator = "Narrator"),
+            overrides = SidecarBook.Overrides(title = "Title", narrator = "Narrator", nameSource = "FOLDER"),
         )
 
         assertEquals(book, SidecarCodec.read(SidecarCodec.write(book, previous = null))!!.book)
